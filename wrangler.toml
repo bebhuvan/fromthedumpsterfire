@@ -9,6 +9,7 @@ directory = "./dist"
 
 # Custom domain routes (configure in Cloudflare Dashboard after adding domain)
 # Uncomment and redeploy after domain is added to Cloudflare:
+#
 # [[routes]]
 # pattern = "fromthedumpsterfire.com/*"
 # zone_name = "fromthedumpsterfire.com"
@@ -16,3 +17,6 @@ directory = "./dist"
 # [[routes]]
 # pattern = "www.fromthedumpsterfire.com/*"
 # zone_name = "fromthedumpsterfire.com"
+#
+# Note: Both domains will serve the site. Create a Redirect Rule in
+# Cloudflare Dashboard to redirect www → non-www for SEO best practices.

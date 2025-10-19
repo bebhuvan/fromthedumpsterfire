@@ -117,11 +117,31 @@ Once DNS propagates:
 
 ---
 
-## 🔧 Optional: Setup WWW Redirect
+## 🔧 RECOMMENDED: Setup WWW Redirect
 
-To redirect www → non-www (or vice versa):
+**Best Practice**: Redirect www → non-www for cleaner URLs and better SEO.
 
-### Method 1: Cloudflare Page Rule (Free tier allows 3 rules)
+To redirect www.fromthedumpsterfire.com → fromthedumpsterfire.com:
+
+### Method 1: Redirect Rules (Recommended - Unlimited on Free Tier)
+
+1. Go to **Rules** → **Redirect Rules** in Cloudflare Dashboard
+2. Click **Create rule**
+3. Configure:
+   - **Rule name**: Redirect www to non-www
+   - **When incoming requests match**:
+     - Field: `Hostname`
+     - Operator: `equals`
+     - Value: `www.fromthedumpsterfire.com`
+   - **Then**:
+     - Action: `Dynamic` URL redirect
+     - Expression: `concat("https://fromthedumpsterfire.com", http.request.uri.path)`
+     - Status code: `301` (Permanent Redirect)
+4. Click **Deploy**
+
+✅ Unlimited redirects on free tier!
+
+### Method 2: Page Rules (Alternative - 3 rules max on Free tier)
 
 1. Go to **Rules** → **Page Rules**
 2. Create rule:
@@ -129,12 +149,6 @@ To redirect www → non-www (or vice versa):
    - Setting: **Forwarding URL** → **301 Permanent Redirect**
    - Destination: `https://fromthedumpsterfire.com/$1`
 3. Save and deploy
-
-### Method 2: Bulk Redirects (Recommended)
-
-1. Go to **Rules** → **Redirect Rules**
-2. Create rule to redirect www → non-www
-3. Unlimited redirects on free tier!
 
 ---
 
