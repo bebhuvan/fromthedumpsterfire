@@ -1,0 +1,9 @@
+name = "fromthedumpsterfire"
+compatibility_date = "2025-01-01"
+
+# Static Assets Configuration
+# Cloudflare Workers with static asset serving
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"

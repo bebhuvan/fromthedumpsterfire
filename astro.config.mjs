@@ -3,8 +3,10 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
+// For Cloudflare Workers static deployment, we use output: 'static' without adapter
 export default defineConfig({
   site: 'https://fromthedumpsterfire.com',
+  output: 'static',
   integrations: [sitemap()],
   compressHTML: true,
   build: {
