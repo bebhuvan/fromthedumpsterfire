@@ -108,7 +108,17 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
           <div class="art-frame">
             <div class="art-image">
               {latestArt.data.imageUrl ? (
-                <img src={latestArt.data.imageUrl} alt={latestArt.data.imageAlt} loading="lazy" />
+                <img
+                  srcset="/images/wanderer-above-sea-of-fog-small.webp 400w,
+                          /images/wanderer-above-sea-of-fog-medium.webp 800w,
+                          /images/wanderer-above-sea-of-fog.webp 1200w"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  src={latestArt.data.imageUrl}
+                  alt={latestArt.data.imageAlt}
+                  loading="lazy"
+                  width="1200"
+                  height="900"
+                />
               ) : (
                 <div class="art-placeholder">[{latestArt.data.title}]</div>
               )}

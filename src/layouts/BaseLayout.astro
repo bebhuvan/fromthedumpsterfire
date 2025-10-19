@@ -46,10 +46,20 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <meta property="twitter:description" content={description}>
   <meta property="twitter:image" content={new URL(image, Astro.site)}>
 
-  <!-- Fonts - Optimized (removed unused weights) -->
+  <!-- Fonts - Optimized (async loading to eliminate render-blocking) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Async font loading to prevent render blocking -->
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap"
+    media="print"
+    onload="this.media='all'"
+  >
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </noscript>
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/rss+xml" title="From The Dumpster Fire" href="/rss.xml" />
