@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Tyranny of the Marginal User - From The Dumpster Fire</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           ARTICLE PAGE DESIGN
+           Elegant, Readable, Thoughtful
+           ============================================ */
+
+        :root {
+            /* Typography */
+            --font-display: 'DM Serif Display', Georgia, serif;
+            --font-body: 'Crimson Pro', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+
+            /* Color Palette */
+            --bg-cream: #faf9f6;
+            --bg-canvas: #ffffff;
+
+            --pastel-coral: rgba(232, 145, 125, 0.25);
+            --pastel-peach: rgba(245, 195, 160, 0.28);
+            --pastel-mint: rgba(180, 215, 195, 0.26);
+            --pastel-butter: rgba(245, 225, 185, 0.28);
+
+            --flame: #d97b67;
+            --ink: #2d2a26;
+            --ink-medium: #5a5550;
+            --ink-light: #9a9590;
+            --ink-whisper: rgba(45, 42, 38, 0.05);
+
+            /* Spacing */
+            --space-xs: 0.75rem;
+            --space-sm: 1.25rem;
+            --space-md: 2rem;
+            --space-lg: 3rem;
+            --space-xl: 4.5rem;
+            --space-2xl: 6rem;
+
+            /* Visual Effects */
+            --border-fine: 1px;
+            --shadow-soft: 0 4px 20px rgba(45, 42, 38, 0.06), 0 1px 4px rgba(45, 42, 38, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: var(--ink);
+            background: var(--bg-cream);
+            letter-spacing: -0.01em;
+        }
+
+        /* Subtle background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(45, 42, 38, 0.025) 1px, transparent 0);
+            background-size: 32px 32px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 clamp(1.5rem, 5vw, 10vw);
+        }
+
+        /* Header */
+        .header {
+            padding: var(--space-lg) 0;
+            border-bottom: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-title {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            letter-spacing: -0.03em;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--ink);
+            position: relative;
+        }
+
+        .site-title .flame {
+            display: inline-block;
+            font-size: 1.75rem;
+            filter: drop-shadow(0 0 12px rgba(217, 123, 103, 0.3));
+            animation: flicker 3s ease-in-out infinite, wobble 4s ease-in-out infinite;
+            transform-origin: center bottom;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-3deg) scale(1.05); }
+            75% { transform: rotate(3deg) scale(0.98); }
+        }
+
+        .site-title span:last-child {
+            position: relative;
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px dashed var(--flame);
+            border-left: none;
+            border-right: none;
+            box-shadow: 0 2px 4px rgba(217, 123, 103, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+        }
+
+        /* Article Header */
+        .article-header {
+            max-width: 800px;
+            margin: var(--space-2xl) auto var(--space-xl);
+            text-align: center;
+        }
+
+        .article-badge {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 0.4rem 0.9rem;
+            background: rgba(255, 255, 255, 0.7);
+            border: var(--border-fine) solid var(--ink-whisper);
+            color: var(--flame);
+            margin-bottom: var(--space-md);
+        }
+
+        .article-title {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            line-height: 1.1;
+            margin-bottom: var(--space-md);
+            color: var(--ink);
+        }
+
+        .article-meta {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-lg);
+            display: flex;
+            justify-content: center;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .meta-separator {
+            color: var(--ink-light);
+        }
+
+        /* Curator's Note */
+        .curators-note {
+            max-width: 750px;
+            margin: 0 auto var(--space-xl);
+            padding: var(--space-lg);
+            background: rgba(245, 225, 185, 0.2);
+            border-left: 4px solid var(--flame);
+            transform: rotate(-0.4deg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .curators-note-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--flame);
+            margin-bottom: var(--space-sm);
+        }
+
+        .curators-note p {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            font-style: italic;
+            color: var(--ink);
+        }
+
+        /* Article Content */
+        .article-content {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: var(--space-xl) 0;
+        }
+
+        .article-content p {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+            color: var(--ink);
+        }
+
+        .article-content p:first-of-type::first-letter {
+            font-size: 4.5rem;
+            font-family: var(--font-display);
+            float: left;
+            line-height: 0.85;
+            margin: 0.1em 0.15em 0 0;
+            color: var(--flame);
+        }
+
+        .article-content h2 {
+            font-size: 2.25rem;
+            margin-top: var(--space-xl);
+            margin-bottom: var(--space-md);
+            color: var(--ink);
+        }
+
+        .article-content h3 {
+            font-size: 1.75rem;
+            margin-top: var(--space-lg);
+            margin-bottom: var(--space-sm);
+            color: var(--ink);
+        }
+
+        .article-content blockquote {
+            font-size: 1.35rem;
+            font-style: italic;
+            line-height: 1.7;
+            padding: var(--space-md) var(--space-lg);
+            margin: var(--space-lg) 0;
+            background: var(--pastel-mint);
+            border-left: 3px solid rgba(180, 215, 195, 0.6);
+            color: var(--ink);
+        }
+
+        .article-content ul,
+        .article-content ol {
+            margin-bottom: var(--space-md);
+            padding-left: var(--space-lg);
+        }
+
+        .article-content li {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            margin-bottom: var(--space-sm);
+        }
+
+        .article-content a {
+            color: var(--flame);
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 3px;
+        }
+
+        /* Pull Quote */
+        .pull-quote {
+            font-size: 1.75rem;
+            font-style: italic;
+            line-height: 1.5;
+            text-align: center;
+            padding: var(--space-lg);
+            margin: var(--space-xl) -2rem;
+            background: var(--pastel-peach);
+            border-top: 2px solid var(--pastel-coral);
+            border-bottom: 2px solid var(--pastel-coral);
+            transform: rotate(0.5deg);
+            color: var(--ink);
+        }
+
+        /* Article Footer */
+        .article-footer {
+            max-width: 700px;
+            margin: var(--space-2xl) auto;
+            padding-top: var(--space-xl);
+            border-top: 2px solid var(--ink-whisper);
+        }
+
+        .source-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--ink);
+            padding: 0.9rem 1.5rem;
+            background: var(--bg-canvas);
+            border: 2px solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .source-link:hover {
+            border-color: var(--flame);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(45, 42, 38, 0.1);
+        }
+
+        /* Tags */
+        .article-tags {
+            margin-top: var(--space-lg);
+        }
+
+        .tags-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--ink-light);
+            margin-bottom: var(--space-sm);
+        }
+
+        .tags-list {
+            display: flex;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            padding: 0.4rem 0.9rem;
+            background: var(--bg-canvas);
+            border: var(--border-fine) solid var(--ink-whisper);
+            color: var(--ink-medium);
+            text-decoration: none;
+        }
+
+        /* Related Articles */
+        .related-articles {
+            margin: var(--space-2xl) 0;
+            padding: var(--space-xl) 0;
+            border-top: 2px solid var(--ink-whisper);
+        }
+
+        .related-heading {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: var(--space-xl);
+            color: var(--ink);
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-lg);
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .related-card {
+            background: var(--bg-canvas);
+            padding: var(--space-lg);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .related-card:nth-child(1) {
+            transform: rotate(-0.5deg);
+            background: var(--pastel-mint);
+        }
+
+        .related-card:nth-child(2) {
+            transform: rotate(0.6deg);
+            background: var(--pastel-coral);
+        }
+
+        .related-card:nth-child(3) {
+            transform: rotate(-0.4deg);
+            background: var(--pastel-peach);
+        }
+
+        .related-type {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--ink-light);
+            margin-bottom: var(--space-xs);
+        }
+
+        .related-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+            line-height: 1.3;
+        }
+
+        .related-card p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--ink-medium);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-cream);
+            padding: var(--space-xl) 0 var(--space-lg);
+            margin-top: var(--space-2xl);
+            border-top: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .footer-content {
+            text-align: center;
+        }
+
+        .footer-title {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer-tagline {
+            font-style: italic;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .footer-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .article-content p {
+                font-size: 1.125rem;
+            }
+
+            .pull-quote {
+                margin-left: 0;
+                margin-right: 0;
+                font-size: 1.35rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="site-title">
+                    <span class="flame">🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </a>
+                <nav class="nav-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Reading</a>
+                    <a href="#">Subscribe</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Article Header -->
+        <article>
+            <header class="article-header">
+                <div class="article-badge">Featured Essay</div>
+                <h1 class="article-title">The Tyranny of the Marginal User</h1>
+                <div class="article-meta">
+                    <span>Ivan Vendrov</span>
+                    <span class="meta-separator">•</span>
+                    <span>12 min read</span>
+                    <span class="meta-separator">•</span>
+                    <span>January 15, 2025</span>
+                </div>
+            </header>
+
+            <!-- Curator's Note -->
+            <aside class="curators-note">
+                <div class="curators-note-label">Why I Rescued This</div>
+                <p>
+                    This essay crystallizes something I've felt for years but couldn't articulate.
+                    The constant dumbing down of tools in the name of "accessibility" is actually
+                    making them less accessible to those who want to go deep. A must-read for
+                    anyone who cares about the future of software.
+                </p>
+            </aside>
+
+            <!-- Article Content -->
+            <div class="article-content">
+                <p>
+                    When a product gets too popular, the marginal user becomes the king. The marginal user is
+                    someone who just started using your product—someone who doesn't understand it, doesn't
+                    care about it, and will probably leave soon. But product metrics are dominated by them.
+                </p>
+
+                <p>
+                    Consider Instagram. When it started, it was a place for photographers to share their work.
+                    The community valued craft, composition, and aesthetic excellence. Early users spent time
+                    carefully editing their photos, writing thoughtful captions, and engaging in meaningful
+                    conversations about photography.
+                </p>
+
+                <p>
+                    But as Instagram grew, the marginal user changed everything. They didn't care about
+                    photography—they just wanted to share selfies and see what their friends were doing.
+                    The product evolved to serve them: filters became simpler, the explore page prioritized
+                    viral content over quality, and the entire platform shifted from a photography community
+                    to a social network.
+                </p>
+
+                <h2>The Metrics Problem</h2>
+
+                <p>
+                    This happens because of how we measure success. Product teams track engagement, retention,
+                    and growth. When you're small, power users dominate these metrics. But as you scale, the
+                    marginal user—by sheer volume—drowns out the signal from your core users.
+                </p>
+
+                <blockquote>
+                    "The tragedy of scale is that optimizing for the median means abandoning the edges
+                    where all the interesting stuff happens."
+                </blockquote>
+
+                <p>
+                    Every A/B test is dominated by marginal users. Every feature decision is justified by
+                    how it affects their behavior. And slowly, inexorably, the product becomes something
+                    the original users no longer recognize.
+                </p>
+
+                <div class="pull-quote">
+                    Products don't die from lack of features. They die from loss of soul.
+                </div>
+
+                <h2>The Power User Exodus</h2>
+
+                <p>
+                    Eventually, power users leave. They leave because the product no longer serves them.
+                    They leave because the community has changed. They leave because the values that drew
+                    them in have been optimized away in pursuit of growth.
+                </p>
+
+                <p>
+                    And here's the cruel irony: losing power users doesn't show up in your metrics right away.
+                    They're a small percentage of your user base. The marginal users keep coming, engagement
+                    stays high, and everything looks fine. Until it doesn't.
+                </p>
+
+                <h2>What Can Be Done?</h2>
+
+                <p>
+                    The solution isn't to stop growing or to ignore new users. It's to build products with
+                    depth—products that have a high ceiling for mastery while maintaining a gentle learning
+                    curve. It's to resist the temptation to optimize every surface for the marginal user.
+                </p>
+
+                <p>
+                    Some products get this right. Figma is complex enough for professionals but accessible
+                    enough for beginners. Notion has layers of depth that reward exploration. These products
+                    understand that serving power users and marginal users isn't mutually exclusive—it's
+                    about designing for growth rather than dumbing down for scale.
+                </p>
+
+                <p>
+                    The best products don't just solve problems. They create possibilities. And possibilities
+                    require depth, complexity, and room for mastery. Don't let the marginal user kill that.
+                </p>
+            </div>
+
+            <!-- Article Footer -->
+            <footer class="article-footer">
+                <a href="https://example.com/article" class="source-link">
+                    <span>→</span>
+                    <span>Read Original Article</span>
+                </a>
+
+                <div class="article-tags">
+                    <div class="tags-label">Tagged</div>
+                    <div class="tags-list">
+                        <a href="#" class="tag">Product Design</a>
+                        <a href="#" class="tag">Technology</a>
+                        <a href="#" class="tag">User Experience</a>
+                        <a href="#" class="tag">Scale</a>
+                    </div>
+                </div>
+            </footer>
+        </article>
+
+        <!-- Related Articles -->
+        <section class="related-articles">
+            <h2 class="related-heading">You Might Also Like</h2>
+            <div class="related-grid">
+                <a href="#" class="related-card">
+                    <div class="related-type">Essay</div>
+                    <h3>Against Optimization</h3>
+                    <p>
+                        Why efficiency culture is killing creativity, and how embracing the
+                        meandering path leads to better work and richer lives.
+                    </p>
+                </a>
+
+                <a href="#" class="related-card">
+                    <div class="related-type">Essay</div>
+                    <h3>The Garden and the Stream</h3>
+                    <p>
+                        Mike Caulfield's vision for a better web through digital gardens
+                        instead of algorithmic feeds.
+                    </p>
+                </a>
+
+                <a href="#" class="related-card">
+                    <div class="related-type">Essay</div>
+                    <h3>Solitude and Leadership</h3>
+                    <p>
+                        William Deresiewicz on how constant connectivity prevents us from
+                        developing our own thoughts.
+                    </p>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <h3 class="footer-title">
+                    <span>🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </h3>
+                <p class="footer-tagline">Rescuing signal from the algorithmic inferno</p>
+                <nav class="footer-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Subscribe</a>
+                    <a href="#">Reading</a>
+                </nav>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,384 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+}
+
+const {
+  title,
+  description = "Rescuing signal from the algorithmic inferno. A curated magazine for the curious, thoughtful, and intellectually hungry.",
+  image = "/og-image.jpg",
+  article = false
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="generator" content={Astro.generator}>
+
+  <!-- Primary Meta Tags -->
+  <title>{title}</title>
+  <meta name="title" content={title}>
+  <meta name="description" content={description}>
+  <link rel="canonical" href={canonicalURL}>
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content={article ? "article" : "website"}>
+  <meta property="og:url" content={canonicalURL}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:image" content={new URL(image, Astro.site)}>
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content={canonicalURL}>
+  <meta property="twitter:title" content={title}>
+  <meta property="twitter:description" content={description}>
+  <meta property="twitter:image" content={new URL(image, Astro.site)}>
+
+  <!-- Fonts - Optimized (removed unused weights) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/rss+xml" title="From The Dumpster Fire" href="/rss.xml" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/" class="site-title">
+          <span class="flame-container">
+            <span class="flame" aria-hidden="true">🔥</span>
+            <span class="flame-shadow" aria-hidden="true">🔥</span>
+          </span>
+          <span class="site-name">
+            <span class="word-from">FROM</span>
+            <span class="word-the">THE</span>
+            <span class="word-dumpster">DUMPSTER</span>
+            <span class="word-fire">FIRE</span>
+          </span>
+        </a>
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="/about" class="nav-link">About</a>
+          <a href="/archive" class="nav-link">Archive</a>
+          <a href="/subscribe" class="nav-link">Subscribe</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <slot />
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <h3 class="footer-title">
+          <span aria-hidden="true">🔥</span>
+          <span>FROM THE DUMPSTER FIRE</span>
+        </h3>
+        <p class="footer-tagline">Rescuing signal from the algorithmic inferno</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="/about">About</a>
+          <a href="/archive">Archive</a>
+          <a href="/subscribe">Subscribe</a>
+          <a href="/rss.xml">RSS</a>
+        </nav>
+        <p class="footer-copyright">
+          &copy; {new Date().getFullYear()} From The Dumpster Fire
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    /* Header */
+    .header {
+      padding: var(--space-md) 0;
+      border-bottom: 3px double var(--ink-whisper);
+      background: var(--bg-cream);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background: rgba(250, 249, 246, 0.98);
+      box-shadow: 0 2px 8px rgba(45, 42, 38, 0.04);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    /* Offbeat Logo Design */
+    .site-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .site-title:hover .flame-container {
+      transform: rotate(-5deg) scale(1.1);
+    }
+
+    .flame-container {
+      position: relative;
+      width: 2.5rem;
+      height: 2.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .flame {
+      position: absolute;
+      font-size: 2rem;
+      filter: drop-shadow(0 0 8px rgba(217, 123, 103, 0.4));
+      animation: flicker 2.5s ease-in-out infinite, wobble 3.5s ease-in-out infinite;
+      transform-origin: center bottom;
+      z-index: 2;
+    }
+
+    .flame-shadow {
+      position: absolute;
+      font-size: 2rem;
+      opacity: 0.15;
+      filter: blur(4px);
+      transform: translate(3px, 3px);
+      z-index: 1;
+    }
+
+    .site-name {
+      display: grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
+      gap: 0.15rem 0.35rem;
+      align-items: center;
+      font-family: var(--font-sans);
+      line-height: 1;
+    }
+
+    .word-from {
+      grid-column: 1;
+      grid-row: 1;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      transform: rotate(-2deg);
+    }
+
+    .word-the {
+      grid-column: 2;
+      grid-row: 1;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      transform: rotate(1deg);
+    }
+
+    .word-dumpster {
+      grid-column: 1;
+      grid-row: 2;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      transform: rotate(-1deg);
+      text-shadow: 2px 2px 0 rgba(217, 123, 103, 0.1);
+    }
+
+    .word-fire {
+      grid-column: 2;
+      grid-row: 2;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: -0.02em;
+      color: var(--flame);
+      transform: rotate(1.5deg);
+      text-shadow: 2px 2px 0 rgba(45, 42, 38, 0.08);
+    }
+
+    /* Modern Nav with Icons */
+    .nav-links {
+      display: flex;
+      gap: 0.25rem;
+      font-family: var(--font-sans);
+    }
+
+    .nav-link {
+      padding: 0.75rem 1.25rem;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      position: relative;
+      letter-spacing: 0.01em;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0.3rem;
+      left: 1rem;
+      right: 1rem;
+      height: 2px;
+      background: var(--flame);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--flame);
+    }
+
+    .nav-link:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--bg-cream);
+      padding: var(--space-2xl) 0 var(--space-lg);
+      margin-top: var(--space-2xl);
+      border-top: var(--border-fine) solid var(--ink-whisper);
+    }
+
+    .footer-content {
+      text-align: center;
+    }
+
+    .footer-title {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .footer-tagline {
+      font-style: italic;
+      color: var(--ink-medium);
+      margin-bottom: var(--space-md);
+      font-size: 1rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 0.95rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--ink-medium);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--flame);
+    }
+
+    .footer-copyright {
+      margin-top: var(--space-md);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      color: var(--ink-light);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .header {
+        padding: var(--space-sm) 0;
+      }
+
+      .header-content {
+        flex-direction: column;
+        gap: var(--space-sm);
+        align-items: flex-start;
+      }
+
+      .site-title {
+        gap: 0.4rem;
+      }
+
+      .flame-container {
+        width: 2rem;
+        height: 2rem;
+      }
+
+      .flame,
+      .flame-shadow {
+        font-size: 1.6rem;
+      }
+
+      .word-dumpster,
+      .word-fire {
+        font-size: 1.1rem;
+      }
+
+      .word-from,
+      .word-the {
+        font-size: 0.55rem;
+      }
+
+      .nav-links {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .nav-link {
+        padding: 0.875rem 1rem;
+        font-size: 0.9rem;
+        min-height: 48px;
+      }
+
+      .nav-link::after {
+        left: 0.8rem;
+        right: 0.8rem;
+      }
+
+      .footer-title {
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+</body>
+</html>

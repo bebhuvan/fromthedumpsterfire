@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://fromthedumpsterfire.com/sitemap-index.xml
