@@ -6,4 +6,13 @@ compatibility_date = "2025-01-01"
 
 [assets]
 directory = "./dist"
-binding = "ASSETS"
+
+# Custom domain routes (configure in Cloudflare Dashboard after adding domain)
+# Uncomment and redeploy after domain is added to Cloudflare:
+# [[routes]]
+# pattern = "fromthedumpsterfire.com/*"
+# zone_name = "fromthedumpsterfire.com"
+#
+# [[routes]]
+# pattern = "www.fromthedumpsterfire.com/*"
+# zone_name = "fromthedumpsterfire.com"
