@@ -68,41 +68,58 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </p>
 
         <div class="links-section">
-          <h2 class="links-heading">Find me around the web</h2>
+          <div class="links-header">
+            <h2 class="links-heading">Find me around the web</h2>
+            <div class="links-decoration">~ ✦ ~</div>
+          </div>
 
           <div class="links-container">
             <div class="links-group">
-              <h3 class="group-title">Connect</h3>
+              <div class="group-header">
+                <span class="group-icon">🔗</span>
+                <h3 class="group-title">Connect</h3>
+              </div>
               <div class="links-grid">
                 <a href="https://bebhuvan.com" class="link-item" target="_blank" rel="noopener">
-                  bebhuvan.com
+                  <span class="link-label">bebhuvan.com</span>
+                  <span class="link-arrow">→</span>
                 </a>
                 <a href="https://bhuvan.substack.com/" class="link-item" target="_blank" rel="noopener">
-                  Substack
+                  <span class="link-label">Substack</span>
+                  <span class="link-arrow">→</span>
                 </a>
                 <a href="https://twitter.com/bebhuvan" class="link-item" target="_blank" rel="noopener">
-                  @bebhuvan
+                  <span class="link-label">Twitter</span>
+                  <span class="link-arrow">→</span>
                 </a>
                 <a href="https://www.linkedin.com/in/bebhuvan/" class="link-item" target="_blank" rel="noopener">
-                  LinkedIn
+                  <span class="link-label">LinkedIn</span>
+                  <span class="link-arrow">→</span>
                 </a>
               </div>
             </div>
 
             <div class="links-group">
-              <h3 class="group-title">Side Projects</h3>
+              <div class="group-header">
+                <span class="group-icon">🌱</span>
+                <h3 class="group-title">Side Projects</h3>
+              </div>
               <div class="links-grid">
                 <a href="https://seneca.ink" class="link-item" target="_blank" rel="noopener">
-                  seneca.ink
+                  <span class="link-label">seneca.ink</span>
+                  <span class="link-arrow">→</span>
                 </a>
                 <a href="https://paperlanterns.ink" class="link-item" target="_blank" rel="noopener">
-                  paperlanterns.ink
+                  <span class="link-label">paperlanterns.ink</span>
+                  <span class="link-arrow">→</span>
                 </a>
                 <a href="https://papertrails.rabbitholes.garden" class="link-item" target="_blank" rel="noopener">
-                  papertrails
+                  <span class="link-label">papertrails</span>
+                  <span class="link-arrow">→</span>
                 </a>
                 <a href="https://booktrails.rabbitholes.garden" class="link-item" target="_blank" rel="noopener">
-                  booktrails
+                  <span class="link-label">booktrails</span>
+                  <span class="link-arrow">→</span>
                 </a>
               </div>
             </div>
@@ -177,75 +194,116 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   }
 
   .links-section {
-    margin-top: 4rem;
-    padding-top: var(--space-2xl);
-    border-top: 2px solid var(--ink-whisper);
+    margin-top: var(--space-2xl);
+    padding: var(--space-2xl);
+    background: linear-gradient(135deg, var(--pastel-peach), var(--pastel-mint));
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    border-radius: 4px;
+  }
+
+  .links-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
   }
 
   .links-heading {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 400;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-sm);
     color: var(--ink);
-    text-align: center;
+  }
+
+  .links-decoration {
+    font-size: 1.5rem;
+    color: var(--flame);
+    opacity: 0.3;
   }
 
   .links-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-2xl);
+    gap: var(--space-xl);
+    max-width: 700px;
+    margin: 0 auto;
   }
 
   .links-group {
-    min-width: 0;
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    border-radius: 4px;
+  }
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--ink-whisper);
+  }
+
+  .group-icon {
+    font-size: 1.5rem;
   }
 
   .group-title {
     font-family: var(--font-sans);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
     font-weight: 700;
-    color: var(--ink-light);
-    margin-bottom: var(--space-md);
+    color: var(--ink-medium);
+    margin: 0;
   }
 
   .links-grid {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
   }
 
   .link-item {
-    display: inline-block;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     text-decoration: none;
     color: var(--ink);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 400;
-    padding: 0.5rem 0;
+    padding: var(--space-sm) var(--space-md);
     transition: all 0.2s ease;
-    position: relative;
-    border-bottom: 2px solid transparent;
+    background: var(--bg-cream);
+    border: 1px solid transparent;
+    border-radius: 4px;
   }
 
-  .link-item::before {
-    content: '→';
-    position: absolute;
-    left: -1.5rem;
-    opacity: 0;
-    transition: all 0.3s ease;
-    color: var(--flame);
+  .link-label {
+    flex: 1;
+  }
+
+  .link-arrow {
+    color: var(--ink-light);
+    transition: all 0.2s ease;
+    opacity: 0.5;
   }
 
   .link-item:hover {
-    color: var(--flame);
-    border-bottom-color: var(--flame);
-    padding-left: 1.5rem;
+    background: var(--flame-light);
+    border-color: var(--flame);
+    transform: translateX(4px);
   }
 
-  .link-item:hover::before {
+  .link-item:hover .link-label {
+    color: var(--flame);
+  }
+
+  .link-item:hover .link-arrow {
     opacity: 1;
-    left: 0;
+    color: var(--flame);
+    transform: translateX(4px);
   }
 
   @media (max-width: 768px) {
@@ -254,22 +312,34 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     .links-section {
-      margin-top: 3rem;
-      padding-top: var(--space-xl);
+      margin-top: var(--space-xl);
+      padding: var(--space-md);
+      box-shadow: none;
     }
 
     .links-heading {
       font-size: 1.5rem;
-      margin-bottom: var(--space-lg);
     }
 
     .links-container {
       grid-template-columns: 1fr;
-      gap: var(--space-xl);
+      gap: var(--space-md);
+    }
+
+    .links-group {
+      padding: var(--space-md);
+      box-shadow: none;
+      border: 2px solid var(--ink-whisper);
+    }
+
+    .group-header {
+      margin-bottom: var(--space-sm);
+      padding-bottom: var(--space-sm);
     }
 
     .link-item {
-      font-size: 1rem;
+      font-size: 0.95rem;
+      padding: var(--space-sm) var(--space-sm);
     }
   }
 </style>
