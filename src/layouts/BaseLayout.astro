@@ -183,43 +183,36 @@ if (article && publishedTime) {
 
     /* Reserve exact space for LCP elements to prevent layout shift */
     .opening-quote blockquote {
-      min-height: 180px; /* Reserve space for quote - prevents CLS */
+      min-height: 220px; /* Reserve space for quote - prevents CLS */
     }
 
     /* Set explicit dimensions for featured section to prevent shift */
     .featured-grid {
-      min-height: 600px; /* Prevents grid collapse during font load */
+      min-height: 650px; /* Prevents grid collapse during font load */
+    }
+
+    .featured-main {
+      min-height: 620px; /* Match actual content height */
     }
   </style>
 
-  <!-- Fonts - Optimized with font-display: optional to prevent CLS -->
+  <!-- Fonts - Async loading to prevent render blocking -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <!-- Preload critical font files (not just CSS) for faster LCP -->
-  <!-- DM Serif Display is used in LCP element (featured title) -->
-  <link
-    rel="preload"
-    as="font"
-    type="font/woff2"
-    href="https://fonts.gstatic.com/s/dmserifDisplay/v15/-nFnOHM81r4j6k0gjAW3mujVU2B2K_d709jy92k.woff2"
-    crossorigin
-  >
-  <!-- Crimson Pro for body text -->
-  <link
-    rel="preload"
-    as="font"
-    type="font/woff2"
-    href="https://fonts.gstatic.com/s/crimsonpro/v23/q5uUsoa5M_tv7IihmnkabC5XiXCAlXGks1WZTm18OJE_VNWoyQ.woff2"
-    crossorigin
-  >
-
-  <!-- Load fonts with font-display: optional - prevents CLS by only using fonts if immediately available -->
-  <!-- If fonts aren't cached, fallback fonts are used for entire page load -->
+  <!-- Load fonts asynchronously to prevent render blocking -->
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=optional"
+    media="print"
+    onload="this.media='all'"
   >
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=optional"
+    >
+  </noscript>
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/rss+xml" title="From The Dumpster Fire" href="/rss.xml" />
