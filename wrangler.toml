@@ -11,9 +11,6 @@ binding = "ASSETS"
 
 # Browser cache TTL (how long browsers cache before revalidating)
 # Edge cache TTL is controlled in _worker.js
-[assets.experimental_serve_directly]
-# Experimental: serve static assets directly from Workers
-# This enables our custom caching and header logic
 
 # Custom domain routes (configure in Cloudflare Dashboard after adding domain)
 # Uncomment and redeploy after domain is added to Cloudflare:
