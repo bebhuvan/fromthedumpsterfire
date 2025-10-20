@@ -1,0 +1,564 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const letters = await getCollection('letters');
+  return letters.map(letter => ({
+    params: { slug: letter.slug },
+    props: { letter }
+  }));
+}
+
+const { letter } = Astro.props;
+const { Content } = await letter.render();
+---
+
+<BaseLayout
+  title={`Letter from ${letter.data.writer} - From The Dumpster Fire`}
+  description={letter.data.excerpt}
+  article={true}
+  publishedTime={letter.data.publishedDate.toISOString()}
+  modifiedTime={letter.data.publishedDate.toISOString()}
+  author={letter.data.writer}
+  section="Letters"
+  tags={letter.data.topics}
+>
+  <article class="letter-page">
+    <div class="container">
+      <!-- Header Section -->
+      <header class="letter-header">
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span class="separator">→</span>
+          <span>Letter of the Week</span>
+        </div>
+
+        <!-- Decorative Postage Stamp -->
+        <div class="postage-stamp">
+          <span class="stamp-icon">✉</span>
+          <span class="stamp-text">Historical Letter</span>
+        </div>
+
+        <h1 class="letter-title">
+          {letter.data.recipient ? `To ${letter.data.recipient}` : 'A Letter'}
+        </h1>
+
+        <div class="letter-meta">
+          <div class="correspondent">From: <strong>{letter.data.writer}</strong></div>
+          {letter.data.recipient && (
+            <div class="correspondent">To: <strong>{letter.data.recipient}</strong></div>
+          )}
+          <div class="letter-details">
+            <span class="date">{letter.data.date}</span>
+            {letter.data.location && (
+              <>
+                <span class="detail-separator">•</span>
+                <span class="location">{letter.data.location}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div class="divider"></div>
+      </header>
+
+      <!-- Letter Excerpt (Main Quote) -->
+      <section class="letter-excerpt-section">
+        <div class="letter-card">
+          <div class="quote-mark">"</div>
+          <blockquote class="letter-excerpt">
+            {letter.data.excerpt}
+          </blockquote>
+          <div class="quote-attribution">
+            — {letter.data.writer}
+            {letter.data.date && <span class="attribution-date">, {letter.data.date}</span>}
+          </div>
+        </div>
+      </section>
+
+      <!-- Context Section -->
+      {letter.data.context && (
+        <section class="context-section">
+          <h2 class="section-title">Context</h2>
+          <div class="context-content">
+            <p>{letter.data.context}</p>
+          </div>
+        </section>
+      )}
+
+      <!-- Full Letter Content (if available in markdown body) -->
+      {letter.body && letter.body.trim() && (
+        <section class="letter-content-section">
+          <h2 class="section-title">Full Letter</h2>
+          <div class="letter-content">
+            <Content />
+          </div>
+        </section>
+      )}
+
+      <div class="flourish-divider">
+        <span>✦ ✦ ✦</span>
+      </div>
+
+      <!-- Paper Lanterns Link -->
+      {letter.data.paperlanternsUrl && (
+        <aside class="external-link-box">
+          <div class="external-label">
+            <span class="icon">📨</span>
+            <span>Read More</span>
+          </div>
+          <p class="external-description">
+            Explore this letter in depth, along with other historical correspondence, at Paper Lanterns.
+          </p>
+          <a
+            href={letter.data.paperlanternsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="external-button"
+          >
+            Visit Paper Lanterns
+            <span class="arrow">→</span>
+          </a>
+        </aside>
+      )}
+
+      <!-- Related Links -->
+      {letter.data.relatedLinks && letter.data.relatedLinks.length > 0 && (
+        <aside class="related-links">
+          <h3 class="related-title">Further Reading</h3>
+          <ul class="links-list">
+            {letter.data.relatedLinks.map(link => (
+              <li>
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  {link.title}
+                  <span class="external-arrow">↗</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <!-- Back Link -->
+      <div class="back-link-container">
+        <a href="/" class="back-link">
+          ← Back to Home
+        </a>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .letter-page {
+    padding: var(--space-xl) 0 var(--space-2xl);
+  }
+
+  /* Header */
+  .letter-header {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    text-align: center;
+  }
+
+  .breadcrumb {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    margin-bottom: var(--space-md);
+  }
+
+  .breadcrumb a {
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--flame);
+  }
+
+  .separator {
+    margin: 0 0.5rem;
+  }
+
+  .postage-stamp {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: white;
+    border: 3px dashed var(--ink);
+    box-shadow: 4px 4px 0 rgba(45, 42, 38, 0.08);
+    margin-bottom: var(--space-lg);
+  }
+
+  .stamp-icon {
+    font-size: 2rem;
+  }
+
+  .stamp-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+  }
+
+  .letter-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: var(--space-md);
+    line-height: 1.1;
+    font-style: italic;
+  }
+
+  .letter-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    font-family: var(--font-sans);
+  }
+
+  .correspondent {
+    font-size: 1rem;
+    color: var(--ink-medium);
+  }
+
+  .correspondent strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .letter-details {
+    font-size: 0.9rem;
+    color: var(--ink-light);
+    display: flex;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .detail-separator {
+    color: var(--ink-whisper);
+  }
+
+  .divider {
+    width: 80px;
+    height: 2px;
+    background: var(--flame);
+    margin: var(--space-md) auto 0;
+  }
+
+  /* Letter Excerpt */
+  .letter-excerpt-section {
+    max-width: 750px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .letter-card {
+    background: linear-gradient(135deg, #fdfaf5 0%, #f9f6f0 100%);
+    padding: var(--space-xl);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(-0.5deg);
+    position: relative;
+  }
+
+  .quote-mark {
+    position: absolute;
+    top: -0.2rem;
+    left: 0.5rem;
+    font-size: 8rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--flame);
+    opacity: 0.1;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .letter-excerpt {
+    font-size: 1.4rem;
+    line-height: 1.8;
+    font-style: italic;
+    color: var(--ink);
+    margin: 0 0 var(--space-md);
+    padding-left: var(--space-md);
+    border-left: 3px solid var(--flame);
+    position: relative;
+  }
+
+  .quote-attribution {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: var(--ink-medium);
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .attribution-date {
+    color: var(--ink-light);
+    font-weight: 400;
+  }
+
+  /* Context Section */
+  .context-section {
+    max-width: 800px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .context-content {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--ink);
+    padding: var(--space-lg);
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+  }
+
+  .context-content p {
+    margin: 0;
+  }
+
+  /* Letter Content */
+  .letter-content-section {
+    max-width: 800px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .letter-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+
+  .letter-content :global(p) {
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .letter-content :global(h2) {
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .letter-content :global(h3) {
+    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    color: var(--ink);
+  }
+
+  .letter-content :global(blockquote) {
+    font-size: 1.2rem;
+    font-style: italic;
+    padding: var(--space-md);
+    margin: var(--space-lg) 0;
+    background: var(--pastel-mint);
+    border-left: 3px solid rgba(180, 215, 195, 0.6);
+  }
+
+  /* Flourish Divider */
+  .flourish-divider {
+    text-align: center;
+    margin: var(--space-2xl) 0;
+    color: var(--ink-whisper);
+    font-size: 1.5rem;
+    letter-spacing: 1rem;
+  }
+
+  /* External Link Box (Paper Lanterns) */
+  .external-link-box {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    background: var(--pastel-lavender);
+    padding: var(--space-lg);
+    border-radius: 4px;
+    border-left: 4px solid var(--flame);
+    text-align: center;
+  }
+
+  .external-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    margin-bottom: var(--space-sm);
+  }
+
+  .icon {
+    font-size: 1.2rem;
+  }
+
+  .external-description {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-md);
+  }
+
+  .external-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--bg-cream);
+    background: var(--flame);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .external-button:hover {
+    background: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .arrow {
+    transition: transform 0.2s ease;
+  }
+
+  .external-button:hover .arrow {
+    transform: translateX(4px);
+  }
+
+  /* Related Links */
+  .related-links {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--pastel-mint);
+    border-radius: 4px;
+  }
+
+  .related-title {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .links-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .links-list li a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .links-list li a:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--flame);
+    transform: translateX(4px);
+  }
+
+  .external-arrow {
+    margin-left: auto;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+  }
+
+  .links-list li a:hover .external-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  /* Back Link */
+  .back-link-container {
+    max-width: 800px;
+    margin: var(--space-xl) auto 0;
+    text-align: center;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--flame);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .back-link:hover {
+    background: var(--flame);
+    color: var(--bg-cream);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .letter-page {
+      padding: var(--space-lg) 0 var(--space-xl);
+    }
+
+    .letter-card {
+      padding: var(--space-md);
+      transform: rotate(0deg);
+    }
+
+    .letter-excerpt {
+      font-size: 1.2rem;
+      line-height: 1.7;
+    }
+
+    .quote-mark {
+      font-size: 6rem;
+    }
+
+    .context-content {
+      padding: var(--space-md);
+      font-size: 1.05rem;
+    }
+
+    .letter-content {
+      font-size: 1rem;
+    }
+
+    .external-link-box,
+    .related-links {
+      padding: var(--space-sm) var(--space-md);
+    }
+
+    .postage-stamp {
+      padding: 0.75rem 1.25rem;
+    }
+  }
+</style>

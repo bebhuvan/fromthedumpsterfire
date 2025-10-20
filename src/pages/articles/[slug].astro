@@ -35,6 +35,11 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
   title={`${article.data.title} - From The Dumpster Fire`}
   description={article.data.excerpt}
   article={true}
+  publishedTime={article.data.publishedDate.toISOString()}
+  modifiedTime={article.data.publishedDate.toISOString()}
+  author={article.data.author || "Bhuvanesh"}
+  section={typeLabel}
+  tags={article.data.topics}
 >
   <div class="container">
     <!-- Article Header -->

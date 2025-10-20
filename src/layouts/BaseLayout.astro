@@ -6,16 +6,113 @@ interface Props {
   description?: string;
   image?: string;
   article?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+  section?: string;
+  tags?: string[];
 }
 
 const {
   title,
   description = "Rescuing signal from the algorithmic inferno. A curated magazine for the curious, thoughtful, and intellectually hungry.",
   image = "/og-image.jpg",
-  article = false
+  article = false,
+  publishedTime,
+  modifiedTime,
+  author = "Bhuvanesh",
+  section,
+  tags = []
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const siteUrl = Astro.site?.toString() || 'https://fromthedumpsterfire.com';
+
+// JSON-LD Structured Data
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "From The Dumpster Fire",
+  "description": "Rescuing signal from the algorithmic inferno. A curated magazine for the curious, thoughtful, and intellectually hungry.",
+  "url": siteUrl,
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": `${siteUrl}/archive?search={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "From The Dumpster Fire",
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/og-image.jpg`
+    }
+  }
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": siteUrl
+    }
+  ]
+};
+
+// Add current page to breadcrumb if not homepage
+if (Astro.url.pathname !== '/' && Astro.url.pathname !== '') {
+  const pathSegments = Astro.url.pathname.split('/').filter(Boolean);
+  pathSegments.forEach((segment, index) => {
+    breadcrumbSchema.itemListElement.push({
+      "@type": "ListItem",
+      "position": index + 2,
+      "name": segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
+      "item": `${siteUrl}/${pathSegments.slice(0, index + 1).join('/')}`
+    });
+  });
+}
+
+// Article schema for article pages
+let articleSchema = null;
+if (article && publishedTime) {
+  articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": title,
+    "description": description,
+    "image": new URL(image, Astro.site).toString(),
+    "datePublished": publishedTime,
+    "dateModified": modifiedTime || publishedTime,
+    "author": {
+      "@type": "Person",
+      "name": author
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "From The Dumpster Fire",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${siteUrl}/og-image.jpg`
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": canonicalURL.toString()
+    }
+  };
+
+  if (section) {
+    articleSchema.articleSection = section;
+  }
+
+  if (tags.length > 0) {
+    articleSchema.keywords = tags.join(', ');
+  }
+}
 ---
 
 <!DOCTYPE html>
@@ -30,6 +127,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <title>{title}</title>
   <meta name="title" content={title}>
   <meta name="description" content={description}>
+  <meta name="author" content={author}>
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href={canonicalURL}>
 
   <!-- Open Graph / Facebook -->
@@ -38,6 +137,19 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <meta property="og:title" content={title}>
   <meta property="og:description" content={description}>
   <meta property="og:image" content={new URL(image, Astro.site)}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="From The Dumpster Fire">
+  {article && publishedTime && (
+    <>
+      <meta property="article:published_time" content={publishedTime}>
+      {modifiedTime && <meta property="article:modified_time" content={modifiedTime}>}
+      <meta property="article:author" content={author}>
+      {section && <meta property="article:section" content={section}>}
+      {tags.map(tag => <meta property="article:tag" content={tag}>)}
+    </>
+  )}
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
@@ -45,12 +157,42 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <meta property="twitter:title" content={title}>
   <meta property="twitter:description" content={description}>
   <meta property="twitter:image" content={new URL(image, Astro.site)}>
+  <meta property="twitter:creator" content="@fromthedumpsterfire">
 
-  <!-- Fonts - Optimized (async loading to eliminate render-blocking) -->
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  {articleSchema && (
+    <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+  )}
+
+  <!-- Critical CSS for font fallbacks (inline for instant render) -->
+  <style>
+    /* Prevent font loading from blocking LCP and causing CLS */
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+
+    /* Prevent CLS by matching fallback font metrics to custom fonts */
+    /* DM Serif Display fallback (Georgia) adjustments */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size-adjust: 0.51; /* Match DM Serif Display metrics */
+    }
+  </style>
+
+  <!-- Fonts - Optimized with preload for critical fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <!-- Async font loading to prevent render blocking -->
+  <!-- Preload critical fonts for LCP (DM Serif Display for headlines) -->
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap"
+  >
+
+  <!-- Load fonts with font-display: swap for better CLS performance -->
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap"

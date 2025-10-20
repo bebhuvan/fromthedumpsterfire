@@ -23,6 +23,11 @@ const analysisMarkdown = parts.length > 1 ? parts.slice(1).join('---').trim() : 
   title={`${poem.data.title} - From The Dumpster Fire`}
   description={poem.data.excerpt}
   article={true}
+  publishedTime={poem.data.publishedDate.toISOString()}
+  modifiedTime={poem.data.publishedDate.toISOString()}
+  author={poem.data.author}
+  section="Poetry"
+  tags={poem.data.topics}
 >
   <article class="poem-page">
     <div class="container">

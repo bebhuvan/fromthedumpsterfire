@@ -112,12 +112,12 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
                   srcset="/images/wanderer-above-sea-of-fog-small.webp 400w,
                           /images/wanderer-above-sea-of-fog-medium.webp 800w,
                           /images/wanderer-above-sea-of-fog.webp 1200w"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                  src={latestArt.data.imageUrl}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 500px"
+                  src="/images/wanderer-above-sea-of-fog-small.webp"
                   alt={latestArt.data.imageAlt}
                   loading="lazy"
-                  width="1200"
-                  height="900"
+                  width="800"
+                  height="600"
                 />
               ) : (
                 <div class="art-placeholder">[{latestArt.data.title}]</div>
@@ -207,17 +207,20 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
             </div>
           </div>
 
-          <div class="letter-card">
-            <div class="letter-header">
-              <div class="letter-meta">From: {latestLetter.data.writer}</div>
-              {latestLetter.data.recipient && (
-                <div class="letter-meta">To: {latestLetter.data.recipient}</div>
-              )}
-              <div class="letter-meta">{latestLetter.data.date} {latestLetter.data.location && `• ${latestLetter.data.location}`}</div>
+          <a href={`/letters/${latestLetter.slug}`} class="letter-card-link">
+            <div class="letter-card">
+              <div class="letter-header">
+                <div class="letter-meta">From: {latestLetter.data.writer}</div>
+                {latestLetter.data.recipient && (
+                  <div class="letter-meta">To: {latestLetter.data.recipient}</div>
+                )}
+                <div class="letter-meta">{latestLetter.data.date} {latestLetter.data.location && `• ${latestLetter.data.location}`}</div>
+              </div>
+              <p class="letter-excerpt">{latestLetter.data.excerpt}</p>
+              <p class="letter-context">{latestLetter.data.context}</p>
+              <div class="letter-read-more">Read full letter →</div>
             </div>
-            <p class="letter-excerpt">{latestLetter.data.excerpt}</p>
-            <p class="letter-context">{latestLetter.data.context}</p>
-          </div>
+          </a>
           <div class="letter-more">
             <a href="https://paperlanterns.ink" target="_blank" rel="noopener" class="external-link">
               More letters at Paper Lanterns →
@@ -290,13 +293,14 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
 </BaseLayout>
 
 <style>
-  /* Opening Quote */
+  /* Opening Quote - Optimized for LCP (Largest Contentful Paint) */
   .opening-quote {
     padding: var(--space-lg) 0 var(--space-md);
     text-align: center;
     position: relative;
     max-width: 800px;
     margin: 0 auto;
+    font-family: Georgia, 'Times New Roman', serif; /* Force system font for entire section */
   }
 
   .quote-decoration {
@@ -304,17 +308,20 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     color: var(--flame);
     opacity: 0.3;
     margin-bottom: var(--space-md);
-    font-family: var(--font-display);
+    font-family: Georgia, 'Times New Roman', serif; /* System font only - don't block LCP */
   }
 
   .opening-quote blockquote {
     font-size: clamp(1.1rem, 2.2vw, 1.5rem);
     font-style: italic;
-    font-weight: 300;
+    font-weight: 400;
     line-height: 1.65;
     margin: 0;
     color: var(--ink);
     padding: var(--space-lg) var(--space-xl);
+    font-family: Georgia, 'Times New Roman', serif !important; /* Force system font for instant render - critical for LCP */
+    contain: layout style paint; /* Aggressive performance hint for browser */
+    content-visibility: auto; /* Browser optimization */
     background: linear-gradient(135deg, rgba(245, 225, 185, 0.18), rgba(232, 145, 125, 0.12));
     border: var(--border-fine) solid var(--ink-whisper);
     box-shadow: var(--shadow-soft);
@@ -328,7 +335,7 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     top: -0.3rem;
     left: 0.5rem;
     font-size: 6rem;
-    font-family: var(--font-display);
+    font-family: Georgia, 'Times New Roman', serif !important; /* System font for instant render - critical for LCP */
     color: var(--flame);
     opacity: 0.15;
     line-height: 1;
@@ -570,6 +577,7 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     width: 100%;
     height: 100%;
     object-fit: cover;
+    aspect-ratio: 4 / 3;
   }
 
   .art-placeholder {
@@ -877,12 +885,30 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     font-family: var(--font-sans);
   }
 
+  .letter-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: all 0.3s ease;
+  }
+
+  .letter-card-link:hover .letter-card {
+    box-shadow: 0 12px 40px rgba(45, 42, 38, 0.12);
+    transform: rotate(-0.9deg) translateY(-4px);
+  }
+
+  .letter-card-link:hover .letter-read-more {
+    color: var(--flame);
+    transform: translateX(4px);
+  }
+
   .letter-card {
     background: linear-gradient(135deg, #fdfaf5 0%, #f9f6f0 100%);
     padding: var(--space-xl);
     border: var(--border-fine) solid var(--ink-whisper);
     box-shadow: var(--shadow-lift);
     transform: rotate(-0.9deg);
+    transition: all 0.3s ease;
   }
 
   .letter-header {
@@ -913,6 +939,17 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     color: var(--ink-medium);
     padding: var(--space-md);
     background: rgba(255, 255, 255, 0.5);
+    margin-bottom: var(--space-sm);
+  }
+
+  .letter-read-more {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink-medium);
+    text-align: center;
+    padding-top: var(--space-sm);
+    transition: all 0.2s ease;
   }
 
   .letter-more {
@@ -1228,6 +1265,10 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     }
 
     /* Letter card */
+    .letter-card-link:hover .letter-card {
+      transform: rotate(0deg) translateY(-4px) !important;
+    }
+
     .letter-card {
       padding: var(--space-md);
       transform: rotate(0deg) !important;
