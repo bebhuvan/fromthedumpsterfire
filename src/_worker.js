@@ -40,8 +40,8 @@ export default {
     const cacheKey = new Request(url.toString(), request);
 
     // For HTML pages, we can't use cached versions because nonce must be unique
-    const contentType = request.headers.get('Accept') || '';
-    const isHtmlRequest = contentType.includes('text/html') || url.pathname.endsWith('.html') || url.pathname.endsWith('/');
+    const acceptHeader = request.headers.get('Accept') || '';
+    const isHtmlRequest = acceptHeader.includes('text/html') || url.pathname.endsWith('.html') || url.pathname.endsWith('/');
 
     let response;
 
