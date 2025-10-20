@@ -109,15 +109,15 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
             <div class="art-image">
               {latestArt.data.imageUrl ? (
                 <img
-                  srcset="/images/wanderer-above-sea-of-fog-small.webp 400w,
+                  srcset="/images/wanderer-above-sea-of-fog-small.webp 480w,
                           /images/wanderer-above-sea-of-fog-medium.webp 800w,
                           /images/wanderer-above-sea-of-fog.webp 1200w"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 500px"
+                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 480px"
                   src="/images/wanderer-above-sea-of-fog-small.webp"
                   alt={latestArt.data.imageAlt}
                   loading="lazy"
-                  width="800"
-                  height="600"
+                  width="480"
+                  height="615"
                 />
               ) : (
                 <div class="art-placeholder">[{latestArt.data.title}]</div>
@@ -393,6 +393,9 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     box-shadow: var(--shadow-soft);
     transform: rotate(-0.8deg);
     transition: all 0.3s ease;
+    /* Prevent CLS by reserving space for content */
+    min-height: 580px;
+    contain: layout;
   }
 
   .featured-main:hover {

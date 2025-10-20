@@ -179,6 +179,11 @@ if (article && publishedTime) {
       font-family: Georgia, 'Times New Roman', serif;
       font-size-adjust: 0.51; /* Match DM Serif Display metrics */
     }
+
+    /* Force immediate fallback font rendering - don't wait for custom fonts */
+    .featured-main, .featured-title, .opening-quote blockquote {
+      font-family: Georgia, 'Times New Roman', serif !important;
+    }
   </style>
 
   <!-- Fonts - Optimized with preload for critical fonts -->
