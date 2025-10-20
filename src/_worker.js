@@ -3,6 +3,7 @@
  *
  * Advanced optimizations for edge performance:
  * - Smart caching with Cache API
+ * - CSP nonce generation and injection
  * - Early Hints (103) for critical resources
  * - Automatic Brotli compression
  * - Font preloading
@@ -10,23 +11,49 @@
  * - Performance headers (Server-Timing, etc.)
  */
 
+// HTMLRewriter handler to inject nonces into script tags
+class NonceInjector {
+  constructor(nonce) {
+    this.nonce = nonce;
+  }
+
+  element(element) {
+    // Only add nonce to inline scripts and JSON-LD
+    const type = element.getAttribute('type');
+    if (type === 'application/ld+json' || !element.getAttribute('src')) {
+      element.setAttribute('nonce', this.nonce);
+    }
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const cache = caches.default;
 
+    // Generate a unique nonce for this request
+    const nonceArray = new Uint8Array(16);
+    crypto.getRandomValues(nonceArray);
+    const nonce = Array.from(nonceArray, byte => byte.toString(16).padStart(2, '0')).join('');
+
     // Cache key includes compression encoding for proper cache separation
     const cacheKey = new Request(url.toString(), request);
 
-    // Try to get from cache first
-    let response = await cache.match(cacheKey);
+    // For HTML pages, we can't use cached versions because nonce must be unique
+    const contentType = request.headers.get('Accept') || '';
+    const isHtmlRequest = contentType.includes('text/html') || url.pathname.endsWith('.html') || url.pathname.endsWith('/');
 
-    if (response) {
-      // Clone response to add cache hit header
-      response = new Response(response.body, response);
-      response.headers.set('CF-Cache-Status', 'HIT');
-      response.headers.set('X-Worker-Cache', 'HIT');
-      return response;
+    let response;
+
+    // Only use cache for non-HTML resources
+    if (!isHtmlRequest) {
+      response = await cache.match(cacheKey);
+      if (response) {
+        response = new Response(response.body, response);
+        response.headers.set('CF-Cache-Status', 'HIT');
+        response.headers.set('X-Worker-Cache', 'HIT');
+        return response;
+      }
     }
 
     // Not in cache, fetch from origin (static assets)
@@ -90,7 +117,23 @@ export default {
     response.headers.set('X-Content-Type-Options', 'nosniff');
 
     // === Additional Security Headers ===
-    // (These supplement the headers from middleware.ts)
+    // CSP with nonce for HTML pages
+    const responseContentType = response.headers.get('Content-Type') || '';
+    if (responseContentType.includes('text/html')) {
+      const cspHeader = [
+        "default-src 'self'",
+        `script-src 'self' 'nonce-${nonce}'`,
+        "style-src 'self'",
+        "img-src 'self' data: https:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'"
+      ].join('; ');
+
+      response.headers.set('Content-Security-Policy', cspHeader);
+    }
 
     // Enable CORS for fonts (if served from same origin)
     if (contentType.includes('font/')) {
@@ -103,21 +146,24 @@ export default {
 
     // === Cloudflare-Specific Headers ===
     // Enable Polish (automatic image optimization) - if on paid plan
-    // This is set via Cloudflare Dashboard, but we can hint
     response.headers.set('CF-Polish', 'lossy');
 
-    // Enable Mirage (lazy loading) - if on paid plan
-    // This is set via Cloudflare Dashboard
+    // === HTML Rewriting for Nonce Injection ===
+    if (responseContentType.includes('text/html')) {
+      // Use HTMLRewriter to inject nonces into script tags
+      response = new HTMLRewriter()
+        .on('script', new NonceInjector(nonce))
+        .transform(response);
+    }
 
     // === Store in Cache ===
-    // Only cache successful responses
-    if (response.status === 200) {
-      // Don't wait for cache storage (background)
+    // Only cache successful non-HTML responses
+    if (response.status === 200 && !responseContentType.includes('text/html')) {
       ctx.waitUntil(cache.put(cacheKey, response.clone()));
     }
 
     // Mark as cache miss
-    response.headers.set('X-Worker-Cache', 'MISS');
+    response.headers.set('X-Worker-Cache', isHtmlRequest ? 'BYPASS' : 'MISS');
 
     return response;
   },

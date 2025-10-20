@@ -11,14 +11,16 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 
   // Content Security Policy
+  // Note: The Cloudflare Worker (_worker.js) will override this with nonce-based CSP for HTML
+  // This serves as a fallback for direct asset access
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data:",
+      "script-src 'self'",
+      "style-src 'self'",
+      "font-src 'self'",
+      "img-src 'self' data: https:",
       "connect-src 'self'",
       "frame-src https://bhuvan.substack.com https://www.youtube.com https://youtube.com",
       "frame-ancestors 'none'",
