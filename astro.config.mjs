@@ -10,7 +10,7 @@ export default defineConfig({
   integrations: [sitemap()],
   compressHTML: true,
   build: {
-    inlineStylesheets: 'always',
+    inlineStylesheets: 'never',
     assets: '_astro',
   },
   vite: {

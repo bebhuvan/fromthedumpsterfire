@@ -166,53 +166,10 @@ if (article && publishedTime) {
     <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
   )}
 
-  <!-- Critical CSS for font fallbacks (inline for instant render) -->
-  <style>
-    /* Prevent font loading from blocking LCP and causing CLS */
-    /* Use system fonts immediately, custom fonts only if already cached */
-    body {
-      font-family: Georgia, 'Times New Roman', serif;
-    }
-
-    /* Prevent CLS by matching fallback font metrics to custom fonts */
-    /* DM Serif Display fallback (Georgia) adjustments */
-    h1, h2, h3, h4, h5, h6 {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size-adjust: 0.51; /* Match DM Serif Display metrics */
-    }
-
-    /* Reserve exact space for LCP elements to prevent layout shift */
-    .opening-quote blockquote {
-      min-height: 220px; /* Reserve space for quote - prevents CLS */
-    }
-
-    /* Set explicit dimensions for featured section to prevent shift */
-    .featured-grid {
-      min-height: 650px; /* Prevents grid collapse during font load */
-    }
-
-    .featured-main {
-      min-height: 620px; /* Match actual content height */
-    }
-  </style>
-
-  <!-- Fonts - Async loading to prevent render blocking -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <!-- Load fonts asynchronously to prevent render blocking -->
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=optional"
-    media="print"
-    onload="this.media='all'"
-  >
-  <noscript>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=optional"
-    >
-  </noscript>
+  <!-- Preload critical self-hosted fonts -->
+  <link rel="preload" href="/fonts/dm-serif-display-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/fonts/crimson-pro-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/fonts/inter-400.ttf" as="font" type="font/ttf" crossorigin>
 
   <!-- RSS Feed -->
   <link rel="alternate" type="application/rss+xml" title="From The Dumpster Fire" href="/rss.xml" />
@@ -626,48 +583,6 @@ if (article && publishedTime) {
     }
   </style>
 
-  <script is:inline>
-    // Mobile menu toggle
-    (function() {
-      function initMenu() {
-        const menuToggle = document.querySelector('.mobile-menu-toggle');
-        const navLinks = document.querySelector('.nav-links');
-
-        if (menuToggle && navLinks) {
-          menuToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
-
-            menuToggle.setAttribute('aria-expanded', String(!isOpen));
-            navLinks.classList.toggle('open');
-          });
-
-          // Close menu when clicking a link
-          const links = navLinks.querySelectorAll('.nav-link');
-          links.forEach(link => {
-            link.addEventListener('click', () => {
-              menuToggle.setAttribute('aria-expanded', 'false');
-              navLinks.classList.remove('open');
-            });
-          });
-
-          // Close menu when clicking outside
-          document.addEventListener('click', (e) => {
-            if (!menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
-              menuToggle.setAttribute('aria-expanded', 'false');
-              navLinks.classList.remove('open');
-            }
-          });
-        }
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMenu);
-      } else {
-        initMenu();
-      }
-    })();
-  </script>
+  <script src="../scripts/mobileMenu.ts"></script>
 </body>
 </html>
