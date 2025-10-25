@@ -48,10 +48,6 @@ const typeLabel = articleType.charAt(0).toUpperCase() + articleType.slice(1);
     flex-direction: column;
   }
 
-  .article-card:hover {
-    box-shadow: var(--shadow-lift);
-    transform: translateY(-4px);
-  }
 
   .article-card--main {
     background: var(--pastel-peach);
@@ -119,19 +115,19 @@ const typeLabel = articleType.charAt(0).toUpperCase() + articleType.slice(1);
 
   .curator-note-label {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     margin-bottom: var(--space-xs);
     color: var(--flame);
   }
 
   .curator-note p {
     font-style: italic;
-    font-size: 1rem;
+    font-size: 1.25rem;
     color: var(--ink-medium);
-    line-height: 1.6;
+    line-height: 1.7;
   }
 
   @media (max-width: 968px) {

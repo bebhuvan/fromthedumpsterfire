@@ -67,10 +67,9 @@ export default {
     if (url.pathname === '/' || url.pathname === '/index.html') {
       // Note: Early Hints sent automatically by Cloudflare if configured
       // We're setting Link headers which CF will use for Early Hints
-      response.headers.append('Link', '</fonts/crimson-pro.woff2>; rel=preload; as=font; type=font/woff2; crossorigin');
-      response.headers.append('Link', '</fonts/dm-serif-display.woff2>; rel=preload; as=font; type=font/woff2; crossorigin');
-      response.headers.append('Link', '<https://fonts.googleapis.com>; rel=preconnect');
-      response.headers.append('Link', '<https://fonts.gstatic.com>; rel=preconnect; crossorigin');
+      response.headers.append('Link', '</fonts/crimson-pro-regular.ttf>; rel=preload; as=font; type=font/ttf; crossorigin');
+      response.headers.append('Link', '</fonts/dm-serif-display-regular.ttf>; rel=preload; as=font; type=font/ttf; crossorigin');
+      response.headers.append('Link', '</fonts/inter-400.ttf>; rel=preload; as=font; type=font/ttf; crossorigin');
     }
 
     // === Caching Strategy ===
@@ -123,13 +122,15 @@ export default {
       const cspHeader = [
         "default-src 'self'",
         `script-src 'self' 'nonce-${nonce}'`,
-        "style-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "style-src-attr 'self' 'unsafe-inline'",
         "img-src 'self' data: https:",
         "font-src 'self'",
         "connect-src 'self'",
         "frame-ancestors 'none'",
         "base-uri 'self'",
-        "form-action 'self'"
+        "form-action 'self'",
+        "require-trusted-types-for 'script'"
       ].join('; ');
 
       response.headers.set('Content-Security-Policy', cspHeader);

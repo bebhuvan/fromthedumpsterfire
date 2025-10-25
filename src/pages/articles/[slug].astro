@@ -265,12 +265,14 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
   }
 
   .article-content :global(p:first-of-type::first-letter) {
-    font-size: 4.5rem;
+    font-size: 5.5rem;
     font-family: var(--font-display);
+    font-weight: 400;
     float: left;
-    line-height: 0.85;
-    margin: 0.1em 0.15em 0 0;
-    color: var(--flame);
+    line-height: 0.8;
+    margin: 0.08em 0.12em -0.05em 0;
+    color: var(--ink-dark);
+    text-shadow: 2px 2px 0 var(--flame-light);
   }
 
   .article-content :global(h2) {
@@ -288,14 +290,36 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
   }
 
   .article-content :global(blockquote) {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
     font-style: italic;
-    line-height: 1.7;
-    padding: var(--space-md) var(--space-lg);
-    margin: var(--space-lg) 0;
-    background: var(--pastel-mint);
-    border-left: 3px solid rgba(180, 215, 195, 0.6);
-    color: var(--ink);
+    font-weight: 400;
+    line-height: 1.75;
+    padding: var(--space-lg) var(--space-xl);
+    margin: var(--space-xl) 0;
+    background: var(--pastel-butter);
+    border-left: 4px solid var(--flame);
+    color: var(--ink-dark);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    font-feature-settings:
+      "kern" 1,        /* kerning */
+      "liga" 1,        /* ligatures */
+      "calt" 1,        /* contextual alternates */
+      "swsh" 1;        /* swashes for elegance */
+    letter-spacing: 0.01em;
+  }
+
+  .article-content :global(blockquote::before) {
+    content: '"';
+    position: absolute;
+    top: -0.2rem;
+    left: 0.5rem;
+    font-size: 5rem;
+    font-family: Georgia, serif;
+    color: var(--flame);
+    opacity: 0.2;
+    line-height: 1;
+    font-style: normal;
   }
 
   .article-content :global(ul),
@@ -318,9 +342,6 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
     transition: color 0.2s ease;
   }
 
-  .article-content :global(a:hover) {
-    color: var(--ink);
-  }
 
   .article-content :global(img) {
     max-width: 100%;

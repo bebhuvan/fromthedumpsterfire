@@ -200,7 +200,7 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
         </div>
 
         <section class="letter-showcase">
-          <div style="text-align: center;">
+          <div class="stamp-container">
             <div class="postage-stamp">
               <span class="stamp-icon">✉</span>
               <span class="stamp-text">Letter of the Week</span>
@@ -293,14 +293,14 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
 </BaseLayout>
 
 <style>
-  /* Opening Quote - Optimized for LCP (Largest Contentful Paint) */
+  /* Opening Quote - Asymmetric layout */
   .opening-quote {
     padding: var(--space-lg) 0 var(--space-md);
-    text-align: center;
+    text-align: left;  /* break the centered monotony */
     position: relative;
-    max-width: 800px;
-    margin: 0 auto;
-    font-family: Georgia, 'Times New Roman', serif; /* Force system font for entire section */
+    max-width: 900px;  /* wider */
+    margin: 0 0 0 clamp(2rem, 8vw, 8rem);  /* push right, responsive */
+    font-family: Georgia, 'Times New Roman', serif;
   }
 
   .quote-decoration {
@@ -332,13 +332,27 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   .opening-quote blockquote::before {
     content: '"';
     position: absolute;
-    top: -0.3rem;
-    left: 0.5rem;
-    font-size: 6rem;
-    font-family: Georgia, 'Times New Roman', serif !important; /* System font for instant render - critical for LCP */
+    top: -0.8rem;
+    left: 0.2rem;
+    font-size: 8rem;
+    font-family: Georgia, 'Times New Roman', serif !important;
     color: var(--flame);
-    opacity: 0.15;
+    opacity: 0.2;
     line-height: 1;
+    font-weight: 700;
+  }
+
+  .opening-quote blockquote::after {
+    content: '"';
+    position: absolute;
+    bottom: -2rem;
+    right: 0.2rem;
+    font-size: 8rem;
+    font-family: Georgia, 'Times New Roman', serif !important;
+    color: var(--flame);
+    opacity: 0.2;
+    line-height: 1;
+    font-weight: 700;
   }
 
   .quote-footer {
@@ -378,11 +392,11 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
 
   .featured-grid {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: 2fr 1fr;  /* main card is 2x bigger */
     grid-template-rows: 1fr 1fr;
-    gap: var(--space-lg);
+    gap: var(--space-md);
     align-items: stretch;
-    min-height: 600px;
+    min-height: 700px;  /* taller for bigger card */
   }
 
   .featured-main {
@@ -398,10 +412,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     contain: layout;
   }
 
-  .featured-main:hover {
-    box-shadow: var(--shadow-lift);
-    transform: rotate(-0.8deg) translateY(-4px);
-  }
 
   .featured-secondary {
     background: var(--pastel-mint);
@@ -412,19 +422,12 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     transition: all 0.3s ease;
   }
 
-  .featured-secondary:hover {
-    box-shadow: var(--shadow-lift);
-    transform: rotate(0.6deg) translateY(-4px);
-  }
 
   .featured-secondary-2 {
     background: var(--pastel-lavender);
     transform: rotate(-0.7deg);
   }
 
-  .featured-secondary-2:hover {
-    transform: rotate(-0.7deg) translateY(-4px);
-  }
 
   .featured-link {
     text-decoration: none;
@@ -464,11 +467,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     opacity: 0.8;
   }
 
-  .badge:hover {
-    transform: rotate(0deg) translateY(-2px);
-    box-shadow: 0 4px 12px rgba(45, 42, 38, 0.12);
-    border-color: var(--flame);
-  }
 
   .featured-title {
     font-size: clamp(1.75rem, 3.5vw, 2.75rem);
@@ -482,10 +480,15 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   }
 
   .featured-excerpt {
-    font-size: 1.125rem;
-    line-height: 1.65;
+    font-size: 1.15rem;
+    line-height: 1.7;
     color: var(--ink-medium);
     margin-bottom: var(--space-md);
+  }
+
+  .featured-main .featured-excerpt {
+    font-size: 1.25rem;  /* larger in main card */
+    line-height: 1.75;
   }
 
   .curator-note {
@@ -497,25 +500,25 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
 
   .curator-note-label {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     margin-bottom: var(--space-xs);
     color: var(--flame);
   }
 
   .curator-note p {
     font-style: italic;
-    font-size: 1rem;
+    font-size: 1.05rem;
     color: var(--ink-medium);
-    line-height: 1.6;
+    line-height: 1.65;
   }
 
-  /* Section Heading */
+  /* Section Heading - Generous spacing between major sections */
   .section-heading {
     text-align: center;
-    margin: var(--space-2xl) 0 var(--space-xl);
+    margin: var(--space-3xl) 0 var(--space-xl);
   }
 
   .section-heading h2 {
@@ -525,12 +528,13 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   }
 
   .section-heading::after {
-    content: '';
+    content: '✦';
     display: block;
-    width: 60px;
-    height: 2px;
-    background: var(--flame);
+    font-size: 1.5rem;
+    color: var(--flame);
+    opacity: 0.4;
     margin: var(--space-sm) auto 0;
+    letter-spacing: 0.5rem;
   }
 
   .section-link {
@@ -544,10 +548,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     transition: all 0.2s ease;
   }
 
-  .section-link:hover {
-    color: var(--ink);
-    transform: translateX(4px);
-  }
 
   /* Art Showcase */
   .art-showcase {
@@ -624,11 +624,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     border-radius: 4px;
   }
 
-  .art-link:hover {
-    color: var(--ink);
-    background: rgba(217, 123, 103, 0.1);
-    transform: translateX(4px);
-  }
 
   /* Rabbit Holes */
   .rabbit-holes {
@@ -638,7 +633,7 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   .rabbit-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-lg);
+    gap: var(--space-md);  /* tighter - creates visual density */
     grid-auto-rows: 1fr;
   }
 
@@ -654,10 +649,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     min-height: 100%;
   }
 
-  .rabbit-card:hover {
-    box-shadow: var(--shadow-lift);
-    transform: translateY(-4px) !important;
-  }
 
   .rabbit-card:nth-child(1) {
     transform: rotate(0.8deg);
@@ -745,33 +736,43 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     overflow: hidden;
   }
 
-  /* Intermission */
+  /* Intermission - Refined pause */
   .intermission {
-    margin: var(--space-2xl) 0;
-    padding: var(--space-xl) 0;
-    background: repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 10px,
-      rgba(217, 123, 103, 0.04) 10px,
-      rgba(217, 123, 103, 0.04) 20px
-    );
-    border-top: var(--border-fine) solid var(--ink-whisper);
-    border-bottom: var(--border-fine) solid var(--ink-whisper);
+    margin: var(--space-3xl) 0;
+    padding: var(--space-md) var(--space-lg);
     text-align: center;
     position: relative;
+    background: var(--pastel-peach);
+    border-top: 2px solid var(--flame);
+    border-bottom: 2px solid var(--flame);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .intermission::before {
+    content: '✦';
+    display: block;
+    font-size: 0.9rem;
+    color: var(--flame);
+    opacity: 0.5;
+    margin-bottom: var(--space-xs);
   }
 
   .intermission-text {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    letter-spacing: 0.2em;
-    color: var(--ink-light);
+    letter-spacing: 0.15em;
+    color: var(--ink-dark);
+    display: inline-block;
+    position: relative;
     text-transform: uppercase;
     background: var(--bg-cream);
-    padding: 0.5rem 1.5rem;
-    display: inline-block;
+    padding: 0.4rem 1rem;
+    border: 2px solid var(--ink-dark);
+    box-shadow: 2px 2px 0 var(--flame);
+    transform: rotate(1deg);
   }
 
   /* Poem Showcase */
@@ -852,16 +853,15 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     border-radius: 4px;
   }
 
-  .poem-link:hover {
-    color: var(--ink);
-    background: rgba(217, 123, 103, 0.1);
-    transform: translateX(4px);
-  }
 
   /* Letter Showcase */
   .letter-showcase {
     max-width: 850px;
     margin: var(--space-2xl) auto;
+  }
+
+  .stamp-container {
+    text-align: center;
   }
 
   .postage-stamp {
@@ -895,15 +895,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     transition: all 0.3s ease;
   }
 
-  .letter-card-link:hover .letter-card {
-    box-shadow: 0 12px 40px rgba(45, 42, 38, 0.12);
-    transform: rotate(-0.9deg) translateY(-4px);
-  }
-
-  .letter-card-link:hover .letter-read-more {
-    color: var(--flame);
-    transform: translateX(4px);
-  }
 
   .letter-card {
     background: linear-gradient(135deg, #fdfaf5 0%, #f9f6f0 100%);
@@ -970,10 +961,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     display: inline-block;
   }
 
-  .external-link:hover {
-    color: var(--ink);
-    transform: translateX(4px);
-  }
 
   /* Bookshelf */
   .bookshelf {
@@ -987,7 +974,7 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   .books-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-xl);
+    gap: var(--space-lg);  /* tighter for visual cohesion */
   }
 
   .book-card {
@@ -998,9 +985,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     overflow: hidden;
   }
 
-  .book-card:hover {
-    transform: translateY(-4px) !important;
-  }
 
   .book-card:nth-child(1) { transform: rotate(0.6deg); }
   .book-card:nth-child(2) { transform: rotate(-0.4deg); }
@@ -1143,9 +1127,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     transition: color 0.2s ease;
   }
 
-  .wytt-item h3 a:hover {
-    color: var(--flame);
-  }
 
   .wytt-excerpt {
     font-size: 0.95rem;
@@ -1268,9 +1249,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     }
 
     /* Letter card */
-    .letter-card-link:hover .letter-card {
-      transform: rotate(0deg) translateY(-4px) !important;
-    }
 
     .letter-card {
       padding: var(--space-md);

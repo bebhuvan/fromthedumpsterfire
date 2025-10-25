@@ -13,12 +13,14 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
   // Content Security Policy
   // Note: The Cloudflare Worker (_worker.js) will override this with nonce-based CSP for HTML
   // This serves as a fallback for direct asset access
+  // In dev mode, we need 'unsafe-inline' for Astro's inline styles
+  const isDev = import.meta.env.DEV;
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self'",
-      "style-src 'self'",
+      `script-src 'self'${isDev ? " 'unsafe-inline'" : ''}`,
+      `style-src 'self'${isDev ? " 'unsafe-inline'" : ''}`,
       "font-src 'self'",
       "img-src 'self' data: https:",
       "connect-src 'self'",
