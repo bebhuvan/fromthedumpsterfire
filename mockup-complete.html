@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMPLETE DESIGN MOCKUP - From The Dumpster Fire</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CLASSIC EDITORIAL DESIGN SYSTEM
+           Soothing, Thoughtful, Classy
+           ============================================ */
+
+        :root {
+            /* Typography */
+            --font-display: 'DM Serif Display', Georgia, serif;
+            --font-body: 'Crimson Pro', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+
+            /* Soothing Color Palette */
+            --bg-cream: #faf9f6;
+            --bg-canvas: #ffffff;
+
+            --pastel-coral: rgba(232, 145, 125, 0.25);
+            --pastel-peach: rgba(245, 195, 160, 0.28);
+            --pastel-mint: rgba(180, 215, 195, 0.26);
+            --pastel-lavender: rgba(210, 195, 225, 0.28);
+            --pastel-sky: rgba(195, 215, 235, 0.26);
+            --pastel-butter: rgba(245, 225, 185, 0.28);
+            --pastel-blush: rgba(235, 185, 195, 0.26);
+            --pastel-sage: rgba(195, 210, 190, 0.26);
+            --pastel-rose: rgba(235, 195, 205, 0.24);
+
+            --flame: #d97b67;
+            --flame-light: rgba(217, 123, 103, 0.12);
+            --ink: #2d2a26;
+            --ink-medium: #5a5550;
+            --ink-light: #9a9590;
+            --ink-whisper: rgba(45, 42, 38, 0.05);
+
+            /* Spacing */
+            --space-xs: 0.75rem;
+            --space-sm: 1.25rem;
+            --space-md: 2rem;
+            --space-lg: 3rem;
+            --space-xl: 4.5rem;
+            --space-2xl: 6rem;
+
+            /* Visual Effects */
+            --border-fine: 1px;
+            --shadow-soft: 0 4px 20px rgba(45, 42, 38, 0.06), 0 1px 4px rgba(45, 42, 38, 0.04);
+            --shadow-lift: 0 8px 32px rgba(45, 42, 38, 0.08), 0 2px 8px rgba(45, 42, 38, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: var(--ink);
+            background: var(--bg-cream);
+            letter-spacing: -0.01em;
+            position: relative;
+        }
+
+        /* Thoughtful background - subtle dots pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(45, 42, 38, 0.025) 1px, transparent 0);
+            background-size: 32px 32px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 7vw, 5.5rem);
+            margin-bottom: var(--space-md);
+        }
+
+        h2 {
+            font-size: clamp(2rem, 4.5vw, 3.25rem);
+            margin-bottom: var(--space-sm);
+        }
+
+        h3 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Layout Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 clamp(1.5rem, 5vw, 10vw);
+        }
+
+        /* Header */
+        .header {
+            padding: var(--space-lg) 0;
+            border-bottom: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-title {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            letter-spacing: -0.03em;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+        }
+
+        .site-title .flame {
+            display: inline-block;
+            font-size: 1.75rem;
+            filter: drop-shadow(0 0 12px rgba(217, 123, 103, 0.3));
+            animation: flicker 3s ease-in-out infinite, wobble 4s ease-in-out infinite;
+            transform-origin: center bottom;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-3deg) scale(1.05); }
+            75% { transform: rotate(3deg) scale(0.98); }
+        }
+
+        .site-title span:last-child {
+            position: relative;
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px dashed var(--flame);
+            border-left: none;
+            border-right: none;
+            box-shadow: 0 2px 4px rgba(217, 123, 103, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+        }
+
+        /* Opening Quote */
+        .opening-quote {
+            padding: var(--space-2xl) 0 var(--space-xl);
+            text-align: center;
+            position: relative;
+        }
+
+        .opening-quote blockquote {
+            font-size: clamp(1.35rem, 2.8vw, 2rem);
+            font-style: italic;
+            font-weight: 300;
+            line-height: 1.65;
+            max-width: 850px;
+            margin: 0 auto var(--space-md);
+            color: var(--ink);
+            padding: var(--space-xl) var(--space-lg);
+            background: rgba(245, 225, 185, 0.18);
+            border-left: 3px solid var(--pastel-butter);
+            border-right: 3px solid var(--pastel-butter);
+            box-shadow: var(--shadow-soft);
+            transform: rotate(-0.3deg);
+            position: relative;
+        }
+
+        .opening-quote cite {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-style: normal;
+            font-weight: 600;
+            color: var(--ink-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        /* Featured Section - 1 Vertical + 2 Stacked */
+        .featured-section {
+            margin: var(--space-2xl) 0;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: var(--space-lg);
+        }
+
+        .featured-main {
+            grid-row: span 2;
+            background: var(--pastel-peach);
+            padding: var(--space-xl);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            transform: rotate(-0.8deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .featured-secondary {
+            background: var(--pastel-mint);
+            padding: var(--space-lg);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            transform: rotate(0.6deg);
+        }
+
+        .featured-secondary:nth-child(3) {
+            background: var(--pastel-lavender);
+            transform: rotate(-0.7deg);
+        }
+
+        .badge {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 0.4rem 0.9rem;
+            background: rgba(255, 255, 255, 0.7);
+            border: var(--border-fine) solid var(--ink-whisper);
+            color: var(--ink);
+            margin-bottom: var(--space-sm);
+        }
+
+        .article-title {
+            font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+            margin-bottom: var(--space-sm);
+            line-height: 1.15;
+        }
+
+        .featured-main .article-title {
+            font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+        }
+
+        .article-excerpt {
+            font-size: 1.125rem;
+            line-height: 1.65;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .curator-note {
+            background: rgba(255, 255, 255, 0.5);
+            padding: var(--space-md);
+            border-left: 3px solid var(--flame);
+            margin-top: var(--space-md);
+        }
+
+        .curator-note-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: var(--space-xs);
+            color: var(--flame);
+        }
+
+        .curator-note p {
+            font-style: italic;
+            font-size: 1rem;
+            color: var(--ink-medium);
+        }
+
+        /* Section Heading */
+        .section-heading {
+            text-align: center;
+            margin: var(--space-2xl) 0 var(--space-xl);
+            position: relative;
+        }
+
+        .section-heading h2 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-heading::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 2px;
+            background: var(--flame);
+            margin: var(--space-sm) auto 0;
+        }
+
+        /* Art Showcase */
+        .art-showcase {
+            max-width: 1100px;
+            margin: 0 auto var(--space-2xl);
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: var(--space-xl);
+            align-items: center;
+        }
+
+        .art-frame {
+            background: var(--bg-canvas);
+            padding: var(--space-lg);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-lift);
+            transform: rotate(-1.5deg);
+        }
+
+        .art-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--pastel-lavender);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: var(--ink-light);
+        }
+
+        .art-info h3 {
+            font-size: 2.25rem;
+            font-style: italic;
+            margin-bottom: var(--space-xs);
+        }
+
+        .art-artist {
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .art-description {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--ink-medium);
+        }
+
+        /* Flourish Divider */
+        .flourish {
+            text-align: center;
+            margin: var(--space-2xl) 0;
+            color: var(--ink-whisper);
+            font-size: 2rem;
+        }
+
+        /* Rabbit Holes */
+        .rabbit-holes {
+            margin: var(--space-2xl) 0;
+        }
+
+        .rabbit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--space-lg);
+        }
+
+        .rabbit-card {
+            background: var(--bg-canvas);
+            padding: var(--space-lg);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+        }
+
+        .rabbit-card:nth-child(1) {
+            transform: rotate(0.8deg);
+            border-left: 4px solid var(--flame);
+            background: linear-gradient(135deg, var(--pastel-coral), rgba(232, 145, 125, 0.08));
+        }
+        .rabbit-card:nth-child(2) {
+            transform: rotate(-0.9deg);
+            border-left: 4px solid rgba(195, 215, 235, 0.6);
+            background: linear-gradient(135deg, var(--pastel-sky), rgba(195, 215, 235, 0.08));
+        }
+        .rabbit-card:nth-child(3) {
+            transform: rotate(0.6deg);
+            border-left: 4px solid rgba(180, 215, 195, 0.6);
+            background: linear-gradient(135deg, var(--pastel-mint), rgba(180, 215, 195, 0.08));
+        }
+        .rabbit-card:nth-child(4) {
+            transform: rotate(-0.7deg);
+            border-left: 4px solid rgba(245, 225, 185, 0.6);
+            background: linear-gradient(135deg, var(--pastel-butter), rgba(245, 225, 185, 0.08));
+        }
+        .rabbit-card:nth-child(5) {
+            transform: rotate(0.9deg);
+            border-left: 4px solid rgba(235, 185, 195, 0.6);
+            background: linear-gradient(135deg, var(--pastel-blush), rgba(235, 185, 195, 0.08));
+        }
+        .rabbit-card:nth-child(6) {
+            transform: rotate(-0.5deg);
+            border-left: 4px solid rgba(195, 210, 190, 0.6);
+            background: linear-gradient(135deg, var(--pastel-sage), rgba(195, 210, 190, 0.08));
+        }
+
+        .rabbit-number {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            opacity: 0.08;
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            line-height: 1;
+        }
+
+        .content-type {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--ink-light);
+            margin-bottom: var(--space-xs);
+        }
+
+        .rabbit-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .rabbit-card p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--ink-medium);
+        }
+
+        /* Intermission */
+        .intermission {
+            margin: var(--space-2xl) 0;
+            padding: var(--space-xl) 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(217, 123, 103, 0.04) 10px,
+                rgba(217, 123, 103, 0.04) 20px
+            );
+            border-top: var(--border-fine) solid var(--ink-whisper);
+            border-bottom: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        /* Poem Showcase */
+        .poem-showcase {
+            max-width: 850px;
+            margin: var(--space-2xl) auto;
+            padding: 0;
+        }
+
+        .poem-container {
+            background: var(--pastel-rose);
+            padding: var(--space-2xl) var(--space-xl);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-lift);
+            transform: rotate(0.8deg);
+            position: relative;
+        }
+
+        .poem-header {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+            padding-bottom: var(--space-md);
+            position: relative;
+        }
+
+        .poem-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 1px;
+            background: var(--ink-whisper);
+        }
+
+        .poem-title {
+            font-size: 2.75rem;
+            font-style: italic;
+            margin-bottom: var(--space-sm);
+            line-height: 1.1;
+            color: var(--ink);
+        }
+
+        .poem-author {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            color: var(--ink-medium);
+            text-transform: uppercase;
+        }
+
+        .poem-text {
+            font-size: 1.25rem;
+            line-height: 2;
+            white-space: pre-line;
+            font-style: italic;
+            color: var(--ink);
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        /* Letter Showcase */
+        .letter-showcase {
+            max-width: 850px;
+            margin: var(--space-2xl) auto;
+            padding: 0;
+        }
+
+        .postage-stamp {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 3px dashed var(--ink);
+            position: relative;
+            box-shadow: 4px 4px 0 rgba(45, 42, 38, 0.08);
+            margin: 0 auto var(--space-lg);
+        }
+
+        .postage-stamp::before,
+        .postage-stamp::after {
+            content: '';
+            position: absolute;
+            background: var(--bg-cream);
+        }
+
+        .postage-stamp::before {
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            height: 6px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--bg-cream) 0px,
+                var(--bg-cream) 4px,
+                transparent 4px,
+                transparent 8px
+            );
+        }
+
+        .postage-stamp::after {
+            left: -3px;
+            top: -3px;
+            bottom: -3px;
+            width: 6px;
+            background: repeating-linear-gradient(
+                180deg,
+                var(--bg-cream) 0px,
+                var(--bg-cream) 4px,
+                transparent 4px,
+                transparent 8px
+            );
+        }
+
+        .stamp-icon {
+            font-size: 2rem;
+            display: block;
+        }
+
+        .stamp-text {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            font-family: var(--font-sans);
+        }
+
+        .letter-card {
+            background: linear-gradient(135deg, #fdfaf5 0%, #f9f6f0 100%);
+            padding: var(--space-xl);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-lift);
+            transform: rotate(-0.9deg);
+            position: relative;
+        }
+
+        .letter-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 30px 30px 0;
+            border-color: transparent var(--bg-cream) transparent transparent;
+            filter: drop-shadow(-1px 1px 1px rgba(0, 0, 0, 0.1));
+        }
+
+        .letter-header {
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-md);
+            border-bottom: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .letter-meta {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-xs);
+        }
+
+        .letter-excerpt {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            font-style: italic;
+            margin-bottom: var(--space-md);
+            padding-left: var(--space-md);
+            border-left: 3px solid var(--flame);
+        }
+
+        .letter-context {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--ink-medium);
+            padding: var(--space-md);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Bookshelf */
+        .bookshelf {
+            margin: var(--space-2xl) 0;
+            padding: var(--space-2xl) var(--space-xl);
+            background: rgba(245, 225, 185, 0.12);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+        }
+
+        .bookshelf::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--pastel-butter);
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-xl);
+        }
+
+        .book-card {
+            background: transparent;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-card:nth-child(1) {
+            transform: rotate(0.6deg);
+        }
+        .book-card:nth-child(2) {
+            transform: rotate(-0.4deg);
+        }
+        .book-card:nth-child(3) {
+            transform: rotate(0.3deg);
+        }
+        .book-card:nth-child(4) {
+            transform: rotate(-0.5deg);
+        }
+
+        .book-cover {
+            width: 100%;
+            aspect-ratio: 2/3;
+            background: var(--bg-canvas);
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ink-light);
+            font-size: 0.85rem;
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow:
+                2px 4px 8px rgba(45, 42, 38, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .book-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            line-height: 1.3;
+            color: var(--ink);
+        }
+
+        .book-author {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-sm);
+            font-weight: 500;
+        }
+
+        .book-note {
+            font-size: 0.85rem;
+            font-style: italic;
+            color: var(--ink-medium);
+            line-height: 1.5;
+            margin-top: auto;
+        }
+
+        /* Deep Cuts */
+        .deep-cuts {
+            margin: var(--space-2xl) 0;
+            padding: var(--space-xl);
+            background: rgba(255, 255, 255, 0.3);
+            border-top: 3px solid rgba(217, 123, 103, 0.3);
+            border-bottom: 3px solid rgba(217, 123, 103, 0.3);
+        }
+
+        .deep-cuts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-lg) var(--space-xl);
+        }
+
+        .deep-cut-card {
+            padding: var(--space-md) 0;
+        }
+
+        .deep-cut-card:nth-child(1) { background: var(--pastel-coral); padding: var(--space-md); transform: rotate(-0.6deg); }
+        .deep-cut-card:nth-child(2) { background: var(--pastel-sky); padding: var(--space-md); transform: rotate(0.7deg); }
+        .deep-cut-card:nth-child(3) { background: var(--pastel-mint); padding: var(--space-md); transform: rotate(0.5deg); }
+        .deep-cut-card:nth-child(4) { background: var(--pastel-blush); padding: var(--space-md); transform: rotate(-0.8deg); }
+
+        .deep-cut-meta {
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--ink-light);
+            margin-bottom: var(--space-xs);
+        }
+
+        .deep-cut-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .deep-cut-card p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--ink-medium);
+        }
+
+        /* Worth Your Time */
+        .worth-your-time {
+            margin: var(--space-2xl) 0;
+            padding: var(--space-xl) var(--space-lg);
+            background: rgba(255, 255, 255, 0.6);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), var(--shadow-soft);
+            position: relative;
+        }
+
+        .worth-your-time::before {
+            content: '✦';
+            position: absolute;
+            top: var(--space-md);
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            color: var(--flame);
+            opacity: 0.2;
+        }
+
+        .worth-your-time::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--pastel-butter);
+        }
+
+        .wytt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-xl) var(--space-2xl);
+            counter-reset: wytt-counter;
+            margin-top: var(--space-lg);
+        }
+
+        .wytt-item {
+            padding: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            position: relative;
+            counter-increment: wytt-counter;
+            padding-left: var(--space-lg);
+            border-left: 3px solid var(--pastel-coral);
+        }
+
+        .wytt-item::before {
+            content: counter(wytt-counter, decimal-leading-zero);
+            position: absolute;
+            top: -0.25rem;
+            left: -0.75rem;
+            font-family: var(--font-sans);
+            font-size: 0.65rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--ink);
+            background: var(--bg-canvas);
+            padding: 0.35rem 0.5rem;
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: 0 2px 4px rgba(45, 42, 38, 0.06);
+        }
+
+        .wytt-date {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--ink-light);
+            margin-bottom: var(--space-xs);
+        }
+
+        .wytt-item h3 {
+            font-size: 1.35rem;
+            margin-bottom: var(--space-xs);
+            line-height: 1.3;
+        }
+
+        .wytt-excerpt {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--ink-medium);
+        }
+
+        /* Closing Quote */
+        .closing-quote {
+            padding: var(--space-2xl) 0;
+            text-align: center;
+            margin-top: var(--space-2xl);
+            position: relative;
+        }
+
+        .closing-quote::before {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 2px;
+            background: var(--pastel-mint);
+            margin: 0 auto var(--space-xl);
+        }
+
+        .closing-quote blockquote {
+            font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+            font-style: italic;
+            font-weight: 300;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 0 auto var(--space-md);
+            color: var(--ink);
+            padding: var(--space-lg) var(--space-md);
+            background: rgba(180, 215, 195, 0.15);
+            border-top: 2px solid var(--pastel-mint);
+            border-bottom: 2px solid var(--pastel-mint);
+            box-shadow: var(--shadow-soft);
+            transform: rotate(0.4deg);
+            position: relative;
+        }
+
+        .closing-quote cite {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-style: normal;
+            font-weight: 600;
+            color: var(--ink-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: block;
+            margin-top: var(--space-sm);
+        }
+
+        .closing-quote cite::before {
+            content: '— ';
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-cream);
+            padding: var(--space-2xl) 0 var(--space-lg);
+            margin-top: var(--space-2xl);
+            border-top: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .footer-content {
+            text-align: center;
+        }
+
+        .footer-title {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer-tagline {
+            font-style: italic;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .footer-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .featured-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .featured-main {
+                grid-column: span 1;
+            }
+
+            .art-showcase,
+            .deep-cuts-grid,
+            .wytt-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .featured-main,
+            .featured-secondary,
+            .rabbit-card,
+            .poem-showcase,
+            .letter-showcase,
+            .book-card,
+            .deep-cut-card {
+                transform: rotate(0deg) !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="site-title">
+                    <span class="flame">🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </h1>
+                <nav class="nav-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Reading</a>
+                    <a href="#">Subscribe</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Opening Quote -->
+        <section class="opening-quote">
+            <blockquote>
+                The internet has become a raging dumpster fire, consuming all the good things in its wake.
+                But there are still amazing, thoughtful, meaningful things untouched by the flames—things we
+                should all read, watch, and listen to. Welcome to my small corner of the internet, where I go
+                dumpster diving to share the good stuff.
+            </blockquote>
+            <cite>Welcome to the rescue mission</cite>
+        </section>
+
+        <!-- Featured Section: 1 Main + 2 Secondary -->
+        <section class="featured-section">
+            <div class="featured-grid">
+                <article class="featured-main">
+                    <span class="badge">Featured Essay</span>
+                    <h2 class="article-title">The Tyranny of the Marginal User</h2>
+                    <p class="article-excerpt">
+                        How software companies optimize for the least engaged users at the expense of power users,
+                        and why this trend is hollowing out the internet's best tools. A manifesto for depth over scale.
+                    </p>
+                    <div class="curator-note">
+                        <div class="curator-note-label">Why I Rescued This</div>
+                        <p>
+                            This essay crystallizes something I've felt for years but couldn't articulate.
+                            The constant dumbing down of tools in the name of "accessibility" is actually
+                            making them less accessible to those who want to go deep.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="featured-secondary">
+                    <span class="badge">Essay</span>
+                    <h3 class="article-title">Against Optimization</h3>
+                    <p class="article-excerpt">
+                        Why efficiency culture is killing creativity, and how embracing the meandering path
+                        leads to better work and richer lives.
+                    </p>
+                </article>
+
+                <article class="featured-secondary">
+                    <span class="badge">Podcast</span>
+                    <h3 class="article-title">Ezra Klein Interviews Alain de Botton</h3>
+                    <p class="article-excerpt">
+                        On status anxiety, the meaning of success, and what truly makes us happy in a world
+                        obsessed with achievement.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Art of the Week -->
+        <div class="section-heading">
+            <h2>Art of the Week</h2>
+        </div>
+
+        <section class="art-showcase">
+            <div class="art-frame">
+                <div class="art-image">
+                    [Edward Hopper's Nighthawks]
+                </div>
+            </div>
+            <div class="art-info">
+                <h3>Nighthawks</h3>
+                <div class="art-artist">Edward Hopper, 1942</div>
+                <p class="art-description">
+                    Hopper's masterpiece captures urban isolation in a way that feels more
+                    relevant than ever. The fluorescent diner, the anonymous figures, the
+                    empty street—this is loneliness in the age of abundance.
+                </p>
+            </div>
+        </section>
+
+        <!-- Flourish Divider -->
+        <div class="flourish">~ ✦ ~</div>
+
+        <!-- Rabbit Holes -->
+        <div class="section-heading">
+            <h2>Rabbit Holes</h2>
+        </div>
+
+        <section class="rabbit-holes">
+            <div class="rabbit-grid">
+                <article class="rabbit-card">
+                    <span class="rabbit-number">01</span>
+                    <div class="content-type">Video</div>
+                    <h3>Kurzgesagt: Loneliness</h3>
+                    <p>
+                        A beautifully animated exploration of the loneliness epidemic and what
+                        science tells us about human connection.
+                    </p>
+                </article>
+
+                <article class="rabbit-card">
+                    <span class="rabbit-number">02</span>
+                    <div class="content-type">Podcast</div>
+                    <h3>The Ezra Klein Show</h3>
+                    <p>
+                        Deep conversations about ideas, politics, and culture with some of the
+                        most interesting minds today.
+                    </p>
+                </article>
+
+                <article class="rabbit-card">
+                    <span class="rabbit-number">03</span>
+                    <div class="content-type">Thread</div>
+                    <h3>@andy_matuschak on Learning</h3>
+                    <p>
+                        A Twitter thread that completely changed how I think about knowledge work
+                        and spaced repetition systems.
+                    </p>
+                </article>
+
+                <article class="rabbit-card">
+                    <span class="rabbit-number">04</span>
+                    <div class="content-type">Paper</div>
+                    <h3>As We May Think</h3>
+                    <p>
+                        Vannevar Bush's 1945 essay that predicted the internet decades before
+                        it existed. Visionary and prescient.
+                    </p>
+                </article>
+
+                <article class="rabbit-card">
+                    <span class="rabbit-number">05</span>
+                    <div class="content-type">Note</div>
+                    <h3>Derek Sivers: Subtract</h3>
+                    <p>
+                        A short meditation on the power of subtraction over addition in life
+                        and work.
+                    </p>
+                </article>
+
+                <article class="rabbit-card">
+                    <span class="rabbit-number">06</span>
+                    <div class="content-type">Book</div>
+                    <h3>How to Do Nothing</h3>
+                    <p>
+                        Jenny Odell's brilliant critique of the attention economy and a guide
+                        to resisting its pull.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Intermission -->
+        <div class="intermission"></div>
+
+        <!-- Poem of the Week -->
+        <div class="section-heading">
+            <h2>Poem of the Week</h2>
+        </div>
+
+        <section class="poem-showcase">
+            <div class="poem-container">
+                <div class="poem-header">
+                    <h3 class="poem-title">The Peace of Wild Things</h3>
+                    <div class="poem-author">Wendell Berry</div>
+                </div>
+                <div class="poem-text">
+When despair for the world grows in me
+and I wake in the night at the least sound
+in fear of what my life and my children's lives may be,
+I go and lie down where the wood drake
+rests in his beauty on the water, and the great heron feeds.
+I come into the peace of wild things
+who do not tax their lives with forethought
+of grief. I come into the presence of still water.
+And I feel above me the day-blind stars
+waiting with their light. For a time
+I rest in the grace of the world, and am free.
+                </div>
+            </div>
+        </section>
+
+        <!-- Letter of the Week -->
+        <div class="section-heading">
+            <h2>Letter of the Week</h2>
+        </div>
+
+        <section class="letter-showcase">
+            <div style="text-align: center;">
+                <div class="postage-stamp">
+                    <span class="stamp-icon">✉</span>
+                    <span class="stamp-text">Letter of the Week</span>
+                </div>
+            </div>
+
+            <div class="letter-card">
+                <div class="letter-header">
+                    <div class="letter-meta">From: Virginia Woolf</div>
+                    <div class="letter-meta">To: Vita Sackville-West</div>
+                    <div class="letter-meta">January 31, 1927 • London</div>
+                </div>
+                <p class="letter-excerpt">
+                    "I am haunted by you. The way you walk, the way you sit, how you move your hands.
+                    I am entirely under your spell. Last night I walked for hours thinking of nothing
+                    but you, seeing you in every shadow and light."
+                </p>
+                <p class="letter-context">
+                    This intimate letter captures the deep connection between two literary giants
+                    during the height of their relationship. Woolf's prose, even in personal
+                    correspondence, is achingly beautiful.
+                </p>
+            </div>
+        </section>
+
+        <!-- On My Shelf -->
+        <div class="section-heading">
+            <h2>On My Shelf</h2>
+        </div>
+
+        <section class="bookshelf">
+            <div class="books-grid">
+                <article class="book-card">
+                    <div class="book-cover">[Book Cover]</div>
+                    <h3 class="book-title">The Marginalian</h3>
+                    <div class="book-author">Maria Popova</div>
+                    <p class="book-note">A celebration of curiosity and the examined life.</p>
+                </article>
+
+                <article class="book-card">
+                    <div class="book-cover">[Book Cover]</div>
+                    <h3 class="book-title">How to Do Nothing</h3>
+                    <div class="book-author">Jenny Odell</div>
+                    <p class="book-note">Resisting the attention economy in a distracted world.</p>
+                </article>
+
+                <article class="book-card">
+                    <div class="book-cover">[Book Cover]</div>
+                    <h3 class="book-title">Four Thousand Weeks</h3>
+                    <div class="book-author">Oliver Burkeman</div>
+                    <p class="book-note">Time management for mortals who've given up on productivity.</p>
+                </article>
+
+                <article class="book-card">
+                    <div class="book-cover">[Book Cover]</div>
+                    <h3 class="book-title">The Practicing Mind</h3>
+                    <div class="book-author">Thomas M. Sterner</div>
+                    <p class="book-note">Developing focus and discipline in your life.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Deep Cuts -->
+        <div class="section-heading">
+            <h2>Deep Cuts</h2>
+        </div>
+
+        <section class="deep-cuts">
+            <div class="deep-cuts-grid">
+                <article class="deep-cut-card">
+                    <div class="deep-cut-meta">Essay • 12 min</div>
+                    <h3>The Garden and the Stream</h3>
+                    <p>
+                        Mike Caulfield's vision for a better web through digital gardens instead of
+                        algorithmic feeds. A manifesto for thoughtful knowledge building.
+                    </p>
+                </article>
+
+                <article class="deep-cut-card">
+                    <div class="deep-cut-meta">Essay • 15 min</div>
+                    <h3>Solitude and Leadership</h3>
+                    <p>
+                        William Deresiewicz's powerful critique of how constant connectivity
+                        prevents us from developing our own thoughts.
+                    </p>
+                </article>
+
+                <article class="deep-cut-card">
+                    <div class="deep-cut-meta">Essay • 8 min</div>
+                    <h3>Reclaiming Conversation</h3>
+                    <p>
+                        Sherry Turkle on why face-to-face contact matters in a digital age,
+                        and what we lose when we choose screens over people.
+                    </p>
+                </article>
+
+                <article class="deep-cut-card">
+                    <div class="deep-cut-meta">Essay • 10 min</div>
+                    <h3>The Art of Noticing</h3>
+                    <p>
+                        Rob Walker on how paying attention to the world around us can transform
+                        our experience of everyday life.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Worth Your Time This Week -->
+        <div class="section-heading">
+            <h2>Worth Your Time This Week</h2>
+        </div>
+
+        <section class="worth-your-time">
+            <div class="wytt-grid">
+                <article class="wytt-item">
+                    <div class="wytt-date">Jan 15</div>
+                    <h3>The Unreasonable Effectiveness of One-on-Ones</h3>
+                    <p class="wytt-excerpt">
+                        Why the most powerful management tool is also the simplest.
+                    </p>
+                </article>
+
+                <article class="wytt-item">
+                    <div class="wytt-date">Jan 14</div>
+                    <h3>Against Metrics</h3>
+                    <p class="wytt-excerpt">
+                        Not everything that matters can be measured, and not everything measured matters.
+                    </p>
+                </article>
+
+                <article class="wytt-item">
+                    <div class="wytt-date">Jan 13</div>
+                    <h3>The Power of Patience</h3>
+                    <p class="wytt-excerpt">
+                        How slowing down can help you move faster in the long run.
+                    </p>
+                </article>
+
+                <article class="wytt-item">
+                    <div class="wytt-date">Jan 12</div>
+                    <h3>On Writing Well</h3>
+                    <p class="wytt-excerpt">
+                        William Zinsser's timeless advice on clarity, simplicity, and grace.
+                    </p>
+                </article>
+
+                <article class="wytt-item">
+                    <div class="wytt-date">Jan 11</div>
+                    <h3>The Adjacent Possible</h3>
+                    <p class="wytt-excerpt">
+                        Steven Johnson on how innovation builds on what came before.
+                    </p>
+                </article>
+
+                <article class="wytt-item">
+                    <div class="wytt-date">Jan 10</div>
+                    <h3>Digital Minimalism</h3>
+                    <p class="wytt-excerpt">
+                        Cal Newport on choosing a focused life in a noisy world.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Closing Quote -->
+        <section class="closing-quote">
+            <blockquote>
+                In the middle of winter I at last discovered that there was in me an invincible summer.
+            </blockquote>
+            <cite>Albert Camus</cite>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <h3 class="footer-title">
+                    <span>🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </h3>
+                <p class="footer-tagline">Rescuing signal from the algorithmic inferno</p>
+                <nav class="footer-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Subscribe</a>
+                    <a href="#">Reading</a>
+                </nav>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

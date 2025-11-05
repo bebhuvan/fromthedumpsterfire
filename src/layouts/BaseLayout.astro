@@ -1,0 +1,568 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+  section?: string;
+  tags?: string[];
+}
+
+const {
+  title,
+  description = "Rescuing signal from the algorithmic inferno. A curated magazine for the curious, thoughtful, and intellectually hungry.",
+  image = "/og-image.jpg",
+  article = false,
+  publishedTime,
+  modifiedTime,
+  author = "Bhuvanesh",
+  section,
+  tags = []
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const siteUrl = Astro.site?.toString() || 'https://fromthedumpsterfire.com';
+
+// JSON-LD Structured Data
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "From The Dumpster Fire",
+  "description": "Rescuing signal from the algorithmic inferno. A curated magazine for the curious, thoughtful, and intellectually hungry.",
+  "url": siteUrl,
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": `${siteUrl}/archive?search={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "From The Dumpster Fire",
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/og-image.jpg`
+    }
+  }
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": siteUrl
+    }
+  ]
+};
+
+// Add current page to breadcrumb if not homepage
+if (Astro.url.pathname !== '/' && Astro.url.pathname !== '') {
+  const pathSegments = Astro.url.pathname.split('/').filter(Boolean);
+  pathSegments.forEach((segment, index) => {
+    breadcrumbSchema.itemListElement.push({
+      "@type": "ListItem",
+      "position": index + 2,
+      "name": segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
+      "item": `${siteUrl}/${pathSegments.slice(0, index + 1).join('/')}`
+    });
+  });
+}
+
+// Article schema for article pages
+let articleSchema = null;
+if (article && publishedTime) {
+  articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": title,
+    "description": description,
+    "image": new URL(image, Astro.site).toString(),
+    "datePublished": publishedTime,
+    "dateModified": modifiedTime || publishedTime,
+    "author": {
+      "@type": "Person",
+      "name": author
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "From The Dumpster Fire",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${siteUrl}/og-image.jpg`
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": canonicalURL.toString()
+    }
+  };
+
+  if (section) {
+    articleSchema.articleSection = section;
+  }
+
+  if (tags.length > 0) {
+    articleSchema.keywords = tags.join(', ');
+  }
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="generator" content={Astro.generator}>
+
+  <!-- Primary Meta Tags -->
+  <title>{title}</title>
+  <meta name="title" content={title}>
+  <meta name="description" content={description}>
+  <meta name="author" content={author}>
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href={canonicalURL}>
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content={article ? "article" : "website"}>
+  <meta property="og:url" content={canonicalURL}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:image" content={new URL(image, Astro.site)}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="From The Dumpster Fire">
+  {article && publishedTime && (
+    <>
+      <meta property="article:published_time" content={publishedTime}>
+      {modifiedTime && <meta property="article:modified_time" content={modifiedTime}>}
+      <meta property="article:author" content={author}>
+      {section && <meta property="article:section" content={section}>}
+      {tags.map(tag => <meta property="article:tag" content={tag}>)}
+    </>
+  )}
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content={canonicalURL}>
+  <meta property="twitter:title" content={title}>
+  <meta property="twitter:description" content={description}>
+  <meta property="twitter:image" content={new URL(image, Astro.site)}>
+  <meta property="twitter:creator" content="@fromthedumpsterfire">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  {articleSchema && (
+    <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+  )}
+
+  <!-- Preload critical self-hosted fonts -->
+  <link rel="preload" href="/fonts/dm-serif-display-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/fonts/crimson-pro-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/fonts/inter-400.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/rss+xml" title="From The Dumpster Fire" href="/rss.xml" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/" class="site-title">
+          <span class="flame-container">
+            <span class="flame" aria-hidden="true">🔥</span>
+            <span class="flame-shadow" aria-hidden="true">🔥</span>
+          </span>
+          <span class="site-name">
+            <span class="word-from">FROM</span>
+            <span class="word-the">THE</span>
+            <span class="word-dumpster">DUMPSTER</span>
+            <span class="word-fire">FIRE</span>
+          </span>
+        </a>
+        <button class="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="/about" class="nav-link">About</a>
+          <a href="/archive" class="nav-link">Archive</a>
+          <a href="/subscribe" class="nav-link">Subscribe</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <slot />
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <h3 class="footer-title">
+          <span aria-hidden="true">🔥</span>
+          <span>FROM THE DUMPSTER FIRE</span>
+        </h3>
+        <p class="footer-tagline">Rescuing signal from the algorithmic inferno</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="/about">About</a>
+          <a href="/archive">Archive</a>
+          <a href="/subscribe">Subscribe</a>
+          <a href="/rss.xml">RSS</a>
+        </nav>
+        <p class="footer-copyright">
+          &copy; {new Date().getFullYear()} From The Dumpster Fire
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    /* Header */
+    .header {
+      padding: var(--space-md) 0;
+      border-bottom: 3px double var(--ink-whisper);
+      background: var(--bg-cream);
+      position: relative;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-md);
+      position: relative;
+    }
+
+    /* Offbeat Logo Design */
+    .site-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+
+    .flame-container {
+      position: relative;
+      width: 2.5rem;
+      height: 2.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .flame {
+      position: absolute;
+      font-size: 2rem;
+      filter: drop-shadow(0 0 8px rgba(217, 123, 103, 0.4));
+      animation: flicker 2.5s ease-in-out infinite, wobble 3.5s ease-in-out infinite;
+      transform-origin: center bottom;
+      z-index: 2;
+    }
+
+    .flame-shadow {
+      position: absolute;
+      font-size: 2rem;
+      opacity: 0.15;
+      filter: blur(4px);
+      transform: translate(3px, 3px);
+      z-index: 1;
+    }
+
+    .site-name {
+      display: grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
+      gap: 0.15rem 0.35rem;
+      align-items: center;
+      font-family: var(--font-sans);
+      line-height: 1;
+    }
+
+    .word-from {
+      grid-column: 1;
+      grid-row: 1;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      transform: rotate(-2deg);
+    }
+
+    .word-the {
+      grid-column: 2;
+      grid-row: 1;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      transform: rotate(1deg);
+    }
+
+    .word-dumpster {
+      grid-column: 1;
+      grid-row: 2;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      transform: rotate(-1deg);
+      text-shadow: 2px 2px 0 rgba(217, 123, 103, 0.1);
+    }
+
+    .word-fire {
+      grid-column: 2;
+      grid-row: 2;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: -0.02em;
+      color: var(--flame);
+      transform: rotate(1.5deg);
+      text-shadow: 2px 2px 0 rgba(45, 42, 38, 0.08);
+    }
+
+    /* Modern Nav with Icons */
+    .nav-links {
+      display: flex;
+      gap: 0.25rem;
+      font-family: var(--font-sans);
+    }
+
+    .nav-link {
+      padding: 0.75rem 1.25rem;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      position: relative;
+      letter-spacing: 0.01em;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0.3rem;
+      left: 1rem;
+      right: 1rem;
+      height: 2px;
+      background: var(--flame);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.3s ease;
+    }
+
+
+    /* Mobile Menu Toggle - Hidden on desktop */
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      cursor: pointer;
+      flex-direction: column;
+      gap: 0.35rem;
+      z-index: 110;
+      transition: opacity 0.2s ease;
+    }
+
+
+    .hamburger-line {
+      width: 20px;
+      height: 1.5px;
+      background: var(--ink-medium);
+      transition: all 0.25s ease;
+    }
+
+    .mobile-menu-toggle[aria-expanded="true"] .hamburger-line:nth-child(1) {
+      transform: rotate(45deg) translate(5.5px, 5.5px);
+    }
+
+    .mobile-menu-toggle[aria-expanded="true"] .hamburger-line:nth-child(2) {
+      opacity: 0;
+    }
+
+    .mobile-menu-toggle[aria-expanded="true"] .hamburger-line:nth-child(3) {
+      transform: rotate(-45deg) translate(5.5px, -5.5px);
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--bg-cream);
+      padding: var(--space-2xl) 0 var(--space-lg);
+      margin-top: var(--space-2xl);
+      border-top: var(--border-fine) solid var(--ink-whisper);
+    }
+
+    .footer-content {
+      text-align: center;
+    }
+
+    .footer-title {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .footer-tagline {
+      font-style: italic;
+      color: var(--ink-medium);
+      margin-bottom: var(--space-md);
+      font-size: 1rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-md);
+      margin-top: var(--space-md);
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 0.95rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--ink-medium);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+
+    .footer-copyright {
+      margin-top: var(--space-md);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      color: var(--ink-light);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .header {
+        padding: var(--space-sm) 0;
+      }
+
+      .header-content {
+        gap: var(--space-sm);
+        align-items: center;
+      }
+
+      /* Simplified mobile logo - single line */
+      .site-title {
+        gap: 0.35rem;
+        flex: 1;
+      }
+
+      .flame-container {
+        width: 1.75rem;
+        height: 1.75rem;
+        flex-shrink: 0;
+      }
+
+      .flame,
+      .flame-shadow {
+        font-size: 1.4rem;
+      }
+
+      /* Hide the complex grid, show simplified version */
+      .site-name {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 0.25rem;
+        line-height: 1;
+      }
+
+      .word-from,
+      .word-the {
+        display: none; /* Hide "FROM THE" on mobile */
+      }
+
+      .word-dumpster,
+      .word-fire {
+        font-size: 1rem;
+        transform: rotate(0deg); /* Remove rotation on mobile */
+      }
+
+      .word-dumpster {
+        font-weight: 600;
+      }
+
+      /* Show hamburger menu on mobile */
+      .mobile-menu-toggle {
+        display: flex;
+      }
+
+      /* Mobile navigation - simple dropdown */
+      .nav-links {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--bg-canvas);
+        flex-direction: column;
+        gap: 0;
+        padding: 0;
+        min-width: 180px;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+        border: 1px solid var(--ink-whisper);
+        border-top: none;
+        box-shadow: 0 4px 12px rgba(45, 42, 38, 0.1);
+        z-index: 90;
+      }
+
+      .nav-links.open {
+        max-height: 300px;
+        opacity: 1;
+        padding: var(--space-xs) 0;
+      }
+
+      .nav-link {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 1rem;
+        min-height: auto;
+        text-align: left;
+        border-bottom: none;
+      }
+
+
+      .nav-link::after {
+        display: none;
+      }
+
+      .footer-title {
+        font-size: 1.35rem;
+      }
+    }
+  </style>
+
+  <script src="../scripts/mobileMenu.ts"></script>
+</body>
+</html>

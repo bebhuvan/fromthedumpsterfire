@@ -1,0 +1,421 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const poems = await getCollection('poems');
+  return poems.map(poem => ({
+    params: { slug: poem.slug },
+    props: { poem }
+  }));
+}
+
+const { poem } = Astro.props;
+const { Content } = await poem.render();
+
+// Split the body into poem text and analysis
+const parts = poem.body.split('---');
+const poemText = parts[0].trim();
+const analysisMarkdown = parts.length > 1 ? parts.slice(1).join('---').trim() : '';
+---
+
+<BaseLayout
+  title={`${poem.data.title} - From The Dumpster Fire`}
+  description={poem.data.excerpt}
+  article={true}
+  publishedTime={poem.data.publishedDate.toISOString()}
+  modifiedTime={poem.data.publishedDate.toISOString()}
+  author={poem.data.author}
+  section="Poetry"
+  tags={poem.data.topics}
+>
+  <article class="poem-page">
+    <div class="container">
+      <!-- Header Section -->
+      <header class="poem-header">
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span class="separator">→</span>
+          <span>Poem of the Week</span>
+        </div>
+
+        <h1 class="poem-title">{poem.data.title}</h1>
+
+        <div class="poem-meta">
+          <div class="poet-info">
+            <span class="poet-name">{poem.data.author}</span>
+            {poem.data.year && <span class="poem-year">({poem.data.year})</span>}
+          </div>
+          {poem.data.source && (
+            <div class="poem-source">
+              From <em>{poem.data.source}</em>
+            </div>
+          )}
+        </div>
+
+        <div class="divider"></div>
+      </header>
+
+      <!-- Poem Text -->
+      <section class="poem-text-section">
+        <div class="poem-text" set:html={poemText.split('\n').map(line =>
+          line.trim() === '' ? '<br>' : `<p>${line}</p>`
+        ).join('')} />
+      </section>
+
+      <div class="flourish-divider">
+        <span>✦ ✦ ✦</span>
+      </div>
+
+      <!-- Analysis Section -->
+      {analysisMarkdown && (
+        <section class="analysis-section">
+          <div class="analysis-content">
+            <Content />
+          </div>
+        </section>
+      )}
+
+      <!-- Curator Notes -->
+      {poem.data.curatorNotes && (
+        <aside class="curator-notes-box">
+          <div class="curator-label">
+            <span class="flame-icon">🔥</span>
+            <span>Why I Rescued This</span>
+          </div>
+          <p class="curator-text">{poem.data.curatorNotes}</p>
+        </aside>
+      )}
+
+      <!-- Related Links -->
+      {poem.data.relatedLinks && poem.data.relatedLinks.length > 0 && (
+        <aside class="related-links">
+          <h3 class="related-title">Further Reading</h3>
+          <ul class="links-list">
+            {poem.data.relatedLinks.map(link => (
+              <li>
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  {link.title}
+                  <span class="external-arrow">↗</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <!-- Back Link -->
+      <div class="back-link-container">
+        <a href="/" class="back-link">
+          ← Back to Home
+        </a>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .poem-page {
+    padding: var(--space-xl) 0 var(--space-2xl);
+  }
+
+  /* Header */
+  .poem-header {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    text-align: center;
+  }
+
+  .breadcrumb {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    margin-bottom: var(--space-md);
+  }
+
+  .breadcrumb a {
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--flame);
+  }
+
+  .separator {
+    margin: 0 0.5rem;
+  }
+
+  .poem-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: var(--space-sm);
+    line-height: 1.1;
+  }
+
+  .poem-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: var(--space-md);
+  }
+
+  .poet-info {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    color: var(--ink-medium);
+  }
+
+  .poet-name {
+    font-weight: 600;
+  }
+
+  .poem-year {
+    color: var(--ink-light);
+    margin-left: 0.5rem;
+  }
+
+  .poem-source {
+    font-size: 0.95rem;
+    color: var(--ink-light);
+    font-style: italic;
+  }
+
+  .divider {
+    width: 80px;
+    height: 2px;
+    background: var(--flame);
+    margin: var(--space-md) auto 0;
+  }
+
+  /* Poem Text */
+  .poem-text-section {
+    max-width: 700px;
+    margin: 0 auto var(--space-2xl);
+    background: var(--pastel-butter);
+    padding: var(--space-xl);
+    border-radius: 4px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .poem-text {
+    font-family: var(--font-body);
+    font-size: 1.2rem;
+    line-height: 1.9;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .poem-text :global(p) {
+    margin: 0;
+  }
+
+  .poem-text :global(br) {
+    display: block;
+    margin: 1rem 0;
+    content: '';
+  }
+
+  /* Flourish Divider */
+  .flourish-divider {
+    text-align: center;
+    margin: var(--space-2xl) 0;
+    color: var(--ink-whisper);
+    font-size: 1.5rem;
+    letter-spacing: 1rem;
+  }
+
+  /* Analysis Section */
+  .analysis-section {
+    max-width: 800px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .analysis-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+
+  .analysis-content :global(h2) {
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(h3) {
+    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(p) {
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(em) {
+    font-style: italic;
+    color: var(--ink-medium);
+  }
+
+  .analysis-content :global(ul) {
+    margin: var(--space-md) 0;
+    padding-left: var(--space-lg);
+  }
+
+  .analysis-content :global(li) {
+    margin-bottom: var(--space-sm);
+    line-height: 1.7;
+  }
+
+  /* Curator Notes */
+  .curator-notes-box {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    background: var(--pastel-coral);
+    padding: var(--space-lg);
+    border-radius: 4px;
+    border-left: 4px solid var(--flame);
+  }
+
+  .curator-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    margin-bottom: var(--space-sm);
+  }
+
+  .flame-icon {
+    font-size: 1.2rem;
+  }
+
+  .curator-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  /* Related Links */
+  .related-links {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--pastel-mint);
+    border-radius: 4px;
+  }
+
+  .related-title {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .links-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .links-list li a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .links-list li a:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--flame);
+    transform: translateX(4px);
+  }
+
+  .external-arrow {
+    margin-left: auto;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+  }
+
+  .links-list li a:hover .external-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  /* Back Link */
+  .back-link-container {
+    max-width: 800px;
+    margin: var(--space-xl) auto 0;
+    text-align: center;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--flame);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .back-link:hover {
+    background: var(--flame);
+    color: var(--bg-cream);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .poem-page {
+      padding: var(--space-lg) 0 var(--space-xl);
+    }
+
+    .poem-text-section {
+      padding: var(--space-md);
+    }
+
+    .poem-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      text-align: left;
+    }
+
+    .poem-text :global(p) {
+      margin-bottom: 0.25rem;
+    }
+
+    .poem-text :global(br) {
+      margin: 0.75rem 0;
+    }
+
+    .analysis-content {
+      font-size: 1rem;
+    }
+
+    .curator-notes-box,
+    .related-links {
+      padding: var(--space-sm) var(--space-md);
+    }
+  }
+</style>

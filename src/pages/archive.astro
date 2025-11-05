@@ -1,0 +1,199 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArchiveSearch from '../components/ArchiveSearch.astro';
+import { getCollection } from 'astro:content';
+
+const allArticles = await getCollection('articles');
+const sortedArticles = allArticles.sort(
+  (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
+);
+
+// Group articles by year and month
+const articlesByDate = sortedArticles.reduce((acc, article) => {
+  const year = article.data.publishedDate.getFullYear();
+  const month = article.data.publishedDate.toLocaleDateString('en-US', { month: 'long' });
+  const key = `${year}-${month}`;
+
+  if (!acc[key]) {
+    acc[key] = {
+      year,
+      month,
+      articles: []
+    };
+  }
+
+  acc[key].articles.push(article);
+  return acc;
+}, {} as Record<string, { year: number; month: string; articles: typeof allArticles }>);
+
+const groupedArticles = Object.values(articlesByDate);
+---
+
+<BaseLayout title="Archive - From The Dumpster Fire">
+  <div class="container">
+    <div class="archive-page">
+      <header class="page-header">
+        <h1>Archive</h1>
+        <p class="archive-count">{allArticles.length} articles rescued from the flames</p>
+      </header>
+
+      <ArchiveSearch />
+
+      <div class="archive-content">
+        {groupedArticles.map(group => (
+          <section class="archive-group">
+            <h2 class="archive-period">{group.month} {group.year}</h2>
+            <div class="articles-list">
+              {group.articles.map(article => (
+                <article class="archive-item">
+                  <a href={`/articles/${article.slug}`} class="archive-link">
+                    <div class="archive-item-header">
+                      <span class="article-type">{article.data.articleType}</span>
+                      <span class="article-date">
+                        {article.data.publishedDate.toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <h3 class="archive-title">{article.data.title}</h3>
+                    <p class="archive-excerpt">{article.data.excerpt}</p>
+                    <div class="archive-meta">
+                      {article.data.author && <span>{article.data.author}</span>}
+                      {article.data.author && <span class="separator">•</span>}
+                      <span>{article.data.readingTime} min read</span>
+                    </div>
+                  </a>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .archive-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--space-2xl) 0;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 2px solid var(--ink-whisper);
+  }
+
+  .page-header h1 {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    margin-bottom: var(--space-sm);
+  }
+
+  .archive-count {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--ink-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  .archive-group {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .archive-period {
+    font-size: 1.75rem;
+    color: var(--flame);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: var(--border-fine) solid var(--ink-whisper);
+  }
+
+  .articles-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .archive-item {
+    background: var(--bg-canvas);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+  }
+
+  .archive-item:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+  }
+
+  .archive-link {
+    display: block;
+    padding: var(--space-lg);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .archive-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+  }
+
+  .article-type {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+  }
+
+  .article-date {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-medium);
+  }
+
+  .archive-title {
+    font-size: 1.75rem;
+    margin-bottom: var(--space-sm);
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .archive-excerpt {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-sm);
+  }
+
+  .archive-meta {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .separator {
+    color: var(--ink-whisper);
+  }
+
+  @media (max-width: 768px) {
+    .archive-title {
+      font-size: 1.5rem;
+    }
+
+    .archive-excerpt {
+      font-size: 1rem;
+    }
+  }
+</style>

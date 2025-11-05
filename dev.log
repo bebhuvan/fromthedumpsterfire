@@ -1,0 +1,22 @@
+
+> fromthedumpsterfire@1.0.0 dev
+> astro dev
+
+13:34:45 [types] Generated 1ms
+13:34:45 [content] Syncing content
+13:34:45 [content] Astro config changed
+13:34:45 [content] Clearing content store
+13:34:46 [content] Synced content
+13:34:46 [vite] Re-optimizing dependencies because vite config has changed
+13:34:46 [vite] Port 4321 is in use, trying another one...
+13:34:46 [vite] Port 4322 is in use, trying another one...
+
+ astro  v5.14.6 ready in 684 ms
+
+┃ Local    http://localhost:4323/
+┃ Network  use --host to expose
+
+13:34:46 watching for file changes...
+13:37:37 [200] / 140ms
+13:37:41 [200] / 9ms
+13:37:42 [200] /articles/inconvenient-bad-things-cant-happen 9ms

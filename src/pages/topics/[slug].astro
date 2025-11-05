@@ -1,0 +1,358 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allArticles = await getCollection('articles');
+
+  // Extract all unique topics
+  const topicsSet = new Set<string>();
+  allArticles.forEach(article => {
+    article.data.topics.forEach(topic => topicsSet.add(topic));
+  });
+
+  // Create a path for each topic
+  return Array.from(topicsSet).map(topic => ({
+    params: { slug: topic },
+    props: { topic },
+  }));
+}
+
+const { topic } = Astro.props;
+
+// Get all articles with this topic
+const allArticles = await getCollection('articles');
+const topicArticles = allArticles
+  .filter(article => article.data.topics.includes(topic))
+  .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf());
+
+// Format topic for display (convert kebab-case to Title Case)
+const displayTopic = topic
+  .split('-')
+  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+  .join(' ');
+
+// Get related topics (topics that appear in articles with this topic)
+const relatedTopicsMap = new Map<string, number>();
+topicArticles.forEach(article => {
+  article.data.topics.forEach(t => {
+    if (t !== topic) {
+      relatedTopicsMap.set(t, (relatedTopicsMap.get(t) || 0) + 1);
+    }
+  });
+});
+
+const relatedTopics = Array.from(relatedTopicsMap.entries())
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .map(([t]) => t);
+---
+
+<BaseLayout
+  title={`${displayTopic} - Topics - From The Dumpster Fire`}
+  description={`Explore ${topicArticles.length} curated articles about ${displayTopic}`}
+>
+  <div class="container">
+    <div class="topic-page">
+      <header class="page-header">
+        <div class="topic-label">Topic</div>
+        <h1>{displayTopic}</h1>
+        <p class="topic-count">{topicArticles.length} {topicArticles.length === 1 ? 'article' : 'articles'} rescued</p>
+      </header>
+
+      <div class="topic-content">
+        <div class="articles-list">
+          {topicArticles.map((article, index) => (
+            <article class="topic-article">
+              <a href={`/articles/${article.slug}`} class="article-link">
+                <div class="article-header">
+                  <span class="article-number">{String(index + 1).padStart(2, '0')}</span>
+                  <span class="article-type">{article.data.articleType}</span>
+                  <span class="article-date">
+                    {article.data.publishedDate.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </div>
+                <h2 class="article-title">{article.data.title}</h2>
+                <p class="article-excerpt">{article.data.excerpt}</p>
+                <div class="article-meta">
+                  {article.data.author && <span>{article.data.author}</span>}
+                  {article.data.author && <span class="separator">•</span>}
+                  <span>{article.data.readingTime} min read</span>
+                  {article.data.source && (
+                    <>
+                      <span class="separator">•</span>
+                      <span>{article.data.source}</span>
+                    </>
+                  )}
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+
+        {relatedTopics.length > 0 && (
+          <aside class="related-topics">
+            <h3>Related Topics</h3>
+            <div class="topics-list">
+              {relatedTopics.map(relatedTopic => (
+                <a
+                  href={`/topics/${relatedTopic}`}
+                  class="topic-tag"
+                >
+                  {relatedTopic.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </a>
+              ))}
+            </div>
+            <div class="browse-all">
+              <a href="/archive" class="browse-link">Browse all articles →</a>
+            </div>
+          </aside>
+        )}
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .topic-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--space-2xl) 0;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 2px solid var(--ink-whisper);
+  }
+
+  .topic-label {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 0.5rem 1.2rem;
+    background: var(--bg-canvas);
+    border: 2px solid var(--flame);
+    color: var(--flame);
+    margin-bottom: var(--space-md);
+    box-shadow: 0 2px 8px rgba(201, 93, 72, 0.15);
+    transform: rotate(-1deg);
+  }
+
+  .page-header h1 {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    margin-bottom: var(--space-sm);
+    color: var(--ink);
+  }
+
+  .topic-count {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--ink-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  .topic-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2xl);
+  }
+
+  .articles-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .topic-article {
+    background: var(--bg-canvas);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+  }
+
+  .topic-article:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+  }
+
+  .topic-article:nth-child(odd) {
+    border-left: 4px solid var(--pastel-coral);
+  }
+
+  .topic-article:nth-child(even) {
+    border-left: 4px solid var(--pastel-mint);
+  }
+
+  .article-link {
+    display: block;
+    padding: var(--space-lg);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .article-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .article-number {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--ink);
+    opacity: 0.25;
+    line-height: 1;
+  }
+
+  .article-type {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+    background: rgba(45, 42, 38, 0.05);
+    padding: 0.3rem 0.6rem;
+    border-radius: 3px;
+  }
+
+  .article-date {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--ink-medium);
+    margin-left: auto;
+  }
+
+  .article-title {
+    font-size: 1.85rem;
+    margin-bottom: var(--space-sm);
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .article-excerpt {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-sm);
+  }
+
+  .article-meta {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    display: flex;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+  }
+
+  .separator {
+    color: var(--ink-whisper);
+  }
+
+  /* Related Topics Sidebar */
+  .related-topics {
+    background: var(--pastel-butter);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    transform: rotate(-0.5deg);
+    align-self: start;
+  }
+
+  .related-topics h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .topics-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .topic-tag {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-canvas);
+    border: var(--border-fine) solid var(--ink-whisper);
+    color: var(--ink-medium);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-block;
+  }
+
+  .topic-tag:hover {
+    border-color: var(--flame);
+    color: var(--flame);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .browse-all {
+    padding-top: var(--space-md);
+    border-top: var(--border-fine) solid var(--ink-whisper);
+  }
+
+  .browse-link {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .browse-link:hover {
+    color: var(--ink);
+    transform: translateX(4px);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .article-title {
+      font-size: 1.5rem;
+    }
+
+    .article-excerpt {
+      font-size: 1rem;
+    }
+
+    .related-topics {
+      transform: rotate(0deg);
+    }
+
+    .article-header {
+      gap: var(--space-xs);
+    }
+
+    .article-number {
+      font-size: 1.5rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .article-date {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+</style>

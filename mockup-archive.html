@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive - From The Dumpster Fire</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           ARCHIVE PAGE DESIGN
+           Clean, Browseable, Organized
+           ============================================ */
+
+        :root {
+            /* Typography */
+            --font-display: 'DM Serif Display', Georgia, serif;
+            --font-body: 'Crimson Pro', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+
+            /* Color Palette */
+            --bg-cream: #faf9f6;
+            --bg-canvas: #ffffff;
+
+            --pastel-coral: rgba(232, 145, 125, 0.25);
+            --pastel-peach: rgba(245, 195, 160, 0.28);
+            --pastel-mint: rgba(180, 215, 195, 0.26);
+            --pastel-lavender: rgba(210, 195, 225, 0.28);
+            --pastel-sky: rgba(195, 215, 235, 0.26);
+            --pastel-butter: rgba(245, 225, 185, 0.28);
+            --pastel-blush: rgba(235, 185, 195, 0.26);
+            --pastel-sage: rgba(195, 210, 190, 0.26);
+
+            --flame: #d97b67;
+            --ink: #2d2a26;
+            --ink-medium: #5a5550;
+            --ink-light: #9a9590;
+            --ink-whisper: rgba(45, 42, 38, 0.05);
+
+            /* Spacing */
+            --space-xs: 0.75rem;
+            --space-sm: 1.25rem;
+            --space-md: 2rem;
+            --space-lg: 3rem;
+            --space-xl: 4.5rem;
+            --space-2xl: 6rem;
+
+            /* Visual Effects */
+            --border-fine: 1px;
+            --shadow-soft: 0 4px 20px rgba(45, 42, 38, 0.06), 0 1px 4px rgba(45, 42, 38, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: var(--ink);
+            background: var(--bg-cream);
+            letter-spacing: -0.01em;
+        }
+
+        /* Subtle background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(45, 42, 38, 0.025) 1px, transparent 0);
+            background-size: 32px 32px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 clamp(1.5rem, 5vw, 10vw);
+        }
+
+        /* Header */
+        .header {
+            padding: var(--space-lg) 0;
+            border-bottom: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-title {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            letter-spacing: -0.03em;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--ink);
+            position: relative;
+        }
+
+        .site-title .flame {
+            display: inline-block;
+            font-size: 1.75rem;
+            filter: drop-shadow(0 0 12px rgba(217, 123, 103, 0.3));
+            animation: flicker 3s ease-in-out infinite, wobble 4s ease-in-out infinite;
+            transform-origin: center bottom;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-3deg) scale(1.05); }
+            75% { transform: rotate(3deg) scale(0.98); }
+        }
+
+        .site-title span:last-child {
+            position: relative;
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px dashed var(--flame);
+            border-left: none;
+            border-right: none;
+            box-shadow: 0 2px 4px rgba(217, 123, 103, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            padding: var(--space-2xl) 0 var(--space-xl);
+            position: relative;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(217, 123, 103, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .page-title {
+            font-size: clamp(3rem, 6vw, 5rem);
+            margin-bottom: var(--space-sm);
+            color: var(--ink);
+            position: relative;
+        }
+
+        .page-title::after {
+            content: '📚';
+            position: absolute;
+            top: -1.5rem;
+            right: -2rem;
+            font-size: 3rem;
+            opacity: 0.3;
+            transform: rotate(15deg);
+        }
+
+        .page-description {
+            font-size: 1.25rem;
+            font-style: italic;
+            color: var(--ink-medium);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-xl);
+            padding-bottom: var(--space-lg);
+            border-bottom: 2px solid var(--ink-whisper);
+        }
+
+        .filter-btn {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.6rem 1.2rem;
+            background: var(--bg-canvas);
+            border: var(--border-fine) solid var(--ink-whisper);
+            color: var(--ink-medium);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--flame);
+            color: var(--flame);
+        }
+
+        .filter-btn.active {
+            background: var(--flame);
+            color: white;
+            border-color: var(--flame);
+        }
+
+        /* Archive Grid */
+        .archive-section {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .month-header {
+            font-size: 2.5rem;
+            font-family: var(--font-display);
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            margin-bottom: var(--space-lg);
+            position: relative;
+            display: inline-block;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--pastel-butter);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            transform: rotate(-0.8deg);
+        }
+
+        .month-header::before {
+            content: '→';
+            position: absolute;
+            left: -2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: var(--flame);
+            opacity: 0.4;
+        }
+
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-xl);
+        }
+
+        .archive-card {
+            background: var(--bg-canvas);
+            padding: var(--space-lg);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            text-decoration: none;
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s;
+        }
+
+        .archive-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(45, 42, 38, 0.1);
+        }
+
+        /* Content type specific colors */
+        .archive-card[data-type="essay"] {
+            background: var(--pastel-peach);
+        }
+
+        .archive-card[data-type="video"] {
+            background: var(--pastel-sky);
+        }
+
+        .archive-card[data-type="podcast"] {
+            background: var(--pastel-mint);
+        }
+
+        .archive-card[data-type="thread"] {
+            background: var(--pastel-lavender);
+        }
+
+        .archive-card[data-type="paper"] {
+            background: var(--pastel-butter);
+        }
+
+        .archive-card[data-type="book"] {
+            background: var(--pastel-blush);
+        }
+
+        .archive-card[data-type="note"] {
+            background: var(--pastel-sage);
+        }
+
+        .archive-card:nth-child(odd) {
+            transform: rotate(0.4deg);
+        }
+
+        .archive-card:nth-child(even) {
+            transform: rotate(-0.5deg);
+        }
+
+        .archive-card:hover {
+            transform: rotate(0deg) translateY(-4px) !important;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-sm);
+        }
+
+        .card-type {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--ink-light);
+        }
+
+        .card-date {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            color: var(--ink-light);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+            line-height: 1.3;
+            color: var(--ink);
+        }
+
+        .card-excerpt {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-sm);
+            flex-grow: 1;
+        }
+
+        .card-meta {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            color: var(--ink-light);
+            display: flex;
+            gap: var(--space-sm);
+            padding-top: var(--space-sm);
+            border-top: var(--border-fine) solid rgba(45, 42, 38, 0.1);
+        }
+
+        /* Stats Section */
+        .archive-stats {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-lg);
+            flex-wrap: wrap;
+            margin-bottom: var(--space-2xl);
+            position: relative;
+        }
+
+        .archive-stats::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 3px;
+            background: var(--pastel-coral);
+        }
+
+        .archive-stats::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 3px;
+            background: var(--pastel-coral);
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: var(--space-lg) var(--space-md);
+            background: var(--bg-canvas);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            min-width: 140px;
+        }
+
+        .stat-item:nth-child(1) {
+            transform: rotate(-1.2deg);
+            background: var(--pastel-peach);
+        }
+
+        .stat-item:nth-child(2) {
+            transform: rotate(0.8deg);
+            background: var(--pastel-mint);
+        }
+
+        .stat-item:nth-child(3) {
+            transform: rotate(-0.6deg);
+            background: var(--pastel-sky);
+        }
+
+        .stat-item:nth-child(4) {
+            transform: rotate(1deg);
+            background: var(--pastel-butter);
+        }
+
+        .stat-item:nth-child(5) {
+            transform: rotate(-0.9deg);
+            background: var(--pastel-lavender);
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--ink);
+            display: block;
+            margin-bottom: var(--space-xs);
+        }
+
+        .stat-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--ink-medium);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-cream);
+            padding: var(--space-xl) 0 var(--space-lg);
+            margin-top: var(--space-2xl);
+            border-top: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .footer-content {
+            text-align: center;
+        }
+
+        .footer-title {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer-tagline {
+            font-style: italic;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .footer-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .archive-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                gap: 0.5rem;
+            }
+
+            .filter-btn {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.9rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .archive-card:nth-child(odd),
+            .archive-card:nth-child(even) {
+                transform: rotate(0deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="site-title">
+                    <span class="flame">🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </a>
+                <nav class="nav-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Reading</a>
+                    <a href="#">Subscribe</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Page Header -->
+        <header class="page-header">
+            <h1 class="page-title">Archive</h1>
+            <p class="page-description">
+                Every piece of signal rescued from the noise. Browse by type, date, or just wander.
+            </p>
+        </header>
+
+        <!-- Stats -->
+        <section class="archive-stats">
+            <div class="stat-item">
+                <span class="stat-number">247</span>
+                <span class="stat-label">Total Rescues</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">89</span>
+                <span class="stat-label">Essays</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">43</span>
+                <span class="stat-label">Videos</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">52</span>
+                <span class="stat-label">Podcasts</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">63</span>
+                <span class="stat-label">Other</span>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <div class="filters">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn">Essays</button>
+            <button class="filter-btn">Videos</button>
+            <button class="filter-btn">Podcasts</button>
+            <button class="filter-btn">Threads</button>
+            <button class="filter-btn">Papers</button>
+            <button class="filter-btn">Books</button>
+            <button class="filter-btn">Notes</button>
+        </div>
+
+        <!-- January 2025 -->
+        <section class="archive-section">
+            <h2 class="month-header">January 2025</h2>
+            <div class="archive-grid">
+                <a href="#" class="archive-card" data-type="essay">
+                    <div class="card-header">
+                        <span class="card-type">Essay</span>
+                        <span class="card-date">Jan 15</span>
+                    </div>
+                    <h3 class="card-title">The Tyranny of the Marginal User</h3>
+                    <p class="card-excerpt">
+                        How software companies optimize for the least engaged users at the expense
+                        of power users, and why this trend is hollowing out the internet's best tools.
+                    </p>
+                    <div class="card-meta">
+                        <span>12 min read</span>
+                        <span>•</span>
+                        <span>Ivan Vendrov</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="video">
+                    <div class="card-header">
+                        <span class="card-type">Video</span>
+                        <span class="card-date">Jan 14</span>
+                    </div>
+                    <h3 class="card-title">Kurzgesagt: Loneliness</h3>
+                    <p class="card-excerpt">
+                        A beautifully animated exploration of the loneliness epidemic and what
+                        science tells us about human connection in the modern world.
+                    </p>
+                    <div class="card-meta">
+                        <span>15 min watch</span>
+                        <span>•</span>
+                        <span>Kurzgesagt</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="podcast">
+                    <div class="card-header">
+                        <span class="card-type">Podcast</span>
+                        <span class="card-date">Jan 13</span>
+                    </div>
+                    <h3 class="card-title">Ezra Klein Interviews Alain de Botton</h3>
+                    <p class="card-excerpt">
+                        On status anxiety, the meaning of success, and what truly makes us happy
+                        in a world obsessed with achievement.
+                    </p>
+                    <div class="card-meta">
+                        <span>78 min listen</span>
+                        <span>•</span>
+                        <span>The Ezra Klein Show</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="essay">
+                    <div class="card-header">
+                        <span class="card-type">Essay</span>
+                        <span class="card-date">Jan 12</span>
+                    </div>
+                    <h3 class="card-title">Against Optimization</h3>
+                    <p class="card-excerpt">
+                        Why efficiency culture is killing creativity, and how embracing the
+                        meandering path leads to better work and richer lives.
+                    </p>
+                    <div class="card-meta">
+                        <span>8 min read</span>
+                        <span>•</span>
+                        <span>Maria Popova</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="thread">
+                    <div class="card-header">
+                        <span class="card-type">Thread</span>
+                        <span class="card-date">Jan 11</span>
+                    </div>
+                    <h3 class="card-title">@andy_matuschak on Learning Systems</h3>
+                    <p class="card-excerpt">
+                        A Twitter thread that completely changed how I think about knowledge work
+                        and spaced repetition systems for deep understanding.
+                    </p>
+                    <div class="card-meta">
+                        <span>5 min read</span>
+                        <span>•</span>
+                        <span>Andy Matuschak</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="paper">
+                    <div class="card-header">
+                        <span class="card-type">Paper</span>
+                        <span class="card-date">Jan 10</span>
+                    </div>
+                    <h3 class="card-title">As We May Think</h3>
+                    <p class="card-excerpt">
+                        Vannevar Bush's 1945 essay that predicted the internet decades before
+                        it existed. Visionary, prescient, and still relevant.
+                    </p>
+                    <div class="card-meta">
+                        <span>20 min read</span>
+                        <span>•</span>
+                        <span>Vannevar Bush</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="book">
+                    <div class="card-header">
+                        <span class="card-type">Book</span>
+                        <span class="card-date">Jan 9</span>
+                    </div>
+                    <h3 class="card-title">How to Do Nothing</h3>
+                    <p class="card-excerpt">
+                        Jenny Odell's brilliant critique of the attention economy and a practical
+                        guide to resisting its pull in daily life.
+                    </p>
+                    <div class="card-meta">
+                        <span>240 pages</span>
+                        <span>•</span>
+                        <span>Jenny Odell</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="note">
+                    <div class="card-header">
+                        <span class="card-type">Note</span>
+                        <span class="card-date">Jan 8</span>
+                    </div>
+                    <h3 class="card-title">Derek Sivers: Subtract</h3>
+                    <p class="card-excerpt">
+                        A short meditation on the power of subtraction over addition in both
+                        life and work. Simple but profound.
+                    </p>
+                    <div class="card-meta">
+                        <span>3 min read</span>
+                        <span>•</span>
+                        <span>Derek Sivers</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="essay">
+                    <div class="card-header">
+                        <span class="card-type">Essay</span>
+                        <span class="card-date">Jan 7</span>
+                    </div>
+                    <h3 class="card-title">The Garden and the Stream</h3>
+                    <p class="card-excerpt">
+                        Mike Caulfield's vision for a better web through digital gardens instead
+                        of algorithmic feeds. A manifesto for thoughtful knowledge building.
+                    </p>
+                    <div class="card-meta">
+                        <span>12 min read</span>
+                        <span>•</span>
+                        <span>Mike Caulfield</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- December 2024 -->
+        <section class="archive-section">
+            <h2 class="month-header">December 2024</h2>
+            <div class="archive-grid">
+                <a href="#" class="archive-card" data-type="essay">
+                    <div class="card-header">
+                        <span class="card-type">Essay</span>
+                        <span class="card-date">Dec 28</span>
+                    </div>
+                    <h3 class="card-title">Solitude and Leadership</h3>
+                    <p class="card-excerpt">
+                        William Deresiewicz's powerful critique of how constant connectivity
+                        prevents us from developing our own thoughts and ideas.
+                    </p>
+                    <div class="card-meta">
+                        <span>18 min read</span>
+                        <span>•</span>
+                        <span>William Deresiewicz</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="podcast">
+                    <div class="card-header">
+                        <span class="card-type">Podcast</span>
+                        <span class="card-date">Dec 25</span>
+                    </div>
+                    <h3 class="card-title">The Tim Ferriss Show: Naval Ravikant</h3>
+                    <p class="card-excerpt">
+                        On wealth creation, happiness, reading, and the importance of clear
+                        thinking in a world full of noise.
+                    </p>
+                    <div class="card-meta">
+                        <span>92 min listen</span>
+                        <span>•</span>
+                        <span>Tim Ferriss</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="video">
+                    <div class="card-header">
+                        <span class="card-type">Video</span>
+                        <span class="card-date">Dec 22</span>
+                    </div>
+                    <h3 class="card-title">Nerdwriter: In Praise of Shadows</h3>
+                    <p class="card-excerpt">
+                        A visual essay on Japanese aesthetics, the beauty of imperfection, and
+                        what we lose in our obsession with brightness.
+                    </p>
+                    <div class="card-meta">
+                        <span>12 min watch</span>
+                        <span>•</span>
+                        <span>Nerdwriter1</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="essay">
+                    <div class="card-header">
+                        <span class="card-type">Essay</span>
+                        <span class="card-date">Dec 20</span>
+                    </div>
+                    <h3 class="card-title">Reclaiming Conversation</h3>
+                    <p class="card-excerpt">
+                        Sherry Turkle on why face-to-face contact matters in a digital age,
+                        and what we lose when we choose screens over people.
+                    </p>
+                    <div class="card-meta">
+                        <span>14 min read</span>
+                        <span>•</span>
+                        <span>Sherry Turkle</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="book">
+                    <div class="card-header">
+                        <span class="card-type">Book</span>
+                        <span class="card-date">Dec 18</span>
+                    </div>
+                    <h3 class="card-title">Four Thousand Weeks</h3>
+                    <p class="card-excerpt">
+                        Oliver Burkeman's refreshing take on time management for mortals who've
+                        given up on productivity hacks and optimization.
+                    </p>
+                    <div class="card-meta">
+                        <span>288 pages</span>
+                        <span>•</span>
+                        <span>Oliver Burkeman</span>
+                    </div>
+                </a>
+
+                <a href="#" class="archive-card" data-type="essay">
+                    <div class="card-header">
+                        <span class="card-type">Essay</span>
+                        <span class="card-date">Dec 15</span>
+                    </div>
+                    <h3 class="card-title">The Art of Noticing</h3>
+                    <p class="card-excerpt">
+                        Rob Walker on how paying attention to the world around us can transform
+                        our experience of everyday life and make us more present.
+                    </p>
+                    <div class="card-meta">
+                        <span>10 min read</span>
+                        <span>•</span>
+                        <span>Rob Walker</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <h3 class="footer-title">
+                    <span>🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </h3>
+                <p class="footer-tagline">Rescuing signal from the algorithmic inferno</p>
+                <nav class="footer-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Subscribe</a>
+                    <a href="#">Reading</a>
+                </nav>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,139 @@
+---
+interface Props {
+  title: string;
+  excerpt: string;
+  slug: string;
+  articleType: string;
+  featured?: boolean;
+  curatorNotes?: string;
+  variant?: 'main' | 'secondary' | 'small';
+}
+
+const {
+  title,
+  excerpt,
+  slug,
+  articleType,
+  featured = false,
+  curatorNotes,
+  variant = 'small'
+} = Astro.props;
+
+const typeLabel = articleType.charAt(0).toUpperCase() + articleType.slice(1);
+---
+
+<article class={`article-card article-card--${variant}`}>
+  <a href={`/articles/${slug}`} class="article-link">
+    <span class="badge">{featured ? 'Featured ' : ''}{typeLabel}</span>
+    <h3 class="article-title">{title}</h3>
+    <p class="article-excerpt">{excerpt}</p>
+    {curatorNotes && variant === 'main' && (
+      <div class="curator-note">
+        <div class="curator-note-label">Why I Rescued This</div>
+        <p>{curatorNotes}</p>
+      </div>
+    )}
+  </a>
+</article>
+
+<style>
+  .article-card {
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+
+  .article-card--main {
+    background: var(--pastel-peach);
+    padding: var(--space-xl);
+    transform: rotate(-0.8deg);
+  }
+
+  .article-card--secondary {
+    background: var(--pastel-mint);
+    transform: rotate(0.6deg);
+  }
+
+  .article-card--secondary:nth-of-type(3) {
+    background: var(--pastel-lavender);
+    transform: rotate(-0.7deg);
+  }
+
+  .article-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.4rem 0.9rem;
+    background: rgba(255, 255, 255, 0.7);
+    border: var(--border-fine) solid var(--ink-whisper);
+    color: var(--ink);
+    margin-bottom: var(--space-sm);
+    width: fit-content;
+  }
+
+  .article-title {
+    font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+    margin-bottom: var(--space-sm);
+    line-height: 1.15;
+    color: var(--ink);
+  }
+
+  .article-card--main .article-title {
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+  }
+
+  .article-excerpt {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-md);
+  }
+
+  .curator-note {
+    background: rgba(255, 255, 255, 0.5);
+    padding: var(--space-md);
+    border-left: 3px solid var(--flame);
+    margin-top: auto;
+  }
+
+  .curator-note-label {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: var(--space-xs);
+    color: var(--flame);
+  }
+
+  .curator-note p {
+    font-style: italic;
+    font-size: 1.25rem;
+    color: var(--ink-medium);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 968px) {
+    .article-card--main,
+    .article-card--secondary {
+      transform: rotate(0deg) !important;
+    }
+  }
+</style>

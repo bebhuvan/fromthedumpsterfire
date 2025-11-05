@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAOTIC ELEGANCE MOCKUP - From The Dumpster Fire</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CHAOTIC ELEGANCE DESIGN SYSTEM
+           Bright, Translucent, Playful, Alive
+           ============================================ */
+
+        :root {
+            /* Typography - Elegant & Refined */
+            --font-display: 'DM Serif Display', Georgia, serif;
+            --font-body: 'Crimson Pro', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+
+            /* Color System - Soothing & Classic */
+            --bg-cream: #faf9f6;
+            --bg-canvas: #ffffff;
+            --bg-tint: rgba(250, 249, 246, 0.9);
+
+            /* Soothing Pastel Palette - Soft & Pleasing */
+            --pastel-coral: rgba(232, 145, 125, 0.25);
+            --pastel-peach: rgba(245, 195, 160, 0.28);
+            --pastel-mint: rgba(180, 215, 195, 0.26);
+            --pastel-lavender: rgba(210, 195, 225, 0.28);
+            --pastel-sky: rgba(195, 215, 235, 0.26);
+            --pastel-butter: rgba(245, 225, 185, 0.28);
+            --pastel-blush: rgba(235, 185, 195, 0.26);
+            --pastel-sage: rgba(195, 210, 190, 0.26);
+            --pastel-rose: rgba(235, 195, 205, 0.24);
+            --pastel-lilac: rgba(220, 205, 230, 0.26);
+            --pastel-sand: rgba(230, 215, 200, 0.26);
+            --pastel-clay: rgba(215, 190, 180, 0.24);
+
+            /* Refined Accent Colors */
+            --flame: #d97b67;
+            --flame-light: rgba(217, 123, 103, 0.12);
+            --flame-medium: rgba(217, 123, 103, 0.25);
+            --ink: #2d2a26;
+            --ink-medium: #5a5550;
+            --ink-light: #9a9590;
+            --ink-whisper: rgba(45, 42, 38, 0.05);
+
+            /* Spacing - Generous & Breathing */
+            --space-xs: 0.75rem;
+            --space-sm: 1.25rem;
+            --space-md: 2rem;
+            --space-lg: 3rem;
+            --space-xl: 4.5rem;
+            --space-2xl: 6rem;
+
+            /* Visual Effects - Soft & Subtle */
+            --border-fine: 1px;
+            --border-medium: 2px;
+            --shadow-soft: 0 4px 20px rgba(45, 42, 38, 0.06), 0 1px 4px rgba(45, 42, 38, 0.04);
+            --shadow-lift: 0 8px 32px rgba(45, 42, 38, 0.08), 0 2px 8px rgba(45, 42, 38, 0.05);
+            --shadow-float: 0 12px 48px rgba(45, 42, 38, 0.1), 0 4px 12px rgba(45, 42, 38, 0.06);
+            --blur-glass: blur(12px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: var(--ink);
+            background: var(--bg-cream);
+            letter-spacing: -0.01em;
+            position: relative;
+        }
+
+        /* Subtle paper texture */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 3px,
+                    rgba(45, 42, 38, 0.008) 3px,
+                    rgba(45, 42, 38, 0.008) 6px
+                );
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Typography - Refined Elegance */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 7vw, 5.5rem);
+            margin-bottom: var(--space-md);
+        }
+
+        h2 {
+            font-size: clamp(2rem, 4.5vw, 3.25rem);
+            margin-bottom: var(--space-sm);
+        }
+
+        h3 {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            margin-bottom: var(--space-sm);
+        }
+
+        /* Layout Container */
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 0 clamp(1.5rem, 5vw, 6rem);
+        }
+
+        /* Header - Elegant & Minimal */
+        .header {
+            padding: var(--space-lg) 0;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: var(--blur-glass);
+            border-bottom: var(--border-fine) solid var(--ink-whisper);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-title {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            letter-spacing: -0.03em;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .site-title .flame {
+            display: inline-block;
+            font-size: 1.75rem;
+            filter: drop-shadow(0 0 12px rgba(224, 120, 86, 0.3));
+            animation: flicker 3s ease-in-out infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.9; }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--space-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--flame);
+        }
+
+        /* Hero - Dynamic Mosaic Layout */
+        .hero {
+            padding: var(--space-2xl) 0;
+        }
+
+        .tagline {
+            font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+            font-style: italic;
+            font-weight: 300;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-xl);
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+        }
+
+        .tagline::before {
+            content: '✺';
+            position: absolute;
+            left: -2rem;
+            top: 50%;
+            transform: translateY(-50%) rotate(20deg);
+            opacity: 0.15;
+            font-size: 1.5rem;
+            color: var(--flame);
+        }
+
+        .tagline::after {
+            content: '✺';
+            position: absolute;
+            right: -2rem;
+            top: 50%;
+            transform: translateY(-50%) rotate(-20deg);
+            opacity: 0.15;
+            font-size: 1.5rem;
+            color: var(--flame);
+        }
+
+        /* Masonry-style Featured Grid */
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-xl);
+        }
+
+        .featured-card {
+            background: var(--bg-canvas);
+            padding: var(--space-lg);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .featured-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--flame-medium);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .featured-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-float);
+            border-color: rgba(224, 120, 86, 0.2);
+        }
+
+        .featured-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Featured Large - Hero Article */
+        .featured-large {
+            grid-column: span 7;
+            grid-row: span 2;
+            background: var(--pastel-peach);
+            padding: var(--space-xl);
+            transform: rotate(-1.2deg);
+            position: relative;
+            z-index: 2;
+        }
+
+        .featured-large:hover {
+            transform: rotate(-0.5deg) translateY(-6px);
+        }
+
+        /* Featured Medium - Secondary Articles */
+        .featured-medium {
+            grid-column: span 5;
+            background: var(--pastel-lavender);
+            transform: rotate(1.5deg);
+            position: relative;
+        }
+
+        .featured-medium:nth-child(3) {
+            background: var(--pastel-mint);
+            transform: rotate(-1.3deg) translateY(0.5rem);
+        }
+
+        /* Featured Small - Quick Picks */
+        .featured-small {
+            grid-column: span 4;
+            background: var(--pastel-sky);
+            padding: var(--space-md);
+            transform: rotate(1.2deg);
+        }
+
+        .featured-small:nth-child(4) {
+            background: var(--pastel-butter);
+            transform: rotate(-1.8deg);
+        }
+
+        .featured-small:nth-child(5) {
+            background: var(--pastel-blush);
+            transform: rotate(2.2deg) translateX(-0.25rem);
+        }
+
+        .featured-small:nth-child(6) {
+            background: var(--pastel-sage);
+            transform: rotate(-0.8deg) translateY(0.5rem);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 0.4rem 0.9rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border: var(--border-fine) solid var(--ink-whisper);
+            color: var(--ink);
+            margin-bottom: var(--space-sm);
+            transform: rotate(-1.5deg);
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .featured-large .badge {
+            background: rgba(255, 255, 255, 0.8);
+            transform: rotate(1.8deg);
+        }
+
+        .featured-medium .badge {
+            transform: rotate(-2.2deg);
+        }
+
+        .featured-small .badge {
+            transform: rotate(2.5deg);
+        }
+
+        .featured-title {
+            font-size: clamp(1.5rem, 3vw, 2.75rem);
+            margin-bottom: var(--space-sm);
+            line-height: 1.15;
+        }
+
+        .featured-large .featured-title {
+            font-size: clamp(2.25rem, 4vw, 3.5rem);
+        }
+
+        .featured-excerpt {
+            font-size: 1.125rem;
+            line-height: 1.65;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .featured-large .featured-excerpt {
+            font-size: 1.25rem;
+        }
+
+        .read-more {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--flame);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: gap 0.3s ease;
+        }
+
+        .read-more:hover {
+            gap: 0.75rem;
+        }
+
+        .read-more::after {
+            content: '→';
+        }
+
+        /* Curator Note - Softer Treatment */
+        .curator-note {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            padding: var(--space-md);
+            border-left: 3px solid var(--flame);
+            margin-top: var(--space-md);
+        }
+
+        .curator-note-label {
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: var(--space-xs);
+            color: var(--flame);
+        }
+
+        .curator-note p {
+            font-style: italic;
+            font-size: 1rem;
+            color: var(--ink-medium);
+        }
+
+        /* Section Headers */
+        .section-header {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+            padding: var(--space-lg) 0;
+            position: relative;
+        }
+
+        .section-header::before {
+            content: '✦';
+            position: absolute;
+            top: -1rem;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            font-size: 2rem;
+            color: var(--flame);
+            opacity: 0.2;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 2px;
+            background: var(--flame-medium);
+            border-radius: 50%;
+        }
+
+        .section-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: var(--space-xs);
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-subtitle {
+            font-size: 1.25rem;
+            font-style: italic;
+            font-weight: 300;
+            color: var(--ink-medium);
+            position: relative;
+        }
+
+        .section-subtitle::before {
+            content: '~';
+            margin-right: 0.5rem;
+            opacity: 0.3;
+        }
+
+        .section-subtitle::after {
+            content: '~';
+            margin-left: 0.5rem;
+            opacity: 0.3;
+        }
+
+        /* Flowing Grid Section */
+        .flowing-grid {
+            padding: var(--space-2xl) 0;
+            background: var(--bg-cream);
+        }
+
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--space-lg);
+        }
+
+        .flow-card {
+            background: var(--bg-canvas);
+            padding: var(--space-lg);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-soft);
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .flow-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--flame-light);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .flow-card:hover {
+            transform: translateY(-4px) rotate(-0.5deg);
+            box-shadow: var(--shadow-lift);
+        }
+
+        .flow-card:hover::after {
+            opacity: 1;
+        }
+
+        .flow-card:nth-child(1) {
+            transform: rotate(1.3deg);
+            background: var(--bg-canvas);
+            border-left: 3px solid var(--pastel-coral);
+        }
+
+        .flow-card:nth-child(2) {
+            transform: rotate(-1.5deg) translateY(0.25rem);
+            background: var(--bg-canvas);
+            border-left: 3px solid var(--pastel-sky);
+        }
+
+        .flow-card:nth-child(3) {
+            transform: rotate(0.8deg);
+            background: var(--bg-canvas);
+            border-left: 3px solid var(--pastel-mint);
+        }
+
+        .flow-card:nth-child(4) {
+            transform: rotate(-1.2deg);
+            background: var(--bg-canvas);
+            border-left: 3px solid var(--pastel-lavender);
+        }
+
+        .flow-card:nth-child(5) {
+            transform: rotate(1.6deg) translateX(0.25rem);
+            background: var(--bg-canvas);
+            border-left: 3px solid var(--pastel-blush);
+        }
+
+        .flow-card:nth-child(6) {
+            transform: rotate(-0.9deg) translateY(0.5rem);
+            background: var(--bg-canvas);
+            border-left: 3px solid var(--pastel-butter);
+        }
+
+        .flow-card:nth-child(odd):hover {
+            transform: translateY(-4px) rotate(0deg);
+        }
+
+        .flow-card:nth-child(even):hover {
+            transform: translateY(-4px) rotate(0deg);
+        }
+
+        .content-type {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--ink-light);
+            margin-bottom: var(--space-xs);
+        }
+
+        .flow-card h3 {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .flow-card p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--ink-medium);
+        }
+
+        /* Art Showcase - Refined */
+        .art-showcase {
+            padding: var(--space-2xl) 0;
+        }
+
+        .art-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: var(--space-xl);
+            align-items: center;
+        }
+
+        .art-frame {
+            background: var(--bg-canvas);
+            padding: var(--space-md);
+            border: var(--border-fine) solid var(--ink-whisper);
+            box-shadow: var(--shadow-lift);
+            transform: rotate(-2.5deg);
+            transition: transform 0.4s ease;
+            position: relative;
+        }
+
+
+        .art-frame:hover {
+            transform: rotate(0.5deg);
+        }
+
+        .art-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--pastel-lavender);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: var(--ink-light);
+            position: relative;
+        }
+
+        .art-info h3 {
+            font-size: 2.5rem;
+            font-style: italic;
+            margin-bottom: var(--space-xs);
+        }
+
+        .art-artist {
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .art-description {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--ink-medium);
+        }
+
+        /* Pull Quote - Elegant */
+        .pull-quote {
+            padding: var(--space-xl) 0;
+            margin: var(--space-2xl) 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .pull-quote::before,
+        .pull-quote::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--ink-whisper);
+        }
+
+        .pull-quote::before {
+            top: 0;
+        }
+
+        .pull-quote::after {
+            bottom: 0;
+        }
+
+        .pull-quote blockquote {
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            font-style: italic;
+            font-weight: 300;
+            line-height: 1.4;
+            max-width: 900px;
+            margin: 0 auto;
+            color: var(--ink-medium);
+            position: relative;
+        }
+
+        .pull-quote blockquote::before {
+            content: '"';
+            position: absolute;
+            top: -0.5rem;
+            left: -0.75rem;
+            font-size: 6rem;
+            font-family: var(--font-display);
+            opacity: 0.1;
+            line-height: 1;
+        }
+
+        .pull-quote cite {
+            display: block;
+            font-size: 1rem;
+            font-style: normal;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            margin-top: var(--space-md);
+            color: var(--ink-light);
+        }
+
+        /* Footer - Clean & Refined */
+        .footer {
+            background: var(--bg-cream);
+            padding: var(--space-2xl) 0 var(--space-lg);
+            margin-top: var(--space-2xl);
+            border-top: var(--border-fine) solid var(--ink-whisper);
+        }
+
+        .footer-content {
+            text-align: center;
+        }
+
+        .footer-title {
+            font-size: 1.75rem;
+            margin-bottom: var(--space-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer-tagline {
+            font-style: italic;
+            color: var(--ink-medium);
+            margin-bottom: var(--space-md);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .footer-links a {
+            color: var(--ink-medium);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--flame);
+        }
+
+        /* Design Note Badge */
+        .design-note {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: var(--blur-glass);
+            border: var(--border-fine) solid var(--flame-light);
+            color: var(--flame);
+            padding: 0.75rem 1.25rem;
+            border-radius: 50px;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: var(--shadow-soft);
+            z-index: 1000;
+            transform: rotate(-2deg);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .featured-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .featured-card,
+            .featured-large,
+            .featured-medium,
+            .featured-small {
+                grid-column: span 1 !important;
+                grid-row: span 1 !important;
+                transform: rotate(0deg) !important;
+            }
+
+            .art-container {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .flow-card {
+                transform: rotate(0deg) !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Design Note Badge -->
+    <div class="design-note">
+        ✦ CHAOTIC ELEGANCE ✦
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="site-title">
+                    <span class="flame">🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </h1>
+                <nav class="nav-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Reading</a>
+                    <a href="#">Subscribe</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <p class="tagline">
+                One information addict's rescue work for the internet age
+            </p>
+
+            <!-- Dynamic Mosaic Featured Grid -->
+            <div class="featured-grid">
+                <!-- Hero Feature (Large) -->
+                <article class="featured-card featured-large">
+                    <span class="badge">Featured Essay</span>
+                    <h2 class="featured-title">The Tyranny of the Marginal User</h2>
+                    <p class="featured-excerpt">
+                        How software companies optimize for the least engaged users at the expense of power users,
+                        and why this trend is hollowing out the internet's best tools. A manifesto for depth over scale.
+                    </p>
+                    <div class="curator-note">
+                        <div class="curator-note-label">Why I Rescued This</div>
+                        <p>
+                            This essay crystallizes something I've felt for years but couldn't articulate.
+                            The constant dumbing down of tools in the name of "accessibility" is actually
+                            making them less accessible to those who want to go deep.
+                        </p>
+                    </div>
+                    <a href="#" class="read-more">Read Essay</a>
+                </article>
+
+                <!-- Secondary Features (Medium) -->
+                <article class="featured-card featured-medium">
+                    <span class="badge">Podcast</span>
+                    <h3 class="featured-title">Ezra Klein Interviews Alain de Botton</h3>
+                    <p class="featured-excerpt">
+                        On status anxiety, the meaning of success, and what truly makes us happy in a world
+                        obsessed with achievement.
+                    </p>
+                    <a href="#" class="read-more">Listen</a>
+                </article>
+
+                <article class="featured-card featured-medium">
+                    <span class="badge">Video Essay</span>
+                    <h3 class="featured-title">Against Optimization</h3>
+                    <p class="featured-excerpt">
+                        Why efficiency culture is killing creativity, and how embracing the meandering path
+                        leads to better work and richer lives.
+                    </p>
+                    <a href="#" class="read-more">Watch</a>
+                </article>
+
+                <!-- Quick Picks (Small) -->
+                <article class="featured-card featured-small">
+                    <span class="badge">Thread</span>
+                    <h3 class="featured-title">On Slowness</h3>
+                    <p class="featured-excerpt">
+                        Jenny Odell on the radical act of doing nothing in an attention economy.
+                    </p>
+                    <a href="#" class="read-more">View Thread</a>
+                </article>
+
+                <article class="featured-card featured-small">
+                    <span class="badge">Paper</span>
+                    <h3 class="featured-title">As We May Think</h3>
+                    <p class="featured-excerpt">
+                        Vannevar Bush's 1945 essay that predicted the internet decades before it existed.
+                    </p>
+                    <a href="#" class="read-more">Read Paper</a>
+                </article>
+
+                <article class="featured-card featured-small">
+                    <span class="badge">Note</span>
+                    <h3 class="featured-title">Derek Sivers: Subtract</h3>
+                    <p class="featured-excerpt">
+                        A short meditation on the power of subtraction over addition.
+                    </p>
+                    <a href="#" class="read-more">Read Note</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pull Quote -->
+    <section class="pull-quote">
+        <div class="container">
+            <blockquote>
+                We've optimized for engagement over enlightenment, for virality over truth,
+                for the marginal user over the dedicated one.
+            </blockquote>
+            <cite>Ivan Mir, The Tyranny of the Marginal User</cite>
+        </div>
+    </section>
+
+    <!-- Rabbit Holes Section -->
+    <section class="flowing-grid">
+        <div class="container">
+            <header class="section-header">
+                <h2 class="section-title">Rabbit Holes</h2>
+                <p class="section-subtitle">Quick picks to fall into this week</p>
+            </header>
+
+            <div class="flow-grid">
+                <article class="flow-card">
+                    <div class="content-type">Essay</div>
+                    <h3>The Garden and the Stream</h3>
+                    <p>
+                        Mike Caulfield's vision for a better web through digital gardens instead of
+                        algorithmic feeds. A manifesto for thoughtful knowledge building.
+                    </p>
+                </article>
+
+                <article class="flow-card">
+                    <div class="content-type">Video</div>
+                    <h3>Kurzgesagt: Loneliness</h3>
+                    <p>
+                        A beautifully animated exploration of the loneliness epidemic and what
+                        science tells us about human connection.
+                    </p>
+                </article>
+
+                <article class="flow-card">
+                    <div class="content-type">Book</div>
+                    <h3>How to Do Nothing</h3>
+                    <p>
+                        Jenny Odell's brilliant critique of the attention economy and a guide to
+                        resisting its pull. Essential reading for our times.
+                    </p>
+                </article>
+
+                <article class="flow-card">
+                    <div class="content-type">Thread</div>
+                    <h3>@andy_matuschak on Learning</h3>
+                    <p>
+                        A Twitter thread that completely changed how I think about knowledge work
+                        and spaced repetition systems.
+                    </p>
+                </article>
+
+                <article class="flow-card">
+                    <div class="content-type">Poem</div>
+                    <h3>The Peace of Wild Things</h3>
+                    <p>
+                        Wendell Berry's meditation on finding solace in nature when the news of
+                        the world becomes too much to bear.
+                    </p>
+                </article>
+
+                <article class="flow-card">
+                    <div class="content-type">Paper</div>
+                    <h3>Attention Is All You Need</h3>
+                    <p>
+                        The 2017 paper that introduced the Transformer architecture and changed
+                        the course of AI research forever.
+                    </p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Art of the Week -->
+    <section class="art-showcase">
+        <div class="container">
+            <header class="section-header">
+                <h2 class="section-title">Art of the Week</h2>
+            </header>
+
+            <div class="art-container">
+                <div class="art-frame">
+                    <div class="art-image">
+                        [Edward Hopper's Nighthawks]
+                    </div>
+                </div>
+                <div class="art-info">
+                    <h3>Nighthawks</h3>
+                    <div class="art-artist">Edward Hopper, 1942</div>
+                    <p class="art-description">
+                        Hopper's masterpiece captures urban isolation in a way that feels more
+                        relevant than ever. The fluorescent diner, the anonymous figures, the
+                        empty street—this is loneliness in the age of abundance. A quiet reminder
+                        that connection requires more than proximity.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <h3 class="footer-title">
+                    <span>🔥</span>
+                    <span>FROM THE DUMPSTER FIRE</span>
+                </h3>
+                <p class="footer-tagline">Rescuing signal from the algorithmic inferno</p>
+                <nav class="footer-links">
+                    <a href="#">About</a>
+                    <a href="#">Archive</a>
+                    <a href="#">Subscribe</a>
+                    <a href="#">Reading</a>
+                </nav>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

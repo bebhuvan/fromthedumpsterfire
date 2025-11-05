@@ -1,0 +1,303 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allBooks = await getCollection('books');
+const sortedBooks = allBooks.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf());
+
+const readingBooks = sortedBooks.filter(book => book.data.status === 'reading');
+const finishedBooks = sortedBooks.filter(book => book.data.status === 'finished');
+const toReadBooks = sortedBooks.filter(book => book.data.status === 'to-read');
+---
+
+<BaseLayout title="On My Shelf - From The Dumpster Fire">
+  <div class="container">
+    <div class="page-header">
+      <h1>On My Shelf</h1>
+      <p class="page-intro">
+        Books I'm reading, have read, and want to read. Each one has taught me something,
+        challenged me, or simply made me think differently about the world.
+      </p>
+    </div>
+
+    {readingBooks.length > 0 && (
+      <>
+        <div class="section-heading">
+          <h2>Currently Reading</h2>
+        </div>
+
+        <section class="books-section">
+          <div class="books-grid">
+            {readingBooks.map(book => (
+              <article class="book-card">
+                <div class="book-cover">
+                  {book.data.coverImage ? (
+                    <img src={book.data.coverImage} alt={`${book.data.title} cover`} loading="lazy" />
+                  ) : (
+                    '[Book Cover]'
+                  )}
+                </div>
+                <h3 class="book-title">{book.data.title}</h3>
+                <div class="book-author">{book.data.author}</div>
+                <p class="book-note">{book.data.curatorNote}</p>
+                {book.data.purchaseUrl && (
+                  <a href={book.data.purchaseUrl} class="book-link" target="_blank" rel="noopener">
+                    Get this book →
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      </>
+    )}
+
+    {finishedBooks.length > 0 && (
+      <>
+        <div class="section-heading">
+          <h2>Finished</h2>
+        </div>
+
+        <section class="books-section">
+          <div class="books-grid">
+            {finishedBooks.map(book => (
+              <article class="book-card">
+                <div class="book-cover">
+                  {book.data.coverImage ? (
+                    <img src={book.data.coverImage} alt={`${book.data.title} cover`} loading="lazy" />
+                  ) : (
+                    '[Book Cover]'
+                  )}
+                </div>
+                <h3 class="book-title">{book.data.title}</h3>
+                <div class="book-author">{book.data.author}</div>
+                <p class="book-note">{book.data.curatorNote}</p>
+                {book.data.purchaseUrl && (
+                  <a href={book.data.purchaseUrl} class="book-link" target="_blank" rel="noopener">
+                    Get this book →
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      </>
+    )}
+
+    {toReadBooks.length > 0 && (
+      <>
+        <div class="section-heading">
+          <h2>Want to Read</h2>
+        </div>
+
+        <section class="books-section">
+          <div class="books-grid">
+            {toReadBooks.map(book => (
+              <article class="book-card">
+                <div class="book-cover">
+                  {book.data.coverImage ? (
+                    <img src={book.data.coverImage} alt={`${book.data.title} cover`} loading="lazy" />
+                  ) : (
+                    '[Book Cover]'
+                  )}
+                </div>
+                <h3 class="book-title">{book.data.title}</h3>
+                <div class="book-author">{book.data.author}</div>
+                <p class="book-note">{book.data.curatorNote}</p>
+                {book.data.purchaseUrl && (
+                  <a href={book.data.purchaseUrl} class="book-link" target="_blank" rel="noopener">
+                    Get this book →
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      </>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .page-header {
+    text-align: center;
+    padding: var(--space-2xl) 0 var(--space-xl);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .page-header h1 {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    margin-bottom: var(--space-md);
+  }
+
+  .page-intro {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: var(--ink-medium);
+    font-style: italic;
+  }
+
+  .section-heading {
+    text-align: center;
+    margin: var(--space-2xl) 0 var(--space-xl);
+  }
+
+  .section-heading h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    position: relative;
+    display: inline-block;
+  }
+
+  .section-heading::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 2px;
+    background: var(--flame);
+    margin: var(--space-sm) auto 0;
+  }
+
+  .books-section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .books-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xl);
+  }
+
+  .book-card {
+    background: var(--bg-canvas);
+    padding: var(--space-md);
+    border: 3px solid rgba(45, 42, 38, 0.2);
+    text-align: left;
+    transition: all 0.3s ease;
+    box-shadow:
+      8px 8px 0 rgba(217, 123, 103, 0.15),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.04),
+      inset 0 2px 3px rgba(255, 255, 255, 0.8);
+  }
+
+  .book-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow:
+      10px 11px 0 rgba(217, 123, 103, 0.18),
+      inset 0 -3px 8px rgba(0, 0, 0, 0.05),
+      inset 0 2px 3px rgba(255, 255, 255, 0.8);
+  }
+
+  .book-card:nth-child(8n+1) {
+    transform: rotate(0.6deg);
+    background: var(--pastel-peach);
+  }
+  .book-card:nth-child(8n+2) {
+    transform: rotate(-0.4deg);
+    background: var(--pastel-mint);
+  }
+  .book-card:nth-child(8n+3) {
+    transform: rotate(0.3deg);
+    background: var(--pastel-lavender);
+  }
+  .book-card:nth-child(8n+4) {
+    transform: rotate(-0.5deg);
+    background: var(--pastel-sky);
+  }
+  .book-card:nth-child(8n+5) {
+    transform: rotate(0.7deg);
+    background: var(--pastel-butter);
+  }
+  .book-card:nth-child(8n+6) {
+    transform: rotate(-0.6deg);
+    background: var(--pastel-blush);
+  }
+  .book-card:nth-child(8n+7) {
+    transform: rotate(0.4deg);
+    background: var(--pastel-sage);
+  }
+  .book-card:nth-child(8n) {
+    transform: rotate(-0.8deg);
+    background: var(--pastel-rose);
+  }
+
+  .book-cover {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: var(--bg-canvas);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-light);
+    font-size: 0.85rem;
+    border: 2px solid rgba(45, 42, 38, 0.15);
+    box-shadow: 0 3px 8px rgba(45, 42, 38, 0.15);
+    overflow: hidden;
+  }
+
+  .book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .book-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .book-author {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-sm);
+    font-weight: 600;
+    font-style: italic;
+  }
+
+  .book-note {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-bottom: var(--space-sm);
+    opacity: 0.9;
+  }
+
+  .book-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .book-link:hover {
+    color: var(--ink);
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 968px) {
+    .page-header {
+      padding: var(--space-xl) 0 var(--space-lg);
+    }
+
+    .page-intro {
+      font-size: 1.05rem;
+    }
+
+    .books-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .book-card {
+      transform: rotate(0deg) !important;
+    }
+  }
+</style>

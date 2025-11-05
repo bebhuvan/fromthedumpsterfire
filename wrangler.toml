@@ -1,0 +1,43 @@
+name = "fromthedumpsterfire"
+main = "src/_worker.js"
+compatibility_date = "2025-01-01"
+
+# Static Assets Configuration
+# Cloudflare Workers with static asset serving and custom edge logic
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+# Browser cache TTL (how long browsers cache before revalidating)
+# Edge cache TTL is controlled in _worker.js
+
+# Custom domain routes (configure in Cloudflare Dashboard after adding domain)
+# Uncomment and redeploy after domain is added to Cloudflare:
+#
+# [[routes]]
+# pattern = "fromthedumpsterfire.com/*"
+# zone_name = "fromthedumpsterfire.com"
+#
+# [[routes]]
+# pattern = "www.fromthedumpsterfire.com/*"
+# zone_name = "fromthedumpsterfire.com"
+#
+# Note: Both domains will serve the site. Create a Redirect Rule in
+# Cloudflare Dashboard to redirect www → non-www for SEO best practices.
+
+# Environment Variables (optional)
+[vars]
+ENVIRONMENT = "production"
+
+# Build configuration
+[build]
+command = "npm run build"
+
+# Observability (optional - for paid plans)
+# [observability]
+# enabled = true
+
+# Limits (increase if needed on paid plan)
+# [limits]
+# cpu_ms = 50

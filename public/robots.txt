@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Crawl-delay: 1
+
+# Disallow admin or dev paths (if any exist in future)
+Disallow: /admin/
+Disallow: /_astro/
+
+# Allow all content
+Allow: /articles/
+Allow: /art/
+Allow: /poems/
+Allow: /archive/
+Allow: /about/
+Allow: /subscribe/
+
+# Sitemaps
+Sitemap: https://fromthedumpsterfire.com/sitemap-index.xml
+Sitemap: https://fromthedumpsterfire.com/sitemap-0.xml

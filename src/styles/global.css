@@ -1,0 +1,304 @@
+/* ============================================
+   FROM THE DUMPSTER FIRE
+   Classic Editorial Design System
+   Soothing, Thoughtful, Classy
+   ============================================ */
+
+/* Self-hosted Fonts with Metric Overrides */
+/* Using font-display: swap with metric overrides to prevent CLS */
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/crimson-pro-regular.ttf') format('truetype');
+  size-adjust: 95.2%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/crimson-pro-italic.ttf') format('truetype');
+  size-adjust: 95.2%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'DM Serif Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/dm-serif-display-regular.ttf') format('truetype');
+  size-adjust: 98.5%;
+  ascent-override: 95%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'DM Serif Display';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/dm-serif-display-italic.ttf') format('truetype');
+  size-adjust: 98.5%;
+  ascent-override: 95%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/inter-400.ttf') format('truetype');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/inter-500.ttf') format('truetype');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/inter-600.ttf') format('truetype');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/inter-700.ttf') format('truetype');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+:root {
+  /* Typography - Optimized fallbacks to prevent FOIT */
+  --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* System font fallback (instant render) */
+  --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Soothing Color Palette */
+  --bg-cream: #faf9f6;
+  --bg-canvas: #ffffff;
+
+  /* Pastels — more saturated, more confident */
+  --pastel-coral: rgba(232, 145, 125, 0.35);
+  --pastel-peach: rgba(245, 195, 160, 0.38);
+  --pastel-mint: rgba(180, 215, 195, 0.36);
+  --pastel-lavender: rgba(210, 195, 225, 0.38);
+  --pastel-sky: rgba(195, 215, 235, 0.36);
+  --pastel-butter: rgba(245, 225, 185, 0.38);
+  --pastel-blush: rgba(235, 185, 195, 0.36);
+  --pastel-sage: rgba(195, 210, 190, 0.36);
+  --pastel-rose: rgba(235, 195, 205, 0.34);
+
+  /* Primary colors — stronger, more confident */
+  --flame: #d4543e;
+  --flame-light: rgba(212, 84, 62, 0.12);
+  --ink: #2d2a26;
+  --ink-dark: #1a1816;  /* True black for hero moments */
+  --ink-medium: #4a4540;
+  --ink-light: #6e6760;
+  --ink-whisper: rgba(45, 42, 38, 0.05);
+
+  /* Spacing - Refined vertical rhythm */
+  --space-xs: 0.75rem;
+  --space-sm: 1.25rem;
+  --space-md: 2rem;
+  --space-lg: 3rem;
+  --space-xl: 5rem;        /* increased from 4.5rem */
+  --space-2xl: 7.5rem;      /* increased from 6rem */
+  --space-3xl: 10rem;       /* new - for major section breaks */
+
+  /* Visual Effects */
+  --border-fine: 1px;
+  --shadow-soft: 0 4px 20px rgba(45, 42, 38, 0.06), 0 1px 4px rgba(45, 42, 38, 0.04);
+  --shadow-lift: 0 8px 32px rgba(45, 42, 38, 0.08), 0 2px 8px rgba(45, 42, 38, 0.05);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: var(--ink);
+  background: var(--bg-cream);
+  letter-spacing: -0.01em;
+  position: relative;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: oldstyle-nums;
+  hanging-punctuation: first last;
+  font-feature-settings:
+    "kern" 1,     /* kerning for better spacing */
+    "liga" 1,     /* standard ligatures (fi, fl, etc) */
+    "calt" 1;     /* contextual alternates */
+}
+
+/* Thoughtful background - subtle dots pattern */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle at 1px 1px, rgba(45, 42, 38, 0.025) 1px, transparent 0);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums;  /* uniform numbers in headings */
+}
+
+h1 {
+  font-size: clamp(3.5rem, 8vw, 6.5rem);
+  margin-bottom: var(--space-md);
+  color: var(--ink-dark);
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  margin-bottom: var(--space-sm);
+  letter-spacing: -0.035em;
+}
+
+h3 {
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  margin-bottom: var(--space-sm);
+  letter-spacing: -0.025em;
+}
+
+/* Links */
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
+a:focus-visible {
+  outline: 3px solid var(--flame);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--flame);
+  outline-offset: 3px;
+}
+
+/* Layout Container */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 4vw, 3rem);
+}
+
+/* Utility Classes */
+.flourish {
+  text-align: center;
+  margin: var(--space-2xl) 0;
+  color: var(--ink-whisper);
+  font-size: 2rem;
+}
+
+/* Animations */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-3deg) scale(1.05); }
+  75% { transform: rotate(3deg) scale(0.98); }
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  body {
+    font-size: 1.125rem;
+  }
+
+  /* Remove tilts on mobile for better readability */
+  .featured-main,
+  .featured-secondary,
+  .rabbit-card,
+  .book-card,
+  .deep-cut-card {
+    transform: rotate(0deg) !important;
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .featured-main,
+  .featured-secondary,
+  .rabbit-card,
+  .book-card,
+  .poem-container,
+  .letter-card {
+    transform: none !important;
+  }
+}

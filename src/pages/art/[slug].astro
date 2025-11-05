@@ -1,0 +1,487 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const artworks = await getCollection('art');
+  return artworks.map(artwork => ({
+    params: { slug: artwork.slug },
+    props: { artwork }
+  }));
+}
+
+const { artwork } = Astro.props;
+const { Content } = await artwork.render();
+---
+
+<BaseLayout
+  title={`${artwork.data.title} - From The Dumpster Fire`}
+  description={artwork.data.context}
+  article={true}
+  publishedTime={artwork.data.publishedDate.toISOString()}
+  modifiedTime={artwork.data.publishedDate.toISOString()}
+  author={artwork.data.artist}
+  section="Art"
+  tags={artwork.data.topics}
+>
+  <article class="art-page">
+    <div class="container">
+      <!-- Header Section -->
+      <header class="art-header">
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span class="separator">→</span>
+          <span>Art of the Week</span>
+        </div>
+
+        <h1 class="art-title">{artwork.data.title}</h1>
+
+        <div class="art-meta">
+          <div class="artist-info">
+            <span class="artist-name">{artwork.data.artist}</span>
+            {artwork.data.year && <span class="art-year">({artwork.data.year})</span>}
+          </div>
+          {artwork.data.medium && (
+            <div class="art-medium">{artwork.data.medium}</div>
+          )}
+          {artwork.data.location && (
+            <div class="art-location">
+              <span class="location-icon">📍</span>
+              {artwork.data.location}
+            </div>
+          )}
+        </div>
+
+        <div class="divider"></div>
+      </header>
+
+      <!-- Art Image -->
+      {artwork.data.imageUrl && (
+        <section class="art-image-section">
+          <div class="art-frame">
+            <img
+              src={artwork.data.imageUrl}
+              alt={artwork.data.imageAlt || artwork.data.title}
+              class="art-image"
+              loading="eager"
+            />
+          </div>
+          {artwork.data.imageAlt && (
+            <p class="image-caption">{artwork.data.imageAlt}</p>
+          )}
+        </section>
+      )}
+
+      <!-- Context -->
+      {artwork.data.context && (
+        <section class="art-context">
+          <p class="context-text">{artwork.data.context}</p>
+        </section>
+      )}
+
+      <div class="flourish-divider">
+        <span>✦ ✦ ✦</span>
+      </div>
+
+      <!-- Full Analysis -->
+      <section class="analysis-section">
+        <div class="analysis-content">
+          <Content />
+        </div>
+      </section>
+
+      <!-- Curator Notes -->
+      {artwork.data.curatorNotes && (
+        <aside class="curator-notes-box">
+          <div class="curator-label">
+            <span class="flame-icon">🔥</span>
+            <span>Why I Rescued This</span>
+          </div>
+          <p class="curator-text">{artwork.data.curatorNotes}</p>
+        </aside>
+      )}
+
+      <!-- Related Links -->
+      {(artwork.data.wikiUrl || artwork.data.museumUrl || (artwork.data.relatedLinks && artwork.data.relatedLinks.length > 0)) && (
+        <aside class="related-links">
+          <h3 class="related-title">Further Exploration</h3>
+          <ul class="links-list">
+            {artwork.data.wikiUrl && (
+              <li>
+                <a href={artwork.data.wikiUrl} target="_blank" rel="noopener noreferrer">
+                  Wikipedia Article
+                  <span class="external-arrow">↗</span>
+                </a>
+              </li>
+            )}
+            {artwork.data.museumUrl && (
+              <li>
+                <a href={artwork.data.museumUrl} target="_blank" rel="noopener noreferrer">
+                  Museum Collection
+                  <span class="external-arrow">↗</span>
+                </a>
+              </li>
+            )}
+            {artwork.data.relatedLinks && artwork.data.relatedLinks.map(link => (
+              <li>
+                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  {link.title}
+                  <span class="external-arrow">↗</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <!-- Back Link -->
+      <div class="back-link-container">
+        <a href="/" class="back-link">
+          ← Back to Home
+        </a>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .art-page {
+    padding: var(--space-xl) 0 var(--space-2xl);
+  }
+
+  /* Header */
+  .art-header {
+    max-width: 900px;
+    margin: 0 auto var(--space-xl);
+    text-align: center;
+  }
+
+  .breadcrumb {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    margin-bottom: var(--space-md);
+  }
+
+  .breadcrumb a {
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--flame);
+  }
+
+  .separator {
+    margin: 0 0.5rem;
+  }
+
+  .art-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: var(--space-sm);
+    line-height: 1.1;
+    font-style: italic;
+  }
+
+  .art-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: var(--space-md);
+  }
+
+  .artist-info {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    color: var(--ink-medium);
+  }
+
+  .artist-name {
+    font-weight: 600;
+  }
+
+  .art-year {
+    color: var(--ink-light);
+    margin-left: 0.5rem;
+  }
+
+  .art-medium,
+  .art-location {
+    font-size: 0.95rem;
+    color: var(--ink-light);
+  }
+
+  .art-location {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .location-icon {
+    font-size: 1rem;
+  }
+
+  .divider {
+    width: 80px;
+    height: 2px;
+    background: var(--flame);
+    margin: var(--space-md) auto 0;
+  }
+
+  /* Art Image */
+  .art-image-section {
+    max-width: 900px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .art-frame {
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(-0.5deg);
+    transition: transform 0.3s ease;
+  }
+
+  .art-frame:hover {
+    transform: rotate(0deg);
+  }
+
+  .art-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    box-shadow: inset 0 0 0 1px rgba(45, 42, 38, 0.1);
+  }
+
+  .image-caption {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--ink-medium);
+    font-style: italic;
+    text-align: center;
+    margin-top: var(--space-md);
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Context */
+  .art-context {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--pastel-lavender);
+    border-radius: 4px;
+    border-left: 4px solid rgba(210, 195, 225, 0.6);
+  }
+
+  .context-text {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: var(--ink);
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* Flourish Divider */
+  .flourish-divider {
+    text-align: center;
+    margin: var(--space-2xl) 0;
+    color: var(--ink-whisper);
+    font-size: 1.5rem;
+    letter-spacing: 1rem;
+  }
+
+  /* Analysis Section */
+  .analysis-section {
+    max-width: 800px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .analysis-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+
+  .analysis-content :global(h2) {
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(h3) {
+    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(p) {
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(em) {
+    font-style: italic;
+    color: var(--ink-medium);
+  }
+
+  .analysis-content :global(strong) {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .analysis-content :global(ul) {
+    margin: var(--space-md) 0;
+    padding-left: var(--space-lg);
+  }
+
+  .analysis-content :global(li) {
+    margin-bottom: var(--space-sm);
+    line-height: 1.7;
+  }
+
+  /* Curator Notes */
+  .curator-notes-box {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    background: var(--pastel-coral);
+    padding: var(--space-lg);
+    border-radius: 4px;
+    border-left: 4px solid var(--flame);
+  }
+
+  .curator-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    margin-bottom: var(--space-sm);
+  }
+
+  .flame-icon {
+    font-size: 1.2rem;
+  }
+
+  .curator-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  /* Related Links */
+  .related-links {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--pastel-mint);
+    border-radius: 4px;
+  }
+
+  .related-title {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .links-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .links-list li a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .links-list li a:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--flame);
+    transform: translateX(4px);
+  }
+
+  .external-arrow {
+    margin-left: auto;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+  }
+
+  .links-list li a:hover .external-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  /* Back Link */
+  .back-link-container {
+    max-width: 800px;
+    margin: var(--space-xl) auto 0;
+    text-align: center;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--flame);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .back-link:hover {
+    background: var(--flame);
+    color: var(--bg-cream);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .art-page {
+      padding: var(--space-lg) 0 var(--space-xl);
+    }
+
+    .art-frame {
+      padding: var(--space-sm);
+      transform: rotate(0deg);
+    }
+
+    .context-text {
+      font-size: 1.05rem;
+    }
+
+    .analysis-content {
+      font-size: 1rem;
+    }
+
+    .curator-notes-box,
+    .related-links,
+    .art-context {
+      padding: var(--space-sm) var(--space-md);
+    }
+  }
+</style>

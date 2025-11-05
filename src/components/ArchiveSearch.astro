@@ -1,0 +1,202 @@
+---
+// Archive search component - client-side search functionality
+---
+
+<div class="search-container">
+  <div class="search-box">
+    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.35-4.35"></path>
+    </svg>
+    <input
+      type="search"
+      id="archive-search"
+      class="search-input"
+      placeholder="Search articles by title, excerpt, or topic..."
+      aria-label="Search articles"
+    />
+    <button type="button" id="clear-search" class="clear-button" aria-label="Clear search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+  <div class="search-meta">
+    <span id="search-count" class="search-count"></span>
+  </div>
+</div>
+
+<style>
+  .search-container {
+    margin-bottom: var(--space-xl);
+    background: var(--bg-cream);
+    padding: var(--space-md) 0;
+  }
+
+  .search-box {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-light);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 1rem 3rem 1rem 3rem;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    border: 2px solid var(--ink-whisper);
+    background: var(--bg-canvas);
+    color: var(--ink);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--flame);
+    box-shadow: 0 0 0 3px var(--flame-light), var(--shadow-soft);
+  }
+
+  .search-input::placeholder {
+    color: var(--ink-light);
+  }
+
+  .clear-button {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--ink-light);
+    cursor: pointer;
+    padding: 0.25rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+
+  .clear-button.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .clear-button:hover {
+    color: var(--flame);
+  }
+
+  .search-meta {
+    text-align: center;
+    margin-top: var(--space-sm);
+    min-height: 1.5rem;
+  }
+
+  .search-count {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-medium);
+  }
+
+  @media (max-width: 768px) {
+    .search-input {
+      font-size: 1rem;
+      padding: 1rem 3rem;
+    }
+  }
+</style>
+
+<script>
+  // Client-side search functionality
+  function initArchiveSearch() {
+    const searchInput = document.getElementById('archive-search') as HTMLInputElement | null;
+    const clearButton = document.getElementById('clear-search') as HTMLButtonElement | null;
+    const searchCount = document.getElementById('search-count') as HTMLSpanElement | null;
+    const archiveItems = document.querySelectorAll('.archive-item') as NodeListOf<HTMLElement>;
+
+    if (!searchInput || !clearButton || !searchCount) return;
+
+    let totalArticles = archiveItems.length;
+
+    function performSearch(query: string) {
+      const normalizedQuery = query.toLowerCase().trim();
+      let visibleCount = 0;
+
+      archiveItems.forEach((item) => {
+        const title = item.querySelector('.archive-title')?.textContent?.toLowerCase() || '';
+        const excerpt = item.querySelector('.archive-excerpt')?.textContent?.toLowerCase() || '';
+        const type = item.querySelector('.article-type')?.textContent?.toLowerCase() || '';
+
+        const matches = !normalizedQuery ||
+          title.includes(normalizedQuery) ||
+          excerpt.includes(normalizedQuery) ||
+          type.includes(normalizedQuery);
+
+        if (matches) {
+          item.style.display = '';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // Update search count
+      if (normalizedQuery) {
+        searchCount.textContent = `Found ${visibleCount} of ${totalArticles} articles`;
+        clearButton.classList.add('visible');
+      } else {
+        searchCount.textContent = '';
+        clearButton.classList.remove('visible');
+      }
+
+      // Show/hide archive groups based on visible articles
+      const archiveGroups = document.querySelectorAll('.archive-group') as NodeListOf<HTMLElement>;
+      archiveGroups.forEach((group) => {
+        const visibleItems = group.querySelectorAll('.archive-item:not([style*="display: none"])');
+        group.style.display = visibleItems.length > 0 ? '' : 'none';
+      });
+    }
+
+    // Debounce search for performance
+    let searchTimeout: number;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const query = (e.target as HTMLInputElement).value;
+      searchTimeout = window.setTimeout(() => {
+        performSearch(query);
+      }, 150);
+    });
+
+    // Clear search
+    clearButton.addEventListener('click', () => {
+      searchInput.value = '';
+      performSearch('');
+      searchInput.focus();
+    });
+
+    // Handle Escape key to clear search
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        searchInput.value = '';
+        performSearch('');
+        searchInput.blur();
+      }
+    });
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initArchiveSearch);
+  } else {
+    initArchiveSearch();
+  }
+</script>

@@ -1,0 +1,627 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles');
+  return articles.map(article => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+const { Content } = await article.render();
+
+// Get related articles
+const allArticles = await getCollection('articles');
+const relatedArticles = allArticles
+  .filter(a =>
+    a.slug !== article.slug &&
+    a.data.topics.some(topic => article.data.topics.includes(topic))
+  )
+  .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())
+  .slice(0, 3);
+
+const typeLabel = article.data.articleType.charAt(0).toUpperCase() + article.data.articleType.slice(1);
+const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+---
+
+<BaseLayout
+  title={`${article.data.title} - From The Dumpster Fire`}
+  description={article.data.excerpt}
+  article={true}
+  publishedTime={article.data.publishedDate.toISOString()}
+  modifiedTime={article.data.publishedDate.toISOString()}
+  author={article.data.author || "Bhuvanesh"}
+  section={typeLabel}
+  tags={article.data.topics}
+>
+  <div class="container">
+    <!-- Article Header -->
+    <article>
+      <header class="article-header">
+        <div class="article-badge">
+          {article.data.featured ? 'Featured ' : ''}{typeLabel}
+        </div>
+        <h1 class="article-title">{article.data.title}</h1>
+        <div class="article-meta">
+          {article.data.author && <span>{article.data.author}</span>}
+          {article.data.author && <span class="meta-separator">•</span>}
+          <span>{article.data.readingTime} min read</span>
+          <span class="meta-separator">•</span>
+          <span>{formattedDate}</span>
+        </div>
+      </header>
+
+      <!-- Curator's Note -->
+      {article.data.curatorNotes && (
+        <aside class="curators-note">
+          <div class="curators-note-label">Why I Rescued This</div>
+          <p>{article.data.curatorNotes}</p>
+        </aside>
+      )}
+
+      <!-- Article Content -->
+      <div class="article-content">
+        <Content />
+
+        <!-- Read Original Link (after content, before separator) -->
+        <div class="read-original-container">
+          <a href={article.data.originalUrl} class="source-link" target="_blank" rel="noopener noreferrer">
+            <span>→</span>
+            <span>Read Original Article</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Article Footer -->
+      <footer class="article-footer">
+        <div class="footer-section">
+          <div class="article-tags">
+            <div class="tags-label">Tagged</div>
+            <div class="tags-list">
+              {article.data.topics.map(topic => (
+                <a href={`/topics/${topic}`} class="tag">{topic}</a>
+              ))}
+            </div>
+          </div>
+
+          <div class="share-section">
+            <div class="share-label">Share</div>
+            <div class="share-buttons">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.data.title)}&url=${encodeURIComponent(Astro.site + 'articles/' + article.slug)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="share-button"
+                aria-label="Share on Twitter"
+              >
+                𝕏
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.site + 'articles/' + article.slug)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="share-button"
+                aria-label="Share on LinkedIn"
+              >
+                in
+              </a>
+              <a
+                href={`mailto:?subject=${encodeURIComponent(article.data.title)}&body=${encodeURIComponent('Check out this article: ' + Astro.site + 'articles/' + article.slug)}`}
+                class="share-button"
+                aria-label="Share via Email"
+              >
+                ✉
+              </a>
+              <button
+                class="share-button copy-link"
+                data-url={Astro.site + 'articles/' + article.slug}
+                aria-label="Copy link"
+                title="Copy link"
+              >
+                🔗
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </article>
+
+    <!-- Related Articles -->
+    {relatedArticles.length > 0 && (
+      <section class="related-articles">
+        <h2 class="related-heading">You Might Also Like</h2>
+        <div class="related-grid">
+          {relatedArticles.map(related => (
+            <a href={`/articles/${related.slug}`} class="related-card">
+              <div class="related-type">{related.data.articleType}</div>
+              <h3>{related.data.title}</h3>
+              <p>{related.data.excerpt}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  /* Article Header */
+  .article-header {
+    max-width: 800px;
+    margin: var(--space-2xl) auto var(--space-xl);
+    text-align: center;
+  }
+
+  .article-badge {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 0.5rem 1.2rem 0.5rem 2rem;
+    background: var(--bg-canvas);
+    border: 2px solid var(--ink);
+    color: var(--ink);
+    margin-bottom: var(--space-md);
+    box-shadow: 0 2px 8px rgba(45, 42, 38, 0.08);
+    transform: rotate(-1deg);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .article-badge::before {
+    content: '✦';
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    color: var(--flame);
+    opacity: 0.8;
+  }
+
+  .article-badge:hover {
+    transform: rotate(0deg) translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 42, 38, 0.12);
+    border-color: var(--flame);
+  }
+
+  .article-title {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1.1;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .article-meta {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .meta-separator {
+    color: var(--ink-light);
+  }
+
+  /* Curator's Note */
+  .curators-note {
+    max-width: 750px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+    background: rgba(245, 225, 185, 0.2);
+    border-left: 4px solid var(--flame);
+    transform: rotate(-0.4deg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .curators-note-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--flame);
+    margin-bottom: var(--space-sm);
+  }
+
+  .curators-note p {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  /* Article Content */
+  .article-content {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: var(--space-xl) 0 0;
+  }
+
+  .read-original-container {
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-lg);
+    text-align: center;
+  }
+
+  .article-content :global(p) {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .article-content :global(p:first-of-type::first-letter) {
+    font-size: 5.5rem;
+    font-family: var(--font-display);
+    font-weight: 400;
+    float: left;
+    line-height: 0.8;
+    margin: 0.08em 0.12em -0.05em 0;
+    color: var(--ink-dark);
+    text-shadow: 2px 2px 0 var(--flame-light);
+  }
+
+  .article-content :global(h2) {
+    font-size: 2.25rem;
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .article-content :global(h3) {
+    font-size: 1.75rem;
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    color: var(--ink);
+  }
+
+  .article-content :global(blockquote) {
+    font-size: 1.3rem;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.75;
+    padding: var(--space-lg) var(--space-xl);
+    margin: var(--space-xl) 0;
+    background: var(--pastel-butter);
+    border-left: 4px solid var(--flame);
+    color: var(--ink-dark);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    font-feature-settings:
+      "kern" 1,        /* kerning */
+      "liga" 1,        /* ligatures */
+      "calt" 1,        /* contextual alternates */
+      "swsh" 1;        /* swashes for elegance */
+    letter-spacing: 0.01em;
+  }
+
+  .article-content :global(blockquote::before) {
+    content: '"';
+    position: absolute;
+    top: -0.2rem;
+    left: 0.5rem;
+    font-size: 5rem;
+    font-family: Georgia, serif;
+    color: var(--flame);
+    opacity: 0.2;
+    line-height: 1;
+    font-style: normal;
+  }
+
+  .article-content :global(ul),
+  .article-content :global(ol) {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-lg);
+  }
+
+  .article-content :global(li) {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    margin-bottom: var(--space-sm);
+  }
+
+  .article-content :global(a) {
+    color: var(--flame);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+  }
+
+
+  .article-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    margin: var(--space-lg) 0;
+    border-radius: 4px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .article-content :global(code) {
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 0.9em;
+    background: var(--ink-whisper);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+  }
+
+  .article-content :global(pre) {
+    background: var(--ink);
+    color: var(--bg-cream);
+    padding: var(--space-md);
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: var(--space-lg) 0;
+  }
+
+  .article-content :global(pre code) {
+    background: transparent;
+    padding: 0;
+  }
+
+  .source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 0.9rem 1.5rem;
+    background: var(--bg-canvas);
+    border: 2px solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .source-link:hover {
+    border-color: var(--flame);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(45, 42, 38, 0.1);
+  }
+
+  /* Article Footer */
+  .article-footer {
+    max-width: 700px;
+    margin: 0 auto;
+    padding-top: var(--space-lg);
+    border-top: 2px solid var(--ink-whisper);
+  }
+
+  .footer-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+  }
+
+  /* Tags */
+  .article-tags {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .tags-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+    margin-bottom: var(--space-sm);
+  }
+
+  .tags-list {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.9rem;
+    background: var(--bg-canvas);
+    border: var(--border-fine) solid var(--ink-whisper);
+    color: var(--ink-medium);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .tag:hover {
+    border-color: var(--flame);
+    color: var(--flame);
+  }
+
+  /* Share Section */
+  .share-section {
+    flex: 0 0 auto;
+  }
+
+  .share-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+    margin-bottom: var(--space-sm);
+  }
+
+  .share-buttons {
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .share-button {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: var(--bg-canvas);
+    border: var(--border-fine) solid var(--ink-whisper);
+    color: var(--ink-medium);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .share-button:hover {
+    border-color: var(--flame);
+    color: var(--flame);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .share-button.copy-link:active {
+    background: var(--pastel-mint);
+  }
+
+  /* Related Articles */
+  .related-articles {
+    margin: var(--space-2xl) 0;
+    padding: var(--space-xl) 0;
+    border-top: 2px solid var(--ink-whisper);
+  }
+
+  .related-heading {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    color: var(--ink);
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .related-card {
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    text-decoration: none;
+    color: var(--ink);
+    transition: all 0.3s ease;
+  }
+
+  .related-card:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-4px);
+  }
+
+  .related-card:nth-child(1) {
+    transform: rotate(-0.5deg);
+    background: var(--pastel-mint);
+  }
+
+  .related-card:nth-child(2) {
+    transform: rotate(0.6deg);
+    background: var(--pastel-coral);
+  }
+
+  .related-card:nth-child(3) {
+    transform: rotate(-0.4deg);
+    background: var(--pastel-peach);
+  }
+
+  .related-type {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+    margin-bottom: var(--space-xs);
+  }
+
+  .related-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
+    line-height: 1.3;
+  }
+
+  .related-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-medium);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .article-content :global(p) {
+      font-size: 1.125rem;
+    }
+
+    .curators-note {
+      padding: var(--space-md);
+      transform: rotate(0deg);
+    }
+
+    .related-card {
+      padding: var(--space-md);
+      transform: rotate(0deg) !important;
+    }
+
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .footer-section {
+      flex-direction: column;
+    }
+
+    .share-section {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  // Copy link functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const copyButton = document.querySelector('.copy-link');
+    if (copyButton) {
+      copyButton.addEventListener('click', async () => {
+        const url = copyButton.getAttribute('data-url');
+        if (url) {
+          try {
+            await navigator.clipboard.writeText(url);
+            // Visual feedback
+            const originalText = copyButton.textContent;
+            copyButton.textContent = '✓';
+            setTimeout(() => {
+              copyButton.textContent = originalText;
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        }
+      });
+    }
+  });
+</script>

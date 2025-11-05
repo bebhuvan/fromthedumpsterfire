@@ -1,0 +1,1283 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { getCollection } from 'astro:content';
+
+// Get featured and recent content
+const allArticles = await getCollection('articles');
+
+// Manually order featured articles for homepage layout
+const featuredSlugs = [
+  'inconvenient-bad-things-cant-happen',  // Main tall card (left)
+  'we-need-more-bubbles',                 // Top right
+  'global-decline-of-religion'            // Bottom right
+];
+
+const featuredArticles = featuredSlugs
+  .map(slug => allArticles.find(article => article.slug === slug))
+  .filter(article => article !== undefined);
+
+const recentArticles = allArticles
+  .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())
+  .slice(0, 6);
+
+// Worth Your Time This Week articles (essays after featured and rabbit holes)
+const worthYourTimeArticles = allArticles
+  .filter(article => article.data.articleType === 'essay' && !featuredSlugs.includes(article.slug))
+  .sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())
+  .slice(4) // Skip the first 4 non-featured essays (used in Rabbit Holes), show the rest
+  .map(article => ({
+    date: new Date(article.data.publishedDate).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }),
+    title: article.data.title,
+    excerpt: article.data.excerpt,
+    source: article.data.source || 'From The Dumpster Fire',
+    url: `/articles/${article.slug}`
+  }));
+
+// Get other content types
+const artPieces = await getCollection('art');
+const poems = await getCollection('poems');
+const letters = await getCollection('letters');
+const books = await getCollection('books');
+
+const latestArt = artPieces.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())[0];
+const latestPoemEntry = poems.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())[0];
+const latestPoem = latestPoemEntry ? {
+  ...latestPoemEntry,
+  poemText: latestPoemEntry.body.split('---')[0].trim()
+} : null;
+const latestLetter = letters.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())[0];
+const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
+---
+
+<BaseLayout title="From The Dumpster Fire - Rescuing signal from the algorithmic inferno">
+  <div class="container">
+    <!-- Opening Quote -->
+    <section class="opening-quote">
+      <blockquote>
+        The internet wasn't supposed to work this way. We were promised connection, knowledge,
+        enlightenment. Instead, we got algorithmic rage bait, manufactured controversy, and
+        endless noise drowning out signal. But the good stuff still exists—thoughtful essays,
+        forgotten art, ideas worth your time. It's just buried under the flames.
+      </blockquote>
+    </section>
+
+    <!-- Featured Section: 1 Main + 2 Secondary -->
+    {featuredArticles.length > 0 && (
+      <section class="featured-section">
+        <div class="featured-grid">
+          {featuredArticles[0] && (
+            <article class="featured-main">
+              <a href={`/articles/${featuredArticles[0].slug}`} class="featured-link">
+                <span class="badge">Featured {featuredArticles[0].data.articleType.charAt(0).toUpperCase() + featuredArticles[0].data.articleType.slice(1)}</span>
+                <h2 class="featured-title">{featuredArticles[0].data.title}</h2>
+                <p class="featured-excerpt">{featuredArticles[0].data.excerpt}</p>
+                {featuredArticles[0].data.curatorNotes && (
+                  <div class="curator-note">
+                    <div class="curator-note-label">Why I Rescued This</div>
+                    <p>{featuredArticles[0].data.curatorNotes}</p>
+                  </div>
+                )}
+              </a>
+            </article>
+          )}
+          {featuredArticles.slice(1, 3).map((article, index) => (
+            <article class={`featured-secondary featured-secondary-${index + 1}`}>
+              <a href={`/articles/${article.slug}`} class="featured-link">
+                <span class="badge">{article.data.articleType.charAt(0).toUpperCase() + article.data.articleType.slice(1)}</span>
+                <h3 class="featured-title">{article.data.title}</h3>
+                <p class="featured-excerpt">{article.data.excerpt}</p>
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Art of the Week -->
+    {latestArt && (
+      <>
+        <div class="section-heading">
+          <h2>Art of the Week</h2>
+        </div>
+
+        <section class="art-showcase">
+          <div class="art-frame">
+            <div class="art-image">
+              {latestArt.data.imageUrl ? (
+                <img
+                  srcset="/images/wanderer-above-sea-of-fog-small.webp 480w,
+                          /images/wanderer-above-sea-of-fog-medium.webp 800w,
+                          /images/wanderer-above-sea-of-fog.webp 1200w"
+                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 480px"
+                  src="/images/wanderer-above-sea-of-fog-small.webp"
+                  alt={latestArt.data.imageAlt}
+                  loading="lazy"
+                  width="480"
+                  height="615"
+                />
+              ) : (
+                <div class="art-placeholder">[{latestArt.data.title}]</div>
+              )}
+            </div>
+          </div>
+          <div class="art-info">
+            <h3>{latestArt.data.title}</h3>
+            <div class="art-artist">{latestArt.data.artist}, {latestArt.data.year}</div>
+            <p class="art-description">{latestArt.data.context}</p>
+            <div class="art-link-container">
+              <a href={`/art/${latestArt.slug}`} class="art-link">
+                View full details →
+              </a>
+            </div>
+          </div>
+        </section>
+      </>
+    )}
+
+    <!-- Flourish Divider -->
+    <div class="flourish">~ ✦ ~</div>
+
+    <!-- Rabbit Holes (Recent Articles) -->
+    <div class="section-heading">
+      <h2>Rabbit Holes</h2>
+    </div>
+
+    <section class="rabbit-holes">
+      <div class="rabbit-grid">
+        {recentArticles.map((article, index) => (
+          <article class="rabbit-card">
+            <div class="rabbit-header">
+              <span class="rabbit-number">{String(index + 1).padStart(2, '0')}</span>
+              <span class="content-type">{article.data.articleType}</span>
+            </div>
+            <a href={`/articles/${article.slug}`} class="rabbit-link">
+              <h3>{article.data.title}</h3>
+              <p>{article.data.excerpt}</p>
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- Intermission -->
+    <div class="intermission">
+      <span class="intermission-text">STILL WITH ME?</span>
+    </div>
+
+    <!-- Poem of the Week -->
+    {latestPoem && (
+      <>
+        <div class="section-heading">
+          <h2>Poem of the Week</h2>
+        </div>
+
+        <section class="poem-showcase">
+          <div class="poem-container">
+            <div class="poem-header">
+              <h3 class="poem-title">{latestPoem.data.title}</h3>
+              <div class="poem-author">{latestPoem.data.author}</div>
+            </div>
+            <div class="poem-text">{latestPoem.poemText}</div>
+            <div class="poem-link-container">
+              <a href={`/poems/${latestPoemEntry.slug}`} class="poem-link">
+                Read full analysis →
+              </a>
+            </div>
+          </div>
+        </section>
+      </>
+    )}
+
+    <!-- Letter of the Week -->
+    {latestLetter && (
+      <>
+        <div class="section-heading">
+          <h2>Letter of the Week</h2>
+        </div>
+
+        <section class="letter-showcase">
+          <div class="stamp-container">
+            <div class="postage-stamp">
+              <span class="stamp-icon">✉</span>
+              <span class="stamp-text">Letter of the Week</span>
+            </div>
+          </div>
+
+          <a href={`/letters/${latestLetter.slug}`} class="letter-card-link">
+            <div class="letter-card">
+              <div class="letter-header">
+                <div class="letter-meta">From: {latestLetter.data.writer}</div>
+                {latestLetter.data.recipient && (
+                  <div class="letter-meta">To: {latestLetter.data.recipient}</div>
+                )}
+                <div class="letter-meta">{latestLetter.data.date} {latestLetter.data.location && `• ${latestLetter.data.location}`}</div>
+              </div>
+              <p class="letter-excerpt">{latestLetter.data.excerpt}</p>
+              <p class="letter-context">{latestLetter.data.context}</p>
+              <div class="letter-read-more">Read full letter →</div>
+            </div>
+          </a>
+          <div class="letter-more">
+            <a href="https://paperlanterns.ink" target="_blank" rel="noopener" class="external-link">
+              More letters at Paper Lanterns →
+            </a>
+          </div>
+        </section>
+      </>
+    )}
+
+    <!-- On My Shelf -->
+    {featuredBooks.length > 0 && (
+      <>
+        <div class="section-heading">
+          <h2>On My Shelf</h2>
+          <a href="/shelf" class="section-link">View Full Shelf →</a>
+        </div>
+
+        <section class="bookshelf">
+          <div class="books-grid">
+            {featuredBooks.map(book => (
+              <article class="book-card">
+                <div class="book-cover">
+                  {book.data.coverImage ? (
+                    <img src={book.data.coverImage} alt={`${book.data.title} cover`} loading="lazy" />
+                  ) : (
+                    '[Book Cover]'
+                  )}
+                </div>
+                <h3 class="book-title">{book.data.title}</h3>
+                <div class="book-author">{book.data.author}</div>
+                <p class="book-note">{book.data.curatorNote}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      </>
+    )}
+
+    <!-- Worth Your Time This Week -->
+    {worthYourTimeArticles.length > 0 && (
+      <>
+        <div class="section-heading">
+          <h2>Worth Your Time This Week</h2>
+        </div>
+
+        <section class="worth-your-time">
+          <div class="wytt-grid">
+            {worthYourTimeArticles.map((article, index) => (
+              <article class="wytt-item">
+                <div class="wytt-date">{article.date}</div>
+                <h3>
+                  <a href={article.url}>{article.title}</a>
+                </h3>
+                <p class="wytt-excerpt">{article.excerpt}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      </>
+    )}
+
+    <!-- Closing Quote -->
+    <section class="closing-quote">
+      <blockquote>
+        In the middle of winter I at last discovered that there was in me an invincible summer.
+      </blockquote>
+      <cite>Albert Camus</cite>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Opening Quote - Asymmetric layout */
+  .opening-quote {
+    padding: var(--space-lg) 0 var(--space-md);
+    text-align: left;  /* break the centered monotony */
+    position: relative;
+    max-width: 900px;  /* wider */
+    margin: 0 0 0 clamp(2rem, 8vw, 8rem);  /* push right, responsive */
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .quote-decoration {
+    font-size: 2.5rem;
+    color: var(--flame);
+    opacity: 0.3;
+    margin-bottom: var(--space-md);
+    font-family: Georgia, 'Times New Roman', serif; /* System font only - don't block LCP */
+  }
+
+  .opening-quote blockquote {
+    font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.65;
+    margin: 0;
+    color: var(--ink);
+    padding: var(--space-lg) var(--space-xl);
+    font-family: Georgia, 'Times New Roman', serif !important; /* Force system font for instant render - critical for LCP */
+    contain: layout style paint; /* Aggressive performance hint for browser */
+    content-visibility: auto; /* Browser optimization */
+    background: linear-gradient(135deg, rgba(245, 225, 185, 0.18), rgba(232, 145, 125, 0.12));
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    transform: rotate(-0.3deg);
+    position: relative;
+  }
+
+  .opening-quote blockquote::before {
+    content: '"';
+    position: absolute;
+    top: -0.8rem;
+    left: 0.2rem;
+    font-size: 8rem;
+    font-family: Georgia, 'Times New Roman', serif !important;
+    color: var(--flame);
+    opacity: 0.2;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .opening-quote blockquote::after {
+    content: '"';
+    position: absolute;
+    bottom: -2rem;
+    right: 0.2rem;
+    font-size: 8rem;
+    font-family: Georgia, 'Times New Roman', serif !important;
+    color: var(--flame);
+    opacity: 0.2;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .quote-footer {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: left;
+  }
+
+  .quote-label {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--flame);
+    background: var(--bg-canvas);
+    padding: 0.4rem 1rem;
+    border: 2px solid var(--flame);
+    margin-bottom: var(--space-sm);
+  }
+
+  .quote-context {
+    font-family: var(--font-sans);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink-medium);
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.5);
+    border-left: 3px solid var(--flame);
+  }
+
+  /* Featured Section */
+  .featured-section {
+    margin: var(--space-2xl) 0;
+  }
+
+  .featured-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;  /* main card is 2x bigger */
+    grid-template-rows: 1fr 1fr;
+    gap: var(--space-md);
+    align-items: stretch;
+    min-height: 700px;  /* taller for bigger card */
+  }
+
+  .featured-main {
+    grid-row: 1 / 3;
+    background: var(--pastel-peach);
+    padding: var(--space-xl);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    transform: rotate(-0.8deg);
+    transition: all 0.3s ease;
+    /* Prevent CLS by reserving space for content */
+    min-height: 580px;
+    contain: layout;
+  }
+
+
+  .featured-secondary {
+    background: var(--pastel-mint);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    transform: rotate(0.6deg);
+    transition: all 0.3s ease;
+  }
+
+
+  .featured-secondary-2 {
+    background: var(--pastel-lavender);
+    transform: rotate(-0.7deg);
+  }
+
+
+  .featured-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 0.5rem 1.2rem 0.5rem 2rem;
+    background: var(--bg-canvas);
+    border: 2px solid var(--ink);
+    color: var(--ink);
+    margin-bottom: var(--space-sm);
+    width: fit-content;
+    box-shadow: 0 2px 8px rgba(45, 42, 38, 0.08);
+    transform: rotate(-1deg);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .badge::before {
+    content: '✦';
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    color: var(--flame);
+    opacity: 0.8;
+  }
+
+
+  .featured-title {
+    font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+    margin-bottom: var(--space-sm);
+    line-height: 1.15;
+    color: var(--ink);
+  }
+
+  .featured-main .featured-title {
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+  }
+
+  .featured-excerpt {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-md);
+  }
+
+  .featured-main .featured-excerpt {
+    font-size: 1.25rem;  /* larger in main card */
+    line-height: 1.75;
+  }
+
+  .curator-note {
+    background: rgba(255, 255, 255, 0.5);
+    padding: var(--space-md);
+    border-left: 3px solid var(--flame);
+    margin-top: auto;
+  }
+
+  .curator-note-label {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: var(--space-xs);
+    color: var(--flame);
+  }
+
+  .curator-note p {
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--ink-medium);
+    line-height: 1.65;
+  }
+
+  /* Section Heading - Generous spacing between major sections */
+  .section-heading {
+    text-align: center;
+    margin: var(--space-3xl) 0 var(--space-xl);
+  }
+
+  .section-heading h2 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    position: relative;
+    display: inline-block;
+  }
+
+  .section-heading::after {
+    content: '✦';
+    display: block;
+    font-size: 1.5rem;
+    color: var(--flame);
+    opacity: 0.4;
+    margin: var(--space-sm) auto 0;
+    letter-spacing: 0.5rem;
+  }
+
+  .section-link {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    margin-top: var(--space-sm);
+    transition: all 0.2s ease;
+  }
+
+
+  /* Art Showcase */
+  .art-showcase {
+    max-width: 1100px;
+    margin: 0 auto var(--space-2xl);
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: var(--space-xl);
+    align-items: center;
+  }
+
+  .art-frame {
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(-1.5deg);
+  }
+
+  .art-image {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--pastel-lavender);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .art-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 4 / 3;
+  }
+
+  .art-placeholder {
+    font-size: 0.9rem;
+    color: var(--ink-light);
+  }
+
+  .art-info h3 {
+    font-size: 2.25rem;
+    font-style: italic;
+    margin-bottom: var(--space-xs);
+  }
+
+  .art-artist {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-md);
+  }
+
+  .art-description {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink-medium);
+  }
+
+  .art-link-container {
+    margin-top: var(--space-md);
+  }
+
+  .art-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+  }
+
+
+  /* Rabbit Holes */
+  .rabbit-holes {
+    margin: var(--space-2xl) 0;
+  }
+
+  .rabbit-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);  /* tighter - creates visual density */
+    grid-auto-rows: 1fr;
+  }
+
+  .rabbit-card {
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+
+  .rabbit-card:nth-child(1) {
+    transform: rotate(0.8deg);
+    border-left: 4px solid var(--flame);
+    background: linear-gradient(135deg, var(--pastel-coral), rgba(232, 145, 125, 0.08));
+  }
+  .rabbit-card:nth-child(2) {
+    transform: rotate(-0.9deg);
+    border-left: 4px solid rgba(195, 215, 235, 0.6);
+    background: linear-gradient(135deg, var(--pastel-sky), rgba(195, 215, 235, 0.08));
+  }
+  .rabbit-card:nth-child(3) {
+    transform: rotate(0.6deg);
+    border-left: 4px solid rgba(180, 215, 195, 0.6);
+    background: linear-gradient(135deg, var(--pastel-mint), rgba(180, 215, 195, 0.08));
+  }
+  .rabbit-card:nth-child(4) {
+    transform: rotate(-0.7deg);
+    border-left: 4px solid rgba(245, 225, 185, 0.6);
+    background: linear-gradient(135deg, var(--pastel-butter), rgba(245, 225, 185, 0.08));
+  }
+  .rabbit-card:nth-child(5) {
+    transform: rotate(0.9deg);
+    border-left: 4px solid rgba(235, 185, 195, 0.6);
+    background: linear-gradient(135deg, var(--pastel-blush), rgba(235, 185, 195, 0.08));
+  }
+  .rabbit-card:nth-child(6) {
+    transform: rotate(-0.5deg);
+    border-left: 4px solid rgba(195, 210, 190, 0.6);
+    background: linear-gradient(135deg, var(--pastel-sage), rgba(195, 210, 190, 0.08));
+  }
+
+  .rabbit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid rgba(45, 42, 38, 0.1);
+  }
+
+  .rabbit-number {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--ink);
+    opacity: 0.3;
+    font-style: italic;
+  }
+
+  .rabbit-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .content-type {
+    font-family: var(--font-sans);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-light);
+    background: rgba(45, 42, 38, 0.05);
+    padding: 0.3rem 0.6rem;
+    border-radius: 3px;
+  }
+
+  .rabbit-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
+    line-height: 1.3;
+  }
+
+  .rabbit-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-medium);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Intermission - Refined pause */
+  .intermission {
+    margin: var(--space-3xl) 0;
+    padding: var(--space-md) var(--space-lg);
+    text-align: center;
+    position: relative;
+    background: var(--pastel-peach);
+    border-top: 2px solid var(--flame);
+    border-bottom: 2px solid var(--flame);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .intermission::before {
+    content: '✦';
+    display: block;
+    font-size: 0.9rem;
+    color: var(--flame);
+    opacity: 0.5;
+    margin-bottom: var(--space-xs);
+  }
+
+  .intermission-text {
+    font-family: var(--font-sans);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--ink-dark);
+    display: inline-block;
+    position: relative;
+    text-transform: uppercase;
+    background: var(--bg-cream);
+    padding: 0.4rem 1rem;
+    border: 2px solid var(--ink-dark);
+    box-shadow: 2px 2px 0 var(--flame);
+    transform: rotate(1deg);
+  }
+
+  /* Poem Showcase */
+  .poem-showcase {
+    max-width: 850px;
+    margin: var(--space-2xl) auto;
+  }
+
+  .poem-container {
+    background: var(--pastel-rose);
+    padding: var(--space-2xl) var(--space-xl);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(0.8deg);
+  }
+
+  .poem-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-md);
+    position: relative;
+  }
+
+  .poem-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 1px;
+    background: var(--ink-whisper);
+  }
+
+  .poem-title {
+    font-size: 2.75rem;
+    font-style: italic;
+    margin-bottom: var(--space-sm);
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .poem-author {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--ink-medium);
+    text-transform: uppercase;
+  }
+
+  .poem-text {
+    font-size: 1.25rem;
+    line-height: 2;
+    white-space: pre-line;
+    font-style: italic;
+    color: var(--ink);
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+    font-weight: 300;
+  }
+
+  .poem-link-container {
+    text-align: center;
+    margin-top: var(--space-lg);
+  }
+
+  .poem-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+  }
+
+
+  /* Letter Showcase */
+  .letter-showcase {
+    max-width: 850px;
+    margin: var(--space-2xl) auto;
+  }
+
+  .stamp-container {
+    text-align: center;
+  }
+
+  .postage-stamp {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: white;
+    border: 3px dashed var(--ink);
+    box-shadow: 4px 4px 0 rgba(45, 42, 38, 0.08);
+    margin-bottom: var(--space-lg);
+  }
+
+  .stamp-icon {
+    font-size: 2rem;
+  }
+
+  .stamp-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+  }
+
+  .letter-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: all 0.3s ease;
+  }
+
+
+  .letter-card {
+    background: linear-gradient(135deg, #fdfaf5 0%, #f9f6f0 100%);
+    padding: var(--space-xl);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(-0.9deg);
+    transition: all 0.3s ease;
+  }
+
+  .letter-header {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: var(--border-fine) solid var(--ink-whisper);
+  }
+
+  .letter-meta {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-xs);
+  }
+
+  .letter-excerpt {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    font-style: italic;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    border-left: 3px solid var(--flame);
+  }
+
+  .letter-context {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ink-medium);
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.5);
+    margin-bottom: var(--space-sm);
+  }
+
+  .letter-read-more {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink-medium);
+    text-align: center;
+    padding-top: var(--space-sm);
+    transition: all 0.2s ease;
+  }
+
+  .letter-more {
+    text-align: center;
+    margin-top: var(--space-lg);
+  }
+
+  .external-link {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-block;
+  }
+
+
+  /* Bookshelf */
+  .bookshelf {
+    margin: var(--space-2xl) 0;
+    padding: var(--space-2xl) var(--space-xl);
+    background: rgba(245, 225, 185, 0.12);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .books-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);  /* tighter for visual cohesion */
+  }
+
+  .book-card {
+    background: transparent;
+    text-align: left;
+    transition: all 0.3s ease;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+
+  .book-card:nth-child(1) { transform: rotate(0.6deg); }
+  .book-card:nth-child(2) { transform: rotate(-0.4deg); }
+  .book-card:nth-child(3) { transform: rotate(0.3deg); }
+  .book-card:nth-child(4) { transform: rotate(-0.5deg); }
+
+  .book-cover {
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 2/3;
+    background: var(--bg-canvas);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-light);
+    font-size: 0.85rem;
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: 2px 4px 8px rgba(45, 42, 38, 0.12);
+    overflow: hidden;
+  }
+
+  .book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .book-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .book-author {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-sm);
+    font-weight: 500;
+  }
+
+  .book-note {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--ink-medium);
+    line-height: 1.5;
+  }
+
+  /* Worth Your Time This Week */
+  .worth-your-time {
+    margin: var(--space-2xl) 0;
+    padding: var(--space-xl) var(--space-lg);
+    background: rgba(255, 255, 255, 0.6);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), var(--shadow-soft);
+    position: relative;
+  }
+
+  .worth-your-time::before {
+    content: '✦';
+    position: absolute;
+    top: var(--space-md);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    color: var(--flame);
+    opacity: 0.2;
+  }
+
+  .worth-your-time::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--pastel-butter);
+  }
+
+  .wytt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl) var(--space-2xl);
+    counter-reset: wytt-counter;
+    margin-top: var(--space-lg);
+  }
+
+  .wytt-item {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    position: relative;
+    counter-increment: wytt-counter;
+    padding-left: var(--space-lg);
+    border-left: 3px solid var(--pastel-coral);
+  }
+
+  .wytt-item::before {
+    content: counter(wytt-counter, decimal-leading-zero);
+    position: absolute;
+    top: -0.25rem;
+    left: -0.75rem;
+    font-family: var(--font-sans);
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--ink);
+    background: var(--bg-canvas);
+    padding: 0.35rem 0.5rem;
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: 0 2px 4px rgba(45, 42, 38, 0.06);
+  }
+
+  .wytt-date {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-light);
+    margin-bottom: var(--space-xs);
+  }
+
+  .wytt-item h3 {
+    font-size: 1.35rem;
+    margin-bottom: var(--space-xs);
+    line-height: 1.3;
+  }
+
+  .wytt-item h3 a {
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+
+  .wytt-excerpt {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--ink-medium);
+  }
+
+  /* Closing Quote */
+  .closing-quote {
+    padding: var(--space-2xl) 0;
+    text-align: center;
+    margin-top: var(--space-2xl);
+  }
+
+  .closing-quote::before {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 2px;
+    background: var(--pastel-mint);
+    margin: 0 auto var(--space-xl);
+  }
+
+  .closing-quote blockquote {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.5;
+    max-width: 800px;
+    margin: 0 auto var(--space-md);
+    padding: var(--space-lg) var(--space-md);
+    background: rgba(180, 215, 195, 0.15);
+    border-top: 2px solid var(--pastel-mint);
+    border-bottom: 2px solid var(--pastel-mint);
+    box-shadow: var(--shadow-soft);
+    transform: rotate(0.4deg);
+  }
+
+  .closing-quote cite {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-style: normal;
+    font-weight: 600;
+    color: var(--ink-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .closing-quote cite::before {
+    content: '— ';
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    /* Opening quote */
+    .opening-quote blockquote {
+      padding: var(--space-lg) var(--space-md);
+    }
+
+    .bookshelf {
+      padding: var(--space-lg) var(--space-sm);
+    }
+
+    .featured-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+      min-height: auto;
+    }
+
+    .featured-main {
+      grid-row: auto;
+      transform: rotate(0deg) !important;
+      padding: var(--space-md);
+    }
+
+    .featured-secondary {
+      transform: rotate(0deg) !important;
+      padding: var(--space-sm);
+    }
+
+    .featured-title {
+      font-size: clamp(1.5rem, 4vw, 2rem) !important;
+    }
+
+    .featured-excerpt {
+      font-size: 1rem;
+    }
+
+    .art-showcase {
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+    }
+
+    .art-frame {
+      padding: var(--space-md);
+      transform: rotate(0deg);
+    }
+
+    .art-image {
+      aspect-ratio: 3/2;
+    }
+
+    .rabbit-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .books-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-auto-columns: 1fr;
+    }
+
+    .rabbit-card {
+      transform: rotate(0deg) !important;
+    }
+
+    /* Poem container */
+    .poem-container {
+      padding: var(--space-lg) var(--space-md);
+      transform: rotate(0deg) !important;
+    }
+
+    /* Letter card */
+
+    .letter-card {
+      padding: var(--space-md);
+      transform: rotate(0deg) !important;
+    }
+
+    .book-card {
+      transform: rotate(0deg) !important;
+    }
+
+    /* Worth Your Time mobile */
+    .wytt-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .rabbit-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .books-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-auto-columns: 1fr;
+      gap: var(--space-sm);
+    }
+
+    .rabbit-card p {
+      -webkit-line-clamp: 3;
+    }
+  }
+</style>

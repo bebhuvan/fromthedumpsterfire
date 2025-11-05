@@ -1,0 +1,604 @@
+---
+/**
+ * DEVIANT ARTICLE TEMPLATE
+ * Marginalia Mode: Curator's notes dominate the reading experience
+ * The article becomes a conversation between source and curator
+ */
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles');
+  // Only include articles with deviantMode
+  const deviantArticles = articles.filter(article => article.data.deviantMode);
+
+  return deviantArticles.map(article => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+const { Content } = await article.render();
+
+const typeLabel = article.data.articleType.charAt(0).toUpperCase() + article.data.articleType.slice(1);
+const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+
+// Get marginalia if exists
+const marginalia = article.data.marginalia || [];
+---
+
+<BaseLayout
+  title={`${article.data.title} - From The Dumpster Fire`}
+  description={article.data.excerpt}
+  article={true}
+  publishedTime={article.data.publishedDate.toISOString()}
+  modifiedTime={article.data.publishedDate.toISOString()}
+  author={article.data.author || "Bhuvanesh"}
+  section={typeLabel}
+  tags={article.data.topics}
+>
+  <div class="deviant-container">
+    <!-- Warning Badge -->
+    <div class="deviant-warning">
+      <span class="warning-icon">⚠</span>
+      <span class="warning-text">Experimental Layout</span>
+      <a href={`/articles/${article.slug}`} class="standard-link">View Standard →</a>
+    </div>
+
+    <!-- Article Header -->
+    <article class="deviant-article">
+      <header class="deviant-header">
+        <div class="article-badge deviant-badge">
+          {article.data.featured ? 'Featured ' : ''}{typeLabel} • Marginalia Mode
+        </div>
+        <h1 class="deviant-title">{article.data.title}</h1>
+        <div class="article-meta">
+          {article.data.author && <span class="author-name">{article.data.author}</span>}
+          {article.data.author && <span class="meta-separator">•</span>}
+          <span>{article.data.readingTime} min read</span>
+          <span class="meta-separator">•</span>
+          <span>{formattedDate}</span>
+        </div>
+      </header>
+
+      <!-- DOMINANT Curator's Note -->
+      {article.data.curatorNotes && (
+        <aside class="dominant-curators-note">
+          <div class="dominant-note-header">
+            <div class="curator-label">
+              <span class="curator-icon">✦</span>
+              <span>Curator's Reading</span>
+            </div>
+            <div class="note-decoration">~ Why This Matters ~</div>
+          </div>
+          <div class="dominant-note-content">
+            <p class="note-text">{article.data.curatorNotes}</p>
+          </div>
+        </aside>
+      )}
+
+      <!-- Two-Column Layout: Marginalia + Content -->
+      <div class="marginalia-layout">
+        <!-- Left Column: Floating Annotations -->
+        <aside class="marginalia-column">
+          <div class="marginalia-sticky">
+            <div class="marginalia-header">Annotations</div>
+            {marginalia.map((note, index) => (
+              <div class="margin-note" data-position={note.position}>
+                <div class="note-number">{index + 1}</div>
+                <div class="note-content">{note.note}</div>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        <!-- Right Column: Article Content (Secondary) -->
+        <div class="content-column">
+          <div class="content-label">Source Text</div>
+          <div class="article-content deviant-content">
+            <Content />
+
+            <!-- Read Original Link -->
+            <div class="read-original-container">
+              <a href={article.data.originalUrl} class="source-link deviant-source-link" target="_blank" rel="noopener noreferrer">
+                <span>→</span>
+                <span>Read Complete Original</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Article Footer -->
+      <footer class="article-footer deviant-footer">
+        <div class="footer-section">
+          <div class="article-tags">
+            <div class="tags-label">Tagged</div>
+            <div class="tags-list">
+              {article.data.topics.map(topic => (
+                <a href={`/topics/${topic}`} class="tag">{topic}</a>
+              ))}
+            </div>
+          </div>
+
+          <div class="share-section">
+            <div class="share-label">Share</div>
+            <div class="share-buttons">
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.data.title)}&url=${encodeURIComponent(Astro.site + 'articles/deviant/' + article.slug)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="share-button"
+                aria-label="Share on Twitter"
+              >
+                𝕏
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.site + 'articles/deviant/' + article.slug)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="share-button"
+                aria-label="Share on LinkedIn"
+              >
+                in
+              </a>
+              <a
+                href={`mailto:?subject=${encodeURIComponent(article.data.title)}&body=${encodeURIComponent('Check out this article: ' + Astro.site + 'articles/deviant/' + article.slug)}`}
+                class="share-button"
+                aria-label="Share via Email"
+              >
+                ✉
+              </a>
+              <button
+                class="share-button copy-link"
+                data-url={Astro.site + 'articles/deviant/' + article.slug}
+                aria-label="Copy link"
+                title="Copy link"
+              >
+                🔗
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Deviant Warning */
+  .deviant-warning {
+    max-width: 1200px;
+    margin: var(--space-lg) auto var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--pastel-butter);
+    border: 2px solid var(--flame);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+  }
+
+  .warning-icon {
+    font-size: 1.5rem;
+  }
+
+  .warning-text {
+    font-weight: 600;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  .standard-link {
+    color: var(--flame);
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+
+  .standard-link:hover {
+    opacity: 0.7;
+  }
+
+  /* Container */
+  .deviant-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .deviant-header {
+    text-align: center;
+    margin: var(--space-2xl) auto var(--space-lg);
+    max-width: 900px;
+  }
+
+  .deviant-badge {
+    font-size: 0.65rem;
+    padding: 0.6rem 1.5rem;
+    background: var(--ink);
+    color: var(--bg-cream);
+    border: none;
+  }
+
+  .deviant-badge::before {
+    color: var(--flame);
+  }
+
+  .deviant-title {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 1.05;
+    margin: var(--space-lg) 0 var(--space-md);
+    color: var(--ink-dark);
+  }
+
+  /* DOMINANT Curator's Note */
+  .dominant-curators-note {
+    max-width: 900px;
+    margin: 0 auto var(--space-2xl);
+    padding: var(--space-2xl);
+    background: linear-gradient(135deg, var(--pastel-peach), var(--pastel-lavender));
+    border: 3px solid var(--flame);
+    box-shadow: 0 8px 32px rgba(212, 84, 62, 0.15);
+    position: relative;
+  }
+
+  .dominant-note-header {
+    margin-bottom: var(--space-lg);
+    text-align: center;
+  }
+
+  .curator-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--flame);
+    margin-bottom: var(--space-sm);
+  }
+
+  .curator-icon {
+    font-size: 1.2rem;
+  }
+
+  .note-decoration {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--ink-medium);
+    opacity: 0.6;
+  }
+
+  .dominant-note-content {
+    position: relative;
+  }
+
+  .note-text {
+    font-size: 1.35rem;
+    line-height: 1.75;
+    color: var(--ink-dark);
+    font-weight: 400;
+  }
+
+  /* Two-Column Marginalia Layout */
+  .marginalia-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--space-2xl);
+    margin-top: var(--space-2xl);
+    align-items: start;
+  }
+
+  /* Left: Marginalia Column */
+  .marginalia-column {
+    position: relative;
+  }
+
+  .marginalia-sticky {
+    position: sticky;
+    top: var(--space-lg);
+  }
+
+  .marginalia-header {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-light);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-xs);
+    border-bottom: 2px solid var(--ink-whisper);
+  }
+
+  .margin-note {
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--pastel-mint);
+    border-left: 3px solid var(--flame);
+    transform: rotate(-1deg);
+    transition: all 0.3s;
+  }
+
+  .margin-note:nth-child(even) {
+    transform: rotate(0.8deg);
+    background: var(--pastel-rose);
+  }
+
+  .margin-note:hover {
+    transform: rotate(0deg) translateX(4px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .note-number {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--flame);
+    margin-bottom: var(--space-xs);
+  }
+
+  .note-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  /* Right: Content Column (Secondary) */
+  .content-column {
+    min-width: 0;
+  }
+
+  .content-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-light);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-xs);
+    border-bottom: 2px solid var(--ink-whisper);
+  }
+
+  .deviant-content {
+    background: var(--bg-canvas);
+    padding: var(--space-xl);
+    border: 1px solid var(--ink-whisper);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Article Content Styles */
+  .deviant-content :global(h2) {
+    font-size: 1.75rem;
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    color: var(--ink);
+  }
+
+  .deviant-content :global(h3) {
+    font-size: 1.4rem;
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-sm);
+    color: var(--ink-medium);
+  }
+
+  .deviant-content :global(p) {
+    font-size: 1.1rem;
+    line-height: 1.75;
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .deviant-content :global(ul),
+  .deviant-content :global(ol) {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-lg);
+  }
+
+  .deviant-content :global(li) {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin-bottom: var(--space-xs);
+  }
+
+  .deviant-content :global(strong) {
+    color: var(--flame);
+    font-weight: 600;
+  }
+
+  .deviant-content :global(blockquote) {
+    font-size: 1.15rem;
+    font-style: italic;
+    padding: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0;
+    background: var(--pastel-sky);
+    border-left: 3px solid var(--ink-medium);
+  }
+
+  .read-original-container {
+    margin-top: var(--space-xl);
+    text-align: center;
+  }
+
+  .deviant-source-link {
+    background: var(--flame);
+    color: var(--bg-canvas);
+    border-color: var(--flame);
+  }
+
+  .deviant-source-link:hover {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+
+  /* Footer */
+  .deviant-footer {
+    max-width: 900px;
+    margin: var(--space-2xl) auto 0;
+    padding-top: var(--space-xl);
+    border-top: 3px double var(--ink-whisper);
+  }
+
+  .footer-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+  }
+
+  .article-tags {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .tags-label,
+  .share-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+    margin-bottom: var(--space-sm);
+  }
+
+  .tags-list {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.9rem;
+    background: var(--bg-canvas);
+    border: 1px solid var(--ink-whisper);
+    color: var(--ink-medium);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .tag:hover {
+    border-color: var(--flame);
+    color: var(--flame);
+  }
+
+  .share-section {
+    flex: 0 0 auto;
+  }
+
+  .share-buttons {
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .share-button {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: var(--bg-canvas);
+    border: 1px solid var(--ink-whisper);
+    color: var(--ink-medium);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .share-button:hover {
+    border-color: var(--flame);
+    color: var(--flame);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 968px) {
+    .marginalia-layout {
+      grid-template-columns: 1fr;
+      gap: var(--space-xl);
+    }
+
+    .marginalia-sticky {
+      position: static;
+    }
+
+    .marginalia-column {
+      order: 2;
+    }
+
+    .content-column {
+      order: 1;
+    }
+
+    .margin-note {
+      transform: rotate(0deg) !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .deviant-warning {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-sm);
+    }
+
+    .dominant-curators-note {
+      padding: var(--space-lg);
+    }
+
+    .note-text {
+      font-size: 1.15rem;
+    }
+
+    .deviant-content {
+      padding: var(--space-md);
+    }
+
+    .footer-section {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  // Copy link functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const copyButton = document.querySelector('.copy-link');
+    if (copyButton) {
+      copyButton.addEventListener('click', async () => {
+        const url = copyButton.getAttribute('data-url');
+        if (url) {
+          try {
+            await navigator.clipboard.writeText(url);
+            const originalText = copyButton.textContent;
+            copyButton.textContent = '✓';
+            setTimeout(() => {
+              copyButton.textContent = originalText;
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        }
+      });
+    }
+  });
+</script>

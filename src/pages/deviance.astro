@@ -1,0 +1,528 @@
+---
+// The Forbidden Playground - A celebration of deviant web design
+// "For the first time in history, weirdness is a choice."
+const title = "DEVIANCE ZONE";
+const description = "An illegal hole in the basement";
+
+// Pick random aesthetic on each load
+const aesthetics = ['geocities', 'brutalist', 'vaporwave', 'y2k', 'glitch'];
+const currentAesthetic = aesthetics[Math.floor(Math.random() * aesthetics.length)];
+---
+
+<!DOCTYPE html>
+<html lang="en" data-aesthetic={currentAesthetic}>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content={description}>
+	<title>{title}</title>
+	<style>
+		/* RESET THE RULES */
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		/* BASE CHAOS */
+		body {
+			overflow-x: hidden;
+			cursor: crosshair;
+			user-select: none;
+		}
+
+		/* GEOCITIES AESTHETIC (1997) */
+		[data-aesthetic="geocities"] {
+			background: url('data:image/gif;base64,R0lGODlhBAAEAIAAAP///wAAACH5BAAAAAAALAAAAAAEAAQAAAIChFEAOw==') repeat;
+			background-color: #000080;
+		}
+
+		[data-aesthetic="geocities"] body {
+			font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive !important;
+			color: #00FF00;
+			text-shadow: 2px 2px #FF00FF;
+		}
+
+		[data-aesthetic="geocities"] .container {
+			background: repeating-linear-gradient(45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px);
+			border: 5px ridge gold;
+			padding: 20px;
+			margin: 20px;
+			animation: rainbow-border 3s linear infinite;
+		}
+
+		@keyframes rainbow-border {
+			0% { border-color: red; }
+			16% { border-color: orange; }
+			33% { border-color: yellow; }
+			50% { border-color: green; }
+			66% { border-color: blue; }
+			83% { border-color: indigo; }
+			100% { border-color: violet; }
+		}
+
+		[data-aesthetic="geocities"] h1 {
+			font-size: 48px;
+			text-align: center;
+			animation: blink 0.5s infinite, spin 10s linear infinite;
+			background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			text-shadow: 3px 3px 5px rgba(0,0,0,0.5);
+		}
+
+		@keyframes blink {
+			0%, 49% { opacity: 1; }
+			50%, 100% { opacity: 0; }
+		}
+
+		@keyframes spin {
+			from { transform: rotate(0deg); }
+			to { transform: rotate(360deg); }
+		}
+
+		[data-aesthetic="geocities"] marquee {
+			background: yellow;
+			color: red;
+			font-weight: bold;
+			padding: 10px;
+			border: 3px dashed black;
+			font-size: 24px;
+		}
+
+		/* BRUTALIST AESTHETIC */
+		[data-aesthetic="brutalist"] {
+			background: #fff;
+		}
+
+		[data-aesthetic="brutalist"] body {
+			font-family: "Courier New", monospace;
+			color: #000;
+			line-height: 1.2;
+			font-size: 12px;
+		}
+
+		[data-aesthetic="brutalist"] .container {
+			border: 3px solid #000;
+			padding: 0;
+			margin: 0;
+		}
+
+		[data-aesthetic="brutalist"] h1 {
+			background: #000;
+			color: #fff;
+			padding: 20px;
+			font-size: 72px;
+			font-weight: 900;
+			letter-spacing: -5px;
+			line-height: 0.9;
+			transform: scaleY(1.5);
+		}
+
+		[data-aesthetic="brutalist"] p {
+			padding: 20px;
+			border-bottom: 1px solid #000;
+			text-transform: uppercase;
+		}
+
+		/* VAPORWAVE AESTHETIC */
+		[data-aesthetic="vaporwave"] {
+			background: linear-gradient(180deg, #1a0033 0%, #330066 50%, #ff6ec7 100%);
+		}
+
+		[data-aesthetic="vaporwave"] body {
+			font-family: "Arial", sans-serif;
+			color: #00ffff;
+			text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+		}
+
+		[data-aesthetic="vaporwave"] .container {
+			background: rgba(0, 255, 255, 0.1);
+			border: 2px solid #ff00ff;
+			box-shadow: 0 0 50px rgba(255, 0, 255, 0.5), inset 0 0 50px rgba(0, 255, 255, 0.2);
+			padding: 40px;
+			margin: 40px;
+			backdrop-filter: blur(10px);
+		}
+
+		[data-aesthetic="vaporwave"] h1 {
+			font-size: 64px;
+			text-align: center;
+			background: linear-gradient(90deg, #ff00ff, #00ffff, #ff00ff);
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			animation: vaporwave-pulse 2s ease-in-out infinite;
+			font-style: italic;
+			letter-spacing: 10px;
+		}
+
+		@keyframes vaporwave-pulse {
+			0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
+			50% { transform: scale(1.05); filter: hue-rotate(180deg); }
+		}
+
+		[data-aesthetic="vaporwave"] .japanese {
+			font-size: 36px;
+			color: #ff00ff;
+			text-align: center;
+			margin: 20px 0;
+		}
+
+		/* Y2K AESTHETIC */
+		[data-aesthetic="y2k"] {
+			background: radial-gradient(circle at 50% 50%, #ff00ff, #0000ff, #000);
+		}
+
+		[data-aesthetic="y2k"] body {
+			font-family: "Arial Black", sans-serif;
+			color: #fff;
+		}
+
+		[data-aesthetic="y2k"] .container {
+			background: linear-gradient(135deg, rgba(255,0,255,0.3) 0%, rgba(0,255,255,0.3) 100%);
+			border: 3px solid #00ffff;
+			border-radius: 30px;
+			padding: 30px;
+			margin: 30px;
+			box-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffff;
+			backdrop-filter: blur(5px);
+		}
+
+		[data-aesthetic="y2k"] h1 {
+			font-size: 56px;
+			text-align: center;
+			background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff, #00ffff);
+			background-size: 300% 300%;
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			animation: gradient-shift 3s ease infinite;
+			filter: drop-shadow(0 0 20px #ff00ff);
+			text-transform: uppercase;
+			letter-spacing: 5px;
+		}
+
+		@keyframes gradient-shift {
+			0% { background-position: 0% 50%; }
+			50% { background-position: 100% 50%; }
+			100% { background-position: 0% 50%; }
+		}
+
+		[data-aesthetic="y2k"] .chrome-text {
+			background: linear-gradient(180deg, #fff, #ccc, #fff);
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+			filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+		}
+
+		/* GLITCH AESTHETIC */
+		[data-aesthetic="glitch"] {
+			background: #0a0a0a;
+		}
+
+		[data-aesthetic="glitch"] body {
+			font-family: "Courier New", monospace;
+			color: #00ff00;
+			animation: screen-flicker 0.1s infinite;
+		}
+
+		@keyframes screen-flicker {
+			0% { opacity: 1; }
+			50% { opacity: 0.98; }
+			100% { opacity: 1; }
+		}
+
+		[data-aesthetic="glitch"] .container {
+			background: rgba(0, 20, 0, 0.9);
+			border: 2px solid #00ff00;
+			padding: 30px;
+			margin: 30px;
+			position: relative;
+			overflow: hidden;
+		}
+
+		[data-aesthetic="glitch"] .container::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: -100%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.1), transparent);
+			animation: scan 3s linear infinite;
+		}
+
+		@keyframes scan {
+			from { left: -100%; }
+			to { left: 200%; }
+		}
+
+		[data-aesthetic="glitch"] h1 {
+			font-size: 48px;
+			text-align: center;
+			color: #00ff00;
+			text-shadow: 2px 2px #ff0000, -2px -2px #0000ff;
+			animation: glitch 0.5s infinite;
+			position: relative;
+		}
+
+		@keyframes glitch {
+			0% { transform: translate(0); }
+			20% { transform: translate(-2px, 2px); }
+			40% { transform: translate(-2px, -2px); }
+			60% { transform: translate(2px, 2px); }
+			80% { transform: translate(2px, -2px); }
+			100% { transform: translate(0); }
+		}
+
+		[data-aesthetic="glitch"] h1::before,
+		[data-aesthetic="glitch"] h1::after {
+			content: attr(data-text);
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+		}
+
+		[data-aesthetic="glitch"] h1::before {
+			color: #ff0000;
+			animation: glitch-1 0.3s infinite;
+			clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+		}
+
+		[data-aesthetic="glitch"] h1::after {
+			color: #0000ff;
+			animation: glitch-2 0.3s infinite;
+			clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+		}
+
+		@keyframes glitch-1 {
+			0% { transform: translate(0); }
+			50% { transform: translate(-5px, 0); }
+			100% { transform: translate(0); }
+		}
+
+		@keyframes glitch-2 {
+			0% { transform: translate(0); }
+			50% { transform: translate(5px, 0); }
+			100% { transform: translate(0); }
+		}
+
+		/* SHARED ELEMENTS */
+		.manifest {
+			margin: 40px 0;
+			padding: 20px;
+			line-height: 1.8;
+		}
+
+		.controls {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			display: flex;
+			gap: 10px;
+			z-index: 1000;
+		}
+
+		button {
+			padding: 15px 25px;
+			font-size: 16px;
+			font-weight: bold;
+			border: 3px solid currentColor;
+			background: rgba(0, 0, 0, 0.8);
+			color: #00ff00;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+
+		button:hover {
+			transform: scale(1.1) rotate(5deg);
+			box-shadow: 0 0 20px currentColor;
+		}
+
+		[data-aesthetic="geocities"] button {
+			background: #ff00ff;
+			color: #ffff00;
+			border-radius: 20px;
+			border-style: ridge;
+		}
+
+		[data-aesthetic="brutalist"] button {
+			background: #000;
+			color: #fff;
+			border-radius: 0;
+			text-transform: uppercase;
+		}
+
+		[data-aesthetic="vaporwave"] button {
+			background: rgba(255, 0, 255, 0.3);
+			color: #00ffff;
+			backdrop-filter: blur(10px);
+		}
+
+		[data-aesthetic="y2k"] button {
+			background: linear-gradient(45deg, #ff00ff, #00ffff);
+			color: #fff;
+			border-radius: 15px;
+		}
+
+		.back-link {
+			position: fixed;
+			top: 20px;
+			left: 20px;
+			padding: 10px 20px;
+			background: rgba(0, 0, 0, 0.8);
+			color: #00ff00;
+			text-decoration: none;
+			border: 2px solid currentColor;
+			font-weight: bold;
+			z-index: 1000;
+		}
+
+		.back-link:hover {
+			background: #00ff00;
+			color: #000;
+		}
+
+		/* CHAOS MODE */
+		body.chaos * {
+			animation: chaos-spin 2s linear infinite, chaos-wobble 0.5s ease-in-out infinite !important;
+		}
+
+		@keyframes chaos-spin {
+			from { transform: rotate(0deg); }
+			to { transform: rotate(360deg); }
+		}
+
+		@keyframes chaos-wobble {
+			0%, 100% { transform: translateX(0); }
+			25% { transform: translateX(-10px); }
+			75% { transform: translateX(10px); }
+		}
+	</style>
+</head>
+<body>
+	<a href="/" class="back-link">← ESCAPE</a>
+
+	<div class="container">
+		{currentAesthetic === 'geocities' && (
+			<>
+				<marquee behavior="scroll" direction="left">🔥 WELCOME TO THE FORBIDDEN ZONE 🔥 UNDER CONSTRUCTION 🚧</marquee>
+				<h1>⚠️ DEVIANCE ZONE ⚠️</h1>
+				<center>
+					<img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="50" height="50" alt="animated gif" />
+					<blink>✨ NOW WITH 100% MORE CHAOS ✨</blink>
+				</center>
+			</>
+		)}
+
+		{currentAesthetic === 'brutalist' && (
+			<>
+				<h1>DEVIANCE<br/>ZONE</h1>
+			</>
+		)}
+
+		{currentAesthetic === 'vaporwave' && (
+			<>
+				<div class="japanese">逸脱ゾーン</div>
+				<h1>ＤＥＶＩＡＮＣＥ ＺＯＮＥ</h1>
+				<div class="japanese">美学</div>
+			</>
+		)}
+
+		{currentAesthetic === 'y2k' && (
+			<>
+				<h1 class="chrome-text">✧･ﾟ: *✧･ﾟ:* DEVIANCE ZONE *:･ﾟ✧*:･ﾟ✧</h1>
+			</>
+		)}
+
+		{currentAesthetic === 'glitch' && (
+			<>
+				<h1 data-text="DEVIANCE ZONE">DEVIANCE ZONE</h1>
+				<div style="color: #00ff00; text-align: center; margin: 20px 0;">
+					&gt;&gt; SYSTEM COMPROMISED &lt;&lt;<br/>
+					&gt;&gt; FIREWALL BREACHED &lt;&lt;<br/>
+					&gt;&gt; ENTERING UNAUTHORIZED SPACE &lt;&lt;
+				</div>
+			</>
+		)}
+
+		<div class="manifest">
+			<p style="font-size: 18px; margin-bottom: 20px;">
+				"For the first time in history, weirdness is a choice. And it's a hard one, because we have more to lose than ever."
+			</p>
+			<p style="margin-bottom: 15px;">
+				This page breaks every rule. It's ugly. It's chaotic. It uses Comic Sans. It has marquee tags. It blinks. It spins. It glitches.
+			</p>
+			<p style="margin-bottom: 15px;">
+				We live in the age of sleek minimalism, where every website looks the same, every logo is a sans-serif wordmark, every color is muted. We've optimized away all the weird.
+			</p>
+			<p style="margin-bottom: 15px;">
+				But weird is necessary. Deviance drives creativity. Cultural stagnation is the price of safety. This page is a rebellion against good taste.
+			</p>
+			<p style="margin-bottom: 15px;">
+				Welcome to the illegal hole in the basement.
+			</p>
+			<p style="text-align: center; margin-top: 30px; font-weight: bold; font-size: 20px;">
+				🔥 EMBRACE THE CHAOS 🔥
+			</p>
+		</div>
+	</div>
+
+	<div class="controls">
+		<button onclick="location.reload()">REROLL AESTHETIC</button>
+		<button onclick="document.body.classList.toggle('chaos')">CHAOS MODE</button>
+	</div>
+
+	<script>
+		// Easter eggs
+		let clickCount = 0;
+		document.addEventListener('click', () => {
+			clickCount++;
+			if (clickCount === 10) {
+				alert('You found the secret! But there are no secrets here. Only chaos.');
+			}
+		});
+
+		// Konami code
+		let konamiCode = [];
+		const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+
+		document.addEventListener('keydown', (e) => {
+			konamiCode.push(e.key);
+			konamiCode = konamiCode.slice(-10);
+
+			if (konamiCode.join(',') === konamiSequence.join(',')) {
+				document.body.style.transform = 'rotate(180deg)';
+				setTimeout(() => {
+					document.body.style.transform = 'rotate(0deg)';
+				}, 3000);
+			}
+		});
+
+		// Random cursor changes
+		const cursors = ['crosshair', 'pointer', 'move', 'text', 'wait', 'help', 'progress', 'not-allowed', 'grab'];
+		setInterval(() => {
+			document.body.style.cursor = cursors[Math.floor(Math.random() * cursors.length)];
+		}, 3000);
+
+		// Screen shake
+		function shake() {
+			document.body.style.animation = 'none';
+			setTimeout(() => {
+				document.body.style.animation = 'screen-flicker 0.1s infinite';
+			}, 10);
+		}
+
+		// Random shake every 30 seconds
+		setInterval(shake, 30000);
+
+		console.log('%cYOU FOUND THE DEVIANCE ZONE', 'font-size: 48px; color: #ff00ff; text-shadow: 2px 2px #00ffff; font-weight: bold;');
+		console.log('%cIf you want something in a moment things are very bad, you can do it. You can do it by yourself. - Arturo Di Modica', 'font-size: 14px; color: #00ff00;');
+	</script>
+</body>
+</html>

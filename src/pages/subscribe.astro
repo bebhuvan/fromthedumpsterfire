@@ -1,0 +1,151 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Subscribe - From The Dumpster Fire" description="Get the week's best finds from across the internet, rescued from the algorithmic chaos.">
+  <div class="container">
+    <article class="subscribe-page">
+      <header class="page-header">
+        <h1>Subscribe</h1>
+        <div class="divider"></div>
+      </header>
+
+      <div class="content">
+        <div class="description">
+          <p>Every week, you're drowning in content. Algorithms optimized for engagement, not insight. Rage bait, hot takes, and manufactured controversy. The internet wasn't supposed to work this way.</p>
+
+          <p>This newsletter is rescue work. I spend my week diving into the dumpster fire so you don't have to. The good stuff still exists—thoughtful essays, forgotten art, poems that actually say something, ideas worth your time. It's just buried under the noise.</p>
+
+          <p>What you get: Essays that change how you think, not just what you think about. Art and poetry with context that matters. Research that hasn't been flattened into a tweet. Letters from the past that speak to now. Everything curated by a human who reads for understanding, not engagement metrics.</p>
+
+          <p>One email a week. No spam, no tracking, no algorithmic manipulation. Just signal rescued from noise, delivered to your inbox. You can unsubscribe anytime, obviously.</p>
+
+          <p>If you're tired of letting algorithms decide what you read, subscribe below.</p>
+        </div>
+
+        <div class="form-container">
+          <iframe
+            src="https://bhuvan.substack.com/embed"
+            width="480"
+            height="320"
+            frameborder="0"
+            scrolling="no"
+            class="substack-embed"
+          ></iframe>
+        </div>
+
+        <p class="fallback-link">
+          Form not loading? <a href="https://bhuvan.substack.com/" target="_blank" rel="noopener">Subscribe on Substack</a>
+        </p>
+      </div>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .subscribe-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--space-2xl) 0;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .page-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 0;
+    color: var(--ink);
+    position: relative;
+  }
+
+  .divider {
+    width: 80px;
+    height: 3px;
+    background: var(--flame);
+    margin: var(--space-md) auto 0;
+  }
+
+  .content {
+    text-align: center;
+  }
+
+  .description {
+    text-align: left;
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--ink);
+    margin-bottom: var(--space-2xl);
+  }
+
+  /* Drop cap on first paragraph */
+  .description p:first-of-type::first-letter {
+    font-family: var(--font-display);
+    font-size: 4.5rem;
+    font-weight: 400;
+    line-height: 0.85;
+    float: left;
+    margin: 0.1rem 0.15rem 0 0;
+    color: var(--flame);
+  }
+
+  .description p {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-container {
+    display: flex;
+    justify-content: center;
+    margin: 3rem 0;
+  }
+
+  .substack-embed {
+    max-width: 100%;
+    border: 1px solid var(--ink-whisper);
+    background: white;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .fallback-link {
+    margin-top: 2rem;
+    font-size: 0.95rem;
+    color: var(--ink-medium);
+  }
+
+  .fallback-link a {
+    color: var(--flame);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 2px solid var(--flame);
+    transition: all 0.2s ease;
+  }
+
+  .fallback-link a:hover {
+    color: var(--ink);
+    background: rgba(217, 123, 103, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .subscribe-page {
+      padding: var(--space-xl) 0;
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+    }
+
+    .description {
+      font-size: 1.05rem;
+    }
+
+    .form-container iframe {
+      width: 100% !important;
+      height: 350px !important;
+    }
+  }
+</style>

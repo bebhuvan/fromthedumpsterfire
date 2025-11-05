@@ -1,0 +1,27 @@
+# Security Headers for Cloudflare Workers Static Assets
+# Applied to all routes
+
+/*
+  # HSTS - Force HTTPS
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+  # Content Security Policy
+  # Note: The Cloudflare Worker will override this with nonce-based CSP for HTML pages
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self'; frame-src https://bhuvan.substack.com https://www.youtube.com https://youtube.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+
+  # Clickjacking Protection
+  X-Frame-Options: DENY
+
+  # MIME Type Sniffing Protection
+  X-Content-Type-Options: nosniff
+
+  # Referrer Policy
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Permissions Policy
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()
+
+  # Cross-Origin Policies
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
