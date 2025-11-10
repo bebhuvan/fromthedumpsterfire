@@ -264,7 +264,8 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
     color: var(--ink);
   }
 
-  .article-content :global(p:first-of-type::first-letter) {
+  /* Drop cap only for the first direct paragraph, not in lists or after headings with lists */
+  .article-content > :global(p:first-of-type::first-letter) {
     font-size: 5.5rem;
     font-family: var(--font-display);
     font-weight: 400;
