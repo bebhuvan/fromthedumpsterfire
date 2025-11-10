@@ -264,6 +264,12 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
     color: var(--ink);
   }
 
+  /* Reduce spacing between paragraphs and lists */
+  .article-content :global(p + ul),
+  .article-content :global(p + ol) {
+    margin-top: -0.5rem;
+  }
+
   /* Drop cap only for the first direct paragraph, not in lists or after headings with lists */
   .article-content > :global(p:first-of-type::first-letter) {
     font-size: 5.5rem;
