@@ -12,6 +12,7 @@
     "@astrojs/cloudflare": "^12.6.10",
     "@astrojs/rss": "^4.0.12",
     "astro": "^5.14.1",
+    "lightningcss": "^1.30.2",
     "marked": "^16.4.0"
   },
   "devDependencies": {

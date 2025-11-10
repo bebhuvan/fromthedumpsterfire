@@ -29,7 +29,7 @@ China follows a "build before break" strategy, ensuring clean systems are ready 
 
 - Investment and Capacity: In 2024, China invested $625 billion in clean energy, representing 31 percent of the global total. Wind and solar capacity more than doubled in three years and now generate more electricity than nuclear, hydro, and bioenergy combined.
 
-![China Wind and Solar Generation Capacity](/images/China wind and solar generation capacity.png)
+![China Wind and Solar Generation Capacity](/images/china-wind-solar-capacity.png)
 
 - The Turning Point: In early 2025, clean energy growth outpaced total demand growth, leading to a decline in fossil generation.
 
@@ -57,9 +57,9 @@ China's domestic shift is rewriting the economics of the global energy system. T
 
 - China now produces 80 percent of global solar panels, 60 percent of wind turbines, and 70 percent of battery cells.
 
-![China Solar PV Manufacturing Capacity](/images/china solar pv manufacturing capacity.png)
+![China Solar PV Manufacturing Capacity](/images/china-solar-pv-capacity.png)
 
-![China Solar PV Manufacturing Trend](/images/china solar pv manufacturing trend.png)
+![China Solar PV Manufacturing Trend](/images/china-solar-pv-trend.png)
 
 - These volumes have cut clean-tech prices by 60 to 90 percent since 2010, making 91 percent of new renewable projects worldwide cheaper than fossil alternatives.
 
@@ -71,7 +71,7 @@ Chinese firms file around three-quarters of all global clean-tech patents. They 
 
 Affordable Chinese technology has allowed emerging markets to skip over the fossil-fuel era.
 
-![China Solar Exports](/images/china solar exports.png)
+![China Solar Exports](/images/china-solar-exports.png)
 
 - One-quarter of emerging markets are now more electrified than the United States.
 
