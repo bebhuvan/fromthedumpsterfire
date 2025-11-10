@@ -13,7 +13,7 @@ excerpt: "China's energy transition is accelerating the global peak of fossil fu
 pullQuote: "As China peaks, so too may the world."
 ---
 
-[Noah Smith's thread on China forestalling climate change](https://x.com/Noahpinion/status/1965815338014281779) sparked my interest in understanding the full scope of China's energy transformation. The [China Energy Transition Review 2025 by Ember](https://ember-energy.org/latest-insights/china-energy-transition-review-2025/) provides overwhelming evidence that this transformation is real, accelerating, and globally consequential.
+I had bookmarked [Noah Smith's thread on how China is saving the world from climate change](https://x.com/Noahpinion/status/1965815338014281779)—a bold claim that cut through the usual climate doom narratives. Then I came across the [China Energy Transition Review 2025 by Ember](https://ember-energy.org/latest-insights/china-energy-transition-review-2025/), and the data told an even more remarkable story. China's energy transformation is not just real—it's accelerating, and it's globally consequential.
 
 ## The Central Thesis: A World Reshaped
 
