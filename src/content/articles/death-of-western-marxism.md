@@ -3,7 +3,7 @@ title: "Death of Western Marxism"
 source: "Joseph Heath's Substack"
 originalUrl: "https://josephheath.substack.com/p/john-rawls-and-the-death-of-western"
 author: "Joseph Heath"
-publishedDate: 2024-11-20
+publishedDate: 2025-11-12
 readingTime: 8
 articleType: "essay"
 topics: ["political-theory", "philosophy", "intellectual-history"]

@@ -3,7 +3,7 @@ title: "On Disliking Poetry"
 source: "London Review of Books"
 originalUrl: "https://www.lrb.co.uk/the-paper/v37/n12/ben-lerner/diary"
 author: "Ben Lerner"
-publishedDate: 2025-11-03
+publishedDate: 2025-11-22
 readingTime: 10
 articleType: "essay"
 topics: ["poetry", "literature", "philosophy", "art"]

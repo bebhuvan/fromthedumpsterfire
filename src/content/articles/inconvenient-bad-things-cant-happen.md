@@ -3,7 +3,7 @@ title: "It would be inconvenient if something bad happened, so it can't happen"
 source: "Astral Codex Ten"
 originalUrl: "https://www.astralcodexten.com/p/book-review-if-anyone-builds-it-everyone"
 author: "Scott Alexander"
-publishedDate: 2025-01-15
+publishedDate: 2025-11-22
 readingTime: 4
 articleType: "essay"
 topics: ["long-term-thinking", "web-philosophy"]

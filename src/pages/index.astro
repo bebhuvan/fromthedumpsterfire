@@ -42,6 +42,7 @@ const artPieces = await getCollection('art');
 const poems = await getCollection('poems');
 const letters = await getCollection('letters');
 const books = await getCollection('books');
+const videos = await getCollection('videos');
 
 const latestArt = artPieces.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())[0];
 const latestPoemEntry = poems.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())[0];
@@ -50,6 +51,7 @@ const latestPoem = latestPoemEntry ? {
   poemText: latestPoemEntry.body.split('---')[0].trim()
 } : null;
 const latestLetter = letters.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())[0];
+const latestVideo = videos.sort((a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf())[0];
 const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
 ---
 
@@ -225,6 +227,40 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
             <a href="https://paperlanterns.ink" target="_blank" rel="noopener" class="external-link">
               More letters at Paper Lanterns →
             </a>
+          </div>
+        </section>
+      </>
+    )}
+
+    <!-- Video of the Week -->
+    {latestVideo && (
+      <>
+        <div class="section-heading">
+          <h2>Video of the Week</h2>
+        </div>
+
+        <section class="video-showcase">
+          <div class="video-frame">
+            <div class="video-embed">
+              <iframe
+                src={latestVideo.data.embedUrl}
+                title={latestVideo.data.title}
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                loading="lazy"
+              ></iframe>
+            </div>
+          </div>
+          <div class="video-info">
+            <h3>{latestVideo.data.title}</h3>
+            <div class="video-creator">{latestVideo.data.creator}{latestVideo.data.year && `, ${latestVideo.data.year}`}</div>
+            <p class="video-context">{latestVideo.data.context}</p>
+            <div class="video-link-container">
+              <a href={`/videos/${latestVideo.slug}`} class="video-link">
+                Read full analysis →
+              </a>
+            </div>
           </div>
         </section>
       </>
@@ -643,7 +679,6 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     border: var(--border-fine) solid var(--ink-whisper);
     box-shadow: var(--shadow-soft);
     position: relative;
-    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     min-height: 100%;
@@ -739,29 +774,35 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   /* Intermission - Refined pause */
   .intermission {
     margin: var(--space-3xl) 0;
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-md) 0;
     text-align: center;
     position: relative;
-    background: var(--pastel-peach);
+    background: linear-gradient(135deg, rgba(250, 220, 200, 0.2) 0%, rgba(255, 235, 220, 0.25) 50%, rgba(250, 220, 200, 0.2) 100%);
     border-top: 2px solid var(--flame);
     border-bottom: 2px solid var(--flame);
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   .intermission::before {
     content: '✦';
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     color: var(--flame);
-    opacity: 0.5;
+    opacity: 0.35;
     margin-bottom: var(--space-xs);
+  }
+
+  .intermission::after {
+    content: '✦';
+    display: block;
+    font-size: 0.75rem;
+    color: var(--flame);
+    opacity: 0.35;
+    margin-top: var(--space-xs);
   }
 
   .intermission-text {
     font-family: var(--font-sans);
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.15em;
     color: var(--ink-dark);
@@ -769,10 +810,10 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     position: relative;
     text-transform: uppercase;
     background: var(--bg-cream);
-    padding: 0.4rem 1rem;
+    padding: 0.5rem 1.25rem;
     border: 2px solid var(--ink-dark);
-    box-shadow: 2px 2px 0 var(--flame);
-    transform: rotate(1deg);
+    box-shadow: 3px 3px 0 var(--flame);
+    transform: rotate(-0.5deg);
   }
 
   /* Poem Showcase */
@@ -892,47 +933,50 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     text-decoration: none;
     color: inherit;
     display: block;
-    transition: all 0.3s ease;
   }
-
 
   .letter-card {
     background: linear-gradient(135deg, #fdfaf5 0%, #f9f6f0 100%);
-    padding: var(--space-xl);
+    padding: var(--space-2xl);
     border: var(--border-fine) solid var(--ink-whisper);
-    box-shadow: var(--shadow-lift);
+    box-shadow: 0 8px 30px rgba(45, 42, 38, 0.1), 0 2px 8px rgba(45, 42, 38, 0.06);
     transform: rotate(-0.9deg);
-    transition: all 0.3s ease;
   }
 
   .letter-header {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
     padding-bottom: var(--space-md);
-    border-bottom: var(--border-fine) solid var(--ink-whisper);
+    border-bottom: 2px solid var(--ink-whisper);
   }
 
   .letter-meta {
     font-family: var(--font-sans);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: var(--ink-medium);
-    margin-bottom: var(--space-xs);
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .letter-excerpt {
-    font-size: 1.2rem;
-    line-height: 1.8;
+    font-size: 1.3rem;
+    line-height: 1.85;
     font-style: italic;
-    margin-bottom: var(--space-md);
-    padding-left: var(--space-md);
-    border-left: 3px solid var(--flame);
+    margin-bottom: var(--space-lg);
+    padding-left: var(--space-lg);
+    border-left: 4px solid var(--flame);
+    color: var(--ink);
+    font-weight: 400;
   }
 
   .letter-context {
-    font-size: 1rem;
-    line-height: 1.6;
+    font-size: 1.05rem;
+    line-height: 1.7;
     color: var(--ink-medium);
-    padding: var(--space-md);
-    background: rgba(255, 255, 255, 0.5);
+    padding: var(--space-lg);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
     margin-bottom: var(--space-sm);
   }
 
@@ -961,6 +1005,75 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     display: inline-block;
   }
 
+  /* Video Showcase */
+  .video-showcase {
+    max-width: 1100px;
+    margin: 0 auto var(--space-2xl);
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: var(--space-xl);
+    align-items: center;
+  }
+
+  .video-frame {
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(1deg);
+  }
+
+  .video-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(210, 225, 240, 0.2) 0%, rgba(195, 215, 235, 0.3) 100%);
+  }
+
+  .video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .video-info h3 {
+    font-size: 2.25rem;
+    font-style: italic;
+    margin-bottom: var(--space-xs);
+    line-height: 1.2;
+  }
+
+  .video-creator {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink-medium);
+    margin-bottom: var(--space-md);
+  }
+
+  .video-context {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink-medium);
+  }
+
+  .video-link-container {
+    margin-top: var(--space-md);
+  }
+
+  .video-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+  }
 
   /* Bookshelf */
   .bookshelf {
@@ -1042,22 +1155,23 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   /* Worth Your Time This Week */
   .worth-your-time {
     margin: var(--space-2xl) 0;
-    padding: var(--space-xl) var(--space-lg);
-    background: rgba(255, 255, 255, 0.6);
+    padding: var(--space-2xl) var(--space-xl);
+    background: linear-gradient(135deg, rgba(245, 225, 185, 0.12) 0%, rgba(255, 255, 255, 0.6) 100%);
     border: var(--border-fine) solid var(--ink-whisper);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), var(--shadow-soft);
+    box-shadow: 0 4px 20px rgba(45, 42, 38, 0.06), 0 1px 4px rgba(45, 42, 38, 0.04);
     position: relative;
   }
 
   .worth-your-time::before {
-    content: '✦';
+    content: '✦ ✦ ✦';
     position: absolute;
-    top: var(--space-md);
+    top: var(--space-lg);
     left: 50%;
     transform: translateX(-50%);
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: var(--flame);
-    opacity: 0.2;
+    opacity: 0.25;
+    letter-spacing: 1rem;
   }
 
   .worth-your-time::after {
@@ -1066,8 +1180,8 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: var(--pastel-butter);
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--pastel-butter) 50%, transparent);
   }
 
   .wytt-grid {
@@ -1116,21 +1230,20 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
   }
 
   .wytt-item h3 {
-    font-size: 1.35rem;
-    margin-bottom: var(--space-xs);
+    font-size: 1.4rem;
+    margin-bottom: var(--space-sm);
     line-height: 1.3;
+    font-weight: 600;
   }
 
   .wytt-item h3 a {
     color: var(--ink);
     text-decoration: none;
-    transition: color 0.2s ease;
   }
 
-
   .wytt-excerpt {
-    font-size: 0.95rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    line-height: 1.7;
     color: var(--ink-medium);
   }
 
@@ -1227,6 +1340,16 @@ const featuredBooks = books.filter(book => book.data.featured).slice(0, 4);
 
     .art-image {
       aspect-ratio: 3/2;
+    }
+
+    .video-showcase {
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+    }
+
+    .video-frame {
+      padding: var(--space-md);
+      transform: rotate(0deg);
     }
 
     .rabbit-grid {

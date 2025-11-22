@@ -3,7 +3,7 @@ title: "The Pipedream of Classical Democracy"
 source: "Branko Milanović's Substack"
 originalUrl: "https://branko2f7.substack.com/p/the-age-of-discord-fragmented-politics"
 author: "Branko Milanović"
-publishedDate: 2024-12-10
+publishedDate: 2025-11-13
 readingTime: 7
 articleType: "essay"
 topics: ["political-theory", "democracy", "history"]

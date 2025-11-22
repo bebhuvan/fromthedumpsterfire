@@ -103,10 +103,30 @@ const books = defineCollection({
   }),
 });
 
+const videos = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    creator: z.string(),
+    year: z.string().optional(),
+    platform: z.enum(['youtube', 'vimeo', 'other']).default('youtube'),
+    videoId: z.string(), // YouTube ID or Vimeo ID
+    embedUrl: z.string().url(), // Full embed URL
+    duration: z.string().optional(), // e.g., "12:34"
+    publishedDate: z.coerce.date(),
+    excerpt: z.string(),
+    context: z.string(), // Why this video matters
+    curatorNotes: z.string(),
+    originalUrl: z.string().url().optional(), // Link to original video page
+    topics: z.array(z.string()),
+  }),
+});
+
 export const collections = {
   articles,
   art,
   poems,
   letters,
   books,
+  videos,
 };

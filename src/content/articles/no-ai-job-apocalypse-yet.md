@@ -3,7 +3,7 @@ title: "No AI Job Apocalypse Yet?"
 source: "Fork Lightning Substack"
 originalUrl: "https://forklightning.substack.com/p/shorting-the-ai-jobs-apocalypse"
 author: "David Deming"
-publishedDate: 2024-12-16
+publishedDate: 2025-11-15
 readingTime: 5
 articleType: "essay"
 topics: ["economics", "technology", "future-of-work"]

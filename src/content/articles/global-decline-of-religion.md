@@ -3,7 +3,7 @@ title: "The Global Decline of Religion"
 source: "Nature / Pew Research Center"
 originalUrl: "https://www.nature.com/articles/s41467-025-62452-z"
 author: "Conrad Hackett et al."
-publishedDate: 2025-01-02
+publishedDate: 2025-11-20
 readingTime: 6
 articleType: "essay"
 topics: ["religion", "demographics", "society"]

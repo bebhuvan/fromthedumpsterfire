@@ -4,29 +4,38 @@ import ArchiveSearch from '../components/ArchiveSearch.astro';
 import { getCollection } from 'astro:content';
 
 const allArticles = await getCollection('articles');
-const sortedArticles = allArticles.sort(
+const allVideos = await getCollection('videos');
+
+// Combine articles and videos into a single array with type information
+const allContent = [
+  ...allArticles.map(article => ({ ...article, contentType: 'article' as const })),
+  ...allVideos.map(video => ({ ...video, contentType: 'video' as const }))
+];
+
+const sortedContent = allContent.sort(
   (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf()
 );
 
-// Group articles by year and month
-const articlesByDate = sortedArticles.reduce((acc, article) => {
-  const year = article.data.publishedDate.getFullYear();
-  const month = article.data.publishedDate.toLocaleDateString('en-US', { month: 'long' });
+// Group content by year and month
+const contentByDate = sortedContent.reduce((acc, item) => {
+  const year = item.data.publishedDate.getFullYear();
+  const month = item.data.publishedDate.toLocaleDateString('en-US', { month: 'long' });
   const key = `${year}-${month}`;
 
   if (!acc[key]) {
     acc[key] = {
       year,
       month,
-      articles: []
+      items: []
     };
   }
 
-  acc[key].articles.push(article);
+  acc[key].items.push(item);
   return acc;
-}, {} as Record<string, { year: number; month: string; articles: typeof allArticles }>);
+}, {} as Record<string, { year: number; month: string; items: typeof allContent }>);
 
-const groupedArticles = Object.values(articlesByDate);
+const groupedContent = Object.values(contentByDate);
+const totalCount = allArticles.length + allVideos.length;
 ---
 
 <BaseLayout title="Archive - From The Dumpster Fire">
@@ -34,34 +43,58 @@ const groupedArticles = Object.values(articlesByDate);
     <div class="archive-page">
       <header class="page-header">
         <h1>Archive</h1>
-        <p class="archive-count">{allArticles.length} articles rescued from the flames</p>
+        <p class="archive-count">{totalCount} items rescued from the flames</p>
       </header>
+
+      <div class="category-filters">
+        <button class="filter-btn active" data-category="all">
+          All ({totalCount})
+        </button>
+        <button class="filter-btn" data-category="article">
+          Articles ({allArticles.length})
+        </button>
+        <button class="filter-btn" data-category="video">
+          Videos ({allVideos.length})
+        </button>
+      </div>
 
       <ArchiveSearch />
 
       <div class="archive-content">
-        {groupedArticles.map(group => (
+        {groupedContent.map(group => (
           <section class="archive-group">
             <h2 class="archive-period">{group.month} {group.year}</h2>
             <div class="articles-list">
-              {group.articles.map(article => (
-                <article class="archive-item">
-                  <a href={`/articles/${article.slug}`} class="archive-link">
+              {group.items.map(item => (
+                <article class={`archive-item ${item.contentType}`} data-content-type={item.contentType}>
+                  <a href={item.contentType === 'article' ? `/articles/${item.slug}` : `/videos/${item.slug}`} class="archive-link">
                     <div class="archive-item-header">
-                      <span class="article-type">{article.data.articleType}</span>
+                      <span class="article-type">
+                        {item.contentType === 'article' ? item.data.articleType : 'video'}
+                      </span>
                       <span class="article-date">
-                        {article.data.publishedDate.toLocaleDateString('en-US', {
+                        {item.data.publishedDate.toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric'
                         })}
                       </span>
                     </div>
-                    <h3 class="archive-title">{article.data.title}</h3>
-                    <p class="archive-excerpt">{article.data.excerpt}</p>
+                    <h3 class="archive-title">{item.data.title}</h3>
+                    <p class="archive-excerpt">{item.data.excerpt}</p>
                     <div class="archive-meta">
-                      {article.data.author && <span>{article.data.author}</span>}
-                      {article.data.author && <span class="separator">•</span>}
-                      <span>{article.data.readingTime} min read</span>
+                      {item.contentType === 'article' ? (
+                        <>
+                          {item.data.author && <span>{item.data.author}</span>}
+                          {item.data.author && <span class="separator">•</span>}
+                          <span>{item.data.readingTime} min read</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{item.data.creator}</span>
+                          {item.data.duration && <span class="separator">•</span>}
+                          {item.data.duration && <span>{item.data.duration}</span>}
+                        </>
+                      )}
                     </div>
                   </a>
                 </article>
@@ -100,6 +133,40 @@ const groupedArticles = Object.values(articlesByDate);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 600;
+  }
+
+  .category-filters {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: var(--space-xs) var(--space-md);
+    border: 2px solid var(--ink-whisper);
+    background: var(--bg-canvas);
+    color: var(--ink-medium);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--flame);
+    color: var(--flame);
+  }
+
+  .filter-btn.active {
+    background: var(--flame);
+    color: var(--bg-cream);
+    border-color: var(--flame);
   }
 
   .archive-group {
@@ -197,3 +264,46 @@ const groupedArticles = Object.values(articlesByDate);
     }
   }
 </style>
+
+<script>
+  // Category filter functionality
+  function initCategoryFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn') as NodeListOf<HTMLButtonElement>;
+    const archiveItems = document.querySelectorAll('.archive-item') as NodeListOf<HTMLElement>;
+    const archiveGroups = document.querySelectorAll('.archive-group') as NodeListOf<HTMLElement>;
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const category = button.dataset.category;
+
+        // Update active button
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        // Filter items
+        archiveItems.forEach(item => {
+          const itemType = item.dataset.contentType;
+
+          if (category === 'all' || itemType === category) {
+            item.style.display = '';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+
+        // Show/hide groups based on visible items
+        archiveGroups.forEach(group => {
+          const visibleItems = group.querySelectorAll('.archive-item:not([style*="display: none"])');
+          group.style.display = visibleItems.length > 0 ? '' : 'none';
+        });
+      });
+    });
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCategoryFilters);
+  } else {
+    initCategoryFilters();
+  }
+</script>

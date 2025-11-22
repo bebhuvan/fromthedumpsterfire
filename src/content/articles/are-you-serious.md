@@ -3,7 +3,7 @@ title: "Are You Serious?"
 source: "Introspect"
 originalUrl: "https://visakanv.substack.com/p/are-you-serious"
 author: "Visakan Veerasamy"
-publishedDate: 2025-11-07
+publishedDate: 2025-11-05
 readingTime: 12
 articleType: "essay"
 topics: ["philosophy", "personal growth", "character", "culture"]

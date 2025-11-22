@@ -3,7 +3,7 @@ title: "AI's Impossible Math"
 source: "Practical Capital's Blog"
 originalUrl: "https://pracap.com/global-crossing-reborn"
 author: "Harris 'Kuppy' Kupperman"
-publishedDate: 2024-12-20
+publishedDate: 2025-11-19
 readingTime: 8
 articleType: "essay"
 topics: ["economics", "technology", "finance"]

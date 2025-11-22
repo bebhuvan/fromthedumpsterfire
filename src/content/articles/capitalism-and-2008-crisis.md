@@ -3,7 +3,7 @@ title: "On Capitalism and the 2008 Crisis"
 source: "Twitter / X"
 originalUrl: "https://x.com/alexolegimas/status/1986227566252863962"
 author: "Alex Imas"
-publishedDate: 2025-11-04
+publishedDate: 2025-11-05
 readingTime: 6
 articleType: "thread"
 topics: ["economics", "capitalism", "2008 crisis", "politics"]

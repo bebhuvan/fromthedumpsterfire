@@ -203,7 +203,7 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
 
   .article-meta {
     font-family: var(--font-sans);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--ink-medium);
     margin-bottom: var(--space-lg);
     display: flex;
@@ -219,8 +219,8 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
   /* Curator's Note */
   .curators-note {
     max-width: 750px;
-    margin: 0 auto var(--space-xl);
-    padding: var(--space-lg);
+    margin: 0 auto 3rem;  /* Tighter bottom margin */
+    padding: 1.5rem;  /* Tighter padding */
     background: rgba(245, 225, 185, 0.2);
     border-left: 4px solid var(--flame);
     transform: rotate(-0.4deg);
@@ -239,16 +239,17 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
 
   .curators-note p {
     font-size: 1.25rem;
-    line-height: 1.7;
+    line-height: 1.75;  /* Palatino italic is beautiful with space */
     font-style: italic;
     color: var(--ink);
+    letter-spacing: 0.01em;  /* Palatino italic is naturally elegant */
   }
 
   /* Article Content */
   .article-content {
     max-width: 700px;
     margin: 0 auto;
-    padding: var(--space-xl) 0 0;
+    padding: 2.5rem 0 0;  /* Tighter top padding */
   }
 
   .read-original-container {
@@ -258,16 +259,20 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
   }
 
   .article-content :global(p) {
-    font-size: 1.25rem;
-    line-height: 1.8;
-    margin-bottom: var(--space-md);
+    font-size: 1.25rem;  /* Palatino's elegant proportions work at standard size */
+    line-height: 1.8;  /* Palatino shines with generous spacing */
+    margin-bottom: 1.5rem;  /* Tighter paragraph spacing */
     color: var(--ink);
+    letter-spacing: 0.005em;  /* Minimal - Palatino is naturally elegant */
+    word-spacing: 0;  /* Perfect as-is */
+    hyphens: auto;  /* Better line breaks for long words */
+    hyphenate-limit-chars: 8 4 4;  /* Smart hyphenation */
   }
 
   /* Reduce spacing between paragraphs and lists */
   .article-content :global(p + ul),
   .article-content :global(p + ol) {
-    margin-top: -0.5rem;
+    margin-top: -0.75rem;  /* Closer to preceding paragraph */
   }
 
   /* Drop cap only for the first direct paragraph, not in lists or after headings with lists */
@@ -284,25 +289,29 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
 
   .article-content :global(h2) {
     font-size: 2.25rem;
-    margin-top: var(--space-lg);
-    margin-bottom: var(--space-sm);
+    line-height: 1.2;  /* Add explicit line-height for multi-line headings */
+    margin-top: 3rem;  /* Tighter section break */
+    margin-bottom: 1.25rem;  /* Less space below */
     color: var(--ink);
+    letter-spacing: -0.02em;  /* Tighter for display font */
   }
 
   .article-content :global(h3) {
     font-size: 1.75rem;
-    margin-top: var(--space-md);
-    margin-bottom: var(--space-sm);
+    line-height: 1.3;  /* Explicit line-height */
+    margin-top: 2.5rem;  /* Tighter */
+    margin-bottom: 1rem;  /* Tighter */
     color: var(--ink);
+    letter-spacing: -0.015em;
   }
 
   .article-content :global(blockquote) {
-    font-size: 1.3rem;
+    font-size: 1.4rem;  /* Larger for emphasis with Palatino */
     font-style: italic;
     font-weight: 400;
-    line-height: 1.75;
-    padding: var(--space-lg) var(--space-xl);
-    margin: var(--space-xl) 0;
+    line-height: 1.75;  /* Palatino italic is gorgeous with generous spacing */
+    padding: 1.5rem 2rem;  /* Tighter padding */
+    margin: 2.5rem 0;  /* Tighter margins */
     background: var(--pastel-butter);
     border-left: 4px solid var(--flame);
     color: var(--ink-dark);
@@ -311,9 +320,9 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
     font-feature-settings:
       "kern" 1,        /* kerning */
       "liga" 1,        /* ligatures */
-      "calt" 1,        /* contextual alternates */
-      "swsh" 1;        /* swashes for elegance */
-    letter-spacing: 0.01em;
+      "calt" 1;        /* contextual alternates */
+    letter-spacing: 0.01em;  /* Palatino italic is naturally well-spaced */
+    word-spacing: 0;
   }
 
   .article-content :global(blockquote::before) {
@@ -336,9 +345,10 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
   }
 
   .article-content :global(li) {
-    font-size: 1.25rem;
-    line-height: 1.8;
-    margin-bottom: 0.5rem;
+    font-size: 1.25rem;  /* Match paragraph size */
+    line-height: 1.8;  /* Match paragraph line-height */
+    margin-bottom: 0.75rem;  /* Slightly more space between list items */
+    letter-spacing: 0.005em;
   }
 
   .article-content :global(a) {
@@ -581,7 +591,13 @@ const formattedDate = article.data.publishedDate.toLocaleDateString('en-US', {
   /* Responsive */
   @media (max-width: 768px) {
     .article-content :global(p) {
-      font-size: 1.125rem;
+      font-size: 1.15rem;  /* Palatino remains elegant at smaller sizes */
+      line-height: 1.8;
+    }
+
+    .article-content :global(blockquote) {
+      font-size: 1.25rem;  /* Proportionally reduce on mobile */
+      line-height: 1.75;
     }
 
     .curators-note {

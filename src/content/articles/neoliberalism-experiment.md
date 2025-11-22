@@ -3,7 +3,7 @@ title: "A Horrific Experiment Called 'Neoliberalism'"
 source: "Twitter/X"
 originalUrl: "https://x.com/GestaltU/status/1966844702390403166"
 author: "Adam Butler"
-publishedDate: 2025-01-16
+publishedDate: 2025-11-21
 readingTime: 3
 articleType: "thread"
 topics: ["economics", "politics", "technology"]

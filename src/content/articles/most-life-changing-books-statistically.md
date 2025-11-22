@@ -3,7 +3,7 @@ title: "The Most Life-Changing Books, Statistically"
 source: "Residual Thoughts"
 originalUrl: "https://residualthoughts.substack.com/p/a-statistical-guide-to-the-most-life"
 author: "Joe Hovde"
-publishedDate: 2025-11-09
+publishedDate: 2025-11-21
 readingTime: 8
 articleType: "essay"
 topics: ["books", "data", "culture", "self-help"]

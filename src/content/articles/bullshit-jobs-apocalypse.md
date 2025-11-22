@@ -3,7 +3,7 @@ title: "A Bullshit Jobs Apocalypse?"
 source: "The Still Wandering Substack"
 originalUrl: "https://thestillwandering.substack.com/p/the-death-of-the-corporate-job"
 author: "Alex"
-publishedDate: 2024-12-15
+publishedDate: 2025-11-14
 readingTime: 6
 articleType: "essay"
 topics: ["economics", "technology", "future-of-work"]

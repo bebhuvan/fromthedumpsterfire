@@ -3,7 +3,7 @@ title: "Crop Yields Fail to Rise in Smallholder Farming Systems in Sub-Saharan A
 source: "PNAS"
 originalUrl: "https://www.pnas.org/doi/10.1073/pnas.2312519121"
 author: "Multiple Authors"
-publishedDate: 2024-01-15
+publishedDate: 2025-11-10
 readingTime: 25
 articleType: "paper"
 topics: ["agriculture", "development", "economics"]

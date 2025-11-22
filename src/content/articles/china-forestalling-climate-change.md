@@ -3,7 +3,7 @@ title: "China Is Single-handedly Forestalling Climate Change"
 source: "Ember Energy / Noah Smith"
 originalUrl: "https://ember-energy.org/latest-insights/china-energy-transition-review-2025/"
 author: "Ember Energy, Noah Smith"
-publishedDate: 2025-11-08
+publishedDate: 2025-11-04
 readingTime: 12
 articleType: "essay"
 topics: ["climate", "china", "energy", "technology"]

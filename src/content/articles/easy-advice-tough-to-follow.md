@@ -3,7 +3,7 @@ title: "Easy Advice, Tough to Follow"
 source: "Twitter/X"
 originalUrl: "https://x.com/VicNiederhoffer/status/1966592009218461849"
 author: "Vic Niederhoffer"
-publishedDate: 2025-01-16
+publishedDate: 2025-11-21
 readingTime: 2
 articleType: "thread"
 topics: ["life-advice", "wisdom", "trading"]

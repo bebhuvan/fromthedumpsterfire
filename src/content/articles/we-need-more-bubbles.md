@@ -3,7 +3,7 @@ title: "We Need More Bubbles"
 source: "One Percent Rule Substack"
 originalUrl: "https://onepercentrule.substack.com/p/why-the-overspending-on-ai-is-necessary"
 author: "Colin Lewis"
-publishedDate: 2024-12-18
+publishedDate: 2025-11-17
 readingTime: 4
 articleType: "essay"
 topics: ["economics", "technology", "innovation"]

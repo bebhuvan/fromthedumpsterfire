@@ -1,0 +1,427 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const videos = await getCollection('videos');
+  return videos.map(video => ({
+    params: { slug: video.slug },
+    props: { video }
+  }));
+}
+
+const { video } = Astro.props;
+const { Content } = await video.render();
+---
+
+<BaseLayout
+  title={`${video.data.title} - From The Dumpster Fire`}
+  description={video.data.excerpt}
+  article={true}
+  publishedTime={video.data.publishedDate.toISOString()}
+  modifiedTime={video.data.publishedDate.toISOString()}
+  author={video.data.creator}
+  section="Videos"
+  tags={video.data.topics}
+>
+  <article class="video-page">
+    <div class="container">
+      <!-- Header Section -->
+      <header class="video-header">
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span class="separator">→</span>
+          <span>Video of the Week</span>
+        </div>
+
+        <h1 class="video-title">{video.data.title}</h1>
+
+        <div class="video-meta">
+          <div class="creator-info">
+            <span class="creator-name">{video.data.creator}</span>
+            {video.data.year && <span class="video-year">({video.data.year})</span>}
+          </div>
+          {video.data.duration && (
+            <div class="video-duration">
+              <span class="duration-icon">⏱</span>
+              {video.data.duration}
+            </div>
+          )}
+        </div>
+
+        <div class="divider"></div>
+      </header>
+
+      <!-- Video Embed -->
+      <section class="video-embed-section">
+        <div class="video-frame">
+          <div class="video-embed">
+            <iframe
+              src={video.data.embedUrl}
+              title={video.data.title}
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              loading="eager"
+            ></iframe>
+          </div>
+        </div>
+        {video.data.originalUrl && (
+          <div class="video-link">
+            <a href={video.data.originalUrl} target="_blank" rel="noopener noreferrer">
+              Watch on {video.data.platform === 'youtube' ? 'YouTube' : video.data.platform === 'vimeo' ? 'Vimeo' : 'original site'}
+              <span class="external-arrow">↗</span>
+            </a>
+          </div>
+        )}
+      </section>
+
+      <!-- Context -->
+      {video.data.context && (
+        <section class="video-context">
+          <p class="context-text">{video.data.context}</p>
+        </section>
+      )}
+
+      <div class="flourish-divider">
+        <span>✦ ✦ ✦</span>
+      </div>
+
+      <!-- Full Analysis -->
+      <section class="analysis-section">
+        <div class="analysis-content">
+          <Content />
+        </div>
+      </section>
+
+      <!-- Curator Notes -->
+      {video.data.curatorNotes && (
+        <aside class="curator-notes-box">
+          <div class="curator-label">
+            <span class="flame-icon">🔥</span>
+            <span>Why I Rescued This</span>
+          </div>
+          <p class="curator-text">{video.data.curatorNotes}</p>
+        </aside>
+      )}
+
+      <!-- Back Link -->
+      <div class="back-link-container">
+        <a href="/" class="back-link">
+          ← Back to Home
+        </a>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .video-page {
+    padding: var(--space-xl) 0 var(--space-2xl);
+  }
+
+  /* Header */
+  .video-header {
+    max-width: 900px;
+    margin: 0 auto var(--space-xl);
+    text-align: center;
+  }
+
+  .breadcrumb {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    margin-bottom: var(--space-md);
+  }
+
+  .breadcrumb a {
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--flame);
+  }
+
+  .separator {
+    margin: 0 0.5rem;
+  }
+
+  .video-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: var(--space-sm);
+    line-height: 1.1;
+  }
+
+  .video-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: var(--space-md);
+  }
+
+  .creator-info {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    color: var(--ink-medium);
+  }
+
+  .creator-name {
+    font-weight: 600;
+  }
+
+  .video-year {
+    color: var(--ink-light);
+    margin-left: 0.5rem;
+  }
+
+  .video-duration {
+    font-size: 0.95rem;
+    color: var(--ink-light);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .duration-icon {
+    font-size: 1rem;
+  }
+
+  .divider {
+    width: 80px;
+    height: 2px;
+    background: var(--flame);
+    margin: var(--space-md) auto 0;
+  }
+
+  /* Video Embed */
+  .video-embed-section {
+    max-width: 1100px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .video-frame {
+    background: var(--bg-canvas);
+    padding: var(--space-lg);
+    border: var(--border-fine) solid var(--ink-whisper);
+    box-shadow: var(--shadow-lift);
+    transform: rotate(-0.3deg);
+    transition: transform 0.3s ease;
+  }
+
+  .video-frame:hover {
+    transform: rotate(0deg);
+  }
+
+  .video-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    background: #000;
+  }
+
+  .video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-link {
+    text-align: center;
+    margin-top: var(--space-md);
+  }
+
+  .video-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink-medium);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .video-link a:hover {
+    color: var(--flame);
+  }
+
+  .external-arrow {
+    font-size: 1rem;
+    transition: transform 0.2s ease;
+  }
+
+  .video-link a:hover .external-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  /* Context */
+  .video-context {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--pastel-lavender);
+    border-radius: 4px;
+    border-left: 4px solid rgba(210, 195, 225, 0.6);
+  }
+
+  .context-text {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: var(--ink);
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* Flourish Divider */
+  .flourish-divider {
+    text-align: center;
+    margin: var(--space-2xl) 0;
+    color: var(--ink-whisper);
+    font-size: 1.5rem;
+    letter-spacing: 1rem;
+  }
+
+  /* Analysis Section */
+  .analysis-section {
+    max-width: 800px;
+    margin: 0 auto var(--space-2xl);
+  }
+
+  .analysis-content {
+    font-size: 1.25rem;
+    line-height: 1.8;
+  }
+
+  .analysis-content :global(h2) {
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(h3) {
+    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(p) {
+    margin-bottom: var(--space-md);
+    color: var(--ink);
+  }
+
+  .analysis-content :global(em) {
+    font-style: italic;
+    color: var(--ink-medium);
+  }
+
+  .analysis-content :global(strong) {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .analysis-content :global(ul) {
+    margin: var(--space-md) 0;
+    padding-left: var(--space-lg);
+  }
+
+  .analysis-content :global(li) {
+    margin-bottom: var(--space-sm);
+    line-height: 1.7;
+  }
+
+  /* Curator Notes */
+  .curator-notes-box {
+    max-width: 800px;
+    margin: 0 auto var(--space-xl);
+    background: var(--pastel-coral);
+    padding: var(--space-lg);
+    border-radius: 4px;
+    border-left: 4px solid var(--flame);
+  }
+
+  .curator-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    margin-bottom: var(--space-sm);
+  }
+
+  .flame-icon {
+    font-size: 1.2rem;
+  }
+
+  .curator-text {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: var(--ink);
+    font-style: italic;
+  }
+
+  /* Back Link */
+  .back-link-container {
+    max-width: 800px;
+    margin: var(--space-xl) auto 0;
+    text-align: center;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--flame);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--flame);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .back-link:hover {
+    background: var(--flame);
+    color: var(--bg-cream);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .video-page {
+      padding: var(--space-lg) 0 var(--space-xl);
+    }
+
+    .video-frame {
+      padding: var(--space-sm);
+      transform: rotate(0deg);
+    }
+
+    .context-text {
+      font-size: 1.05rem;
+    }
+
+    .analysis-content {
+      font-size: 1.125rem;
+    }
+
+    .curator-notes-box,
+    .video-context {
+      padding: var(--space-sm) var(--space-md);
+    }
+  }
+</style>

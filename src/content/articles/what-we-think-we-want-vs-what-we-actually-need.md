@@ -3,7 +3,7 @@ title: "What We Think We Want vs. What We Actually Need"
 source: "Original"
 originalUrl: "https://fromthedumpsterfire.com"
 author: "Bhuvanesh"
-publishedDate: 2024-12-17
+publishedDate: 2025-11-16
 readingTime: 6
 articleType: "essay"
 topics: ["philosophy", "economics", "personal-development"]

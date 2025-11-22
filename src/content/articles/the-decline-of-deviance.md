@@ -3,7 +3,7 @@ title: "The Decline of Deviance"
 source: "Experimental History"
 originalUrl: "https://www.experimental-history.com/p/the-decline-of-deviance"
 author: "Adam Mastroianni"
-publishedDate: 2025-01-15
+publishedDate: 2025-11-22
 readingTime: 20
 articleType: "essay"
 topics: ["culture", "society", "philosophy"]

@@ -3,7 +3,7 @@ title: "Say It, Don't Show It"
 source: "Neal Stephenson's Substack"
 originalUrl: "https://nealstephenson.substack.com/p/say-it-dont-show-it"
 author: "Neal Stephenson"
-publishedDate: 2024-11-15
+publishedDate: 2025-11-11
 readingTime: 5
 articleType: "essay"
 topics: ["writing", "storytelling", "literary-craft"]

@@ -3,7 +3,7 @@ title: "UBI Is the Answer?"
 source: "Twitter/X"
 originalUrl: "https://x.com/cullenroche/status/1956069299594125539"
 author: "Cullen Roche"
-publishedDate: 2025-01-16
+publishedDate: 2025-11-21
 readingTime: 3
 articleType: "thread"
 topics: ["economics", "technology", "future-of-work"]

@@ -3,7 +3,7 @@ title: "How Not to Be a Victim of Success"
 source: "The Marginalian"
 originalUrl: "https://www.themarginalian.org/2025/10/09/rockwell-kent-success/"
 author: "Maria Popova"
-publishedDate: 2025-10-09
+publishedDate: 2025-11-09
 readingTime: 6
 articleType: "essay"
 topics: ["philosophy", "identity", "success"]

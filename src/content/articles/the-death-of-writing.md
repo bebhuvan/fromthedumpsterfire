@@ -3,7 +3,7 @@ title: "The Death of Writing"
 source: "Cosmos Institute Blog"
 originalUrl: "https://blog.cosmos-institute.org/p/essay-writing-as-personal-sovereignty"
 author: "Michael Dean"
-publishedDate: 2024-12-19
+publishedDate: 2025-11-18
 readingTime: 7
 articleType: "essay"
 topics: ["technology", "philosophy", "writing"]

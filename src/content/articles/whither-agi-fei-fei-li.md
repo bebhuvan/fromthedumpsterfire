@@ -3,7 +3,7 @@ title: "Whither AGI?"
 source: "Stanford HAI"
 originalUrl: "https://www.youtube.com/watch?v=_PioN-CpOP0&t=1301s"
 author: "Fei-Fei Li"
-publishedDate: 2024-12-15
+publishedDate: 2025-11-14
 readingTime: 6
 articleType: "video"
 topics: ["artificial-intelligence", "spatial-intelligence", "computer-vision"]

@@ -3,7 +3,7 @@ title: "On Tools, AI, and Meaning"
 source: "Letters from the Country Mouse"
 originalUrl: "https://lettersfromthecountrymouse.substack.com/p/the-ordinary-theology-of-tools"
 author: "Holly"
-publishedDate: 2025-11-05
+publishedDate: 2025-11-04
 readingTime: 8
 articleType: "essay"
 topics: ["technology", "AI", "philosophy", "tools", "meaning"]

@@ -3,7 +3,7 @@ title: "Scrolling Toward Oblivion"
 source: "Noema Magazine"
 originalUrl: "https://www.noemamag.com/the-last-days-of-social-media/"
 author: "James O'Sullivan"
-publishedDate: 2024-12-15
+publishedDate: 2025-11-14
 readingTime: 8
 articleType: "essay"
 topics: ["technology", "society", "social-media"]
