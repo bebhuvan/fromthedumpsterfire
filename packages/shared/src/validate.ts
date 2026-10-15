@@ -1,0 +1,277 @@
+// Runtime validation of a Haul bundle and the index, run by the Desk before any publish.
+// It checks the shape (bundles are JSON assembled from a database, so types alone prove nothing)
+// and the invariants in test/fixtures.test.ts, plus the house rules that apply to published copy.
+
+import type { Haul, HaulIndex, Item, Title } from './haul';
+import { BUNDLE_VERSION, haulSlug } from './haul';
+import { typeSwatch } from './tokens';
+import { checkStyle } from './style';
+
+export interface BundleIssue {
+  /** JSON path to the offending value, e.g. "items[2].excerpt.highlight". */
+  path: string;
+  rule: string;
+  message: string;
+}
+
+export interface BundleReport {
+  ok: boolean;
+  errors: BundleIssue[];
+  warnings: BundleIssue[];
+}
+
+const SWATCHES = new Set(['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio']);
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+class Collector {
+  errors: BundleIssue[] = [];
+  warnings: BundleIssue[] = [];
+  err(path: string, rule: string, message: string) {
+    this.errors.push({ path, rule, message });
+  }
+  warn(path: string, rule: string, message: string) {
+    this.warnings.push({ path, rule, message });
+  }
+  str(v: unknown, path: string, { optional = false, nonEmpty = true } = {}): v is string {
+    if (v === undefined && optional) return false;
+    if (typeof v !== 'string') {
+      this.err(path, 'shape', 'must be a string');
+      return false;
+    }
+    if (nonEmpty && !v.trim()) {
+      this.err(path, 'shape', 'must not be empty');
+      return false;
+    }
+    return true;
+  }
+  num(v: unknown, path: string, optional = false): v is number {
+    if (v === undefined && optional) return false;
+    if (typeof v !== 'number' || !Number.isFinite(v)) {
+      this.err(path, 'shape', 'must be a number');
+      return false;
+    }
+    return true;
+  }
+  arr(v: unknown, path: string): v is unknown[] {
+    if (!Array.isArray(v)) {
+      this.err(path, 'shape', 'must be an array');
+      return false;
+    }
+    return true;
+  }
+  obj(v: unknown, path: string, optional = false): v is Record<string, unknown> {
+    if (v === undefined && optional) return false;
+    if (!v || typeof v !== 'object' || Array.isArray(v)) {
+      this.err(path, 'shape', 'must be an object');
+      return false;
+    }
+    return true;
+  }
+  title(v: unknown, path: string) {
+    if (!this.obj(v, path)) return;
+    this.str(v.text, `${path}.text`);
+    this.str(v.italic, `${path}.italic`, { optional: true });
+  }
+  https(v: unknown, path: string) {
+    if (!this.str(v, path)) return;
+    if (!/^https:\/\/[^\s]+$/.test(v)) this.err(path, 'https', 'links must be https URLs');
+  }
+  machineProse(v: unknown, path: string) {
+    if (typeof v !== 'string' || !v.trim()) return;
+    const r = checkStyle(v);
+    for (const i of r.issues) {
+      if (i.severity === 'error') this.err(path, `style:${i.rule}`, i.message);
+      else this.warn(path, `style:${i.rule}`, i.message);
+    }
+  }
+}
+
+function checkItem(c: Collector, item: Item, p: string) {
+  if (!c.obj(item, p)) return;
+  c.str(item.id, `${p}.id`);
+  if (typeof item.id === 'string' && !/^[a-z0-9][a-z0-9-]*$/.test(item.id)) c.err(`${p}.id`, 'id', 'ids are lowercase slugs');
+  if (!(item.type in typeSwatch)) c.err(`${p}.type`, 'type', `unknown content type "${String(item.type)}"`);
+  c.title(item.title, `${p}.title`);
+  c.str(item.creator, `${p}.creator`, { nonEmpty: false });
+  if (c.obj(item.source, `${p}.source`)) {
+    c.str(item.source.name, `${p}.source.name`);
+    c.str(item.source.date, `${p}.source.date`, { nonEmpty: false });
+    c.https(item.source.url, `${p}.source.url`);
+  }
+  c.num(item.minutes, `${p}.minutes`, true);
+  if (c.obj(item.why, `${p}.why`)) {
+    c.str(item.why.text, `${p}.why.text`);
+    if (c.obj(item.why.audio, `${p}.why.audio`, true)) {
+      c.https(item.why.audio.url, `${p}.why.audio.url`);
+      c.num(item.why.audio.seconds, `${p}.why.audio.seconds`);
+    }
+  }
+  if (c.obj(item.excerpt, `${p}.excerpt`, true)) {
+    const ex = item.excerpt;
+    c.str(ex.text, `${p}.excerpt.text`);
+    c.str(ex.locator, `${p}.excerpt.locator`, { nonEmpty: false });
+    if (c.str(ex.highlight, `${p}.excerpt.highlight`, { optional: true }) && typeof ex.text === 'string' && !ex.text.includes(ex.highlight)) {
+      c.err(`${p}.excerpt.highlight`, 'highlight', 'the highlight is not part of the excerpt text');
+    }
+  }
+  if (c.obj(item.media, `${p}.media`, true)) {
+    if (item.media.kind !== 'video' && item.media.kind !== 'audio') c.err(`${p}.media.kind`, 'shape', 'video or audio');
+    c.https(item.media.url, `${p}.media.url`);
+    c.str(item.media.label, `${p}.media.label`);
+  }
+  if (c.obj(item.plate, `${p}.plate`, true)) {
+    c.https(item.plate.url, `${p}.plate.url`);
+    c.num(item.plate.width, `${p}.plate.width`);
+    c.num(item.plate.height, `${p}.plate.height`);
+    c.str(item.plate.caption, `${p}.plate.caption`, { nonEmpty: false });
+    c.str(item.plate.credit, `${p}.plate.credit`);
+    c.str(item.plate.licence, `${p}.plate.licence`);
+  }
+  if (c.obj(item.rhyme, `${p}.rhyme`, true)) {
+    for (const end of ['then', 'now'] as const) {
+      const e = item.rhyme[end];
+      if (c.obj(e, `${p}.rhyme.${end}`)) {
+        c.str(e.year, `${p}.rhyme.${end}.year`);
+        c.str(e.quote, `${p}.rhyme.${end}.quote`);
+        c.str(e.cite, `${p}.rhyme.${end}.cite`);
+      }
+    }
+    c.str(item.rhyme.bridge, `${p}.rhyme.bridge`);
+  }
+  if (c.arr(item.marginalia, `${p}.marginalia`)) {
+    item.marginalia.forEach((m, k) => {
+      const mp = `${p}.marginalia[${k}]`;
+      if (!c.obj(m, mp)) return;
+      c.str(m.text, `${mp}.text`);
+      if (typeof m.cite !== 'string' || !m.cite.trim()) c.err(`${mp}.cite`, 'citation', 'every machine note cites a source');
+      c.machineProse(m.text, `${mp}.text`);
+    });
+  }
+  if (c.arr(item.wiki, `${p}.wiki`)) {
+    item.wiki.forEach((w, k) => {
+      const wp = `${p}.wiki[${k}]`;
+      if (!c.obj(w, wp)) return;
+      c.str(w.title, `${wp}.title`);
+      c.str(w.summary, `${wp}.summary`);
+      c.https(w.url, `${wp}.url`);
+      if (typeof w.url === 'string' && !/^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\//.test(w.url)) {
+        c.err(`${wp}.url`, 'wiki-url', 'Wikipedia cards link to a wikipedia.org article');
+      }
+    });
+  }
+  c.arr(item.connections, `${p}.connections`);
+}
+
+/** Validate a bundle (and, if given, the index that will point to it). */
+export function validateHaul(haul: Haul, index?: HaulIndex): BundleReport {
+  const c = new Collector();
+  if (!c.obj(haul, 'haul')) return { ok: false, errors: c.errors, warnings: c.warnings };
+
+  if (haul.bundleVersion !== BUNDLE_VERSION) c.err('bundleVersion', 'version', `must be ${BUNDLE_VERSION}`);
+  if (c.num(haul.number, 'number') && (!Number.isInteger(haul.number) || haul.number < 1)) c.err('number', 'shape', 'a positive integer');
+  if (c.num(haul.version, 'version') && (!Number.isInteger(haul.version) || haul.version < 1)) c.err('version', 'shape', 'a positive integer');
+  c.title(haul.title, 'title');
+  c.str(haul.deck, 'deck');
+  if (c.str(haul.publishedAt, 'publishedAt') && !ISO_DATE.test(haul.publishedAt)) c.err('publishedAt', 'shape', 'an ISO date');
+  if (!SWATCHES.has(haul.swatch)) c.err('swatch', 'shape', 'a known swatch');
+  c.str(haul.colophon, 'colophon');
+
+  // Field note.
+  const fn = haul.fieldNote;
+  if (c.obj(fn, 'fieldNote')) {
+    c.title(fn.title, 'fieldNote.title');
+    if (c.arr(fn.paragraphs, 'fieldNote.paragraphs')) {
+      if (fn.paragraphs.length === 0) c.err('fieldNote.paragraphs', 'shape', 'the field note needs at least one paragraph');
+      fn.paragraphs.forEach((t, k) => c.str(t, `fieldNote.paragraphs[${k}]`));
+      if (fn.highlight && !fn.paragraphs.join(' ').includes(fn.highlight)) {
+        c.err('fieldNote.highlight', 'highlight', 'the highlight is not in the field note text');
+      }
+    }
+    if (c.obj(fn.audio, 'fieldNote.audio', true)) {
+      c.https(fn.audio.url, 'fieldNote.audio.url');
+      c.num(fn.audio.seconds, 'fieldNote.audio.seconds');
+    }
+    if (c.arr(fn.route, 'fieldNote.route')) {
+      fn.route.forEach((r, k) => {
+        const rp = `fieldNote.route[${k}]`;
+        if (!c.obj(r, rp)) return;
+        c.str(r.day, `${rp}.day`);
+        c.str(r.text, `${rp}.text`);
+        if (r.by !== 'editor' && r.by !== 'machine') c.err(`${rp}.by`, 'shape', 'editor or machine');
+        if (r.by === 'machine') c.machineProse(r.text, `${rp}.text`);
+      });
+    }
+  }
+
+  // Items.
+  const items: Item[] = c.arr(haul.items, 'items') ? haul.items : [];
+  items.forEach((item, k) => checkItem(c, item, `items[${k}]`));
+  const ids = new Set(items.map((i) => i.id));
+  if (ids.size !== items.length) c.err('items', 'unique-ids', 'item ids must be unique');
+  if (items.length === 0) c.err('items', 'count', 'a Haul needs items');
+  else if (items.length < 6 || items.length > 20) c.warn('items', 'count', `a Haul is 6 to 20 objects; this one has ${items.length}`);
+
+  // Threads.
+  const threads = c.arr(haul.threads, 'threads') ? haul.threads : [];
+  const threadIds = new Set(threads.map((t) => t.id));
+  threads.forEach((t, k) => {
+    const tp = `threads[${k}]`;
+    if (!c.obj(t, tp)) return;
+    c.str(t.id, `${tp}.id`);
+    c.title(t.title, `${tp}.title`);
+    c.str(t.summary, `${tp}.summary`);
+    c.str(t.provenance, `${tp}.provenance`);
+    if (c.arr(t.points, `${tp}.points`)) {
+      t.points.forEach((pt, j) => {
+        if (pt.itemId && !ids.has(pt.itemId)) c.err(`${tp}.points[${j}].itemId`, 'link', `no item "${pt.itemId}" in this Haul`);
+      });
+    }
+  });
+
+  // Internal links resolve within the bundle.
+  fn?.route?.forEach((r, k) => {
+    if (r.itemId && !ids.has(r.itemId)) c.err(`fieldNote.route[${k}].itemId`, 'link', `no item "${r.itemId}" in this Haul`);
+  });
+  items.forEach((item, k) =>
+    item.connections?.forEach((cn, j) => {
+      const cp = `items[${k}].connections[${j}]`;
+      if (cn.itemId && !ids.has(cn.itemId)) c.err(`${cp}.itemId`, 'link', `no item "${cn.itemId}" in this Haul`);
+      if (cn.threadId && !threadIds.has(cn.threadId)) c.err(`${cp}.threadId`, 'link', `no thread "${cn.threadId}" in this Haul`);
+      if (!cn.itemId && !cn.threadId) c.err(cp, 'link', 'a connection points to an item or a thread');
+    }),
+  );
+
+  if (haul.corrections !== undefined && c.arr(haul.corrections, 'corrections')) {
+    haul.corrections.forEach((x, k) => {
+      c.str(x.date, `corrections[${k}].date`);
+      c.str(x.text, `corrections[${k}].text`);
+    });
+    if (haul.version > 1 && haul.corrections.length < haul.version - 1) {
+      c.err('corrections', 'corrections', 'every version after the first carries a correction entry');
+    }
+  } else if (typeof haul.version === 'number' && haul.version > 1) {
+    c.err('corrections', 'corrections', 'a corrected version must say what changed');
+  }
+
+  if (index) {
+    if (index.bundleVersion !== BUNDLE_VERSION) c.err('index.bundleVersion', 'version', `must be ${BUNDLE_VERSION}`);
+    const entry = index.hauls?.find((h) => h.number === haul.number);
+    if (!entry) c.err('index.hauls', 'index', `the index has no entry for Haul ${haul.number}`);
+    else {
+      if (entry.itemCount !== items.length) c.err('index.itemCount', 'index', 'item count disagrees with the bundle');
+      if (!entry.path.includes(haulSlug(haul.number))) c.err('index.path', 'index', 'path does not name this Haul');
+      if (!sameTitle(entry.title, haul.title)) c.err('index.title', 'index', 'title disagrees with the bundle');
+    }
+    const numbers = (index.hauls ?? []).map((h) => h.number);
+    if (new Set(numbers).size !== numbers.length) c.err('index.hauls', 'index', 'each Haul appears once');
+    for (let k = 1; k < numbers.length; k++) {
+      if (numbers[k - 1]! < numbers[k]!) c.err('index.hauls', 'index', 'the index lists the newest Haul first');
+    }
+  }
+
+  return { ok: c.errors.length === 0, errors: c.errors, warnings: c.warnings };
+}
+
+function sameTitle(a: Title, b: Title): boolean {
+  return a?.text === b?.text && (a?.italic ?? undefined) === (b?.italic ?? undefined);
+}

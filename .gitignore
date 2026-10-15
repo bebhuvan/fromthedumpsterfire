@@ -1,9 +1,9 @@
-node_modules/
-dist/
-.wrangler/
-.dev.vars*
-.env*
 .astro/
+.dev.vars*
+dist/
+.DS_Store
+.env*
 .expo/
 *.log
-.DS_Store
+node_modules/
+.wrangler/
