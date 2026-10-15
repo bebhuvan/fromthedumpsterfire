@@ -124,7 +124,8 @@ async function fromPdfBytes(env: Env, bytes: Uint8Array, url: string | null, nam
     extractor: pdf.extractor,
     meta: { pages: pdf.pages },
     fields: {
-      title: pdf.meta.title ?? name?.replace(/\.pdf$/i, ''),
+      // No filename fallback: the reading card supplies a real title when the PDF has none.
+      title: pdf.meta.title,
       creator: pdf.meta.creator,
       source_name: url ? host(url) : undefined,
       source_date: pdf.meta.date?.slice(0, 4),

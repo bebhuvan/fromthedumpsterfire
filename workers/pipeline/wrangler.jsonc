@@ -17,7 +17,7 @@
         "ENVIRONMENT": "preview",
         "SPEND_WARN_USD": "8",
         "SPEND_CEILING_USD": "10",
-        "FILES_BASE": "https://files-preview.fromthedumpsterfire.com",
+        "FILES_BASE": "https://fdf-desk-preview.r-bhuvanesh2007.workers.dev/files",
         "SITE_BASE": "https://fromthedumpsterfire.com",
         "CF_ACCOUNT_ID": "169758eb3d46dcbb6dba025317257426",
         "AI_GATEWAY_ID": "fdf-preview"

@@ -11,12 +11,80 @@
   Articles open in an in-app browser tab; video and podcast links open in their own apps. Deep links
   for fromthedumpsterfire.com/haul/… Release builds use R8 and resource shrinking.
 
+- 2026-10-16: **the Desk v1** (`apps/desk`, `workers/api`, `workers/pipeline`, `packages/server`,
+  `migrations/0001_desk.sql`; additive `packages/shared` modules: style, verbatim, cleanup, detect,
+  validate). Capture of links (articles, Substack, YouTube, podcasts, X, arXiv, DOIs, PDFs), passages
+  with sources, PDF uploads, page photos (OCR) and voice notes; the per-item Workflow; review with
+  select-to-excerpt; Haul composer with questions, route, preview, publish and corrections; push
+  endpoint and FCM sender. Preview deployed at https://fdf-desk-preview.r-bhuvanesh2007.workers.dev.
+
+### Desk: what was verified (2026-10-16)
+
+- Local (`wrangler dev`, both Workers): captured a real article (Hamming transcript, 14,447 words),
+  the arXiv Transformer paper (15-page PDF, page locators), an uploaded PDF (Bahdanau et al.), a
+  rendered book-page photo (OCR read the text and "p. 12"), a YouTube talk (captions, timestamp
+  locators), a Substack essay and an X post. All reached `ready` with drafts, verbatim excerpt
+  candidates, cited notes judged against their evidence, Wikipedia cards and link checks.
+- In a headless browser: typed the editor's note (autosaved), selected a sentence in the reader to
+  make the excerpt, marked the highlight inside it, kept and cut notes and cards, ran checks to all
+  green, composed Haul 001 (two items), got machine questions and a drafted route, previewed and
+  published. `hauls/001/v1/haul.json` and `hauls/index.json` validated with `scripts/verify-bundle.ts`;
+  a correction published v2 with its `corrections` entry; v1 was left untouched.
+- A voice note (synthesised speech with fillers) was transcribed by Whisper and cleaned by the model;
+  the deletion-only diff accepted it after it removed exactly "Okay, so, um, like, you know".
+- Deployed preview: an item queued through the Cloudflare Queues API ran the deployed Workflow end
+  to end (fetch, R2 snapshot, read, wiki, draft, judge, check) on Workers AI for $0.014. Unsigned
+  requests to the deployed Desk (UI, assets, API, files, share target, spoofed email header, forged
+  and `alg: none` tokens) all get 403; `/v1/health` is 200 and `POST /v1/devices` validates input.
+- `npm test`: 104 tests (shared rules and bundle validator, SSRF guard, Access/CSRF/bypass attempts,
+  pipeline pure functions, FCM JWT signing).
+
+### Desk: what the editor must do
+
+1. **Turn on Cloudflare Access for the preview** (Wrangler's login cannot create Access apps):
+   Workers & Pages → `fdf-desk-preview` → Settings → Domains & Routes → workers.dev → enable
+   Cloudflare Access, with a policy that allows only owner@example.com (and no App Launcher).
+   Copy the application's AUD tag and your team domain (`<team>.cloudflareaccess.com`) into
+   `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` under `env.preview.vars` in `workers/api/wrangler.jsonc`,
+   then `npm run deploy:preview`. Until both are set, the Worker refuses every request.
+2. **Create the AI Gateway** `fdf-preview` (AI → AI Gateway). Until then Workers AI calls go direct
+   (marked `workers-ai-direct` in Settings) and external providers are unreachable.
+3. **Optional provider keys** (Wrangler secrets on both Workers, preview env), never in config:
+   `GOOGLE_AI_STUDIO_API_KEY`, `DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`; or store
+   them in the gateway (BYOK), set `"byok": true` via `MODEL_ROUTES` and add `CF_AIG_TOKEN`.
+   Set with `npx wrangler secret put NAME -c workers/pipeline/wrangler.jsonc --env preview` (and the
+   same with `workers/api/wrangler.jsonc`, which runs voice cleanup and field-note help).
+4. **Push:** `FCM_SERVICE_ACCOUNT` (the Firebase service-account JSON) as a secret on
+   `workers/pipeline`. iOS tokens from Expo are APNs tokens, which FCM HTTP v1 cannot address; iOS
+   push needs the app to register FCM tokens (Firebase iOS SDK) or a separate APNs sender.
+5. **Production** (nothing created yet): D1 `fdf-desk` (id into both configs), R2 `fdf-files` with
+   the custom domain `files.fromthedumpsterfire.com` (public read, CORS GET for the site), queues
+   `fdf-ingest` and `fdf-ingest-dlq`, AI Gateway `fdf`, an Access app for
+   `desk.fromthedumpsterfire.com`, routes for `desk.` and `api.fromthedumpsterfire.com/v1/*`, the
+   secrets above, a real `SPEND_CEILING_USD` (it ships at 0, meaning no model calls), an R2
+   lifecycle rule to abort incomplete multipart uploads, then
+   `npx wrangler d1 migrations apply DB --remote -c workers/api/wrangler.jsonc --env production`.
+
+### Desk: known gaps
+
+- Edge Access is not yet on for the preview (step 1 above); the in-Worker lock is what refuses
+  requests today.
+- No plates (public-domain image matching), no machine connections/Threads, no Rhymes authoring,
+  no Vectorize yet (milestones 6 and later). Editor-made connections are supported.
+- Long non-MP3 audio (m4a/webm over 20 MB) cannot be split for Whisper; YouTube videos without
+  captions rely on a small audio stream. JS-only pages need Browser Rendering (not wired).
+- Voice notes recorded in Chrome are WebM/Opus, which iOS cannot play if published as audio.
+- `apps/mobile` typecheck fails on `p.swatch.peach` (pre-existing; the swatch was renamed in shared).
+- Model prices in `routes.json` for Workers AI are estimates; check them against the dashboard.
+- The preview D1 holds one probe item ("How to Work Hard") from the deployed pipeline test.
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress
-2. **Publish path**: R2 bucket `files.fromthedumpsterfire.com`, bundle writer with the invariant checks.
-3. **Pipeline v1**: item Workflow: fetch, transcribe, clean (deletion-only), reading card, draft, checks.
-4. **Desk v1**: tray, item review, voice capture, Android share target, quote extraction, behind Access.
+2. **Publish path**: bundle writer with the invariant checks: built; production bucket to create.
+3. **Pipeline v1**: item Workflow: fetch, transcribe, clean (deletion-only), reading card, draft, checks: built.
+4. **Desk v1**: tray, item review, voice capture, Android share target, quote extraction: built,
+   preview deployed; edge Access to switch on.
 5. **Web**: Astro issue page in the canvas design, light and dark.
 6. **Connections**: Vectorize, entity linking, edge judging, Threads.
 7. **Backfill**: import old site archive and reading history.

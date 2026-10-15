@@ -30,13 +30,31 @@ Read these before working:
 ## Layout
 
 ```
-apps/web          Astro site + the Desk (private, behind Cloudflare Access)
+apps/web          Astro site (not built yet)
+apps/desk         the Desk UI: Vite + React SPA, served by workers/api (private, behind Access)
 apps/mobile       Expo reader app
-workers/api       public read API, capture, publish
-workers/pipeline  Workflows + queue consumers (ingest, read, link, check)
-packages/shared   schema types, design tokens, style check, Haul bundle format
+workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
+workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, draft, judge, check, push)
+packages/server   Worker-side code shared by both: D1, model router, extraction, publish, FCM
+packages/shared   schema types, design tokens, style check, verbatim, cleanup, detect, validator
 migrations/       D1 migrations
+scripts/          verify-bundle.ts
 ```
+
+## The Desk (apps/desk, workers/*, packages/server)
+
+- Every request runs the Worker first; the in-Worker Access check is fail-closed. Public routes are
+  exact method + path (`POST /v1/devices`, `GET /v1/health`). Never add a route that skips the lock
+  without adding it to `isPublicRoute` and a test. UI writes send `x-desk: 1` and JSON.
+- Every fetch of a URL that came from the editor or a source goes through `guardedFetch` (SSRF).
+- Model calls only through `generateJson` / `transcribeAudio` in `packages/server/src/models/router.ts`
+  (routes in `routes.json`, ledger and ceiling in `spend.ts`). Prompts and schemas in `prompts.ts`.
+- Machine prose is audited with `checkStyle`; editor text is never sent to a model for rewriting.
+- Never render stored or model text as HTML in the UI (no `dangerouslySetInnerHTML`); links go
+  through `safeHref`.
+- Local: `workers/api/.dev.vars` with `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`; see
+  `docs/ARCHITECTURE.md` (Running the Desk). What is deployed and what the editor must set up:
+  `docs/STATUS.md`.
 
 ## The reader app (apps/mobile)
 
