@@ -29,31 +29,42 @@ export interface CsrfVerdict {
 }
 
 /**
- * Refuse state-changing requests that a browser could have sent from another site:
- * - Sec-Fetch-Site must be same-origin (the share target may also be "none": a user-initiated navigation);
- * - an Origin header, when present, must be the Desk's own origin;
- * - API writes must carry the custom `x-desk: 1` header (a cross-site page cannot set it without a
+ * Refuse state-changing requests that a browser could have sent from another site. Fails closed:
+ * - the Origin header must be present and equal to the Desk's own origin (exact match). The one
+ *   exception is the Android share target, a user-initiated navigation: it must say
+ *   Sec-Fetch-Site "none" or "same-origin", and any Origin it sends must be ours or "null";
+ * - Sec-Fetch-Site, when sent, must be "same-origin" (or "none" for the share target);
+ * - writes must carry the custom `x-desk: 1` header (a cross-site page cannot set it without a
  *   CORS preflight, which this Worker never grants);
- * - bodies must be JSON, except on the upload routes, so a plain HTML form cannot post at all.
+ * - POST, PUT and PATCH bodies must be JSON (multipart only on the upload routes), whatever their
+ *   length, so a plain HTML form cannot post at all.
  */
 export function checkCsrf(req: Request): CsrfVerdict {
   if (SAFE_METHODS.has(req.method)) return { ok: true };
   const url = new URL(req.url);
   const site = req.headers.get('sec-fetch-site');
   const origin = req.headers.get('origin');
-  const isShare = url.pathname === '/share';
-  if (site && !(site === 'same-origin' || (isShare && site === 'none'))) return { ok: false, status: 403, reason: `cross-site request (${site})` };
-  if (origin && origin !== url.origin && !(isShare && origin === 'null')) return { ok: false, status: 403, reason: 'foreign origin' };
-  if (url.pathname.startsWith('/api/') && req.headers.get('x-desk') !== '1') return { ok: false, status: 403, reason: 'missing x-desk header' };
+  const isShare = url.pathname === '/share' && req.method === 'POST';
+  if (isShare) {
+    if (site !== 'none' && site !== 'same-origin') return { ok: false, status: 403, reason: 'share target must be a user navigation' };
+    if (origin !== null && origin !== url.origin && origin !== 'null') return { ok: false, status: 403, reason: 'foreign origin' };
+  } else {
+    if (site !== null && site !== 'same-origin') return { ok: false, status: 403, reason: `cross-site request (${site})` };
+    if (origin !== url.origin) return { ok: false, status: 403, reason: origin ? 'foreign origin' : 'missing Origin' };
+    if (req.headers.get('x-desk') !== '1') return { ok: false, status: 403, reason: 'missing x-desk header' };
+  }
   const type = (req.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
-  const hasBody = req.headers.get('content-length') !== '0' && req.method !== 'DELETE';
   if (MULTIPART_ROUTES.has(url.pathname)) {
     if (type !== 'multipart/form-data') return { ok: false, status: 415, reason: 'expected multipart/form-data' };
-  } else if (hasBody && type !== 'application/json') {
+  } else if (req.method !== 'DELETE' && type !== 'application/json') {
     return { ok: false, status: 415, reason: 'expected application/json' };
   }
   return { ok: true };
 }
+
+/** The only unauthenticated routes, by exact method and path. */
+const PUBLIC_ROUTES = new Set(['POST /v1/devices', 'GET /v1/health']);
+export const isPublicRoute = (method: string, pathname: string) => PUBLIC_ROUTES.has(`${method} ${pathname}`);
 
 export function withHeaders(res: Response, headers: Record<string, string>): Response {
   const out = new Response(res.body, res);

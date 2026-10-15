@@ -39,6 +39,8 @@ export async function verifyOwner(token: string | null, cfg: AccessConfig, resol
       issuer: `https://${domain}`,
       audience: aud,
       algorithms: ['RS256'],
+      requiredClaims: ['exp', 'iat', 'email'],
+      clockTolerance: 30,
     });
     const email = typeof payload.email === 'string' ? payload.email.toLowerCase() : '';
     if (email !== owner) throw new AccessDenied('Not the owner');
@@ -49,7 +51,13 @@ export async function verifyOwner(token: string | null, cfg: AccessConfig, resol
   }
 }
 
-/** Local development only: never in production, never on a non-local host. */
-export function devBypassAllowed(env: { DEV_AUTH_BYPASS?: string; ENVIRONMENT: string }, url: URL): boolean {
-  return env.DEV_AUTH_BYPASS === '1' && env.ENVIRONMENT !== 'production' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+/**
+ * Local development only. All three must hold: ENVIRONMENT is exactly "local" (wrangler.jsonc sets
+ * "preview" or "production" for every deployed env, so only workers/api/.dev.vars can make it
+ * "local"), DEV_AUTH_BYPASS is "1", and the request is to localhost.
+ */
+export function devBypassAllowed(env: { DEV_AUTH_BYPASS?: string; ENVIRONMENT?: string }, url: URL): boolean {
+  return env.ENVIRONMENT === 'local' && env.DEV_AUTH_BYPASS === '1' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
 }
+
+export const KNOWN_ENVIRONMENTS = new Set(['local', 'preview', 'production']);

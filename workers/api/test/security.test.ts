@@ -62,14 +62,61 @@ describe('Access lock', () => {
     await expect(verifyOwner(await sign({ email: 'someone@else.com' }), cfg, keys)).rejects.toBeInstanceOf(AccessDenied);
     const wrongAud = await new SignJWT({ email: cfg.ownerEmail }).setProtectedHeader({ alg: 'RS256', kid: 'k1' }).setIssuer('https://team.cloudflareaccess.com').setAudience('other-app').setExpirationTime('5m').sign(privateKey);
     await expect(verifyOwner(wrongAud, cfg, keys)).rejects.toBeInstanceOf(AccessDenied);
-    await expect(verifyOwner(await sign({ email: 'owner@example.com' }), cfg, keys)).resolves.toEqual({ email: cfg.ownerEmail });
+    const base = () => new SignJWT({ email: cfg.ownerEmail }).setProtectedHeader({ alg: 'RS256', kid: 'k1' }).setIssuer('https://team.cloudflareaccess.com').setAudience('aud-123');
+    // expired
+    await expect(verifyOwner(await base().setIssuedAt(Math.floor(Date.now() / 1000) - 7200).setExpirationTime(Math.floor(Date.now() / 1000) - 3600).sign(privateKey), cfg, keys)).rejects.toBeInstanceOf(AccessDenied);
+    // no exp claim at all
+    await expect(verifyOwner(await base().setIssuedAt().sign(privateKey), cfg, keys)).rejects.toBeInstanceOf(AccessDenied);
+    // wrong issuer
+    await expect(verifyOwner(await new SignJWT({ email: cfg.ownerEmail }).setProtectedHeader({ alg: 'RS256', kid: 'k1' }).setIssuer('https://evil.cloudflareaccess.com').setAudience('aud-123').setIssuedAt().setExpirationTime('5m').sign(privateKey), cfg, keys)).rejects.toBeInstanceOf(AccessDenied);
+    // alg none: header {alg:none}, valid-looking claims, empty signature
+    const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+    const now = Math.floor(Date.now() / 1000);
+    const none = `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ email: cfg.ownerEmail, iss: 'https://team.cloudflareaccess.com', aud: 'aud-123', iat: now, exp: now + 300 })}.`;
+    await expect(verifyOwner(none, cfg, keys)).rejects.toBeInstanceOf(AccessDenied);
+    // HS256 signed with the public key as a secret (algorithm confusion)
+    const hs = await new SignJWT({ email: cfg.ownerEmail }).setProtectedHeader({ alg: 'HS256', kid: 'k1' }).setIssuer('https://team.cloudflareaccess.com').setAudience('aud-123').setIssuedAt().setExpirationTime('5m').sign(new TextEncoder().encode(JSON.stringify(jwk)));
+    await expect(verifyOwner(hs, cfg, keys)).rejects.toBeInstanceOf(AccessDenied);
+    // the owner, case-insensitively
+    await expect(verifyOwner(await sign({ email: 'owner@example.com', iat: now }), cfg, keys)).resolves.toEqual({ email: cfg.ownerEmail });
   });
 
-  it('does not let the local bypass work off localhost or in production', async () => {
-    const { env: e } = env({ DEV_AUTH_BYPASS: '1' });
-    expect((await app.request('https://fdf-desk-preview.example.workers.dev/api/items', {}, e)).status).toBe(403);
-    const { env: p } = env({ DEV_AUTH_BYPASS: '1', ENVIRONMENT: 'production' });
-    expect((await app.request(`${BASE}/api/items`, {}, p)).status).toBe(403);
+  it('allows the local bypass only when ENVIRONMENT is exactly local, on localhost', async () => {
+    for (const ENVIRONMENT of ['preview', 'production']) {
+      const { env: e } = env({ DEV_AUTH_BYPASS: '1', ENVIRONMENT });
+      expect((await app.request(`${BASE}/api/items`, {}, e)).status).toBe(403);
+    }
+    const { env: off } = env({ DEV_AUTH_BYPASS: '1', ENVIRONMENT: 'local' });
+    expect((await app.request('https://fdf-desk-preview.example.workers.dev/api/items', {}, off)).status).toBe(403);
+    const { env: on } = env({ DEV_AUTH_BYPASS: '1', ENVIRONMENT: 'local' });
+    expect((await app.request(`${BASE}/api/items`, {}, on)).status).toBe(200);
+  });
+
+  it('refuses everything when ENVIRONMENT is unset or unknown', async () => {
+    for (const ENVIRONMENT of [undefined, '', 'staging']) {
+      const { env: e } = env({ DEV_AUTH_BYPASS: '1', ENVIRONMENT });
+      expect((await app.request(`${BASE}/api/items`, {}, e)).status).toBe(503);
+      expect((await app.request(`${BASE}/v1/devices`, json({ token: 'a'.repeat(40), platform: 'ios', enabled: true }), e)).status).toBe(503);
+    }
+  });
+
+  it('ignores a spoofed Access email header without a signed assertion', async () => {
+    const { env: e } = env({ ACCESS_TEAM_DOMAIN: 'team.cloudflareaccess.com', ACCESS_AUD: 'aud-123' });
+    const res = await app.request(`${BASE}/api/items`, { headers: { 'cf-access-authenticated-user-email': 'owner@example.com' } }, e);
+    expect(res.status).toBe(403);
+  });
+
+  it('keeps the public allowlist to exact method and path', async () => {
+    const { env: e } = env();
+    // GET on the device path used to skip the lock and fall through to the UI.
+    for (const path of ['/v1/devices', '/v1/devices/', '/v1/devices/../api/items', '/v1/%64evices', '/V1/devices', '/v1/health/x']) {
+      const r = await app.request(`${BASE}${path}`, {}, e);
+      expect([403, 404]).toContain(r.status);
+      expect(await r.text()).not.toMatch(/<div id="root"|<script/);
+    }
+    expect((await app.request(`${BASE}/v1/health`, {}, e)).status).toBe(200);
+    const put = await app.request(`${BASE}/v1/devices`, { ...json({ token: 'a'.repeat(40), platform: 'ios', enabled: true }), method: 'PUT' }, e);
+    expect(put.status).toBe(403);
   });
 });
 
@@ -84,6 +131,15 @@ describe('cross-site requests', () => {
     expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, 'sec-fetch-site': 'cross-site' }, body: '{}' })).status).toBe(403);
     expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, 'sec-fetch-site': 'same-site' }, body: '{}' })).status).toBe(403);
     expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, origin: 'https://evil.example' }, body: '{}' })).status).toBe(403);
+    const { origin: _o, ...noOrigin } = good;
+    expect(checkCsrf(req('/api/capture', { method: 'POST', headers: noOrigin, body: '{}' })).status).toBe(403);
+    const { 'sec-fetch-site': _s, ...bare } = noOrigin;
+    expect(checkCsrf(req('/api/capture', { method: 'POST', headers: bare, body: '{}' })).status).toBe(403);
+    expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, origin: BASE + '.evil.example' }, body: '{}' })).status).toBe(403);
+    expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, origin: 'http://127.0.0.1:8787.evil.example' }, body: '{}' })).status).toBe(403);
+    expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, origin: 'null' }, body: '{}' })).status).toBe(403);
+    expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, 'content-type': '', 'content-length': '0' } })).status).toBe(415);
+    expect(checkCsrf(req('/api/items/x', { method: 'DELETE', headers: { 'sec-fetch-site': 'same-origin' } })).status).toBe(403);
     const { 'x-desk': _x, ...noHeader } = good;
     expect(checkCsrf(req('/api/capture', { method: 'POST', headers: noHeader, body: '{}' })).status).toBe(403);
     expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, 'content-type': 'text/plain' }, body: '{}' })).status).toBe(415);
@@ -94,9 +150,13 @@ describe('cross-site requests', () => {
     const mp = { 'content-type': 'multipart/form-data; boundary=x' };
     expect(checkCsrf(req('/share', { method: 'POST', headers: { ...mp, 'sec-fetch-site': 'none' }, body: '' })).ok).toBe(true);
     expect(checkCsrf(req('/share', { method: 'POST', headers: { ...mp, 'sec-fetch-site': 'cross-site', origin: 'https://evil.example' }, body: '' })).ok).toBe(false);
+    // Neither Sec-Fetch-Site nor Origin: refused (old browsers cannot be told apart from forgeries).
+    expect(checkCsrf(req('/share', { method: 'POST', headers: mp, body: '' })).ok).toBe(false);
+    expect(checkCsrf(req('/share', { method: 'POST', headers: { ...mp, 'sec-fetch-site': 'none', origin: 'https://evil.example' }, body: '' })).ok).toBe(false);
+    expect(checkCsrf(req('/share', { method: 'POST', headers: { 'sec-fetch-site': 'none', 'content-type': 'application/x-www-form-urlencoded' }, body: 'url=x' })).ok).toBe(false);
   });
   it('rejects a cross-site write before any work is done, even with the local bypass', async () => {
-    const { env: e, writes } = env({ DEV_AUTH_BYPASS: '1' });
+    const { env: e, writes } = env({ DEV_AUTH_BYPASS: '1', ENVIRONMENT: 'local' });
     const res = await app.request(`${BASE}/api/capture`, json({ paste: 'https://example.com' }, { origin: 'https://evil.example', 'x-desk': '1' }), e);
     expect(res.status).toBe(403);
     expect(writes).toEqual([]);

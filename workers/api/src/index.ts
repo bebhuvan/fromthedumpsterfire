@@ -36,14 +36,13 @@ import {
   type SourceRow,
   type WikiRow,
 } from '@fdf/server';
-import { AccessDenied, devBypassAllowed, readAssertion, verifyOwner } from './access';
+import { AccessDenied, devBypassAllowed, KNOWN_ENVIRONMENTS, readAssertion, verifyOwner } from './access';
 import { captureEntries, captureFile, entriesFromPaste, type CaptureEntry } from './capture';
-import { checkCsrf, escapeHtml, fileHeaders, localLimit, SECURITY_HEADERS, withHeaders } from './security';
+import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY_HEADERS, withHeaders } from './security';
 
 type App = { Bindings: Env; Variables: { owner: string } };
 const app = new Hono<App>();
 
-const PUBLIC = new Set(['/v1/devices', '/v1/health']);
 
 app.onError((err, c) => {
   console.error(JSON.stringify({ event: 'error', path: c.req.path, error: errorMessage(err) }));
@@ -61,7 +60,9 @@ app.use('*', async (c, next) => {
 
 app.use('*', async (c, next) => {
   const url = new URL(c.req.url);
-  if (PUBLIC.has(url.pathname)) return next();
+  // A deployment without a known ENVIRONMENT is misconfigured: refuse everything.
+  if (!KNOWN_ENVIRONMENTS.has(c.env.ENVIRONMENT as string)) return c.json({ error: 'Misconfigured deployment' }, 503);
+  if (isPublicRoute(c.req.method, url.pathname)) return next();
   const csrf = checkCsrf(c.req.raw);
   if (!csrf.ok) return c.json({ error: 'Refused', reason: csrf.reason }, csrf.status ?? 403);
   if (devBypassAllowed(c.env, url)) {
@@ -125,6 +126,9 @@ app.post('/v1/devices', async (c) => {
     .run();
   return c.json({ ok: true });
 });
+
+// Anything else under /v1 is not a Desk page: never fall through to the UI.
+app.all('/v1/*', (c) => c.json({ error: 'Not found' }, 404));
 
 // ------------------------------------------------------------------ helpers
 
