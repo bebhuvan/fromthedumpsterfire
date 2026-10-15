@@ -2,7 +2,7 @@
 // offset where each page starts so excerpts can carry "p. 12" locators. Workers AI toMarkdown is
 // the fallback for PDFs unpdf cannot read.
 
-import { extractText, getDocumentProxy } from 'unpdf';
+import { getDocumentProxy } from 'unpdf';
 import type { Env } from '../env';
 
 export interface ExtractedPdf {
@@ -40,6 +40,37 @@ export function reflow(page: string): string {
   return paras.join('\n\n');
 }
 
+interface TextItemLike {
+  str: string;
+  hasEOL?: boolean;
+  transform?: number[];
+  height?: number;
+}
+
+/** A page's text with its line breaks, and a blank line where the vertical gap says a paragraph ends. */
+async function pageText(pdf: Awaited<ReturnType<typeof getDocumentProxy>>, n: number): Promise<string> {
+  const page = await pdf.getPage(n);
+  const content = await page.getTextContent();
+  let out = '';
+  let lastY: number | null = null;
+  let lastH = 10;
+  for (const raw of content.items as unknown as TextItemLike[]) {
+    if (typeof raw.str !== 'string') continue;
+    const y = raw.transform?.[5] ?? null;
+    const h = raw.height || Math.abs(raw.transform?.[3] ?? 0) || lastH;
+    if (lastY !== null && y !== null && Math.abs(y - lastY) > h * 0.5 && !out.endsWith('\n')) {
+      out += Math.abs(y - lastY) > Math.max(h, lastH) * 1.8 ? '\n\n' : '\n';
+    } else if (lastY !== null && y !== null && Math.abs(y - lastY) > Math.max(h, lastH) * 1.8 && out.endsWith('\n') && !out.endsWith('\n\n')) {
+      out += '\n';
+    }
+    out += raw.str;
+    if (raw.hasEOL) out += '\n';
+    if (y !== null) lastY = y;
+    lastH = h;
+  }
+  return out;
+}
+
 function pdfDate(s?: string): string | undefined {
   const m = s ? /D?:?(\d{4})(\d{2})?(\d{2})?/.exec(s) : null;
   if (!m) return undefined;
@@ -49,8 +80,8 @@ function pdfDate(s?: string): string | undefined {
 export async function extractPdf(env: Env, bytes: Uint8Array, name = 'source.pdf'): Promise<ExtractedPdf> {
   try {
     const pdf = await getDocumentProxy(new Uint8Array(bytes));
-    const { text } = await extractText(pdf, { mergePages: false });
-    const pagesText = (Array.isArray(text) ? text : [text]).map((t) => reflow(t));
+    const pagesText: string[] = [];
+    for (let n = 1; n <= pdf.numPages; n++) pagesText.push(reflow(await pageText(pdf, n)));
     let meta: ExtractedPdf['meta'] = {};
     try {
       const md = await pdf.getMetadata();

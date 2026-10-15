@@ -103,7 +103,7 @@ You must NOT change, add, reorder or replace any word. Do not fix grammar. Do no
 
 export const cleanSchema = z.object({ text: z.string() });
 
-export const HAUL_QUESTIONS_SYSTEM = `You are helping an editor write the field note that opens an issue of From the Dumpster Fire. You have the items in this issue and the editor's own notes on each. Ask two or three short, specific questions that would help the editor say, in their own voice, what tied this week's finds together and how one led to the next. Ask about concrete things in the items and notes. Do not answer them. Do not flatter.
+export const HAUL_QUESTIONS_SYSTEM = `You are helping an editor write the field note that opens an issue of From the Dumpster Fire. You have the items in this issue and the editor's own notes on each. Ask two or three short, specific questions that would help the editor say, in their own voice, what tied this week's finds together and how one led to the next. Ask about concrete things in the items and notes. Speak to the editor directly as "you". Do not answer them. Do not flatter.
 
 ${HOUSE_STYLE}`;
 

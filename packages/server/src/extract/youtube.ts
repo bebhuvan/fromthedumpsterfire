@@ -66,7 +66,10 @@ export function captionsToText(j: Json3): { text: string; times: Array<{ offset:
     const seg = (ev.segs ?? []).map((s) => s.utf8 ?? '').join('');
     if (!seg.trim()) continue;
     const ms = ev.tStartMs ?? lastMs;
-    if (para && (ms - lastMs > 4000 || (words > 70 && /[.!?]["”]?\s*$/.test(para)))) flush();
+    // A new paragraph after a sentence ends and either a long pause or about seventy words.
+    const sentenceEnd = /[.!?]["”]?\s*$/.test(para);
+    if (para && sentenceEnd && ((ms - lastMs > 6000 && words > 25) || words > 70)) flush();
+    else if (para && words > 160) flush();
     if (!para) paraStartMs = ms;
     para += ' ' + seg.replace(/\n/g, ' ');
     words += seg.split(/\s+/).filter(Boolean).length;

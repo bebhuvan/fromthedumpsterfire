@@ -256,7 +256,7 @@ app.get('/api/items', async (c) => {
       `SELECT i.id, i.kind, i.type, i.status, i.status_detail, i.url, i.title, i.title_choice, i.creator, i.source_name, i.source_date, i.minutes,
               i.why_text IS NOT NULL AND i.why_text != '' AS has_why, i.captured_at, i.updated_at, i.archived, i.capture_text,
               (SELECT h.number FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = i.id LIMIT 1) AS haul_number,
-              (SELECT COUNT(*) FROM drafts d WHERE d.item_id = i.id AND d.kind IN ('marginal', 'title') AND d.status = 'proposed') AS pending,
+              (SELECT COUNT(*) FROM drafts d WHERE d.item_id = i.id AND d.kind = 'marginal' AND d.status = 'proposed') AS pending,
               (SELECT group_concat(name || ':' || status) FROM checks k WHERE k.item_id = i.id) AS checks
        FROM items i WHERE ${where} ORDER BY i.captured_at DESC LIMIT 300`,
     ).all()

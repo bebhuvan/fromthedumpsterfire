@@ -1,0 +1,27 @@
+{
+  "name": "The Desk · From the Dumpster Fire",
+  "short_name": "Desk",
+  "description": "The editor's desk for From the Dumpster Fire.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#141416",
+  "icons": [
+    { "src": "/icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        { "name": "files", "accept": ["application/pdf", "image/*", "audio/*", ".pdf", ".m4a", ".mp3", ".ogg", ".opus", ".webm"] }
+      ]
+    }
+  }
+}
