@@ -1,0 +1,76 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // The Desk: its UI (static assets built from apps/desk) and its API, plus the one public route
+  // the reader app needs (POST /v1/devices). Every request reaches the Worker first so that the
+  // in-Worker Access check guards the UI as well as the API; Cloudflare Access at the edge is the
+  // outer lock. No bindings at the top level: every deploy must name an environment.
+  "name": "fdf-desk",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "../../apps/desk/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
+  },
+
+  "env": {
+    "preview": {
+      "name": "fdf-desk-preview",
+      "vars": {
+        "ENVIRONMENT": "preview",
+        "SPEND_WARN_USD": "8",
+        "SPEND_CEILING_USD": "10",
+        "FILES_BASE": "https://fdf-desk-preview.r-bhuvanesh2007.workers.dev/files",
+        "SITE_BASE": "https://fromthedumpsterfire.com",
+        "CF_ACCOUNT_ID": "169758eb3d46dcbb6dba025317257426",
+        "AI_GATEWAY_ID": "fdf-preview",
+        // Access: the team domain and the application's AUD tag, from the Zero Trust dashboard.
+        // Empty values deny every Desk request (fail closed).
+        "ACCESS_TEAM_DOMAIN": "",
+        "ACCESS_AUD": "",
+        "OWNER_EMAIL": "owner@example.com"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "fdf-desk-preview", "database_id": "8da223f8-d555-450b-8e44-62bbae0015e7", "migrations_dir": "../../migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files-preview" }],
+      "ai": { "binding": "AI" },
+      "queues": { "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest-preview" }] },
+      // POST /v1/devices is public; 20 registrations per IP per minute is ample for the app.
+      "ratelimits": [{ "name": "DEVICE_LIMITER", "namespace_id": "4101", "simple": { "limit": 20, "period": 60 } }],
+      "workers_dev": true,
+      "preview_urls": false
+    },
+    "production": {
+      "name": "fdf-desk",
+      "vars": {
+        "ENVIRONMENT": "production",
+        "SPEND_WARN_USD": "0",
+        "SPEND_CEILING_USD": "0",
+        "FILES_BASE": "https://files.fromthedumpsterfire.com",
+        "SITE_BASE": "https://fromthedumpsterfire.com",
+        "CF_ACCOUNT_ID": "169758eb3d46dcbb6dba025317257426",
+        "AI_GATEWAY_ID": "fdf",
+        "ACCESS_TEAM_DOMAIN": "",
+        "ACCESS_AUD": "",
+        "OWNER_EMAIL": "owner@example.com"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "fdf-desk", "database_id": "PLACEHOLDER_SET_AT_PROVISION", "migrations_dir": "../../migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files" }],
+      "ai": { "binding": "AI" },
+      "queues": { "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest" }] },
+      "ratelimits": [{ "name": "DEVICE_LIMITER", "namespace_id": "4102", "simple": { "limit": 20, "period": 60 } }],
+      // Production routes (add when the zone is ready): desk.fromthedumpsterfire.com/* behind an
+      // Access application, and api.fromthedumpsterfire.com/v1/* public for the reader app.
+      "workers_dev": false,
+      "preview_urls": false
+    }
+  }
+}

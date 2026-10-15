@@ -30,3 +30,34 @@ Dated, newest last. Don't reopen these without a new reason.
 - **Brand:** classy system with one ember accent for the brand only; app icon is the ember flame on ink.
 - **Fonts:** static, Latin-subset cuts of Newsreader (text 16, display 72) and Schibsted Grotesk,
   embedded at build time. About 650 KB for eight files.
+
+## 2026-10-16 (the Desk)
+
+- **Desk UI is a Vite + React SPA in `apps/desk`, not Astro routes.** The Desk is an app for one
+  person: selection-to-excerpt, autosaving textareas, keyboard navigation, live pipeline status. It
+  needs no SEO or server rendering, and islands would only add a framework boundary. It is served as
+  static assets by the Desk Worker, so it shares the API's origin and Access lock. The public website
+  stays Astro. Dependencies: React and React DOM only.
+- **Two Workers.** `workers/api` (Desk UI + API + the public device route) and `workers/pipeline`
+  (ItemWorkflow + queue consumer). Shared server code is `packages/server`.
+- **The Worker is a second lock behind Access.** Every request (assets included) runs the Worker,
+  which verifies the Access JWT itself and fails closed when Access is unconfigured. Public routes
+  are listed by exact method and path. Rejected: trusting `Cf-Access-Authenticated-User-Email`, or
+  serving static assets before the Worker.
+- **Models through a task router with fallbacks.** Task chains live in
+  `packages/server/src/models/routes.json`; keys decide availability; Workers AI models (DeepSeek V4
+  Flash, Kimi K2.6 with thinking off, Llama 4 Scout for vision) are the working fallback when no
+  provider keys are set. Reasoning models are run with thinking off: with it on, long drafts spent
+  the whole output budget on reasoning and returned truncated JSON.
+- **Spend is enforced from our own ledger** (`model_calls`), checked before every call; AI Gateway
+  logs are a second view, not the source of truth. Production ships with a zero ceiling (no calls)
+  until the editor sets one.
+- **Machine prose that fails the house style is regenerated twice with the failures listed, then
+  dropped**, never shown with a warning. A note the checker calls "partly" offers a narrower
+  correction only if it is not longer than the original.
+- **Wikipedia card summaries default to the first sentence of Wikipedia's own extract**, not a
+  machine gloss, so the serif text on the card is Wikipedia's words; the editor can rewrite it.
+- **Route lines drafted by the machine stay `by: machine`** until the editor rewrites one or marks it
+  theirs. The machine never writes in the editor's first person.
+- **Connections are editor-made for now** (typed, with a one-sentence note in the editor's words).
+  Machine edge-judging is milestone 6.

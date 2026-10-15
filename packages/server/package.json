@@ -1,0 +1,24 @@
+{
+  "name": "@fdf/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker-side code shared by the Desk API and the pipeline: D1 access, model router, extraction, Wikipedia, publish, push.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fdf/shared": "*",
+    "@mozilla/readability": "^0.6.0",
+    "linkedom": "^0.18.12",
+    "unpdf": "~1.8.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261001.0"
+  }
+}

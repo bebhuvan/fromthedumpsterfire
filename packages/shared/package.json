@@ -6,6 +6,11 @@
   "exports": {
     "./tokens": "./src/tokens.ts",
     "./haul": "./src/haul.ts",
+    "./style": "./src/style.ts",
+    "./validate": "./src/validate.ts",
+    "./verbatim": "./src/verbatim.ts",
+    "./cleanup": "./src/cleanup.ts",
+    "./detect": "./src/detect.ts",
     "./fixtures/haul-001.json": "./fixtures/haul-001.json",
     "./fixtures/index.json": "./fixtures/index.json"
   },

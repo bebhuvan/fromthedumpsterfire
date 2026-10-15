@@ -16,7 +16,7 @@ Reader app + website ◄─────┴──── published Haul bundle (R2
 |---|---|---|
 | Website | readers | Astro on Workers static assets, fromthedumpsterfire.com |
 | Reader app | readers | Expo (React Native), Android + iOS, reads published bundles, offline |
-| Desk | editor only | Astro routes + PWA at desk.fromthedumpsterfire.com, behind Cloudflare Access |
+| Desk | editor only | Vite + React SPA (`apps/desk`) + PWA served by `workers/api` at desk.fromthedumpsterfire.com, behind Cloudflare Access |
 | Capture | editor only | Desk share target (Android), iOS Shortcut, optional Telegram bot |
 
 The reader app has no editor mode. All write routes sit behind Access.
@@ -66,3 +66,100 @@ Corrections publish a new version with a visible changelog entry.
 
 `SPEND_WARN_USD` and `SPEND_CEILING_USD` vars per env, enforced before each model call using AI
 Gateway cost logs. Flash for bulk reading; the stronger model only for edge judging and final checks.
+(As built, the Desk enforces the ceiling from its own `model_calls` ledger; see below.)
+
+## The Desk (built)
+
+The Desk is one Worker (`workers/api`, `fdf-desk-*`) that serves the UI (`apps/desk`, a Vite + React
+SPA built to static assets) and its API, plus a pipeline Worker (`workers/pipeline`, `fdf-pipeline-*`)
+that owns the per-item Workflow and the queue consumer. Shared server code is `packages/server`; the
+rules the app may also use (style check, verbatim matching, deletion-only cleanup, capture
+detection, bundle validator) are in `packages/shared`.
+
+```
+browser (Access) ─► fdf-desk ── D1 (items, sources, excerpts, drafts, wiki_cards, checks, notes,
+   │                 │           hauls, haul_items, haul_versions, connections, model_calls, runs, devices)
+   │                 ├─ R2 (uploads/, notes/, snapshots/, hauls/NNN/vN/haul.json, hauls/index.json)
+   │                 └─ Queue fdf-ingest ─► fdf-pipeline ─► ItemWorkflow (one per item)
+reader app ─► POST /v1/devices (public)              └─ notify (FCM HTTP v1) after a publish
+```
+
+**Requests.** Every request reaches the Worker first (`run_worker_first`), so the in-Worker lock
+guards the UI's assets too. Public routes are exact method + path: `POST /v1/devices` (JSON only,
+shape-checked, rate limited) and `GET /v1/health`. Everything else needs a Cloudflare Access JWT
+verified against the team's certs (RS256 only; issuer, AUD, `exp`/`iat`/`email` required; email must
+be `OWNER_EMAIL`). With `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` empty, or `ENVIRONMENT` unknown, the
+Desk refuses every request. Writes also need an exact same-origin `Origin`, the `x-desk: 1` header
+and a JSON body (multipart only on uploads and the share target, which instead must be a
+`Sec-Fetch-Site: none|same-origin` navigation). Responses carry a strict CSP; stored files are served
+sandboxed, and anything not a known inert type downloads as `application/octet-stream`. Local
+development sets `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1` in `workers/api/.dev.vars`; the bypass
+is honoured only then and only on localhost.
+
+**Capture.** `POST /api/capture` (links, many at once, or a passage with its source),
+`POST /api/capture/file` (PDF, raster page photos), `POST /share` (Android Web Share Target),
+`POST /api/notes` (voice notes, transcribed and cleaned synchronously). Each new item is a queue
+message; the consumer starts one `ItemWorkflow` per item.
+
+**ItemWorkflow steps.** `fetch` (per source kind: Readability on linkedom; unpdf page by page with
+page offsets, Workers AI `toMarkdown` as fallback; YouTube captions through the InnerTube Android
+client, else Whisper on the audio stream; Apple Podcasts / RSS / og:audio with chunked Whisper on
+MP3 in 3 MB byte ranges, one step per chunk; X via oEmbed; arXiv API + PDF; Crossref for DOIs; OCR
+of page photos by a vision model) → snapshot raw bytes and text to R2, text to D1 → `read`
+(reading card; quotables kept only if found verbatim) → `wiki` (model-proposed queries resolved
+with the Wikipedia REST API; hits that share no word with the query are rejected) → `draft`
+(titles, excerpt candidates, cited marginalia; audited for house style, verbatim quotes and real
+citations, regenerated up to three times with the failures listed, then anything still failing is
+dropped) → `judge` (each note against its cited evidence: supported, partly with a narrower
+correction, or unsupported) → `check` (links, quotes, style, citations, the editor's note) →
+`ready`. Errors set the item `failed`; the spend ceiling sets it `paused`.
+
+**SSRF guard.** Every fetch of an editor- or source-supplied URL goes through `guardedFetch`
+(`packages/server/src/extract/guard.ts`): http/https on default ports, no credentials, no internal
+hostnames, no private, loopback, link-local, CGNAT or metadata addresses (IPv4, IPv6 and mapped
+forms), DNS-over-HTTPS resolution checked, redirects followed by hand and re-checked (5 hops).
+
+**Models.** `packages/server/src/models/routes.json` maps tasks (`read`, `draft`, `judge`, `clean`,
+`ocr`, `haul`) to a chain of models; the router skips models whose key is missing and falls back on
+errors. External providers go through the AI Gateway OpenAI-compatible endpoint
+(`/compat/chat/completions`, model `provider/model`); Workers AI goes through the AI binding's
+gateway option (if the named gateway does not exist yet, calls go direct and are logged as
+`workers-ai-direct`). Outputs are JSON validated with zod, with one repair attempt. Every call is
+recorded in `model_calls` with tokens and cost; `assertBudget` refuses calls once the month's total
+reaches `SPEND_CEILING_USD` (zero means no calls). Override routes per deploy with `MODEL_ROUTES`.
+
+**Voice notes.** Whisper (`@cf/openai/whisper-large-v3-turbo`), then a model cleanup that is only
+accepted if `checkDeletionOnly` proves it removed fillers or stutters and changed punctuation or
+capitalisation, nothing else; otherwise the code-only cleanup is used.
+
+**Publish.** `assembleHaul` builds the bundle from D1, maps internal ids to slugs, copies chosen
+voice notes next to the bundle, and refuses on any failing item check, any kept note not confirmed
+by its source, any note still waiting on the editor, or any `validateHaul` error. `publishHaul`
+writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never overwritten) and
+`hauls/index.json`, records `haul_versions`, and for v1 only queues one push. A correction is a new
+version with a `corrections` entry. Push uses FCM HTTP v1 with an OAuth assertion signed by
+WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
+`url: https://fromthedumpsterfire.com/haul/<n>`; unregistered tokens are disabled.
+
+### Desk resources
+
+| | Preview (created) | Production (to create) |
+|---|---|---|
+| Desk Worker | `fdf-desk-preview`, https://fdf-desk-preview.r-bhuvanesh2007.workers.dev | `fdf-desk` on `desk.fromthedumpsterfire.com` (Access) and `api.fromthedumpsterfire.com/v1/*` (public) |
+| Pipeline Worker | `fdf-pipeline-preview` | `fdf-pipeline` |
+| D1 | `fdf-desk-preview` | `fdf-desk` (put its id in both `wrangler.jsonc`) |
+| R2 | `fdf-files-preview` (private) | `fdf-files`, custom domain `files.fromthedumpsterfire.com`, public read |
+| Queues | `fdf-ingest-preview`, `fdf-ingest-preview-dlq` | `fdf-ingest`, `fdf-ingest-dlq` |
+| Workflow | `fdf-item-preview` | `fdf-item` |
+| AI Gateway | `fdf-preview` (create in the dashboard) | `fdf` |
+| Access app | on the workers.dev hostname (see STATUS) | self-hosted app for `desk.fromthedumpsterfire.com`, owner email only |
+
+### Running the Desk
+
+- Local: `npm run desk:build`, then `npx wrangler d1 migrations apply DB --local --persist-to .wrangler/state -c workers/api/wrangler.jsonc --env preview`, then
+  `npx wrangler dev -c workers/api/wrangler.jsonc -c workers/pipeline/wrangler.jsonc --env preview --persist-to .wrangler/state`
+  (local D1, R2, Queues and Workflows; Workers AI is remote and billed). `workers/api/.dev.vars`
+  must contain `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`. For UI work, `npm run dev -w @fdf/desk`
+  proxies the API to port 8787.
+- Preview: `npm run db:migrate:preview`, `npm run deploy:preview`.
+- `npx tsx scripts/verify-bundle.ts <filesBase> hauls/001/v1/haul.json` validates a published bundle.

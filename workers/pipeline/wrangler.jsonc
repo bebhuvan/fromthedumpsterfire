@@ -1,0 +1,65 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // The pipeline: ItemWorkflow (durable per-item steps) and the ingest queue consumer.
+  // No public routes. No bindings at the top level: every deploy must name an environment.
+  "name": "fdf-pipeline",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+
+  "env": {
+    "preview": {
+      "name": "fdf-pipeline-preview",
+      "vars": {
+        "ENVIRONMENT": "preview",
+        "SPEND_WARN_USD": "8",
+        "SPEND_CEILING_USD": "10",
+        "FILES_BASE": "https://fdf-desk-preview.r-bhuvanesh2007.workers.dev/files",
+        "SITE_BASE": "https://fromthedumpsterfire.com",
+        "CF_ACCOUNT_ID": "169758eb3d46dcbb6dba025317257426",
+        "AI_GATEWAY_ID": "fdf-preview"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "fdf-desk-preview", "database_id": "8da223f8-d555-450b-8e44-62bbae0015e7", "migrations_dir": "../../migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files-preview" }],
+      "ai": { "binding": "AI" },
+      "queues": {
+        "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest-preview" }],
+        "consumers": [
+          { "queue": "fdf-ingest-preview", "max_batch_size": 10, "max_batch_timeout": 2, "max_retries": 5, "dead_letter_queue": "fdf-ingest-preview-dlq" }
+        ]
+      },
+      "workflows": [{ "binding": "ITEM_WORKFLOW", "name": "fdf-item-preview", "class_name": "ItemWorkflow" }],
+      "workers_dev": false,
+      "preview_urls": false
+    },
+    "production": {
+      "name": "fdf-pipeline",
+      "vars": {
+        "ENVIRONMENT": "production",
+        "SPEND_WARN_USD": "0",
+        "SPEND_CEILING_USD": "0",
+        "FILES_BASE": "https://files.fromthedumpsterfire.com",
+        "SITE_BASE": "https://fromthedumpsterfire.com",
+        "CF_ACCOUNT_ID": "169758eb3d46dcbb6dba025317257426",
+        "AI_GATEWAY_ID": "fdf"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "fdf-desk", "database_id": "PLACEHOLDER_SET_AT_PROVISION", "migrations_dir": "../../migrations" }
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files" }],
+      "ai": { "binding": "AI" },
+      "queues": {
+        "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest" }],
+        "consumers": [{ "queue": "fdf-ingest", "max_batch_size": 10, "max_batch_timeout": 2, "max_retries": 5, "dead_letter_queue": "fdf-ingest-dlq" }]
+      },
+      "workflows": [{ "binding": "ITEM_WORKFLOW", "name": "fdf-item", "class_name": "ItemWorkflow" }],
+      "workers_dev": false,
+      "preview_urls": false
+    }
+  }
+}
