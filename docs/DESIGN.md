@@ -17,10 +17,17 @@ Screens: cover, field note, glossed item, Rhymes, Thread, dark cover and item, w
 | Role | Face | Notes |
 |---|---|---|
 | Display, headings | Newsreader, display optical size, 500; italics at 400 for the second phrase | Bodoni was tried and rejected: hairlines vanish on phones |
-| Body, excerpts, editor notes | Newsreader text cut; editor notes in italic | old-style numerals in running text, lining in display |
+| Body, excerpts, editor notes | Newsreader text cut; editor notes in italic | Newsreader has no old-style figures; its default numerals are used throughout |
 | Labels, UI, machine voice | Schibsted Grotesk 400–700 | labels uppercase, 11px, 0.12em tracking, 600 |
 
 React Native cannot drive the optical-size axis, so ship static cuts (text and display) of Newsreader.
+
+## Brand
+
+The mark is an ember flame on ink (app icon), drawn as a teardrop with an inner cut. Ember is used only
+for the brand: icon, splash, and the small flame beside the masthead. Never for text, never for UI
+state, never mixed up with the machine blue. Options considered: ember on white, white on ember (read
+as a water drop), the italic f with a lit tip (too small at icon size).
 
 ## Tokens
 
@@ -34,6 +41,7 @@ Defined in `packages/shared/src/tokens.ts`; summarised here.
 | rule | #E6E6EA | #2A2A31 |
 | plate | #F4F4F6 | #1B1B20 |
 | machine | #4651D2 | #A3ACFF |
+| ember (brand only) | #FF4F1F | #FF6A3D |
 | essay (lilac) | #E9E5FF | #2C2752 |
 | rhymes (sky) | #DDEEFF | #16324D |
 | talk (butter) | #FFF2AE | #433B12 |

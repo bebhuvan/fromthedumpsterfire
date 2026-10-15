@@ -38,6 +38,18 @@ packages/shared   schema types, design tokens, style check, Haul bundle format
 migrations/       D1 migrations
 ```
 
+## The reader app (apps/mobile)
+
+- Expo 57 with Continuous Native Generation: never edit `android/` or `ios/`; configure in `app.json`.
+- Lean by rule. Every new dependency needs a reason, and check what it links natively with
+  `npx expo-modules-autolinking resolve -p android --json`. No Expo Router, Reanimated, SVG runtime,
+  icon fonts or UI kits; icons are drawn with views.
+- `src/App.tsx` (navigator + deep links in `src/nav.ts`), `src/routes.tsx` (params to data),
+  `src/screens/*`, `src/ui/*` (type roles in `type.tsx`), `src/lib/data.ts` (offline-first bundles).
+- Fonts are embedded static cuts; use the names in `src/theme.ts` and never set fontWeight/fontStyle.
+- Build a release APK: `cd apps/mobile && npx expo prebuild -p android --clean && cd android &&
+  ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a` (ANDROID_HOME=~/android-sdk).
+
 ## Conventions
 
 - npm workspaces, TypeScript everywhere, Node >= 22. Scripts run with `node --experimental-strip-types`.

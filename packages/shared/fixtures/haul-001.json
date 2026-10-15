@@ -1,0 +1,175 @@
+{
+  "bundleVersion": 1,
+  "number": 1,
+  "version": 1,
+  "title": { "text": "What cheap things", "italic": "cost" },
+  "deck": "Coal, attention, memory machines, and a London summer that smelled so bad Parliament finally paid for sewers.",
+  "publishedAt": "2026-10-15",
+  "swatch": "lilac",
+  "fieldNote": {
+    "title": { "text": "Words got cheap", "italic": "this year" },
+    "paragraphs": [
+      "I began the week with a book about coal from 1865 and ended it in a car, listening to Richard Hamming ask a room of Bellcore researchers why so few scientists do great work.",
+      "Somewhere between the two I noticed they were circling the same idea. When something becomes cheap, we use far more of it, and we slowly stop asking whether it was worth using. Jevons saw it with coal. Herbert Simon saw it with information. Hamming saw it with our own time.",
+      "This year it was words. Prose became nearly free to make, and you can feel it in every feed. So this first Haul is about plenty and its price, and about the few people who built tools and habits for paying attention anyway.",
+      "Start anywhere. The route below is how one thing led to the next."
+    ],
+    "highlight": "When something becomes cheap, we use far more of it, and we slowly stop asking whether it was worth using.",
+    "route": [
+      { "day": "Tue", "by": "editor", "text": "A friend forwards Satya Nadella's “Jevons paradox” post.", "itemId": "coal-question" },
+      { "day": "Wed", "by": "editor", "text": "I go to the source: Jevons, The Coal Question, chapter VII.", "itemId": "coal-question" },
+      { "day": "Thu", "by": "editor", "text": "Who saw the reading problem coming? Vannevar Bush, in 1945.", "itemId": "as-we-may-think" },
+      { "day": "Thu", "by": "machine", "text": "Bush and Jevons were answering the same question eighty years apart, with Simon's 1971 line between them. That link became this issue's thread." },
+      { "day": "Sat", "by": "editor", "text": "Hamming's lecture, on the drive back from Mysore.", "itemId": "you-and-your-research" },
+      { "day": "Sun", "by": "editor", "text": "A footnote on Victorian drains leads to the summer of the Great Stink.", "itemId": "great-stink" }
+    ]
+  },
+  "items": [
+    {
+      "id": "as-we-may-think",
+      "type": "essay",
+      "title": { "text": "As We May Think" },
+      "creator": "Vannevar Bush",
+      "source": { "name": "The Atlantic", "date": "July 1945", "url": "https://www.theatlantic.com/magazine/archive/1945/07/as-we-may-think/303881/" },
+      "minutes": 40,
+      "why": { "text": "Everyone cites the memex and almost nobody reads the essay. Read it now, while generated text piles up around us, and it stops being a period piece. Bush wasn't worried about storage. He was worried about finding the one thing that mattered in a pile that kept growing." },
+      "excerpt": {
+        "text": "The summation of human experience is being expanded at a prodigious rate, and the means we use for threading through the consequent maze to the momentarily important item is the same as was used in the days of square-rigged ships.",
+        "highlight": "the means we use for threading through the consequent maze to the momentarily important item is the same as was used in the days of square-rigged ships.",
+        "locator": "Section 1"
+      },
+      "marginalia": [
+        { "text": "Published in July 1945, while Bush still ran the wartime Office of Scientific Research and Development. The war was ending, and he was asking what scientists should turn to next.", "cite": "Wikipedia: Vannevar Bush" },
+        { "text": "Douglas Engelbart read it as a young Navy radar technician in the Philippines. Two decades later he gave the demonstration that introduced the mouse and hypertext.", "cite": "Wikipedia: Douglas Engelbart" }
+      ],
+      "wiki": [
+        { "title": "Memex", "summary": "The desk-sized machine Bush imagined for storing a person's books and records and linking them by trails.", "url": "https://en.wikipedia.org/wiki/Memex" },
+        { "title": "Vannevar Bush", "summary": "Engineer who organised American wartime science and argued for a postwar National Science Foundation.", "url": "https://en.wikipedia.org/wiki/Vannevar_Bush" },
+        { "title": "The Mother of All Demos", "summary": "Engelbart's 1968 demonstration in San Francisco, where Bush's trails became something you could click.", "url": "https://en.wikipedia.org/wiki/The_Mother_of_All_Demos" }
+      ],
+      "connections": [
+        { "type": "Answers", "title": "The Coal Question, 1865", "note": "Jevons explains why there is always more of a cheap thing. Bush proposes a machine for living with the excess.", "itemId": "coal-question" },
+        { "type": "Same problem, later", "title": "Herbert Simon, 1971", "note": "“A wealth of information creates a poverty of attention.” Simon names the cost Bush was designing around.", "threadId": "price-of-plenty" },
+        { "type": "Same mechanism", "title": "Attention Is All You Need, 2017", "note": "Both retrieve by association instead of by index. Bush's trails join records the way attention joins words.", "itemId": "attention" }
+      ]
+    },
+    {
+      "id": "coal-question",
+      "type": "rhymes",
+      "title": { "text": "Cheaper power,", "italic": "more burning" },
+      "creator": "W. Stanley Jevons",
+      "source": { "name": "The Coal Question", "date": "1865", "url": "https://en.wikipedia.org/wiki/The_Coal_Question" },
+      "why": { "text": "The same goes for words. Cheap prose has given us a great deal more writing, and roughly the same amount worth reading." },
+      "rhyme": {
+        "then": { "year": "1865", "quote": "It is wholly a confusion of ideas to suppose that the economical use of fuel is equivalent to a diminished consumption. The very contrary is the truth.", "cite": "W. Stanley Jevons, The Coal Question, chapter VII" },
+        "now": { "year": "2025", "quote": "Jevons paradox strikes again!", "cite": "Satya Nadella, on X, January 2025, after a cheap Chinese model rattled markets" },
+        "bridge": "Swap coal for computation. Jevons argued that a more efficient steam engine would raise Britain's coal use, because cheaper power found new work to do. The same argument is now made, almost word for word, about cheaper AI models."
+      },
+      "marginalia": [],
+      "wiki": [
+        { "title": "Jevons paradox", "summary": "The observation that efficiency gains can raise, rather than lower, total use of a resource.", "url": "https://en.wikipedia.org/wiki/Jevons_paradox" }
+      ],
+      "connections": [
+        { "type": "Answered by", "title": "As We May Think, 1945", "note": "Bush's memex is a machine for living with the excess Jevons predicts.", "itemId": "as-we-may-think" }
+      ]
+    },
+    {
+      "id": "you-and-your-research",
+      "type": "talk",
+      "title": { "text": "You and Your Research" },
+      "creator": "Richard Hamming",
+      "source": { "name": "Bellcore", "date": "7 March 1986", "url": "https://www.cs.virginia.edu/~robins/YouAndYourResearch.html" },
+      "minutes": 60,
+      "why": { "text": "I listened to this on the drive back from Mysore. The bit that stuck is the Friday afternoons: he kept them only for great thoughts. And the line about important problems. If you don't work on important problems, you won't do important work. Everyone building something with AI right now should hear this, because it's so easy to be busy." },
+      "excerpt": {
+        "text": "If you do not work on an important problem, it's unlikely you'll do important work.",
+        "highlight": "If you do not work on an important problem",
+        "locator": "Transcript"
+      },
+      "marginalia": [
+        { "text": "Hamming gave this talk at Bellcore on 7 March 1986.", "cite": "Transcript header" },
+        { "text": "He spent thirty years at Bell Labs, from 1946 to 1976, and for a time shared an office with Claude Shannon.", "cite": "Wikipedia: Richard Hamming" }
+      ],
+      "wiki": [
+        { "title": "Richard Hamming", "summary": "Mathematician at Bell Labs whose error-correcting codes are still inside almost every digital device.", "url": "https://en.wikipedia.org/wiki/Richard_Hamming" },
+        { "title": "Bell Labs", "summary": "The research lab behind the transistor, information theory and Unix.", "url": "https://en.wikipedia.org/wiki/Bell_Labs" }
+      ],
+      "connections": [
+        { "type": "Same scarcity", "title": "Herbert Simon, 1971", "note": "Both treat attention as the scarce input. Simon at the scale of organisations, Hamming at the scale of one career.", "threadId": "price-of-plenty" }
+      ]
+    },
+    {
+      "id": "attention",
+      "type": "paper",
+      "title": { "text": "Attention Is All You Need" },
+      "creator": "Vaswani and others",
+      "source": { "name": "arXiv", "date": "2017", "url": "https://arxiv.org/abs/1706.03762" },
+      "minutes": 45,
+      "why": { "text": "Read the abstract and the first two pages, then sit with Figure 1 for a while. A good share of the text you read this year came out of that diagram." },
+      "excerpt": {
+        "text": "We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.",
+        "highlight": "based solely on attention mechanisms",
+        "locator": "Abstract"
+      },
+      "marginalia": [],
+      "wiki": [
+        { "title": "Transformer (deep learning architecture)", "summary": "The neural network design behind most large language models.", "url": "https://en.wikipedia.org/wiki/Transformer_(deep_learning_architecture)" }
+      ],
+      "connections": [
+        { "type": "Same mechanism", "title": "As We May Think, 1945", "note": "Bush's associative trails, rebuilt as arithmetic.", "itemId": "as-we-may-think" }
+      ]
+    },
+    {
+      "id": "stray-birds",
+      "type": "poem",
+      "title": { "text": "Stray Birds" },
+      "creator": "Rabindranath Tagore",
+      "source": { "name": "Stray Birds", "date": "1916", "url": "https://en.wikipedia.org/wiki/Stray_Birds" },
+      "why": { "text": "Two lines on time, for an issue about having too much of everything else." },
+      "excerpt": {
+        "text": "The butterfly counts not months but moments, and has time enough.",
+        "locator": "Stray Birds"
+      },
+      "marginalia": [],
+      "wiki": [
+        { "title": "Rabindranath Tagore", "summary": "Bengali poet, composer and painter; the first non-European to win the Nobel Prize in Literature, in 1913.", "url": "https://en.wikipedia.org/wiki/Rabindranath_Tagore" }
+      ],
+      "connections": []
+    },
+    {
+      "id": "great-stink",
+      "type": "rabbit-hole",
+      "title": { "text": "The Great Stink" },
+      "creator": "via Wikipedia",
+      "source": { "name": "Wikipedia", "date": "London, 1858", "url": "https://en.wikipedia.org/wiki/Great_Stink" },
+      "why": { "text": "The summer London's river finally made Parliament act. Some problems only get infrastructure once they are impossible to ignore." },
+      "marginalia": [
+        { "text": "The crisis led to Joseph Bazalgette's sewer network, much of which London still uses.", "cite": "Wikipedia: Great Stink" }
+      ],
+      "wiki": [
+        { "title": "Joseph Bazalgette", "summary": "The civil engineer who designed London's Victorian sewer system.", "url": "https://en.wikipedia.org/wiki/Joseph_Bazalgette" }
+      ],
+      "connections": [
+        { "type": "Overload forces infrastructure", "title": "The price of plenty", "note": "The first point on this Haul's thread.", "threadId": "price-of-plenty" }
+      ]
+    }
+  ],
+  "threads": [
+    {
+      "id": "price-of-plenty",
+      "title": { "text": "The price", "italic": "of plenty" },
+      "summary": "A line that runs through this Haul and back into the archive. It grows as new pieces join.",
+      "provenance": "The machine proposed nine links for this thread. The editor kept six. Each kept link cites a passage from both ends.",
+      "points": [
+        { "year": "1858", "title": "The Great Stink", "gist": "A hot summer turns the Thames into an open sewer. Parliament finally funds Bazalgette's drains.", "edge": "Overload forces infrastructure", "inHaul": true, "itemId": "great-stink" },
+        { "year": "1865", "title": "Jevons, The Coal Question", "gist": "Burning coal more efficiently makes Britain burn more of it.", "edge": "Cheaper means more", "inHaul": true, "itemId": "coal-question" },
+        { "year": "1945", "title": "Bush, As We May Think", "gist": "Too much to read. Build machines that link records by association.", "edge": "Answers Jevons", "inHaul": true, "itemId": "as-we-may-think" },
+        { "year": "1971", "title": "Herbert Simon", "gist": "“A wealth of information creates a poverty of attention.”", "edge": "Names the cost", "inHaul": false },
+        { "year": "1986", "title": "Hamming, You and Your Research", "gist": "The scarce thing is your own attention. Spend it on important problems.", "edge": "Same scarcity, one life", "inHaul": true, "itemId": "you-and-your-research" },
+        { "year": "2017", "title": "Attention Is All You Need", "gist": "The architecture that made text nearly free to produce.", "edge": "Same mechanism as Bush", "inHaul": true, "itemId": "attention" },
+        { "year": "2025", "title": "“Jevons paradox strikes again!”", "gist": "Cheap models, and the old argument returns word for word.", "edge": "Rhymes with 1865", "inHaul": false }
+      ]
+    }
+  ],
+  "colophon": "Chosen and annotated by Bhuvanesh, mostly by voice. Read, cross-linked and drafted with language models, then checked by hand. The serif is the editor; the blue sans is the machine. Every quotation was matched against its source and every link was fetched before publishing. Plates are public domain."
+}

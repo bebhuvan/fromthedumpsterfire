@@ -1,0 +1,15 @@
+{
+  "name": "@fdf/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens": "./src/tokens.ts",
+    "./haul": "./src/haul.ts",
+    "./fixtures/haul-001.json": "./fixtures/haul-001.json",
+    "./fixtures/index.json": "./fixtures/index.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
