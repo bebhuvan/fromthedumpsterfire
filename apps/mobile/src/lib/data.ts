@@ -9,6 +9,7 @@ import { File, Paths } from 'expo-file-system';
 import { BUNDLE_VERSION, type Haul, type HaulIndex, type HaulSummary } from '@fdf/shared/haul';
 import seedIndex from '@fdf/shared/fixtures/index.json';
 import seedHaul from '@fdf/shared/fixtures/haul-001.json';
+import { useReader } from './store';
 
 const BASE = process.env.EXPO_PUBLIC_FILES_BASE ?? 'https://files.fromthedumpsterfire.com';
 const INDEX_PATH = 'hauls/index.json';
@@ -120,3 +121,56 @@ export function prefetchHaul(summary: HaulSummary) {
 
 export const shareUrl = (haul: number, itemId?: string) =>
   `https://fromthedumpsterfire.com/haul/${haul}${itemId ? `/${itemId}` : ''}`;
+
+/**
+ * Every Haul the phone knows about, for search, Threads and Saved. Missing bundles are fetched in
+ * the background when the reader keeps all Hauls offline (the default); bundles are small.
+ */
+export function useAllHauls(): Haul[] {
+  const index = useIndex();
+  const keepAll = useReader((s) => s.keepAllHauls);
+  const [tick, setTick] = useState(0);
+  const summaries = index.data?.hauls ?? [];
+
+  useEffect(() => {
+    if (!keepAll) return;
+    let live = true;
+    const missing = summaries.filter((s) => !peek(s.path));
+    Promise.all(missing.map((s) => fetchJson(s.path))).then(() => live && missing.length && setTick((t) => t + 1));
+    return () => {
+      live = false;
+    };
+  }, [summaries, keepAll]);
+
+  void tick;
+  return summaries.map((s) => peek<Haul>(s.path)).filter((h): h is Haul => Boolean(h));
+}
+
+/** Downloaded Haul files and their total size. */
+export function storageUsed() {
+  let bytes = 0;
+  let count = 0;
+  try {
+    for (const entry of Paths.document.list()) {
+      if (entry instanceof File && entry.name.startsWith('hauls__') && entry.name !== 'hauls__index.json') {
+        bytes += entry.size ?? 0;
+        count += 1;
+      }
+    }
+  } catch {
+    // Unreadable directory: report nothing rather than fail.
+  }
+  return { bytes, count };
+}
+
+/** Remove downloaded Hauls (the index and the reader's own data stay). */
+export function clearDownloads() {
+  try {
+    for (const entry of Paths.document.list()) {
+      if (entry instanceof File && entry.name.startsWith('hauls__') && entry.name !== 'hauls__index.json') entry.delete();
+    }
+  } catch {
+    // Best effort.
+  }
+  for (const key of [...memory.keys()]) if (key !== INDEX_PATH) memory.delete(key);
+}

@@ -7,6 +7,7 @@ import { fonts, GUTTER, typeColor, usePalette } from '@/theme';
 import { joinMeta, minutes } from '@/lib/format';
 import { openSource } from '@/lib/open';
 import { shareUrl } from '@/lib/data';
+import { reader, useReader } from '@/lib/store';
 import { Highlighted, Label, Machine, Meta, Note, Title } from '@/ui/type';
 import { Chip, Divider, Pill, Section, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
@@ -49,6 +50,13 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
           <Text style={[styles.quoteMark, { color: p.ink }]} accessible={false}>“</Text>
           <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} color={tint} style={styles.excerpt} />
           <Meta style={{ marginTop: 12 }}>{item.excerpt.locator} · matched word for word against the source</Meta>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => Share.share({ message: `“${item.excerpt!.text}”\n${item.creator}, ${item.source.name}\n\nvia From the Dumpster Fire ${shareUrl(haul.number, item.id)}` })}
+            style={styles.quoteShare}
+          >
+            <Label muted>Share this quote</Label>
+          </Pressable>
         </View>
       ) : null}
 
@@ -92,7 +100,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
           <View style={{ marginTop: 12, gap: 10 }}>
             {item.connections.map((c, i) => {
               const target = c.itemId ? haul.items.find((x) => x.id === c.itemId) : undefined;
-              const bg = target ? typeColor(p, target.type) : p.swatch.peach;
+              const bg = target ? typeColor(p, target.type) : p.plate;
               const open = () => (c.itemId ? go.item(haul.number, c.itemId) : c.threadId ? go.thread(haul.number, c.threadId) : undefined);
               return (
                 <Pressable key={i} accessibilityRole="link" onPress={open} style={({ pressed }) => [styles.edge, { backgroundColor: bg, opacity: pressed ? 0.8 : 1 }]}>
@@ -107,16 +115,34 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
       ) : null}
 
       <Pill label={sourceLabel} external onPress={() => openSource(item.media?.url ?? item.source.url, p)} style={{ marginTop: 34 }} />
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => Share.share({ message: `${item.title.text}${item.title.italic ? ' ' + item.title.italic : ''}, in From the Dumpster Fire\n${shareUrl(haul.number, item.id)}` })}
-        style={styles.share}
-      >
-        <Label muted>Share this find</Label>
-      </Pressable>
+      <View style={styles.actions}>
+        <SaveButton haul={haul} item={item} />
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => Share.share({ message: `${item.title.text}${item.title.italic ? ' ' + item.title.italic : ''}, in From the Dumpster Fire\n${shareUrl(haul.number, item.id)}` })}
+          style={styles.share}
+        >
+          <Label muted>Share</Label>
+        </Pressable>
+      </View>
 
       {next ? <NextItem n={haul.number} item={next} /> : <Finished haul={haul} />}
     </Screen>
+  );
+}
+
+function SaveButton({ haul, item }: { haul: Haul; item: Item }) {
+  const p = usePalette();
+  const saved = useReader((s) => s.saved.some((x) => x.n === haul.number && x.id === item.id));
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: saved }}
+      onPress={() => reader.toggleSave({ n: haul.number, id: item.id, type: item.type, title: item.title, creator: item.creator })}
+      style={[styles.save, { backgroundColor: saved ? p.invBg : p.plate }]}
+    >
+      <Text style={[styles.saveText, { color: saved ? p.invInk : p.ink }]}>{saved ? 'Saved' : 'Save'}</Text>
+    </Pressable>
   );
 }
 
@@ -223,7 +249,11 @@ const styles = StyleSheet.create({
   edge: { borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14 },
   edgeTitle: { fontFamily: fonts.text, fontSize: 17.5, marginTop: 5 },
   edgeNote: { fontFamily: fonts.text, fontSize: 15, lineHeight: 21, marginTop: 3 },
-  share: { alignSelf: 'center', minHeight: 48, justifyContent: 'center', paddingHorizontal: 16, marginTop: 6 },
+  actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 14 },
+  save: { minHeight: 44, minWidth: 96, paddingHorizontal: 20, borderRadius: 99, alignItems: 'center', justifyContent: 'center' },
+  saveText: { fontFamily: fonts.sansBold, fontSize: 13 },
+  share: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16 },
+  quoteShare: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   next: { marginTop: 22, borderRadius: 20, padding: 20 },
   colophon: { fontFamily: fonts.text, fontSize: 15.5, lineHeight: 23, marginTop: 10 },
   poem: { marginTop: 24, borderRadius: 20, paddingHorizontal: 22, paddingVertical: 30 },

@@ -10,6 +10,14 @@
   archive, how-it's-made. Light and dark. Offline-first bundle cache. Voice notes stream on tap.
   Articles open in an in-app browser tab; video and podcast links open in their own apps. Deep links
   for fromthedumpsterfire.com/haul/… Release builds use R8 and resource shrinking.
+- 2026-10-15: warm palette (apricot, coral, butter, sky, mint, pistachio). App gains a bottom bar
+  (Latest · Threads · Search · Saved); on-device search with type filters, an A–Z topic index and
+  Surprise me; Saved and read markers stored on the phone; Continue reading; Threads across the
+  archive; Settings (notifications, appearance, text size, offline storage, note to the editor,
+  privacy); Share a quote; corrections log on the cover. Push client registers the FCM token with
+  `POST /v1/devices` (server side is in the Desk work); the Firebase file is optional at build time.
+- 2026-10-15: Desk v1 started by a parallel agent on its own branch (capture, pipeline, review,
+  publish, push sending, Access).
 
 ## Milestones
 
@@ -20,7 +28,7 @@
 5. **Web**: Astro issue page in the canvas design, light and dark.
 6. **Connections**: Vectorize, entity linking, edge judging, Threads.
 7. **Backfill**: import old site archive and reading history.
-8. **Push**: Expo notifications when a Haul ships (adds one native module; deliberate).
+8. **Push**: client done; needs google-services.json, the Worker endpoint and FCM credentials.
 
 ## Known gaps
 

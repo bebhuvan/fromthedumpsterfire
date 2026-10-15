@@ -1,8 +1,23 @@
 import { useColorScheme } from 'react-native';
-import { palettes, typeSwatch, type ContentType, type Palette } from '@fdf/shared/tokens';
+import { palettes, typeSwatch, type ContentType, type Palette, type Scheme } from '@fdf/shared/tokens';
+import { useReader, type TextSize } from './lib/store';
+
+export function useScheme(): Scheme {
+  const system = useColorScheme();
+  const pref = useReader((s) => s.theme);
+  if (pref !== 'system') return pref;
+  return system === 'dark' ? 'dark' : 'light';
+}
 
 export function usePalette(): Palette {
-  return palettes[useColorScheme() === 'dark' ? 'dark' : 'light'];
+  return palettes[useScheme()];
+}
+
+const TEXT_SCALE: Record<TextSize, number> = { small: 0.92, regular: 1, large: 1.1, larger: 1.22 };
+
+/** The reader's chosen size for reading text (on top of the system font scale). */
+export function useTextScale() {
+  return TEXT_SCALE[useReader((s) => s.textSize)];
 }
 
 export const typeColor = (p: Palette, type: ContentType) => p.swatch[typeSwatch[type]];
