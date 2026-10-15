@@ -22,7 +22,7 @@ export function Cover({ haul }: { haul: Haul }) {
       </View>
       <Text
         accessibilityLabel={`Haul number ${haul.number}`}
-        style={[styles.numeral, { color: p.ink, fontSize: Math.min(210, width * 0.5), lineHeight: Math.min(210, width * 0.5) * 0.9 }]}
+        style={[styles.numeral, { color: p.ink, fontSize: Math.min(210, width * 0.5), lineHeight: Math.min(210, width * 0.5) * 1.08 }]}
       >
         {haulSlug(haul.number)}
       </Text>
@@ -77,7 +77,7 @@ const ContentsRow = memo(function ContentsRow({ haul, item }: { haul: number; it
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  numeral: { fontFamily: fonts.displayRegular, letterSpacing: -6, marginTop: 18, includeFontPadding: false, fontVariant: ['lining-nums'] },
+  numeral: { fontFamily: fonts.displayRegular, letterSpacing: -6, marginTop: 6, marginBottom: -14, includeFontPadding: false, fontVariant: ['lining-nums'] },
   mastRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 22 },
   masthead: { fontFamily: fonts.displayItalic, fontSize: 16 },
   contents: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },

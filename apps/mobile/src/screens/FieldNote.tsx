@@ -52,7 +52,7 @@ export function FieldNote({ haul }: { haul: Haul }) {
                     styles.dot,
                     machine
                       ? { borderWidth: 1.5, borderColor: p.machine, backgroundColor: p.bg }
-                      : { backgroundColor: t ? typeColor(p, t) : p.rule },
+                      : { backgroundColor: t ? typeColor(p, t) : p.rule, borderWidth: 1, borderColor: p.ink2 },
                   ]}
                 />
                 {machine ? (

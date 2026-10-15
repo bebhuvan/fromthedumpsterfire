@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   whyHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   whyTitle: { fontFamily: fonts.display, fontSize: 23 },
   sign: { fontFamily: fonts.displayItalic, fontSize: 19, textAlign: 'right', marginTop: 4 },
-  quoteMark: { fontFamily: fonts.display, fontSize: 64, lineHeight: 50, height: 32, includeFontPadding: false },
+  quoteMark: { fontFamily: fonts.display, fontSize: 72, lineHeight: 80, marginBottom: -34, includeFontPadding: false },
   excerpt: { fontFamily: fonts.text, fontSize: 23, lineHeight: 32 },
   margin: { marginTop: 32, borderRadius: 16, padding: 18 },
   marginHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 },
