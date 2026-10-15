@@ -1,3 +1,5 @@
+import { guardedFetch } from './guard';
+
 // YouTube: metadata and captions through the InnerTube player API (the Android client returns
 // caption tracks without a proof-of-origin token). Prefers human captions over auto-generated ones.
 // When a video has no captions, the caller can transcribe an audio-only stream with Whisper.
@@ -110,7 +112,7 @@ export async function fetchYouTube(url: string): Promise<YouTubeInfo> {
       tracks.find((t) => t.kind !== 'asr') ??
       tracks[0];
     if (pick) {
-      const cr = await fetch(pick.baseUrl.replace(/&fmt=[^&]+/, '') + '&fmt=json3', { headers: { 'user-agent': client.ua }, signal: AbortSignal.timeout(20_000) });
+      const cr = await guardedFetch(pick.baseUrl.replace(/&fmt=[^&]+/, '') + '&fmt=json3', { headers: { 'user-agent': client.ua }, timeoutMs: 20_000 });
       const body = cr.ok ? await cr.text() : '';
       if (body) {
         const { text, times } = captionsToText(JSON.parse(body) as Json3);

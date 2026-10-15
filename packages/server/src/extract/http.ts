@@ -1,6 +1,7 @@
 // Outbound fetches: one user agent, timeouts and size limits for everything the pipeline reads.
 
 import { FatalError } from '../util';
+import { finalUrlOf, guardedFetch } from './guard';
 
 export const USER_AGENT = 'FromTheDumpsterFireDesk/1.0 (+https://fromthedumpsterfire.com; editor desk)';
 const BROWSER_UA =
@@ -25,17 +26,16 @@ export interface FetchOptions {
 
 export async function fetchBytes(url: string, opts: FetchOptions = {}): Promise<Fetched> {
   const { timeoutMs = 25_000, maxBytes = 40 * 1024 * 1024 } = opts;
-  const res = await fetch(url, {
+  const res = await guardedFetch(url, {
     method: opts.method ?? 'GET',
     body: opts.body,
-    redirect: 'follow',
+    timeoutMs,
     headers: {
       'user-agent': opts.browser ? BROWSER_UA : USER_AGENT,
       accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf,*/*;q=0.8',
       'accept-language': 'en-IN,en;q=0.9',
       ...opts.headers,
     },
-    signal: AbortSignal.timeout(timeoutMs),
   });
   const declared = Number(res.headers.get('content-length') ?? 0);
   if (declared > maxBytes) throw new FatalError(`Source is too large (${Math.round(declared / 1e6)} MB)`);
@@ -60,7 +60,7 @@ export async function fetchBytes(url: string, opts: FetchOptions = {}): Promise<
     bytes.set(c, off);
     off += c.byteLength;
   }
-  return { url: res.url || url, status: res.status, contentType: res.headers.get('content-type') ?? '', bytes };
+  return { url: finalUrlOf(res, url), status: res.status, contentType: res.headers.get('content-type') ?? '', bytes };
 }
 
 export async function fetchText(url: string, opts: FetchOptions = {}): Promise<Fetched & { text: string }> {
@@ -87,16 +87,12 @@ export function decode(bytes: Uint8Array, contentType: string): string {
 export async function checkLink(url: string): Promise<{ ok: boolean; status: number; finalUrl: string }> {
   for (const method of ['HEAD', 'GET']) {
     try {
-      const res = await fetch(url, {
-        method,
-        redirect: 'follow',
-        headers: { 'user-agent': BROWSER_UA, accept: '*/*' },
-        signal: AbortSignal.timeout(15_000),
-      });
-      if (method === 'GET') await res.body?.cancel();
-      if (res.ok) return { ok: true, status: res.status, finalUrl: res.url || url };
-      if (method === 'GET' || ![403, 405, 400, 501].includes(res.status)) return { ok: false, status: res.status, finalUrl: res.url || url };
-    } catch {
+      const res = await guardedFetch(url, { method, headers: { 'user-agent': BROWSER_UA, accept: '*/*' }, timeoutMs: 15_000 });
+      await res.body?.cancel();
+      if (res.ok) return { ok: true, status: res.status, finalUrl: finalUrlOf(res, url) };
+      if (method === 'GET' || ![403, 405, 400, 501].includes(res.status)) return { ok: false, status: res.status, finalUrl: finalUrlOf(res, url) };
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith('Blocked URL')) return { ok: false, status: 0, finalUrl: url };
       if (method === 'GET') return { ok: false, status: 0, finalUrl: url };
     }
   }

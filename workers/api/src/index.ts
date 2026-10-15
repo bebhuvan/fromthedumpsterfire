@@ -38,6 +38,7 @@ import {
 } from '@fdf/server';
 import { AccessDenied, devBypassAllowed, readAssertion, verifyOwner } from './access';
 import { captureEntries, captureFile, entriesFromPaste, type CaptureEntry } from './capture';
+import { checkCsrf, escapeHtml, fileHeaders, localLimit, SECURITY_HEADERS, withHeaders } from './security';
 
 type App = { Bindings: Env; Variables: { owner: string } };
 const app = new Hono<App>();
@@ -50,11 +51,19 @@ app.onError((err, c) => {
   return c.json({ error: errorMessage(err) }, status && status >= 400 && status < 600 ? (status as 400) : 500);
 });
 
-// ------------------------------------------------------------------ the lock
+// ------------------------------------------------------------------ headers, cross-site refusal, the lock
+
+// Every response carries the Desk's security headers (a strict CSP: no inline or third-party script).
+app.use('*', async (c, next) => {
+  await next();
+  c.res = withHeaders(c.res, SECURITY_HEADERS);
+});
 
 app.use('*', async (c, next) => {
   const url = new URL(c.req.url);
   if (PUBLIC.has(url.pathname)) return next();
+  const csrf = checkCsrf(c.req.raw);
+  if (!csrf.ok) return c.json({ error: 'Refused', reason: csrf.reason }, csrf.status ?? 403);
   if (devBypassAllowed(c.env, url)) {
     c.set('owner', 'local-dev');
     return next();
@@ -77,7 +86,7 @@ app.use('*', async (c, next) => {
 function lockedPage(reason: string): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Desk</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#fff;color:#141416;font:16px/1.5 Georgia,serif}@media(prefers-color-scheme:dark){body{background:#0F0F12;color:#F3F3F1}}main{max-width:28rem;padding:24px}h1{font-weight:500;font-style:italic;font-size:32px;margin:0 0 8px}p{margin:0;color:#77777f;font-family:system-ui,sans-serif;font-size:14px}</style></head>
-<body><main><h1>The Desk</h1><p>This desk is private. ${reason.replace(/[<>&]/g, '')}.</p></main></body></html>`;
+<body><main><h1>The Desk</h1><p>This desk is private. ${escapeHtml(reason)}.</p></main></body></html>`;
 }
 
 // ------------------------------------------------------------------ public
@@ -90,9 +99,15 @@ const deviceSchema = z.object({
   enabled: z.boolean(),
 });
 
+// Public by design (the reader app calls it). Narrow: JSON only, small, shape-checked, rate limited,
+// and its only effect is one row in the devices table.
 app.post('/v1/devices', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'local';
+  const limited = c.env.DEVICE_LIMITER ? !(await c.env.DEVICE_LIMITER.limit({ key: ip })).success : !localLimit(`dev:${ip}`, 20, 60_000);
+  if (limited) return c.json({ error: 'Too many requests' }, 429);
+  if ((c.req.header('content-type') ?? '').split(';')[0]!.trim() !== 'application/json') return c.json({ error: 'Expected application/json' }, 415);
   const len = Number(c.req.header('content-length') ?? 0);
-  if (len > 8192) return c.json({ error: 'Too large' }, 413);
+  if (!len || len > 8192) return c.json({ error: 'Body missing or too large' }, 413);
   let body: unknown;
   try {
     body = await c.req.json();
@@ -165,11 +180,13 @@ app.get('/api/settings', async (c) => {
 
 // ------------------------------------------------------------------ capture
 
+const httpUrl = z.string().url().refine((u) => /^https?:\/\//i.test(u), 'only http(s) links can be captured');
+
 const entrySchema = z.object({
-  url: z.string().url().optional(),
+  url: httpUrl.optional(),
   text: z.string().max(200_000).optional(),
   source: z.string().max(500).optional(),
-  sourceUrl: z.string().url().optional().or(z.literal('')),
+  sourceUrl: httpUrl.optional().or(z.literal('')),
   why: z.string().max(20_000).optional(),
   whyNoteId: z.string().optional(),
   type: z.string().optional(),
@@ -372,7 +389,7 @@ app.get('/api/items/:id/file', async (c) => {
   if (!it.file_key) throw notFound();
   const obj = await c.env.MEDIA.get(it.file_key);
   if (!obj) throw notFound();
-  return new Response(obj.body, { headers: { 'content-type': obj.httpMetadata?.contentType ?? 'application/octet-stream', 'cache-control': 'private, max-age=3600' } });
+  return new Response(obj.body, { headers: fileHeaders(obj.httpMetadata?.contentType, obj.customMetadata?.name ?? 'upload') });
 });
 
 // ------------------------------------------------------------------ excerpts
@@ -545,7 +562,7 @@ app.get('/api/notes/:id/audio', async (c) => {
   if (!n) throw notFound();
   const obj = await c.env.MEDIA.get(n.audio_key);
   if (!obj) throw notFound();
-  return new Response(obj.body, { headers: { 'content-type': n.mime, 'cache-control': 'private, max-age=86400' } });
+  return new Response(obj.body, { headers: fileHeaders(n.mime, n.audio_key.split('/').pop()) });
 });
 
 // ------------------------------------------------------------------ hauls
@@ -663,7 +680,7 @@ app.get('/files/*', async (c) => {
   if (!key.startsWith('hauls/')) throw notFound();
   const obj = await c.env.MEDIA.get(key);
   if (!obj) throw notFound();
-  return new Response(obj.body, { headers: { 'content-type': obj.httpMetadata?.contentType ?? 'application/octet-stream' } });
+  return new Response(obj.body, { headers: fileHeaders(obj.httpMetadata?.contentType, key.split('/').pop()) });
 });
 
 // ------------------------------------------------------------------ the UI

@@ -41,6 +41,8 @@
       "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files-preview" }],
       "ai": { "binding": "AI" },
       "queues": { "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest-preview" }] },
+      // POST /v1/devices is public; 20 registrations per IP per minute is ample for the app.
+      "ratelimits": [{ "name": "DEVICE_LIMITER", "namespace_id": "4101", "simple": { "limit": 20, "period": 60 } }],
       "workers_dev": true,
       "preview_urls": false
     },
@@ -64,6 +66,7 @@
       "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files" }],
       "ai": { "binding": "AI" },
       "queues": { "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest" }] },
+      "ratelimits": [{ "name": "DEVICE_LIMITER", "namespace_id": "4102", "simple": { "limit": 20, "period": 60 } }],
       // Production routes (add when the zone is ready): desk.fromthedumpsterfire.com/* behind an
       // Access application, and api.fromthedumpsterfire.com/v1/* public for the reader app.
       "workers_dev": false,

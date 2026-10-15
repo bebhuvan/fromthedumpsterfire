@@ -22,6 +22,8 @@ export interface Env {
   INGEST_QUEUE: Queue<QueueMessage>;
   ITEM_WORKFLOW: Workflow<ItemWorkflowParams>;
   ASSETS?: Fetcher;
+  /** Workers Rate Limiting binding for the public device route (optional; an in-isolate limiter is the fallback). */
+  DEVICE_LIMITER?: { limit(o: { key: string }): Promise<{ success: boolean }> };
 
   ENVIRONMENT: 'local' | 'preview' | 'production';
   SPEND_WARN_USD: string;

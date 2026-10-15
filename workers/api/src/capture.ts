@@ -110,6 +110,8 @@ export async function captureFile(env: Env, file: File, extra: { why?: string; t
   const d = detectFile(file.name, file.type);
   if (d.kind === 'voice') return { noteFile: true };
   if (d.kind !== 'pdf' && d.kind !== 'image') throw new Error(`Cannot capture a ${file.type || 'file'} yet; paste its text instead`);
+  // Raster images only: an SVG is a document that can carry script.
+  if (d.kind === 'image' && !/^image\/(png|jpeg|webp|gif|avif|heic|heif)$/.test(file.type)) throw new Error('Images must be PNG, JPEG, WebP, GIF, AVIF or HEIC');
   if (file.size > 60 * 1024 * 1024) throw new Error('Files over 60 MB are not supported');
   const id = newId('up_');
   const safe = file.name.replace(/[^\w.\-]+/g, '_').slice(-80) || 'upload';

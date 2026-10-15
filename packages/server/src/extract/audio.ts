@@ -3,6 +3,7 @@
 // other containers (m4a, webm) cannot be cut at arbitrary bytes and are sent whole if small enough.
 
 import { USER_AGENT } from './http';
+import { finalUrlOf, guardedFetch } from './guard';
 
 export const CHUNK_BYTES = 3 * 1024 * 1024;
 export const MAX_WHOLE_BYTES = 20 * 1024 * 1024;
@@ -20,9 +21,9 @@ export async function planAudio(url: string, knownMime?: string, knownBytes?: nu
   let mime = knownMime ?? '';
   let finalUrl = url;
   if (!bytes || !mime) {
-    const res = await fetch(url, { headers: { 'user-agent': USER_AGENT, range: 'bytes=0-0' }, redirect: 'follow', signal: AbortSignal.timeout(20_000) });
+    const res = await guardedFetch(url, { headers: { 'user-agent': USER_AGENT, range: 'bytes=0-0' }, timeoutMs: 20_000 });
     await res.body?.cancel();
-    finalUrl = res.url || url;
+    finalUrl = finalUrlOf(res, url);
     const range = res.headers.get('content-range');
     bytes = range ? Number(range.split('/')[1]) : Number(res.headers.get('content-length') ?? 0);
     mime = (res.headers.get('content-type') ?? mime ?? '').split(';')[0]!.trim();
@@ -43,8 +44,10 @@ export async function planAudio(url: string, knownMime?: string, knownBytes?: nu
 }
 
 export async function fetchRange(url: string, start: number, end: number): Promise<Uint8Array> {
-  const res = await fetch(url, { headers: { 'user-agent': USER_AGENT, range: `bytes=${start}-${end}` }, redirect: 'follow', signal: AbortSignal.timeout(60_000) });
+  const res = await guardedFetch(url, { headers: { 'user-agent': USER_AGENT, range: `bytes=${start}-${end}` }, timeoutMs: 60_000 });
   if (!res.ok) throw new Error(`Audio fetch returned ${res.status}`);
+  const declared = Number(res.headers.get('content-length') ?? 0);
+  if (declared > MAX_TOTAL_BYTES) throw new Error('Audio response is too large');
   const buf = new Uint8Array(await res.arrayBuffer());
   // A server that ignores Range sends the whole file; take our slice of it.
   return res.status === 200 && buf.byteLength > end - start + 1 ? buf.subarray(start, end + 1) : buf;
