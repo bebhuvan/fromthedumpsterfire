@@ -143,6 +143,8 @@ export interface Haul {
   items: Item[];
   threads: Thread[];
   colophon: string;
+  /** Visible changelog. A correction publishes a new bundle version with an entry here. */
+  corrections?: { date: string; text: string }[];
 }
 
 export const haulSlug = (n: number) => String(n).padStart(3, '0');

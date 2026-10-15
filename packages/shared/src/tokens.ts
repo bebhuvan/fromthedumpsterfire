@@ -2,7 +2,8 @@
 
 export type Scheme = 'light' | 'dark';
 
-export type Swatch = 'lilac' | 'sky' | 'butter' | 'mint' | 'pink' | 'peach';
+// Warm swatches lead (the name is a fire); cool ones are relief.
+export type Swatch = 'apricot' | 'coral' | 'butter' | 'sky' | 'mint' | 'pistachio';
 
 export interface Palette {
   bg: string;
@@ -30,12 +31,12 @@ export const palettes: Record<Scheme, Palette> = {
     invBg: '#141416',
     invInk: '#FFFFFF',
     swatch: {
-      lilac: '#E9E5FF',
-      sky: '#DDEEFF',
-      butter: '#FFF2AE',
-      mint: '#D4F5E5',
-      pink: '#FFE1EA',
-      peach: '#FFE4CF',
+      apricot: '#FFE0C2',
+      coral: '#FFD8D0',
+      butter: '#FFF0A6',
+      sky: '#DCEBFF',
+      mint: '#D2F3E2',
+      pistachio: '#E6F2C8',
     },
   },
   dark: {
@@ -49,28 +50,28 @@ export const palettes: Record<Scheme, Palette> = {
     invBg: '#F3F3F1',
     invInk: '#0F0F12',
     swatch: {
-      lilac: '#2C2752',
-      sky: '#16324D',
+      apricot: '#4D2E14',
+      coral: '#4E2320',
       butter: '#433B12',
-      mint: '#173F2F',
-      pink: '#4C2333',
-      peach: '#4B2F19',
+      sky: '#15304B',
+      mint: '#163D2D',
+      pistachio: '#2E3915',
     },
   },
 };
 
 /** Every content type has one colour, everywhere. */
 export const typeSwatch = {
-  essay: 'lilac',
-  post: 'lilac',
+  essay: 'apricot',
+  post: 'apricot',
   talk: 'butter',
   video: 'butter',
   podcast: 'butter',
   paper: 'mint',
-  poem: 'pink',
-  passage: 'pink',
+  poem: 'coral',
+  passage: 'coral',
   rhymes: 'sky',
-  'rabbit-hole': 'peach',
+  'rabbit-hole': 'pistachio',
 } as const satisfies Record<string, Swatch>;
 
 export type ContentType = keyof typeof typeSwatch;
