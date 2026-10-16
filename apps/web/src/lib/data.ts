@@ -69,7 +69,8 @@ export function assemble(index: HaulIndex, bundles: unknown[]): Haul[] {
     if (!prev || haul.version > prev.version) byNumber.set(haul.number, haul);
   }
   if (problems.length) throw new Error(`Haul bundles failed validation:\n  ${problems.join('\n  ')}`);
-  if (!byNumber.size) throw new Error('no Hauls to build');
+  // An empty index is the state before Haul 001: the site builds its waiting page.
+  if (!byNumber.size && bundles.length) throw new Error('no Hauls to build');
   return [...byNumber.values()].sort((a, b) => b.number - a.number);
 }
 

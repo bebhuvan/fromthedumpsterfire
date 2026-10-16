@@ -1,8 +1,27 @@
 ---
 import HaulPage from '../components/HaulPage.astro';
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
 import { archive } from '../lib/data';
+import { paths } from '../lib/site';
 
 const { hauls } = await archive();
-const latest = hauls[0]!;
+const latest = hauls[0];
 ---
-<HaulPage haul={latest} home />
+{latest ? (
+  <HaulPage haul={latest} home />
+) : (
+  <Base title="The first Haul is on its way" description="An irregular magazine of things worth pulling out of the internet and the archive before they burn." path={paths.home} section="latest">
+    <div class="wrap">
+      <div class="read">
+        <div class="page-head">
+          <Title title={{ text: 'Haul 001 is being', italic: 'gathered' }} as="h1" class="title-m" />
+        </div>
+        <div class="prose">
+          <p>From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays, talks, papers, poems, podcasts, passages and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.</p>
+          <p>The first one is not out yet. <a href={paths.about}>Read how it's made</a>, or follow the <a href={paths.feed}>RSS feed</a> to hear when it lands.</p>
+        </div>
+      </div>
+    </div>
+  </Base>
+)}

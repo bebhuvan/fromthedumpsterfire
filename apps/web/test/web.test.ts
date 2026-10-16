@@ -181,3 +181,9 @@ describe('app links and aliases', () => {
     expect(aliasFor('/haul/10')).toBeNull();
   });
 });
+
+describe('before Haul 001', () => {
+  it('builds from an empty index', () => {
+    expect(assemble({ bundleVersion: 1, updatedAt: '2026-10-16T00:00:00.000Z', hauls: [] }, [])).toEqual([]);
+  });
+});
