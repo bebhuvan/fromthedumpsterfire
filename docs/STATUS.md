@@ -107,8 +107,8 @@
 | Desk | `fdf-desk` on desk.fromthedumpsterfire.com behind Access app "FDF Desk" (owner email only) |
 | Public API | api.fromthedumpsterfire.com: only `POST /v1/devices` and `GET /v1/health` answer; device registration checked end to end |
 | Pipeline | `fdf-pipeline`, Workflow `fdf-item`, queues `fdf-ingest` / `fdf-ingest-dlq` |
-| Data | D1 `fdf-desk` (migrations 0001–0002), R2 `fdf-media` (private), R2 `fdf-files` (public on files.fromthedumpsterfire.com: only `hauls/` and `seed/`), Vectorize `fdf-chunks` |
-| Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars). Native provider adapters (Gemini, Claude, DeepSeek, Z.ai) with keys set on both Workers |
+| Data | D1 `fdf-desk` (migrations 0001–0003), R2 `fdf-media` (private), R2 `fdf-files` (public on files.fromthedumpsterfire.com: only `hauls/` and `seed/`), Vectorize `fdf-chunks` |
+| Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars). Native provider adapters (Gemini, Claude, DeepSeek, Z.ai) with keys set on both Workers; in production since 2026-10-16 (pipeline `dd2c25cc`, Desk `c810af29`) |
 | Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)". The site's preview Worker `fdf-web-preview` was deleted on 2026-10-16 at the editor's request; `npm run deploy:web:preview` recreates it |
 
 Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run deploy:production`
@@ -116,14 +116,12 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 
 ### What the editor must do
 
-1. **Approve the models branch for production.** Provider keys are set on both Workers; production
-   needs `npm run db:migrate:production` (migration 0003) before `npm run deploy:production`.
-2. **Push:** `FCM_SERVICE_ACCOUNT` (Firebase service-account JSON) as a secret on the pipeline, and
+1. **Push:** `FCM_SERVICE_ACCOUNT` (Firebase service-account JSON) as a secret on the pipeline, and
    `apps/mobile/google-services.json` for the app. iOS push needs FCM tokens on iOS or an APNs sender.
-3. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in
+2. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in
    Proton. Cloudflare Email Routing would replace the Proton MX records.
-4. Optional: `SMITHSONIAN_API_KEY`, `RIJKSMUSEUM_API_KEY`, `BROWSER_FALLBACK=on`, an `IMAGES` binding.
-5. Optional: an R2 lifecycle rule on `fdf-media` to abort incomplete multipart uploads.
+3. Optional: `SMITHSONIAN_API_KEY`, `RIJKSMUSEUM_API_KEY`, `BROWSER_FALLBACK=on`, an `IMAGES` binding.
+4. Optional: an R2 lifecycle rule on `fdf-media` to abort incomplete multipart uploads.
 
 - 2026-10-16: **the Desk, milestone 6** (`migrations/0002_plates_connections_rhymes.sql`;
   `packages/server/src/{plates,connect,rhymes}.ts`, `extract/{browser,stream}.ts`; Desk screens
