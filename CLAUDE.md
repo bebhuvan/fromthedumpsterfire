@@ -12,6 +12,8 @@ Read these before working:
 - `docs/DESIGN.md`: the visual system. Tokens live in `packages/shared/src/tokens.ts`.
 - `docs/DECISIONS.md`: settled decisions and what was rejected. Don't relitigate them.
 - `docs/STATUS.md`: what's built and what's next. Update it as you go.
+- `docs/VOICE.md`: the editor's measured writing voice and the AI patterns to keep out of machine
+  drafts. Machine-usable form in `packages/shared/src/voice.ts`.
 
 ## Non-negotiables
 
@@ -36,7 +38,8 @@ apps/mobile       Expo reader app
 workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
 workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, draft, judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, publish, FCM
-packages/shared   schema types, design tokens, style check, verbatim, cleanup, detect, validator
+packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
+                  validator
 migrations/       D1 migrations
 scripts/          verify-bundle.ts
 ```

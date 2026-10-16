@@ -25,6 +25,13 @@
   with sources, PDF uploads, page photos (OCR) and voice notes; the per-item Workflow; review with
   select-to-excerpt; Haul composer with questions, route, preview, publish and corrections; push
   endpoint and FCM sender. Preview deployed at https://fdf-desk-preview.r-bhuvanesh2007.workers.dev.
+- 2026-10-16: **voice profile** (`docs/VOICE.md`, `packages/shared/src/voice.ts`, export
+  `@fdf/shared/voice`). Measured from 134k words of the editor's Substack notes (2022–25), 25k words
+  of raw 2026 dictation and 87k words of his Claude Code prompts, against AI-polished and
+  model-written contrast sets. Exports `editorVoice` (prompt block for title and route drafts),
+  `aiTells` and `voiceCheck` (17 machine-prose tells that checkStyle does not cover; the editor's
+  notes trip them 2.3 times per 10k words, model-written notes 85 times), `dictionaryHints` and
+  `dictationGarbles` for transcription. Not yet wired into `packages/server` prompts.
 
 ### Desk: what was verified (2026-10-16)
 
@@ -85,6 +92,8 @@
 - `apps/mobile` typecheck fails on `p.swatch.peach` (pre-existing; the swatch was renamed in shared).
 - Model prices in `routes.json` for Workers AI are estimates; check them against the dashboard.
 - The preview D1 holds one probe item ("How to Work Hard") from the deployed pipeline test.
+- `@fdf/shared/voice` is not wired yet: `editorVoice` into the title/route prompts, `voiceCheck`
+  beside `checkStyle` in the regeneration loop, `dictionaryHints` into the transcription prompt.
 
 ## Milestones
 
@@ -110,3 +119,5 @@
 - Model choice and budget ceiling for the judge model.
 - Where the old site's archive and reading history live, for backfill.
 - Final pick of the app icon (current: ember flame on ink).
+- Whether `checkStyle` should allow "leverage"/"leveraged" in finance contexts (your own notes use it
+  20 times as a finance term; see `docs/VOICE.md`).
