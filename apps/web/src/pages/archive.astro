@@ -1,5 +1,5 @@
 ---
-// Every Haul, newest first, as a stack of sheets in each Haul's own colour.
+// Every Haul, newest first: each row a back issue, its ghost number in the Haul's own colour.
 import { haulSlug } from '@fdf/shared/haul';
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
@@ -7,28 +7,26 @@ import { archive } from '../lib/runtime';
 import { longDate, objects, paths, titleText } from '../lib/site';
 
 const { hauls } = await archive();
-const step = (i: number) => `step-${(i % 8) + 1}`;
 ---
 <Base title="Every Haul" description="Every Haul so far, newest first." path={paths.archive} section="archive">
   <section class="wrap g page-head">
     <p class="m meta"><span>The archive</span><span>{objects(hauls.length).replace(/objects?/, hauls.length === 1 ? 'Haul' : 'Hauls')}</span></p>
     <div class="c">
       <Title title={{ text: 'Every', italic: 'Haul' }} as="h1" class="h-title" />
-      <p class="deck">Newest first. Each Haul keeps its own colour, so the archive reads like a stack of papers.</p>
+      <p class="deck">Newest first. Each Haul keeps its own colour, so the archive reads like a run of back issues.</p>
     </div>
   </section>
   <section class="wrap g contents" aria-label="Hauls">
     {hauls.length ? (
-      <ol class="stack" reversed>
-        {hauls.map((h, i) => (
-          <li class:list={['band', 'band-haul', `s-${h.swatch}`, step(i)]}>
+      <ol class="mc arch" reversed>
+        {hauls.map((h) => (
+          <li class={`s-${h.swatch}`}>
             <a href={paths.haul(h.number)} aria-label={`Haul ${h.number}: ${titleText(h.title)}`}>
-              <span class="b-num">{haulSlug(h.number)}</span>
-              <span class="b-form">{longDate(h.publishedAt)}</span>
-              <span class="b-main">
-                <span class="b-title">{h.title.text}{h.title.italic ? ' ' : ''}{h.title.italic ? <em>{h.title.italic}</em> : null}</span>
-                <span class="b-mk">{h.deck}</span>
-                <span class="b-by">{objects(h.items.length)}{h.version > 1 ? ` · corrected, version ${h.version}` : ''}</span>
+              <span class="ar-num" aria-hidden="true">{haulSlug(h.number)}</span>
+              <span class="ar-main">
+                <span class="ar-date">{longDate(h.publishedAt)} · {objects(h.items.length).toLowerCase()}{h.version > 1 ? ` · corrected, version ${h.version}` : ''}</span>
+                <span class="ar-title">{h.title.text}{h.title.italic ? ' ' : ''}{h.title.italic ? <em>{h.title.italic}</em> : null}</span>
+                <span class="ar-deck">{h.deck}</span>
               </span>
             </a>
           </li>

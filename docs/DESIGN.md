@@ -43,24 +43,26 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | essay, post | magazine opening | huge title across margin and column; the why as an italic standfirst; the excerpt as a pull-in with the editor's highlight in the type colour; machine notes beside it in the margin |
 | paper | journal offprint | a running citation line; centred title and authors; the abstract block; numbered sections (Why it's here, Notes, References) with the numbers hanging in the margin |
 | talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps, **B.** in ember italic for the editor, MACHINE in blue; the dateline where timestamps would go |
-| poem | broadside | one sheet in the poem colour, the poem alone in large display italic, poet and source at the foot |
+| poem | broadside | one sheet in the poem colour, the poem alone in Newsreader Text italic (28–44px, leading 1.38), poet and source at the foot |
 | rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
 | rabbit hole | catalogue card | a sheet in the type colour with a call number (`FDF 001.6`), the headword with its article moved to the end, the entry, the machine's note, a punch hole; the plate beside it |
 | passage | page from the book | a plate-grey page with a running head (book, author), the passage justified, the locator as the folio |
 
 Shared by every item page: the running head (Haul and title, then the form's name), a thumb tab on
 the right edge in the type colour at a height set by the item's number (7px on phones, a numbered tab
-from 1100px), **See also** set as an index (entry, dotted leader, pointer such as *Wikipedia*, *item
-2* or *thread*, then the gloss), *Next* as a ruled link, and an ember folio with the item's number.
+from 1100px), **See also** as reference slips (square, plate-grey, joined by hairlines like a
+catalogue drawer; each names where it points, then the title in display serif, then the gloss), *Next* as a ruled link, and an ember folio with the item's number.
 
 ## The cover
 
 The ghost number and title; the field note in the reading column with the route in the margin (days
-in sans, the machine's step in blue); **In this Haul** as a fanned stack of square-edged sheets in
-each type's colour, touching, each stepped in a little on both sides, carrying number, type, title,
-creator and year, the line the editor marked (in display serif) and the first sentence of the why;
-then the thread as a list of years, and the colophon. The archive uses the same stack, one sheet per
-Haul in its own colour.
+in sans, the machine's step in blue); **In this Haul** as *specimens*: each item shown as a small
+specimen of its own form (a cropped opening, a two-page spread, a transcript strip, an offprint with
+its abstract, a coral broadside, a 3×5 card with its punch hole, a book page), with the number in
+ember, the type and the first sentence of the why under it. Wide forms take seven of twelve columns,
+narrow ones four, cards six, packed densely so the table stays uneven but full; on phones they stack
+in order, each keeping its own width and side. Then the thread as a list of years, and the colophon.
+The archive lists back issues, each with its ghost number in the Haul's colour.
 
 ## Ember
 

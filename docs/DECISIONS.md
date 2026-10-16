@@ -78,8 +78,13 @@ Dated, newest last. Don't reopen these without a new reason.
   design take (red embers)" without loudness. Still never body text, machine text or a fill.
 - **No pills, chips, badges, rounded tinted cards or boxed machine notes.** The editor called the
   blue-text box and the rounded cards clichés. Machine notes are blue sans set as typography with
-  their source; Wikipedia and connections are an index with dotted leaders. Boxes are allowed only
+  their source. Boxes are allowed only
   as made things: the swatch sheets, the broadside, the catalogue card, the book page.
 - **The rhyme bridge is machine text**, set in blue sans in the gutter.
 - **Catalogue headwords move a leading article to the end** ("Great Stink, The"). Names of people are
   not inverted, because a two-word title is not always a person ("Bell Labs").
+- **The cover's contents are specimens**, not a stack of coloured bands (the editor found the stepped
+  stack clichéd): each item is a small specimen of its own printed form (`Specimen.astro`).
+- **The broadside is set in Newsreader Text italic**, not the display italic, which read tight and
+  mannered at poster size. The editor picked this from four settings.
+- **No dotted leaders.** See also is a set of reference slips; the search index is title and count.
