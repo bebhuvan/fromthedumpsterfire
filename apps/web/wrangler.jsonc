@@ -1,32 +1,39 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  // The public website: a static Astro build (dist/) served from Workers static assets. The tiny
-  // Worker in src/worker runs first to redirect www to the apex, map the app's deep-link aliases
-  // and add security headers. No bindings beyond ASSETS; every deploy must name an environment.
+  // The public website. Astro renders pages at request time from the published Haul bundles in the
+  // FILES R2 bucket (read only), behind the wrapper in src/worker/index.ts, so a Desk publish shows
+  // without a deploy. Build per environment (CLOUDFLARE_ENV=preview|production astro build); the
+  // Cloudflare Vite plugin writes the deployable config to dist/server/wrangler.json.
   "name": "fdf-web",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_als"],
   "workers_dev": false,
   "preview_urls": false,
   "observability": { "enabled": true },
   "assets": {
-    "directory": "./dist",
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page",
-    "run_worker_first": true
+    "not_found_handling": "none",
+    // Fonts and hashed CSS/JS are served straight from assets (headers from public/_headers).
+    "run_worker_first": ["/*", "!/_astro/*", "!/fonts/*", "!/favicon.svg", "!/og.png", "!/theme-init.js", "!/robots.txt"]
   },
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
 
   "env": {
     "preview": {
       "name": "fdf-web-preview",
       "vars": { "ENVIRONMENT": "preview" },
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "fdf-public-preview" }],
+      "version_metadata": { "binding": "CF_VERSION_METADATA" },
       "workers_dev": true,
       "preview_urls": false
     },
     "production": {
       "name": "fdf-web",
       "vars": { "ENVIRONMENT": "production" },
+      "r2_buckets": [{ "binding": "FILES", "bucket_name": "fdf-files" }],
+      "version_metadata": { "binding": "CF_VERSION_METADATA" },
       "routes": [
         { "pattern": "fromthedumpsterfire.com", "custom_domain": true },
         { "pattern": "www.fromthedumpsterfire.com", "custom_domain": true }
