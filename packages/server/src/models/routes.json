@@ -1,167 +1,311 @@
 {
-  "$comment": "Task -> model chain. The router tries each model in order, skipping any whose provider key is not set, and falls back on errors. Workers AI models need no key and are the working fallback. Prices are USD per million tokens (embeddings: per million input tokens; Whisper: per audio minute) and drive the spend ledger. Workers AI prices checked 2026-10-16 against https://developers.cloudflare.com/workers-ai/platform/pricing/ (deepseek-v4-flash-0731 0.44/1.32, kimi-k2.6 0.95/4.00, llama-4-scout 0.27/0.85, llama-3.3-70b-fp8-fast 0.293/2.253, whisper-large-v3-turbo 0.0005 per audio minute, bge-m3 0.012 per M input tokens; cached-input discounts are ignored, so the ledger errs high). External provider prices are from each provider's price page; check them when you change a model. Override at deploy time with the MODEL_ROUTES var (same shape; tasks and models are merged over these).",
+  "$comment": "Task -> model chain. The router tries each model in order, skipping any whose key is not set (or that lacks a capability the call needs: vision, PDF), and falls back on errors. Workers AI needs no key and is last in every chain. Per model: provider, model id, capabilities (json: schema|object|prompt; vision; pdf and pdfMaxPages; thinking: none|optional|always; caching: auto|explicit|none and minCacheTokens; maxContext; maxOutput; temperature: false when the API refuses one) and prices in USD per million tokens (in, cachedIn, cacheWrite, out, reasoning; long/longAbove for prompt-length tiers). Per task: thinking off|low|medium|high, pdf (attach the source PDF where the model reads it), mediaResolution. External prices and limits are from each provider's docs on 2026-10-16 (dated links in docs/MODELS.md); Workers AI prices from https://developers.cloudflare.com/workers-ai/platform/pricing/ the same day. DeepSeek is priced at its peak rate (off-peak is half), so the ledger errs high. Gemini 3.8 Flash prices double on 2027-01-01: update them then. gateway: AI Gateway route per provider; null calls the provider directly (Z.ai has no built-in gateway provider; set it to custom-zai after creating that custom provider). Override at deploy time with the MODEL_ROUTES var (same shape; tasks and models are merged over these).",
   "byok": false,
+  "gateway": {
+    "zai": null
+  },
   "tasks": {
     "read": {
       "chain": [
+        "haiku",
+        "deepseek-flash",
+        "glm-flash",
         "gemini-flash",
-        "deepseek-chat",
         "wai-deepseek-flash",
         "wai-scout"
       ],
       "maxTokens": 4000,
       "temperature": 0.2,
-      "maxInputChars": 120000
+      "maxInputChars": 120000,
+      "thinking": "low",
+      "pdf": true,
+      "mediaResolution": "low"
     },
     "draft": {
       "chain": [
-        "gemini-pro",
-        "deepseek-chat",
+        "haiku",
+        "gemini-flash",
+        "deepseek-flash",
         "wai-kimi",
         "wai-deepseek-flash"
       ],
       "maxTokens": 8000,
       "temperature": 0.5,
-      "maxInputChars": 90000
+      "maxInputChars": 90000,
+      "thinking": "low"
     },
     "judge": {
       "chain": [
-        "gemini-pro",
-        "deepseek-chat",
+        "deepseek-flash",
+        "gemini-flash",
+        "haiku",
         "wai-kimi",
         "wai-deepseek-flash"
       ],
       "maxTokens": 3000,
       "temperature": 0,
-      "maxInputChars": 60000
+      "maxInputChars": 60000,
+      "thinking": "medium"
     },
     "clean": {
       "chain": [
-        "gemini-flash",
-        "deepseek-chat",
+        "haiku",
+        "deepseek-flash",
+        "glm-4.7-flash",
         "wai-deepseek-flash",
         "wai-scout"
       ],
       "maxTokens": 6000,
       "temperature": 0,
-      "maxInputChars": 30000
+      "maxInputChars": 30000,
+      "thinking": "off"
     },
     "ocr": {
       "chain": [
         "gemini-flash",
+        "haiku",
+        "glm-flash",
+        "deepseek-flash",
         "wai-scout"
       ],
       "maxTokens": 6000,
       "temperature": 0,
       "maxInputChars": 2000,
-      "vision": true
+      "vision": true,
+      "thinking": "off",
+      "pdf": true,
+      "mediaResolution": "high"
     },
     "haul": {
       "chain": [
-        "gemini-pro",
-        "deepseek-chat",
+        "haiku",
+        "gemini-flash",
+        "deepseek-flash",
         "wai-kimi",
         "wai-deepseek-flash"
       ],
       "maxTokens": 3000,
       "temperature": 0.5,
-      "maxInputChars": 60000
+      "maxInputChars": 60000,
+      "thinking": "low"
     },
     "plate": {
       "chain": [
-        "gemini-flash",
-        "deepseek-chat",
+        "glm-4.7-flash",
+        "deepseek-flash",
+        "haiku",
         "wai-deepseek-flash",
         "wai-scout"
       ],
       "maxTokens": 800,
       "temperature": 0.3,
-      "maxInputChars": 8000
+      "maxInputChars": 8000,
+      "thinking": "off"
     },
     "connect": {
       "chain": [
-        "gemini-pro",
-        "deepseek-chat",
+        "deepseek-flash",
+        "gemini-flash",
+        "haiku",
         "wai-kimi",
         "wai-deepseek-flash"
       ],
       "maxTokens": 3000,
       "temperature": 0,
-      "maxInputChars": 40000
+      "maxInputChars": 40000,
+      "thinking": "medium"
     },
     "thread": {
       "chain": [
-        "gemini-pro",
-        "deepseek-chat",
+        "haiku",
+        "gemini-flash",
+        "deepseek-flash",
         "wai-kimi",
         "wai-deepseek-flash"
       ],
       "maxTokens": 2000,
       "temperature": 0.4,
-      "maxInputChars": 30000
+      "maxInputChars": 30000,
+      "thinking": "low"
+    },
+    "bridge": {
+      "chain": [
+        "haiku",
+        "gemini-flash",
+        "deepseek-flash",
+        "wai-kimi",
+        "wai-deepseek-flash"
+      ],
+      "maxTokens": 2000,
+      "temperature": 0.5,
+      "maxInputChars": 30000,
+      "thinking": "low"
     }
   },
   "models": {
-    "gemini-flash": {
-      "provider": "google-ai-studio",
-      "model": "gemini-2.5-flash",
-      "inUsdPerM": 0.3,
-      "outUsdPerM": 2.5,
+    "haiku": {
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "prices": {
+        "in": 0.1,
+        "cachedIn": 0.01,
+        "cacheWrite": 0.125,
+        "out": 0.5,
+        "longAbove": 100000,
+        "long": {
+          "in": 0.5,
+          "cachedIn": 0.05,
+          "cacheWrite": 0.625,
+          "out": 2.5
+        }
+      },
       "json": "schema",
-      "vision": true
-    },
-    "gemini-pro": {
-      "provider": "google-ai-studio",
-      "model": "gemini-2.5-pro",
-      "inUsdPerM": 1.25,
-      "outUsdPerM": 10,
-      "json": "schema",
-      "vision": true
-    },
-    "deepseek-chat": {
-      "provider": "deepseek",
-      "model": "deepseek-chat",
-      "inUsdPerM": 0.28,
-      "outUsdPerM": 0.42,
-      "json": "object"
+      "vision": true,
+      "pdf": true,
+      "pdfMaxPages": 25,
+      "thinking": "optional",
+      "caching": "explicit",
+      "minCacheTokens": 512,
+      "maxContext": 1000000,
+      "maxOutput": 128000,
+      "temperature": false
     },
     "claude-sonnet": {
       "provider": "anthropic",
-      "model": "claude-sonnet-4-5",
-      "inUsdPerM": 3,
-      "outUsdPerM": 15,
-      "json": "prompt"
+      "model": "claude-sonnet-5-5",
+      "prices": {
+        "in": 2,
+        "cachedIn": 0.1,
+        "cacheWrite": 2.5,
+        "out": 10
+      },
+      "json": "schema",
+      "vision": true,
+      "pdf": true,
+      "pdfMaxPages": 100,
+      "thinking": "always",
+      "caching": "explicit",
+      "minCacheTokens": 512,
+      "maxContext": 1000000,
+      "maxOutput": 128000,
+      "temperature": false
+    },
+    "gemini-flash": {
+      "provider": "google-ai-studio",
+      "model": "gemini-3.8-flash",
+      "prices": {
+        "in": 0.75,
+        "cachedIn": 0.075,
+        "out": 3.75
+      },
+      "json": "schema",
+      "vision": true,
+      "pdf": true,
+      "pdfMaxPages": 300,
+      "thinking": "always",
+      "caching": "auto",
+      "minCacheTokens": 4096,
+      "maxContext": 1048576,
+      "maxOutput": 32768,
+      "temperature": false
+    },
+    "deepseek-flash": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "prices": {
+        "in": 0.3,
+        "cachedIn": 0.006,
+        "out": 1.2
+      },
+      "json": "object",
+      "vision": true,
+      "thinking": "optional",
+      "caching": "auto",
+      "maxContext": 1000000,
+      "maxOutput": 384000
+    },
+    "deepseek-pro": {
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "prices": {
+        "in": 1.32,
+        "cachedIn": 0.044,
+        "out": 3.96
+      },
+      "json": "object",
+      "thinking": "optional",
+      "caching": "auto",
+      "maxContext": 1000000,
+      "maxOutput": 384000
+    },
+    "glm-flash": {
+      "provider": "zai",
+      "model": "glm-5.3-flash",
+      "prices": {
+        "in": 0.15,
+        "cachedIn": 0.03,
+        "out": 0.5
+      },
+      "json": "object",
+      "vision": true,
+      "thinking": "always",
+      "caching": "auto",
+      "maxContext": 1000000,
+      "maxOutput": 131072
+    },
+    "glm-4.7-flash": {
+      "provider": "zai",
+      "model": "glm-4.7-flash",
+      "prices": {
+        "in": 0,
+        "out": 0
+      },
+      "json": "object",
+      "thinking": "optional",
+      "caching": "auto",
+      "maxContext": 200000,
+      "maxOutput": 131072
     },
     "wai-deepseek-flash": {
       "provider": "workers-ai",
       "model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
-      "inUsdPerM": 0.44,
-      "outUsdPerM": 1.32,
+      "prices": {
+        "in": 0.44,
+        "out": 1.32
+      },
       "json": "schema",
-      "thinking": false
+      "thinking": "optional"
     },
     "wai-kimi": {
       "provider": "workers-ai",
       "model": "@cf/moonshotai/kimi-k2.6",
-      "inUsdPerM": 0.95,
-      "outUsdPerM": 4.0,
+      "prices": {
+        "in": 0.95,
+        "out": 4.0
+      },
       "json": "schema",
-      "thinking": false
+      "thinking": "optional"
     },
     "wai-scout": {
       "provider": "workers-ai",
       "model": "@cf/meta/llama-4-scout-17b-16e-instruct",
-      "inUsdPerM": 0.27,
-      "outUsdPerM": 0.85,
+      "prices": {
+        "in": 0.27,
+        "out": 0.85
+      },
       "json": "schema",
-      "vision": true
+      "vision": true,
+      "thinking": "none"
     },
     "wai-llama-70b": {
       "provider": "workers-ai",
       "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-      "inUsdPerM": 0.293,
-      "outUsdPerM": 2.253,
-      "json": "schema"
+      "prices": {
+        "in": 0.293,
+        "out": 2.253
+      },
+      "json": "schema",
+      "thinking": "none"
     }
   },
   "transcribe": {

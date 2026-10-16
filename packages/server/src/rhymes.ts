@@ -136,7 +136,7 @@ export async function draftBridge(env: Env, rhymeId: string): Promise<string> {
   const prompt = `THEN (${r.then_year}): "${r.then_quote}"\nCited as: ${r.then_cite}\n\nNOW (${r.now_year}): "${r.now_quote}"\nCited as: ${r.now_cite}`;
   let feedback = '';
   for (let attempt = 0; attempt < 3; attempt++) {
-    const { data } = await generateJson(env, { task: 'haul', system: BRIDGE_SYSTEM, prompt: prompt + feedback, schema: bridgeSchema, itemId: rhymeId });
+    const { data } = await generateJson(env, { task: 'bridge', system: BRIDGE_SYSTEM, prompt: prompt + feedback, schema: bridgeSchema, itemId: rhymeId });
     const s = checkStyle(data.bridge);
     if (s.ok) {
       await env.DB.prepare('UPDATE rhymes SET bridge = ?, updated_at = ? WHERE item_id = ?').bind(data.bridge.trim(), nowIso(), rhymeId).run();

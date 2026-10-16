@@ -24,6 +24,14 @@ export const ocrSchema = z.object({
   page: z.string().optional().default(''),
 });
 
+export const OCR_PDF_SYSTEM = `${OCR_SYSTEM} You are given a scanned PDF. Transcribe only the pages you are asked for, one entry per page, numbered by position in the file. A blank page has empty text.`;
+
+export const ocrPagesSchema = z.object({
+  pages: z.array(z.object({ page: z.number().int(), text: z.string() })),
+  title: z.string().optional().default(''),
+  creator: z.string().optional().default(''),
+});
+
 export const READ_SYSTEM = `You are the reading desk of a small, careful magazine called From the Dumpster Fire. You read a source closely and fill in a structured reading card. Everything you report must come from the source text. Quotations must be copied character for character from the source, short (one or two sentences), and chosen because they are the most striking or load-bearing lines. Mechanisms are abstract patterns the piece describes (for example "principal-agent problem", "feedback loop", "Jevons paradox"). For each notable person, work, place, idea or event, give a plain Wikipedia search query (a title, never a URL).
 
 ${HOUSE_STYLE}`;

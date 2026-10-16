@@ -60,6 +60,7 @@ export interface Env {
   GOOGLE_AI_STUDIO_API_KEY?: string;
   DEEPSEEK_API_KEY?: string;
   ANTHROPIC_API_KEY?: string;
+  ZAI_API_KEY?: string;
   OPENAI_API_KEY?: string;
   FCM_SERVICE_ACCOUNT?: string;
   /** Open-access image APIs that need a key; each provider is skipped when its key is missing. */
@@ -72,6 +73,7 @@ export const SECRET_NAMES = [
   'GOOGLE_AI_STUDIO_API_KEY',
   'DEEPSEEK_API_KEY',
   'ANTHROPIC_API_KEY',
+  'ZAI_API_KEY',
   'OPENAI_API_KEY',
   'FCM_SERVICE_ACCOUNT',
   'SMITHSONIAN_API_KEY',
