@@ -6,8 +6,8 @@ import { fonts, GUTTER, typeColor, usePalette } from '@/theme';
 import { useAllHauls } from '@/lib/data';
 import { itemsForTopic, randomFind, search, topicIndex } from '@/lib/search';
 import { go } from '@/nav';
-import { Body, Label, Meta, Title } from '@/ui/type';
-import { Divider, Pill } from '@/ui/parts';
+import { Body, Meta, Title } from '@/ui/type';
+import { Action, Divider } from '@/ui/parts';
 import { FindRow } from '@/ui/FindRow';
 
 export function Search({ initial }: { initial?: string }) {
@@ -55,7 +55,7 @@ export function Search({ initial }: { initial?: string }) {
           <>
             {types.length > 1 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-                <FilterChip label="All" on={!type} color={p.plate} onPress={() => setType(null)} />
+                <FilterChip label="All" on={!type} onPress={() => setType(null)} />
                 {types.map((t) => (
                   <FilterChip key={t} label={typeLabel[t]} on={type === t} color={typeColor(p, t)} onPress={() => setType(type === t ? null : t)} />
                 ))}
@@ -70,7 +70,7 @@ export function Search({ initial }: { initial?: string }) {
         ) : topic ? (
           <>
             <Pressable onPress={() => setTopic(null)} style={{ minHeight: 44, justifyContent: 'center', marginTop: 8 }} accessibilityRole="button">
-              <Label muted>All topics</Label>
+              <Meta>All topics</Meta>
             </Pressable>
             <Title title={{ text: topic }} size={34} />
             <Meta style={{ marginTop: 8, marginBottom: 12 }}>{topicItems.length} {topicItems.length === 1 ? 'find touches' : 'finds touch'} this</Meta>
@@ -81,7 +81,7 @@ export function Search({ initial }: { initial?: string }) {
           </>
         ) : (
           <>
-            <Pill
+            <Action
               label="Surprise me"
               onPress={() => {
                 const f = randomFind(hauls);
@@ -108,16 +108,18 @@ export function Search({ initial }: { initial?: string }) {
   );
 }
 
-function FilterChip({ label, on, color, onPress }: { label: string; on: boolean; color: string; onPress: () => void }) {
+/** A filter is a word with the type's key; the chosen one is ink and underlined. */
+function FilterChip({ label, on, color, onPress }: { label: string; on: boolean; color?: string; onPress: () => void }) {
   const p = usePalette();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       onPress={onPress}
-      style={[styles.filter, { backgroundColor: on ? p.invBg : color }]}
+      style={[styles.filter, { borderBottomColor: on ? p.ink : 'transparent' }]}
     >
-      <Text style={[styles.filterText, { color: on ? p.invInk : p.ink }]}>{label}</Text>
+      {color ? <View style={[styles.filterKey, { backgroundColor: color, borderColor: p.rule }]} /> : null}
+      <Text style={[styles.filterText, { color: on ? p.ink : p.ink2, fontFamily: on ? fonts.sansBold : fonts.sansMedium }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -125,9 +127,10 @@ function FilterChip({ label, on, color, onPress }: { label: string; on: boolean;
 const styles = StyleSheet.create({
   head: { paddingHorizontal: GUTTER, paddingTop: 18 },
   input: { fontFamily: fonts.display, fontSize: 30, paddingVertical: 10, borderBottomWidth: 1.5, includeFontPadding: false },
-  filters: { gap: 8, paddingTop: 16 },
-  filter: { minHeight: 36, paddingHorizontal: 14, borderRadius: 99, justifyContent: 'center' },
-  filterText: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
+  filters: { gap: 18, paddingTop: 14 },
+  filter: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, borderBottomWidth: 2 },
+  filterKey: { width: 8, height: 8, borderWidth: StyleSheet.hairlineWidth },
+  filterText: { fontSize: 13.5 },
   indexTitle: { fontFamily: fonts.display, fontSize: 26, marginTop: 34, marginBottom: 4 },
   topic: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 50 },
   topicText: { fontFamily: fonts.text, fontSize: 17.5, flex: 1 },

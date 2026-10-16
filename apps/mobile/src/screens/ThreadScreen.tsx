@@ -2,8 +2,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import type { Haul, Thread } from '@fdf/shared/haul';
 import { fonts, usePalette } from '@/theme';
-import { Body, Label, Machine, Meta, Title } from '@/ui/type';
-import { Divider, Pill, TopBar } from '@/ui/parts';
+import { Body, Machine, Meta, Title } from '@/ui/type';
+import { Action, Divider, TopBar } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 
 export function ThreadScreen({ haul, thread }: { haul: Haul; thread: Thread }) {
@@ -14,7 +14,7 @@ export function ThreadScreen({ haul, thread }: { haul: Haul; thread: Thread }) {
 
   return (
     <Screen header={<TopBar label={`Haul ${haul.number}`} />}>
-      <Label muted style={{ marginTop: 16 }}>Thread · {thread.points.length} points{span ? ` · ${span} years` : ''}</Label>
+      <Meta style={{ marginTop: 18 }}>Thread · {thread.points.length} points{span ? ` · ${span} years` : ''}</Meta>
       <Title title={thread.title} size={44} style={{ marginTop: 10 }} />
       <Body style={{ marginTop: 12, color: p.ink2, fontSize: 17, lineHeight: 25 }}>{thread.summary}</Body>
 
@@ -42,11 +42,11 @@ export function ThreadScreen({ haul, thread }: { haul: Haul; thread: Thread }) {
         })}
       </View>
 
-      <View style={[styles.prov, { backgroundColor: p.plate }]}>
-        <Machine style={{ fontSize: 13.5 }}>{thread.provenance}</Machine>
+      <View style={styles.prov}>
+        <Machine style={{ fontSize: 14 }}>{thread.provenance}</Machine>
       </View>
 
-      <Pill label="Back to the field note" onPress={() => go.note(haul.number)} style={{ marginTop: 26 }} />
+      <Action label="Back to the field note" onPress={() => go.note(haul.number)} style={{ marginTop: 26 }} />
     </Screen>
   );
 }
@@ -54,12 +54,12 @@ export function ThreadScreen({ haul, thread }: { haul: Haul; thread: Thread }) {
 const styles = StyleSheet.create({
   legend: { flexDirection: 'row', gap: 18, marginTop: 16 },
   key: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  dot: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5 },
+  dot: { width: 9, height: 9, borderWidth: 1.5 },
   spine: { position: 'absolute', left: 68, top: 26, bottom: 26, width: StyleSheet.hairlineWidth * 2 },
   point: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 13 },
   year: { width: 64, fontFamily: fonts.display, fontSize: 24, lineHeight: 26, letterSpacing: -0.5, fontVariant: ['lining-nums'] },
   title: { fontFamily: fonts.text, fontSize: 17.5, lineHeight: 22, marginLeft: 14 },
   gist: { fontFamily: fonts.text, fontSize: 15, lineHeight: 21, marginTop: 4, marginLeft: 14 },
-  edge: { fontFamily: fonts.sansBold, fontSize: 10, letterSpacing: 0.9, textTransform: 'uppercase', marginTop: 7, marginLeft: 14 },
-  prov: { borderRadius: 14, padding: 16, marginTop: 16 },
+  edge: { fontFamily: fonts.sans, fontSize: 13, marginTop: 6, marginLeft: 14 },
+  prov: { marginTop: 18 },
 });

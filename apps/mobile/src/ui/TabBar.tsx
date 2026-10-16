@@ -30,5 +30,5 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 54, gap: 6, paddingTop: 4 },
   label: { fontFamily: fonts.sansBold, fontSize: 11.5, letterSpacing: 1.1, textTransform: 'uppercase', includeFontPadding: false },
-  mark: { width: 16, height: 2, borderRadius: 1 },
+  mark: { width: 16, height: 2 },
 });

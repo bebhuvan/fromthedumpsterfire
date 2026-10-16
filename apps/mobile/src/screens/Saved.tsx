@@ -1,10 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fonts, GUTTER, usePalette } from '@/theme';
+import { fonts, usePalette } from '@/theme';
 import { reader, useReader } from '@/lib/store';
 import { go } from '@/nav';
-import { Body, Label, Title } from '@/ui/type';
-import { Divider, Pill } from '@/ui/parts';
+import { Body, Title } from '@/ui/type';
+import { Action, Divider } from '@/ui/parts';
 import { FindRow } from '@/ui/FindRow';
 import { Screen } from '@/ui/screen';
 
@@ -29,7 +29,7 @@ export function Saved() {
               creator={s.creator}
               right={
                 <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${s.title.text}`} hitSlop={10} onPress={() => reader.toggleSave(s)}>
-                  <Label muted>Remove</Label>
+                  <Text style={[styles.remove, { color: p.ink2 }]}>Remove</Text>
                 </Pressable>
               }
             />
@@ -37,10 +37,10 @@ export function Saved() {
           <Divider />
         </View>
       ) : (
-        <View style={[styles.empty, { backgroundColor: p.plate }]}>
+        <View style={styles.empty}>
           <Text style={[styles.emptyTitle, { color: p.ink }]}>Nothing saved yet</Text>
           <Body style={{ marginTop: 8, fontSize: 16.5, lineHeight: 24 }}>Tap Save on any find to keep it here. It works offline.</Body>
-          <Pill label="Open the latest Haul" onPress={go.cover} style={{ marginTop: 18 }} />
+          <Action label="Open the latest Haul" onPress={go.cover} style={{ marginTop: 22 }} />
         </View>
       )}
     </Screen>
@@ -48,6 +48,7 @@ export function Saved() {
 }
 
 const styles = StyleSheet.create({
-  empty: { marginTop: 24, borderRadius: 20, padding: 20 },
+  empty: { marginTop: 28 },
+  remove: { fontFamily: fonts.sansMedium, fontSize: 12.5, textDecorationLine: 'underline' },
   emptyTitle: { fontFamily: fonts.display, fontSize: 22 },
 });

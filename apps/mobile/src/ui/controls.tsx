@@ -3,11 +3,11 @@ import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { fonts, usePalette } from '@/theme';
 import { Meta } from './type';
 
-/** A row of choices; the chosen one is an inverted pill. */
+/** A ruled row of choices; the chosen one is ink with a heavier rule beneath it. */
 export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
   const p = usePalette();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.seg, { backgroundColor: p.plate }]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.seg, { borderBottomColor: p.rule }]}>
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -16,9 +16,9 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}
             onPress={() => onChange(o.value)}
-            style={[styles.segItem, on && { backgroundColor: p.invBg }]}
+            style={[styles.segItem, { borderBottomColor: on ? p.ink : 'transparent' }]}
           >
-            <Text style={[styles.segText, { color: on ? p.invInk : p.ink }]}>{o.label}</Text>
+            <Text style={[styles.segText, { color: on ? p.ink : p.ink2, fontFamily: on ? fonts.sansBold : fonts.sansMedium }]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -60,9 +60,9 @@ export function Toggle({ value, onChange, label, disabled }: { value: boolean; o
 }
 
 const styles = StyleSheet.create({
-  seg: { flexDirection: 'row', borderRadius: 99, padding: 4, gap: 4 },
-  segItem: { flex: 1, minHeight: 40, borderRadius: 99, alignItems: 'center', justifyContent: 'center' },
-  segText: { fontFamily: fonts.sansBold, fontSize: 13, includeFontPadding: false },
+  seg: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth },
+  segItem: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 2, marginBottom: -StyleSheet.hairlineWidth },
+  segText: { fontSize: 13.5, includeFontPadding: false },
   row: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 60, paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth },
   rowTitle: { fontFamily: fonts.text, fontSize: 17.5, includeFontPadding: false },
 });

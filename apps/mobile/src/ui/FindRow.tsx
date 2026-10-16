@@ -4,7 +4,7 @@ import type { Title } from '@fdf/shared/haul';
 import type { ContentType } from '@fdf/shared/tokens';
 import { fonts, usePalette } from '@/theme';
 import { go } from '@/nav';
-import { Chip, Divider } from './parts';
+import { Divider, Key } from './parts';
 import { Meta } from './type';
 
 /** One find in a list (search, saved, topic): title, who, which Haul, and its type colour. */
@@ -23,7 +23,7 @@ export const FindRow = memo(function FindRow({ n, id, type, title, creator, snip
           {snippet ? <Text numberOfLines={2} style={[styles.snippet, { color: p.ink2 }]}>{snippet}</Text> : null}
         </View>
         <View style={{ alignItems: 'flex-end', gap: 10 }}>
-          <Chip type={type} />
+          <Key type={type} />
           {right}
         </View>
       </Pressable>

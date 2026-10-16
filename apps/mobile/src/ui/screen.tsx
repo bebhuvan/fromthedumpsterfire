@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
 import { GUTTER, usePalette } from '@/theme';
 import { Body, Title } from './type';
-import { Pill } from './parts';
+import { Action } from './parts';
 
 /**
  * A scrolling page. The app draws edge to edge, so a scrim fades in under the status bar once
@@ -54,7 +54,7 @@ export function Waiting({ status }: { status: 'loading' | 'offline' | 'ready' | 
           <Body style={{ marginTop: 14, color: p.ink2 }}>
             This Haul hasn't reached your phone. Connect to the internet once and it will stay here for offline reading.
           </Body>
-          <Pill label="Back to the latest Haul" onPress={go.cover} style={{ marginTop: 28 }} />
+          <Action label="Back to the latest Haul" onPress={go.cover} style={{ marginTop: 28 }} />
         </>
       )}
     </View>

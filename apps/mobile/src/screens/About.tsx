@@ -1,8 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
-import { usePalette } from '@/theme';
+import { fonts, usePalette } from '@/theme';
 import { Body, Machine, Meta, Note, Title } from '@/ui/type';
-import { Section, TopBar } from '@/ui/parts';
+import { Section, Sign, TopBar } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 
 export function About() {
@@ -15,11 +15,12 @@ export function About() {
       </Body>
 
       <Section title="Two voices">
-        <View style={[styles.voices, { borderColor: p.rule }]}>
-          <View style={styles.voice}>
+        <View style={styles.voices}>
+          <View style={[styles.voice, { borderTopColor: p.ink }]}>
             <Note>This is the editor. One person chooses everything, mostly by voice, and every word set like this is theirs.</Note>
+            <Sign style={{ marginTop: 4 }} />
           </View>
-          <View style={[styles.voice, { backgroundColor: p.plate }]}>
+          <View style={[styles.voice, { borderTopColor: p.rule }]}>
             <Machine>This is the machine. It reads each piece closely, finds connections across time, drafts context and checks facts. Anything it writes is set like this, and the editor checks it before it ships.</Machine>
           </View>
         </View>
@@ -33,9 +34,9 @@ export function About() {
             'Every note from the machine names its source.',
             "The editor's words are never rewritten.",
             'No generated images. Plates come from the public domain.',
-          ].map((line) => (
+          ].map((line, i) => (
             <View key={line} style={styles.promise}>
-              <View style={[styles.bullet, { backgroundColor: p.machine }]} />
+              <Text style={[styles.num, { color: p.ink2 }]}>{i + 1}</Text>
               <Body style={{ flex: 1, fontSize: 17, lineHeight: 25 }}>{line}</Body>
             </View>
           ))}
@@ -48,8 +49,8 @@ export function About() {
 }
 
 const styles = StyleSheet.create({
-  voices: { marginTop: 12, gap: 10 },
-  voice: { borderRadius: 16, padding: 18 },
-  promise: { flexDirection: 'row', gap: 12 },
-  bullet: { width: 6, height: 6, borderRadius: 3, marginTop: 10 },
+  voices: { marginTop: 14 },
+  voice: { paddingVertical: 16, borderTopWidth: 1 },
+  promise: { flexDirection: 'row', gap: 14 },
+  num: { width: 16, fontFamily: fonts.displayRegular, fontSize: 18, lineHeight: 25, textAlign: 'right' },
 });
