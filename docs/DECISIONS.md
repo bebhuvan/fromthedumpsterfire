@@ -58,7 +58,7 @@ Dated, newest last. Don't reopen these without a new reason.
   marks, no thinking control, no cached or reasoning token counts).
 - **Paid models first for bulk tasks once keys are set** (the editor's choice, 2026-10-16): Claude
   Haiku 5.5 reads, drafts and cleans; DeepSeek Flash with thinking judges notes and links (a
-  different family from the drafter); free GLM-4.7-Flash proposes plate searches; Gemini 3.8 Flash
+  different family from the drafter); GLM-5.3-Flash (paid; the free GLM-4.7-Flash was too often overloaded) proposes plate searches; Gemini 3.8 Flash
   does OCR. About $0.03 per item. Workers AI stays last in every chain. Chains and their reasoning:
   `docs/MODELS.md`.
 - **The extracted text stays the source of truth when a model reads the PDF.** Native PDF input is

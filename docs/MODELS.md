@@ -125,9 +125,9 @@ include thinking. The first model is used when its key is set; the rest are fall
 | draft | haiku → gemini-flash → deepseek-flash → wai-kimi → wai-deepseek-flash | low | Best prose per cent; prompt caching makes each redraft cost about a tenth of the first. | $0.004 first draft, under $0.001 per redraft |
 | judge | deepseek-flash → gemini-flash → haiku → wai-kimi → wai-deepseek-flash | medium | A different model family from the drafter checks its notes; thinking helps match a claim to its evidence. | about $0.007 |
 | connect | deepseek-flash → gemini-flash → haiku → wai-kimi → wai-deepseek-flash | medium | Same reasoning: typing a link and choosing quotes at both ends is judgement work. | about $0.012 per batch of candidates |
-| clean | haiku → deepseek-flash → glm-4.7-flash → wai-deepseek-flash → wai-scout | off | Deletion-only cleanup is mechanical; the code check accepts or rejects it. | under $0.001 per voice note |
+| clean | haiku → deepseek-flash → glm-flash → wai-deepseek-flash → wai-scout | off | Deletion-only cleanup is mechanical; the code check accepts or rejects it. | under $0.001 per voice note |
 | ocr | gemini-flash → haiku → glm-flash → deepseek-flash → wai-scout | off (Gemini: low) | Gemini reads page images most accurately; high media resolution for old type. | about $0.008 per page photo; about $0.15 for a 30-page scan |
-| plate | glm-4.7-flash → deepseek-flash → haiku → wai-deepseek-flash → wai-scout | off | Two to four search phrases: a free model is enough. | free |
+| plate | glm-flash → deepseek-flash → haiku → wai-deepseek-flash → wai-scout | off | Two to four search phrases: a small paid model is enough. The free GLM-4.7-Flash was too often overloaded (smoke test), so the editor chose paid GLM-5.3-Flash (2026-10-16). | about $0.00005 |
 | haul | haiku → gemini-flash → deepseek-flash → wai-kimi → wai-deepseek-flash | low | Questions and route draft in the editor's register. | under $0.005 per Haul |
 | thread | same as haul | low | Thread titles and years. | under $0.002 per thread |
 | bridge | same as haul | low | The Rhyme's bridge line (was on the `haul` route). | under $0.002 per Rhyme |
@@ -294,8 +294,8 @@ What it settled:
   `max_tokens`; the adapter's allowance on top is right. Image input works on `deepseek-flash`.
 - **Z.ai:** `glm-4.7-flash` is the API id. `json_object` works on GLM-5.3-Flash, and images too.
   Reasoning tokens are reported. The free GLM-4.7-Flash is often overloaded (1305, a 429): two of
-  five calls failed after three tries, one took 68 s; plate then falls to DeepSeek Flash at about
-  $0.0001.
+  five calls failed after three tries, one took 68 s. It is no longer in any chain; plate and clean
+  use the paid GLM-5.3-Flash.
 - **Still to run:** Claude Haiku and Sonnet (no key yet); GLM PDF input stays off.
 
 ## Keys

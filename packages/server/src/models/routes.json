@@ -51,7 +51,7 @@
       "chain": [
         "haiku",
         "deepseek-flash",
-        "glm-4.7-flash",
+        "glm-flash",
         "wai-deepseek-flash",
         "wai-scout"
       ],
@@ -91,7 +91,7 @@
     },
     "plate": {
       "chain": [
-        "glm-4.7-flash",
+        "glm-flash",
         "deepseek-flash",
         "haiku",
         "wai-deepseek-flash",

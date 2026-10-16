@@ -76,6 +76,8 @@
   on `generateContent`; the adapter now sends `responseMimeType` + `responseJsonSchema` only.
   Without an Anthropic key every chain skips Haiku: read, draft, clean and the Haul helpers start
   with the next model (DeepSeek Flash or Gemini).
+  Plate and clean now use the paid GLM-5.3-Flash (editor's choice): the free GLM-4.7-Flash was
+  overloaded on two of five smoke calls.
 
 ### Desk: what was verified (2026-10-16)
 
