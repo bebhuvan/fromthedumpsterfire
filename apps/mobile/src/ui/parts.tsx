@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
@@ -104,8 +104,12 @@ const mmss = (sec: number) => {
  * The editor's voice. The native player is only created on first tap, so a screen full of
  * voice notes costs nothing until someone listens.
  */
+// iOS cannot play WebM or Ogg; the Desk marks such notes with their format, and on iOS they are left out.
+export const playable = (a: Audio) => !(Platform.OS === 'ios' && (a.format === 'webm' || a.format === 'ogg'));
+
 export function VoiceNote({ audio, label, compact }: { audio: Audio; label: string; compact?: boolean }) {
   const [active, setActive] = useState(false);
+  if (!playable(audio)) return null;
   if (active) return <ActiveVoice audio={audio} label={label} compact={compact} />;
   return <VoiceButton playing={false} label={label} seconds={audio.seconds} compact={compact} onPress={() => setActive(true)} />;
 }

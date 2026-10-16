@@ -3,7 +3,7 @@ import { go } from '@/nav';
 import type { Haul } from '@fdf/shared/haul';
 import { fonts, typeColor, usePalette } from '@/theme';
 import { Highlighted, Label, Machine, Title } from '@/ui/type';
-import { Chip, Divider, Pill, TopBar, VoiceNote } from '@/ui/parts';
+import { Chip, Divider, Pill, TopBar, VoiceNote, playable } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 
 export function FieldNote({ haul }: { haul: Haul }) {
@@ -19,7 +19,7 @@ export function FieldNote({ haul }: { haul: Haul }) {
       </View>
       <Title title={note.title} size={44} style={{ marginTop: 14 }} />
 
-      {note.audio ? (
+      {note.audio && playable(note.audio) ? (
         <View style={{ marginTop: 22 }}>
           <VoiceNote audio={note.audio} label="Hear it as I said it" />
         </View>
