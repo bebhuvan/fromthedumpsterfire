@@ -109,7 +109,8 @@
   Production is live at https://fromthedumpsterfire.com (waiting page until Haul 001); preview at
   https://fdf-web-preview.r-bhuvanesh2007.workers.dev.
 - 2026-10-16: **the Salvage design on the web** (`docs/DESIGN.md`). Struck masthead in every header,
-  the big one on the waiting page; ghost number and a fanned stack of sheets on the Haul cover; every
+  the big one on the waiting page; ghost number and the contents as specimens of each form on the Haul
+  cover; every
   item set in its printed form (`src/lib/forms.ts`: opening, offprint, transcript, broadside, facing
   pages, catalogue card, page from the book) with a working margin, running head, thumb tab, See also
   index and ember folio. Archive, threads, thread, about, search, 404 and 503 redone to match. Chips,
