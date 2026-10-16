@@ -3,6 +3,8 @@ import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
 import { paths } from '../lib/site';
 
+export const prerender = true;
+
 const promises = [
   'Every quotation is matched word for word against its source.',
   'Every link is fetched and working when a Haul ships.',

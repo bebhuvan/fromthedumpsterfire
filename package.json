@@ -21,9 +21,9 @@
     "deploy:preview": "npm run desk:build && wrangler deploy -c workers/pipeline/wrangler.jsonc --env preview && wrangler deploy -c workers/api/wrangler.jsonc --env preview",
     "web:build": "npm run build -w @fdf/web",
     "web:dev": "npm run dev -w @fdf/web",
-    "web:preview": "npm run web:build && wrangler dev -c apps/web/wrangler.jsonc --env preview",
-    "deploy:web:preview": "FDF_USE_SEED=1 npm run build -w @fdf/web && wrangler deploy -c apps/web/wrangler.jsonc --env preview",
-    "deploy:web": "FDF_USE_SEED=0 npm run build -w @fdf/web && wrangler deploy -c apps/web/wrangler.jsonc --env production"
+    "web:preview": "npm run preview -w @fdf/web",
+    "deploy:web:preview": "npm run deploy:preview -w @fdf/web",
+    "deploy:web": "npm run deploy:production -w @fdf/web"
   },
   "devDependencies": {
     "typescript": "~6.0.3",

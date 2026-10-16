@@ -2,7 +2,7 @@
 import { haulSlug } from '@fdf/shared/haul';
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
-import { archive } from '../lib/data';
+import { archive } from '../lib/runtime';
 import { longDate, objects, paths, titleText } from '../lib/site';
 
 const { hauls } = await archive();

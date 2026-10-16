@@ -1,6 +1,9 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { appleAppSiteAssociation, assetLinks } from '../../lib/applinks';
 
+// Built once, from build-time environment variables.
+export const prerender = true;
+
 export const getStaticPaths = (() => {
   const out: { params: { file: string }; props: { body: string } }[] = [];
   const android = assetLinks(process.env.ANDROID_CERT_SHA256);

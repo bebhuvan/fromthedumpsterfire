@@ -4,11 +4,12 @@ import seedHaul from '@fdf/shared/fixtures/haul-001.json';
 import seedIndex from '@fdf/shared/fixtures/index.json';
 import { buildSearchIndex, query, topicIndex, around } from '../src/lib/search';
 import { firstSentence, fullDate, objects, safeHref } from '../src/lib/site';
-import { assemble, loadArchive } from '../src/lib/data';
+import { createStore, memoryBucket, checkIndex, IndexUnavailable } from '../src/lib/store';
+import { findHaul } from '../src/lib/site';
 import { esc, rss } from '../src/lib/xml';
 import { tokensCss } from '../src/lib/tokens-css';
 import { assetLinks, appleAppSiteAssociation } from '../src/lib/applinks';
-import { aliasFor } from '../src/worker/lib';
+import { aliasFor, cacheControl, pageCacheKey, sameOriginRedirect } from '../src/worker/lib';
 
 const haul = seedHaul as Haul;
 const index = seedIndex as HaulIndex;
@@ -83,49 +84,105 @@ describe('search index', () => {
   });
 });
 
-describe('build data', () => {
-  it('loads the sample Haul when asked', async () => {
-    const a = await loadArchive({ useSeed: true });
-    expect(a.source).toBe('seed');
-    expect(a.hauls[0]!.number).toBe(1);
+describe('request-time store', () => {
+  const files = () => ({ 'hauls/index.json': clone(index), 'hauls/001/v1/haul.json': clone(haul) }) as Record<string, unknown>;
+  const quiet = { log: () => {} };
+
+  it('reads and validates the published bundles', async () => {
+    const a = await createStore(memoryBucket(files()), quiet).archive();
+    expect(a.hauls.map((h) => h.number)).toEqual([1]);
+    expect(a.failed.size).toBe(0);
+    expect(a.index.updatedAt).toBe(index.updatedAt);
   });
 
-  it('fails the build on an invalid bundle', () => {
+  it('treats a missing or empty index as the state before Haul 001', async () => {
+    const a = await createStore(memoryBucket({}), quiet).archive();
+    expect(a.hauls).toEqual([]);
+    const b = await createStore(memoryBucket({ 'hauls/index.json': { bundleVersion: 1, updatedAt: '2026-10-16T00:00:00.000Z', hauls: [] } }), quiet).archive();
+    expect(b.hauls).toEqual([]);
+    expect(b.failed.size).toBe(0);
+  });
+
+  it('never renders a bundle that fails validation; falls back to the previous version', async () => {
+    const f = files();
     const bad = clone(haul);
+    bad.version = 2;
+    bad.corrections = [{ date: '2026-10-16', text: 'A correction.' }];
     bad.items[0]!.excerpt!.highlight = 'words that are not in the excerpt';
-    expect(() => assemble(index, [bad])).toThrow(/failed validation[\s\S]*highlight/);
+    f['hauls/001/v2/haul.json'] = bad;
+    const ix = clone(index);
+    ix.hauls[0]!.path = 'hauls/001/v2/haul.json';
+    f['hauls/index.json'] = ix;
+    const logs: string[] = [];
+    const a = await createStore(memoryBucket(f), { log: (m) => logs.push(m) }).archive();
+    expect(a.hauls[0]!.version).toBe(1);
+    expect(a.failed.size).toBe(0);
+    expect(logs.join('\n')).toMatch(/v2\/haul\.json failed validation[\s\S]*serving v1/);
   });
 
-  it('keeps the latest version of each Haul', () => {
-    const v2 = clone(haul);
-    v2.version = 2;
-    v2.corrections = [{ date: '2026-10-16', text: 'Fixed a date.' }];
-    expect(assemble(index, [haul, v2])[0]!.version).toBe(2);
-    expect(assemble(index, [v2, haul])[0]!.version).toBe(2);
+  it('marks a Haul failed when no version validates, and its pages resolve to 503', async () => {
+    const f = files();
+    (f['hauls/001/v1/haul.json'] as Haul).items[0]!.marginalia[0]!.cite = '';
+    const a = await createStore(memoryBucket(f), quiet).archive();
+    expect(a.hauls).toEqual([]);
+    expect(a.failed.get(1)).toMatch(/cite/);
+    expect(findHaul(a, '1').kind).toBe('failed');
+    expect(findHaul(a, '2').kind).toBe('missing');
+    expect(findHaul(a, '001').kind).toBe('missing');
+    f['hauls/001/v1/haul.json'] = '{not json';
+    const b = await createStore(memoryBucket(f), quiet).archive();
+    expect(b.failed.get(1)).toMatch(/not JSON/);
   });
 
-  it('reads remote bundles, refuses odd paths, and falls back only in development', async () => {
-    const files: Record<string, unknown> = {
-      'https://files.example/hauls/index.json': index,
-      'https://files.example/hauls/001/v1/haul.json': haul,
-    };
-    const fetchJson = async (url: string) => {
-      if (!(url in files)) throw new Error(`404 ${url}`);
-      return files[url];
-    };
-    const ok = await loadArchive({ base: 'https://files.example', fetchJson });
-    expect(ok.source).toBe('remote');
+  it('sees a new publish once the index TTL passes, without a restart', async () => {
+    let t = 0;
+    const f: Record<string, unknown> = {};
+    const store = createStore(memoryBucket(f), { ...quiet, now: () => t });
+    expect((await store.archive()).hauls).toEqual([]);
+    Object.assign(f, files());
+    expect((await store.archive()).hauls).toEqual([]);
+    t += 25_000;
+    expect((await store.archive()).hauls.map((h) => h.number)).toEqual([1]);
+  });
 
+  it('keeps the last good index when the index turns bad, and refuses to guess without one', async () => {
+    let t = 0;
+    const f = files();
+    const store = createStore(memoryBucket(f), { ...quiet, now: () => t });
+    await store.archive();
+    f['hauls/index.json'] = '{broken';
+    t += 25_000;
+    expect((await store.getIndex()).updatedAt).toBe(index.updatedAt);
+    await expect(createStore(memoryBucket(f), quiet).getIndex()).rejects.toBeInstanceOf(IndexUnavailable);
+  });
+
+  it('validates the index shape and bundle paths', () => {
+    expect(checkIndex(index)).toBeNull();
     const evil = clone(index);
     evil.hauls[0]!.path = '../../secret.json';
-    files['https://files.example/hauls/index.json'] = evil;
-    await expect(loadArchive({ base: 'https://files.example', fetchJson })).rejects.toThrow(/unexpected path/);
+    expect(checkIndex(evil)).toMatch(/unexpected path/);
+    expect(checkIndex({ bundleVersion: 1, hauls: [] })).toMatch(/updatedAt/);
+    expect(checkIndex([])).toMatch(/object/);
+  });
 
-    const down = async () => {
-      throw new Error('offline');
+  it('caches validation per path and etag', async () => {
+    let t = 0;
+    let gets = 0;
+    const base = memoryBucket(files());
+    const counting = {
+      head: base.head,
+      get: async (k: string) => {
+        if (k.endsWith('haul.json')) gets++;
+        return base.get(k);
+      },
     };
-    await expect(loadArchive({ base: 'https://files.example', fetchJson: down })).rejects.toThrow(/offline/);
-    expect((await loadArchive({ base: 'https://files.example', fetchJson: down, dev: true })).source).toBe('seed');
+    const store = createStore(counting, { ...quiet, now: () => t });
+    await store.archive();
+    await store.archive();
+    expect(gets).toBe(1);
+    t += 6 * 60_000; // past the recheck window: a head request confirms the etag, no new get
+    await store.archive();
+    expect(gets).toBe(1);
   });
 });
 
@@ -182,8 +239,34 @@ describe('app links and aliases', () => {
   });
 });
 
-describe('before Haul 001', () => {
-  it('builds from an empty index', () => {
-    expect(assemble({ bundleVersion: 1, updatedAt: '2026-10-16T00:00:00.000Z', hauls: [] }, [])).toEqual([]);
+describe('edge cache', () => {
+  it('keys pages on deploy version, index updatedAt and path, ignoring the query', () => {
+    const k1 = pageCacheKey('https://fromthedumpsterfire.com', 'v1', '2026-10-16T00:00:00Z', '/haul/1');
+    const k2 = pageCacheKey('https://fromthedumpsterfire.com', 'v1', '2026-10-17T00:00:00Z', '/haul/1');
+    const k3 = pageCacheKey('https://fromthedumpsterfire.com', 'v2', '2026-10-16T00:00:00Z', '/haul/1');
+    expect(new Set([k1, k2, k3]).size).toBe(3);
+    expect(k1).toMatch(/\/haul\/1$/);
+  });
+  it('lets browsers keep pages for 30 seconds and never caches server errors', () => {
+    expect(cacheControl('/haul/1', 200)).toBe('public, max-age=30, must-revalidate');
+    expect(cacheControl('/fonts/a.woff2', 200)).toContain('immutable');
+    expect(cacheControl('/haul/1', 503)).toBe('no-store');
+    expect(aliasFor('/haul/1/')).toBe('/haul/1');
+    expect(aliasFor('/')).toBeNull();
+  });
+});
+
+describe('redirects never leave the site', () => {
+  const base = new URL('https://fromthedumpsterfire.com/');
+  for (const path of ['//evil.com/', '//evil.com', '///evil.com/x/', '/\\evil.com/', '//evil.com/haul/1/note']) {
+    it(`keeps ${JSON.stringify(path)} on this origin`, () => {
+      const alias = aliasFor(path);
+      const target = alias ? sameOriginRedirect(alias, base) : null;
+      if (target) expect(new URL(target).origin).toBe(base.origin);
+    });
+  }
+  it('refuses an alias that resolves elsewhere', () => {
+    expect(sameOriginRedirect('//evil.com', base)).toBeNull();
+    expect(sameOriginRedirect('https://evil.com/', base)).toBeNull();
   });
 });

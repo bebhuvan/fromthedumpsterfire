@@ -1,7 +1,19 @@
 // URL shapes and small text helpers shared by every page. The paths match the reader app's deep
 // links (apps/mobile/src/nav.ts), so a shared link opens the same screen in the app or the browser.
 
-import type { Title } from '@fdf/shared/haul';
+import type { Haul, Title } from '@fdf/shared/haul';
+
+/** Resolve the :n route parameter against the archive. Only canonical numbers ("1", not "001"). */
+export function findHaul(
+  a: { hauls: Haul[]; failed: Map<number, string> },
+  param: string | undefined,
+): { kind: 'ok'; haul: Haul } | { kind: 'failed' } | { kind: 'missing' } {
+  if (!param || !/^[1-9]\d{0,5}$/.test(param)) return { kind: 'missing' };
+  const n = Number(param);
+  const haul = a.hauls.find((h) => h.number === n);
+  if (haul) return { kind: 'ok', haul };
+  return a.failed.has(n) ? { kind: 'failed' } : { kind: 'missing' };
+}
 
 export const SITE = 'https://fromthedumpsterfire.com';
 export const SITE_NAME = 'From the Dumpster Fire';

@@ -2,13 +2,19 @@
 import HaulPage from '../components/HaulPage.astro';
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
-import { archive } from '../lib/data';
+import Unavailable from '../components/Unavailable.astro';
+import { archive } from '../lib/runtime';
 import { paths } from '../lib/site';
 
-const { hauls } = await archive();
+const { hauls, index, failed } = await archive();
+const newest = index.hauls[0]?.number;
 const latest = hauls[0];
+const broken = newest !== undefined && failed.has(newest);
+if (broken) Astro.response.status = 503;
 ---
-{latest ? (
+{broken ? (
+  <Unavailable what={`Haul ${newest}`} />
+) : latest ? (
   <HaulPage haul={latest} home />
 ) : (
   <Base title="The first Haul is on its way" description="An irregular magazine of things worth pulling out of the internet and the archive before they burn." path={paths.home} section="latest">
