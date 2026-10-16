@@ -35,7 +35,7 @@ const topics = topicIndex(hauls);
       <div class="c topics">
         {topics.map((t) => (
           <details>
-            <summary><span>{t.title}</span><span class="lead" aria-hidden="true"></span><span class="ptr">{t.items.length}</span></summary>
+            <summary><span>{t.title}</span><span class="ptr">{t.items.length}</span></summary>
             <ul>
               {t.items.map(({ n, item }) => <li><a href={paths.item(n, item.id)}>{titleText(item.title)}</a><span class="ink2 small"> · {item.creator} · Haul {n}</span></li>)}
             </ul>

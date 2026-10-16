@@ -1,43 +1,43 @@
 ---
-// Wikipedia and connections set as an index: the entry, a dotted leader, a pointer, then the gloss.
+// Wikipedia and connections as reference slips: square, plate-grey, joined by hairlines like the
+// cards in a catalogue drawer. Each slip names where it points, then the title, then the gloss.
 // Wikipedia summaries are Wikipedia's words (serif); connection notes are the editor's (italic).
 import type { Haul, Item } from '@fdf/shared/haul';
+import { typeLabel } from '@fdf/shared/tokens';
 import { paths, safeHref } from '../lib/site';
 
 interface Props {
   haul: Haul;
   item: Item;
-  /** Leave out the Wikipedia rows (the offprint lists them as references instead). */
+  /** Leave out the Wikipedia slips (the offprint lists them as references instead). */
   noWiki?: boolean;
 }
 const { haul, item, noWiki } = Astro.props;
-const position = (id?: string) => (id ? haul.items.findIndex((x) => x.id === id) + 1 : 0);
+const target = (id?: string) => (id ? haul.items.find((x) => x.id === id) : undefined);
 const wiki = noWiki ? [] : item.wiki;
 ---
 {wiki.length || item.connections.length ? (
   <section class="g row" aria-labelledby={`sa-${item.id}`}>
     <h2 class="m mh" id={`sa-${item.id}`}>See also</h2>
     <ul class="c seealso">
+      {item.connections.map((c) => {
+        const t = target(c.itemId);
+        const href = t ? paths.item(haul.number, t.id) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
+        return (
+          <li class:list={['sa', t ? `t-${t.type}` : null]}>
+            <span class="sa-k">{t ? <><span class="key" aria-hidden="true"></span>{haul.items.indexOf(t) + 1} · {typeLabel[t.type]}</> : c.threadId ? 'A thread' : 'From the archive'}<span class="sa-rel">{c.type}</span></span>
+            {href ? <a class="sa-t" href={href}>{c.title}</a> : <span class="sa-t">{c.title}</span>}
+            <span class="sa-g"><i>{c.note}</i></span>
+          </li>
+        );
+      })}
       {wiki.map((w) => {
         const href = safeHref(w.url);
         return (
           <li class="sa">
-            {href ? <a href={href} rel="noopener noreferrer" target="_blank">{w.title}<span class="sr"> (Wikipedia, opens in a new tab)</span></a> : <span>{w.title}</span>}
-            <span class="lead" aria-hidden="true"></span>
-            <span class="ptr" aria-hidden="true">Wikipedia</span>
+            <span class="sa-k">Wikipedia</span>
+            {href ? <a class="sa-t" href={href} rel="noopener noreferrer" target="_blank">{w.title}<span class="sr"> (Wikipedia, opens in a new tab)</span></a> : <span class="sa-t">{w.title}</span>}
             <span class="sa-g">{w.summary}</span>
-          </li>
-        );
-      })}
-      {item.connections.map((c) => {
-        const at = position(c.itemId);
-        const href = c.itemId && at ? paths.item(haul.number, c.itemId) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
-        return (
-          <li class="sa">
-            {href ? <a href={href}>{c.title}</a> : <span>{c.title}</span>}
-            <span class="lead" aria-hidden="true"></span>
-            <span class="ptr">{at ? `item ${at}` : c.threadId ? 'thread' : 'archive'}</span>
-            <span class="sa-g"><span class="sa-t">{c.type}.</span> <i>{c.note}</i></span>
           </li>
         );
       })}

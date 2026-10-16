@@ -229,14 +229,23 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .voice-t { font: 400 13px var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; }
 .voice audio { width: 100%; height: 36px; }
 
-/* See also: an index with dotted leaders. */
-.seealso { border-top: 1px solid var(--rule); }
-.sa { display: grid; grid-template-columns: auto minmax(16px, 1fr) auto; column-gap: 10px; align-items: baseline; padding: 11px 0 13px; border-bottom: 1px solid var(--rule); font-size: 18px; }
-.sa > a, .sa > span:first-child { min-width: 0; }
-.lead { border-bottom: 1.5px dotted var(--ink2); align-self: end; margin-bottom: 0.42em; opacity: 0.6; }
+/* See also: reference slips, square and plate-grey, joined by hairlines like a catalogue drawer. */
+.seealso { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+@media (min-width: 700px) { .seealso { grid-template-columns: repeat(2, minmax(0, 1fr)); } .seealso > .sa:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+.sa { background: var(--plate); padding: 14px 18px 18px; display: grid; gap: 6px; align-content: start; position: relative; }
+.sa-k { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; font: 500 12px/1.5 var(--sans); color: var(--ink2); }
+.sa-k .key { width: 0.75em; height: 0.75em; margin-right: 0.4em; }
+.sa-rel { font-weight: 400; }
+.sa-rel::before { content: '· '; }
+.sa-t { font: 500 21px/1.2 var(--display); color: var(--ink); text-decoration: none; text-wrap: balance; }
+a.sa-t::after { content: ''; position: absolute; inset: 0; }
+.sa:hover { background: color-mix(in srgb, var(--plate) 60%, var(--rule)); }
+.sa:hover .sa-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.16em; }
+.sa:focus-within { outline: 2px solid var(--ink); outline-offset: -2px; }
+.sa-t:focus-visible { outline: none; }
+.sa-g { font-size: 15.5px; line-height: 1.45; color: var(--ink2); }
+.sa-g i { color: var(--ink); }
 .ptr { font: 400 13px var(--sans); color: var(--ink2); }
-.sa-g { grid-column: 1 / -1; font-size: 15.5px; line-height: 1.45; color: var(--ink2); margin-top: 3px; }
-.sa-t { color: var(--ink); font-style: normal; }
 
 /* Next in the Haul. */
 .next { padding-bottom: 8px; }
@@ -378,7 +387,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .textbtn { border: 0; background: none; padding: 0; margin-top: 12px; font: 400 italic 17px var(--serif); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; cursor: pointer; color: var(--ink); }
 .topics { display: grid; border-top: 1px solid var(--rule); }
 .topics details { border-bottom: 1px solid var(--rule); }
-.topics summary { display: grid; grid-template-columns: auto minmax(16px, 1fr) auto; column-gap: 10px; align-items: baseline; padding-block: 10px; cursor: pointer; list-style: none; font-size: 18px; }
+.topics summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: baseline; padding-block: 10px; cursor: pointer; list-style: none; font-size: 18px; }
 .topics summary::-webkit-details-marker { display: none; }
 .topics details[open] summary { font-style: italic; }
 .topics ul { display: grid; gap: 6px; padding: 0 0 14px 1.2em; font-size: 17px; }
