@@ -35,6 +35,39 @@
   so every machine-prose gate catches them; title options, the route draft and thread titles get
   `editorVoice`; editor voice notes send `dictionaryHints` to Whisper as `initial_prompt`.
 
+- 2026-10-16: **native model providers** (`packages/server/src/models/{providers/*,http,gateway,cost,schema,types}.ts`,
+  `migrations/0003_model_call_tokens.sql`, `docs/MODELS.md`, `scripts/smoke-models.ts`). One
+  adapter per provider behind the unchanged `generateJson`: Gemini 3.8 Flash (`generateContent`,
+  JSON schema via `responseFormat`, `thinkingLevel`, inline PDFs and images, media resolution),
+  Claude Haiku 5.5 (Messages API, structured outputs, prompt caching on system and source, adaptive
+  thinking, PDF and image blocks), DeepSeek Flash (V4.1, JSON mode, explicit thinking on or off,
+  cache-hit tokens) and Z.ai GLM-5.3-Flash and the free GLM-4.7-Flash. Gemini, Claude and DeepSeek
+  go through AI Gateway's provider endpoints; Z.ai is called directly (no built-in gateway
+  provider). Capabilities and prices per model in `routes.json`; thinking level, PDF and media
+  resolution per task. The ledger records cached, cache-written and reasoning tokens and prices
+  each; the ceiling is checked against each call's worst case before it is sent. Retries on 429
+  and 5xx with backoff and Retry-After; auth errors, spend caps and empty balances fall through to
+  the next model. Draft sends its source as cacheable context (redrafts cost about a tenth);
+  read attaches the source PDF for models that read PDFs; scanned PDFs (up to 60 pages) are now
+  transcribed instead of refused; the Rhyme bridge has its own `bridge` task. New chains put paid
+  models first (the editor's choice), Workers AI last in every chain: about $0.03 per item.
+  The Desk's settings page shows thinking, direct calls, and cached and thinking tokens per call.
+
+### Models: what was verified (2026-10-16)
+
+- `npm run verify`: every workspace typechecks; 254 tests. New in `providers.test.ts` (36):
+  request shape per provider (schema trimming for Claude, `responseFormat` and its fallback for
+  Gemini, thinking on and off per provider, no temperature where refused, PDFs and images, cache
+  marks only above the minimum), usage parsing with cached, cache-write and reasoning tokens,
+  long-prompt and cache pricing, retries with Retry-After, no retry on auth errors, spend caps or
+  empty balances, timeouts, DeepSeek's blank-line padding, key scrubbing, the gateway URL and
+  metadata header with the key only in a header, Z.ai direct, fallback down the chain on 529 and
+  on a truncated answer with every call in the ledger at the right cost, the repair turn, PDF
+  capability gates, the pre-call ceiling check, and scanned-PDF transcription in page batches.
+- **Not yet verified against the real APIs:** no provider keys are set (none on the preview
+  Workers, none in `.dev.vars`). `docs/MODELS.md` lists the points the smoke test must settle
+  (the `glm-4.7-flash` id, JSON mode on GLM-5.3-Flash, Gemini's `v1beta` path through the gateway).
+
 ### Desk: what was verified (2026-10-16)
 
 - Local (`wrangler dev`, both Workers): captured a real article (Hamming transcript, 14,447 words),
@@ -65,7 +98,7 @@
 | Public API | api.fromthedumpsterfire.com: only `POST /v1/devices` and `GET /v1/health` answer; device registration checked end to end |
 | Pipeline | `fdf-pipeline`, Workflow `fdf-item`, queues `fdf-ingest` / `fdf-ingest-dlq` |
 | Data | D1 `fdf-desk` (migrations 0001–0002), R2 `fdf-media` (private), R2 `fdf-files` (public on files.fromthedumpsterfire.com: only `hauls/` and `seed/`), Vectorize `fdf-chunks` |
-| Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars) |
+| Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars). Native provider adapters are on the `worktree-fdf-models` branch, not yet in production |
 | Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)"; site `fdf-web-preview` |
 
 Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run deploy:production`
@@ -74,9 +107,10 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 ### What the editor must do
 
 1. **Provider keys (optional)** as Wrangler secrets on both Workers, never in config:
-   `GOOGLE_AI_STUDIO_API_KEY`, `DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, e.g.
-   `npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY -c workers/pipeline/wrangler.jsonc --env production`
-   (and `-c workers/api/wrangler.jsonc`). Without keys the routes fall back to Workers AI.
+   `GOOGLE_AI_STUDIO_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `ZAI_API_KEY`; the loop that
+   sets them all is in `docs/MODELS.md` (Keys). Without keys the routes fall back to Workers AI.
+   Then `npm run db:migrate:preview` / `db:migrate:production` for migration 0003, and
+   `npx tsx scripts/smoke-models.ts` with the keys in `workers/pipeline/.dev.vars`.
 2. **Push:** `FCM_SERVICE_ACCOUNT` (Firebase service-account JSON) as a secret on the pipeline, and
    `apps/mobile/google-services.json` for the app. iOS push needs FCM tokens on iOS or an APNs sender.
 3. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in
@@ -257,7 +291,7 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 
 ## Open questions for the editor
 
-- Model choice and budget ceiling for the judge model.
+- Budget ceiling once paid models are on (about $0.03 an item; the ceiling is 10 USD a month). The judge is DeepSeek Flash with thinking, Gemini 3.8 Flash next; Claude Sonnet 5.5 is defined in routes.json if a stronger judge is wanted.
 - Backfill: the old Substack (62 posts, `~/AA/Bhuvan-backups/dumpsterfire`) and the 2026 static site are
   candidates; the 2026 site's notes were model-written, so they should not be imported as the editor's.
 - Final pick of the app icon (current: ember flame on ink).
