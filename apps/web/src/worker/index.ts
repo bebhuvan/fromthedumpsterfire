@@ -7,7 +7,7 @@
 import { handle } from '@astrojs/cloudflare/handler';
 import { getStore } from '../lib/runtime';
 import { IndexUnavailable } from '../lib/store';
-import { aliasFor, APEX, cacheControl, EDGE_TTL, isImmutable, pageCacheKey, SECURITY, type Env } from './lib';
+import { aliasFor, sameOriginRedirect, APEX, cacheControl, EDGE_TTL, isImmutable, pageCacheKey, SECURITY, type Env } from './lib';
 
 interface Ctx {
   waitUntil(p: Promise<unknown>): void;
@@ -46,7 +46,8 @@ export default {
       return new Response('Method not allowed', { status: 405, headers: { allow: 'GET, HEAD', ...SECURITY } });
     }
     const alias = aliasFor(url.pathname);
-    if (alias) return Response.redirect(new URL(alias, url).toString(), 301);
+    const target = alias ? sameOriginRedirect(alias, url) : null;
+    if (target) return Response.redirect(target, 301);
 
     const head = request.method === 'HEAD';
     const get = head ? new Request(request.url, { method: 'GET', headers: request.headers }) : request;

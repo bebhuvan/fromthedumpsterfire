@@ -9,7 +9,7 @@ import { findHaul } from '../src/lib/site';
 import { esc, rss } from '../src/lib/xml';
 import { tokensCss } from '../src/lib/tokens-css';
 import { assetLinks, appleAppSiteAssociation } from '../src/lib/applinks';
-import { aliasFor, cacheControl, pageCacheKey } from '../src/worker/lib';
+import { aliasFor, cacheControl, pageCacheKey, sameOriginRedirect } from '../src/worker/lib';
 
 const haul = seedHaul as Haul;
 const index = seedIndex as HaulIndex;
@@ -253,5 +253,20 @@ describe('edge cache', () => {
     expect(cacheControl('/haul/1', 503)).toBe('no-store');
     expect(aliasFor('/haul/1/')).toBe('/haul/1');
     expect(aliasFor('/')).toBeNull();
+  });
+});
+
+describe('redirects never leave the site', () => {
+  const base = new URL('https://fromthedumpsterfire.com/');
+  for (const path of ['//evil.com/', '//evil.com', '///evil.com/x/', '/\\evil.com/', '//evil.com/haul/1/note']) {
+    it(`keeps ${JSON.stringify(path)} on this origin`, () => {
+      const alias = aliasFor(path);
+      const target = alias ? sameOriginRedirect(alias, base) : null;
+      if (target) expect(new URL(target).origin).toBe(base.origin);
+    });
+  }
+  it('refuses an alias that resolves elsewhere', () => {
+    expect(sameOriginRedirect('//evil.com', base)).toBeNull();
+    expect(sameOriginRedirect('https://evil.com/', base)).toBeNull();
   });
 });

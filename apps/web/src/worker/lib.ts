@@ -36,7 +36,10 @@ export const SECURITY: Record<string, string> = {
 };
 
 /** Redirects that keep app deep links and old shapes working. Returns a path or null. */
-export function aliasFor(pathname: string): string | null {
+export function aliasFor(raw: string): string | null {
+  // "//host" would resolve to another origin; collapse any run of leading slashes first.
+  const pathname = '/' + raw.replace(/^[\/\\]+/, '');
+  if (pathname !== raw) return pathname;
   const note = /^\/haul\/(\d+)\/note\/?$/.exec(pathname);
   if (note) return `/haul/${note[1]}#field-note`;
   const padded = /^\/haul\/0+(\d+)(\/.*)?$/.exec(pathname);
@@ -45,6 +48,12 @@ export function aliasFor(pathname: string): string | null {
   if (pathname === '/index.html') return '/';
   if (pathname.length > 1 && pathname.endsWith('/')) return pathname.replace(/\/+$/, '') || '/';
   return null;
+}
+
+/** A same-origin absolute URL for an alias, or null if it would leave this origin. */
+export function sameOriginRedirect(alias: string, base: URL): string | null {
+  const to = new URL(alias, base);
+  return to.origin === base.origin ? to.toString() : null;
 }
 
 /** Files that never change under a given name; everything else is a page or a generated file. */
