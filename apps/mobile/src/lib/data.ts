@@ -64,6 +64,8 @@ async function fetchJson(path: string): Promise<unknown | null> {
       const text = await res.text();
       const json = JSON.parse(text) as { bundleVersion?: number };
       if (json.bundleVersion !== BUNDLE_VERSION) return null; // a newer app is needed for this bundle
+      // A build carrying the sample keeps it until a real Haul exists; an empty live index would hide it.
+      if (path === INDEX_PATH && SEEDS[path] && !(json as HaulIndex).hauls?.length) return null;
       memory.set(path, json);
       writeDisk(path, text);
       return json;
@@ -77,7 +79,7 @@ async function fetchJson(path: string): Promise<unknown | null> {
   return run;
 }
 
-export type Load<T> = { data: T | null; status: 'ready' | 'loading' | 'offline' };
+export type Load<T> = { data: T | null; status: 'ready' | 'loading' | 'offline' | 'empty' };
 
 function useBundle<T>(path: string | null, { refresh }: { refresh: boolean }): Load<T> {
   const [data, setData] = useState<T | null>(() => (path ? peek<T>(path) : null));
@@ -110,7 +112,11 @@ export function useHaul(number?: number): Load<Haul> & { summary?: HaulSummary }
   const index = useIndex();
   const summary = index.data?.hauls.find((h) => (number === undefined ? true : h.number === number));
   const haul = useBundle<Haul>(summary?.path ?? null, { refresh: false });
-  if (!summary) return { data: null, status: index.status === 'ready' ? 'offline' : index.status };
+  if (!summary) {
+    // Before Haul 001 the published index is real but empty.
+    if (index.data && !index.data.hauls.length) return { data: null, status: 'empty' };
+    return { data: null, status: index.status === 'ready' ? 'offline' : index.status };
+  }
   return { ...haul, summary };
 }
 

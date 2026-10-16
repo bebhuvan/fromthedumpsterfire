@@ -34,13 +34,20 @@ export function Screen({ children, header }: { children: ReactNode; header?: Rea
 }
 
 /** Loading or offline with nothing on disk yet. */
-export function Waiting({ status }: { status: 'loading' | 'offline' | 'ready' }) {
+export function Waiting({ status }: { status: 'loading' | 'offline' | 'ready' | 'empty' }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.waiting, { backgroundColor: p.bg, paddingTop: insets.top + 80 }]}>
       {status === 'loading' ? (
         <ActivityIndicator color={p.ink2} />
+      ) : status === 'empty' ? (
+        <>
+          <Title title={{ text: 'Haul 001 is being', italic: 'gathered' }} size={38} />
+          <Body style={{ marginTop: 14, color: p.ink2 }}>
+            The first one is not out yet. When it lands it will appear here, and stay on your phone for offline reading.
+          </Body>
+        </>
       ) : (
         <>
           <Title title={{ text: 'Nothing here', italic: 'yet' }} size={38} />
