@@ -11,7 +11,7 @@ prices per model, chains per task) is `packages/server/src/models/routes.json`; 
 | Key in routes.json | Model id | Context / max output | JSON | Thinking | Vision / PDF | Caching | USD per M tokens: in / cached in / out |
 |---|---|---|---|---|---|---|---|
 | `haiku` | `claude-haiku-5-5` | 1M / 128K | JSON schema (structured outputs) | adaptive, effort low to high, can be off | images, PDFs (600 pages) | explicit `cache_control`, 5 min | 0.10 / 0.01 / 0.50 (cache write 0.125); above 100K prompt tokens 0.50 / 0.05 / 2.50 |
-| `gemini-flash` | `gemini-3.8-flash` | 1,048,576 / 65,536 (32,768 per non-streaming call) | JSON schema (`responseFormat`) | `thinkingLevel` low, medium, high; cannot be off | images, PDFs (1,000 pages), audio, video | implicit from 4,096 tokens | 0.75 / 0.075 / 3.75 until 31 Dec 2026, then 1.50 / 0.15 / 7.50 |
+| `gemini-flash` | `gemini-3.8-flash` | 1,048,576 / 65,536 (32,768 per non-streaming call) | JSON schema (`responseJsonSchema`) | `thinkingLevel` low, medium, high; cannot be off | images, PDFs (1,000 pages), audio, video | implicit from 4,096 tokens | 0.75 / 0.075 / 3.75 until 31 Dec 2026, then 1.50 / 0.15 / 7.50 |
 | `deepseek-flash` | `deepseek-flash` (V4.1-Flash) | 1M / 384K | JSON object | on by default; can be off; effort low, high, max | images; no PDFs | automatic disk cache | 0.30 / 0.006 / 1.20 peak; half off-peak |
 | `glm-flash` | `glm-5.3-flash` | 1M / 128K | JSON object | always on; effort low, high, max | images, video, files | automatic | 0.15 / 0.03 / 0.50 |
 | `glm-4.7-flash` | `glm-4.7-flash` | 200K / 128K | JSON object | on by default; can be off | none | automatic | free |
@@ -191,9 +191,10 @@ on 1 January 2027; OCR is its main use, so that roughly doubles OCR cost.
   `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-pro-preview`.
   [models](https://ai.google.dev/gemini-api/docs/models),
   [3.8 Flash](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash)
-- **Structured output:** `generationConfig.responseFormat.text = { mimeType: "application/json",
-  schema }`. `responseSchema` and `responseJsonSchema` are deprecated; the adapter retries once with
-  `responseMimeType` + `responseJsonSchema` if the API refuses `responseFormat`. Supports type, enum,
+- **Structured output:** `generationConfig.responseMimeType = "application/json"` with
+  `responseJsonSchema`. The structured-output page now shows a `response_format` object, but that
+  example is for the Interactions API: `generateContent` refused its `mime_type` value in our
+  smoke test (2026-10-16), and the older pair works. Supports type, enum,
   min/max, min/maxItems, `additionalProperties`; keys come out in schema order.
   [structured output](https://ai.google.dev/gemini-api/docs/generate-content/structured-output)
 - **Thinking:** `thinkingConfig.thinkingLevel` (`low`, `medium` default, `high`; `minimal` is an
@@ -273,23 +274,45 @@ on 1 January 2027; OCR is its main use, so that roughly doubles OCR cost.
   retry), 1301 (400, content flagged), 1261 (prompt too long), 1211 (unknown model), 1234 (500,
   retry). [codes](https://docs.z.ai/api-reference/api-code). Rate limits sit behind the console login.
 
-## Not yet confirmed (settle with the smoke test)
+## Smoke test (2026-10-16)
 
-- The exact API id `glm-4.7-flash` (the docs give display names only) and whether `response_format`
-  works on GLM-5.3-Flash (the API reference says text models only).
-- Whether the gateway passes Gemini's `v1beta` path through (Cloudflare's examples show `v1`).
-- Whether `responseFormat` or the older fields are what 3.8 Flash accepts today (the adapter tries
-  both).
-- Whether Z.ai reports reasoning tokens (read if present).
-- Whether DeepSeek counts reasoning inside `max_tokens` (the adapter assumes it does).
+`[SMOKE_THINKING=medium] npx tsx scripts/smoke-models.ts [modelKey ...]` with keys in
+`workers/pipeline/.dev.vars`: one JSON call per model and one PDF or image call where supported,
+with tokens and cost for each. Add `CF_ACCOUNT_ID` and `AI_GATEWAY_ID` there to go through the
+gateway. First run, Gemini, DeepSeek and Z.ai (no Anthropic key yet), thinking off and medium,
+direct and through `fdf-preview`: every answer valid, about $0.006 in all.
 
-Run `npx tsx scripts/smoke-models.ts` with keys in `workers/pipeline/.dev.vars`: one JSON call per
-model and one PDF or image call where supported, with tokens and cost for each.
+What it settled:
+
+- **Gemini JSON:** `generateContent` refuses the `response_format` object the structured-output
+  page now shows (400 on `response_format.text.mime_type`); that page's example is the Interactions
+  API. `responseMimeType` + `responseJsonSchema` works, and is what the adapter sends.
+- **Gemini through the gateway:** the `v1beta` path passes through `google-ai-studio` unchanged.
+  The preview gateway needs no `CF_AIG_TOKEN`.
+- **Gemini PDF:** the one-page test PDF cost 552 input tokens, copied verbatim.
+- **DeepSeek:** `reasoning_tokens` sits inside `completion_tokens`, so thinking spends
+  `max_tokens`; the adapter's allowance on top is right. Image input works on `deepseek-flash`.
+- **Z.ai:** `glm-4.7-flash` is the API id. `json_object` works on GLM-5.3-Flash, and images too.
+  Reasoning tokens are reported. The free GLM-4.7-Flash is often overloaded (1305, a 429): two of
+  five calls failed after three tries, one took 68 s; plate then falls to DeepSeek Flash at about
+  $0.0001.
+- **Still to run:** Claude Haiku and Sonnet (no key yet); GLM PDF input stays off.
 
 ## Keys
 
-Wrangler secrets, on both Workers and both environments. Each command prompts for the value; never
-paste a key into chat, a config file or a command line.
+Wrangler secrets, on both Workers and both environments. Never paste a key into chat, a config
+file or a command line. The simplest way: write `KEY=value` lines into a gitignored file at the repo
+root (`.dev.vars.keys`, matched by `.dev.vars*`), upload it with `wrangler secret bulk`, then move
+the lines into `workers/pipeline/.dev.vars` for local runs:
+
+```sh
+for W in pipeline api; do for E in preview production; do
+  npx wrangler secret bulk .dev.vars.keys -c workers/$W/wrangler.jsonc --env $E
+done; done
+cat .dev.vars.keys >> workers/pipeline/.dev.vars && rm .dev.vars.keys
+```
+
+Or one key at a time, each command prompting for the value:
 
 ```sh
 for KEY in GOOGLE_AI_STUDIO_API_KEY ANTHROPIC_API_KEY DEEPSEEK_API_KEY ZAI_API_KEY; do

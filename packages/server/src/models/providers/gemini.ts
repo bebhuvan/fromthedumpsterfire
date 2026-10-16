@@ -1,7 +1,7 @@
 // Gemini through generateContent on v1beta (docs: ai.google.dev/gemini-api/docs/generate-content,
-// checked 2026-10-16; see docs/MODELS.md). JSON comes from generationConfig.responseFormat with a
-// JSON schema; if an API version refuses that field we retry once with the older
-// responseMimeType + responseJsonSchema pair. Thinking is set with thinkingLevel (Gemini 3 Flash
+// checked 2026-10-16; see docs/MODELS.md). JSON comes from responseMimeType + responseJsonSchema.
+// The docs' response_format object belongs to the Interactions API: generateContent refused its
+// mime_type in the 2026-10-16 smoke test, so it is not used here. Thinking is set with thinkingLevel (Gemini 3 Flash
 // cannot turn it off, so 'off' asks for 'low'). PDFs and images go as inline_data parts. Gemini
 // 3.6 Flash and newer ignore temperature and will reject it later, so none is sent when the model
 // config says so. Caching is implicit: the stable prefix (system, files, context) comes first, so
@@ -9,7 +9,6 @@
 
 import type { Env } from '../../env';
 import { callProvider } from '../gateway';
-import { ProviderError } from '../http';
 import { trimSchema } from '../schema';
 import type { ProviderAnswer, ProviderRequest, RoutesConfig, ThinkingLevel } from '../types';
 
@@ -23,7 +22,7 @@ const NON_STREAMING_MAX = 32_768;
 
 const GEMINI_SCHEMA = { drop: ['default', '$schema', 'minLength', 'maxLength', 'pattern'] } as const;
 
-export function geminiBody(req: ProviderRequest, opts: { legacySchema?: boolean } = {}): Record<string, unknown> {
+export function geminiBody(req: ProviderRequest): Record<string, unknown> {
   const { cfg } = req;
   const parts: Array<Record<string, unknown>> = [];
   for (const d of req.documents) parts.push({ inline_data: { mime_type: d.mime, data: d.base64 } });
@@ -45,11 +44,8 @@ export function geminiBody(req: ProviderRequest, opts: { legacySchema?: boolean 
   if (cfg.temperature !== false) generationConfig.temperature = req.temperature;
   if (req.mediaResolution && (req.documents.length || req.images.length)) generationConfig.mediaResolution = `MEDIA_RESOLUTION_${req.mediaResolution.toUpperCase()}`;
   if (cfg.json === 'schema') {
-    const schema = trimSchema(req.schema, { drop: GEMINI_SCHEMA.drop });
-    if (opts.legacySchema) {
-      generationConfig.responseMimeType = 'application/json';
-      generationConfig.responseJsonSchema = schema;
-    } else generationConfig.responseFormat = { text: { mimeType: 'application/json', schema } };
+    generationConfig.responseMimeType = 'application/json';
+    generationConfig.responseJsonSchema = trimSchema(req.schema, { drop: GEMINI_SCHEMA.drop });
   } else if (cfg.json === 'object') generationConfig.responseMimeType = 'application/json';
 
   return { systemInstruction: { parts: [{ text: req.system }] }, contents, generationConfig };
@@ -81,19 +77,11 @@ export function parseGemini(json: Record<string, unknown>): ProviderAnswer {
   };
 }
 
-const refusesResponseFormat = (e: unknown) => e instanceof ProviderError && e.status === 400 && /responseFormat|response_format|Unknown name/i.test(e.message);
-
 export async function callGemini(env: Env, routes: RoutesConfig, req: ProviderRequest): Promise<ProviderAnswer> {
   const headers: Record<string, string> = {};
   // Header, never ?key=, so the key cannot end up in a logged URL.
   if (env.GOOGLE_AI_STUDIO_API_KEY) headers['x-goog-api-key'] = env.GOOGLE_AI_STUDIO_API_KEY;
   const path = `/v1beta/models/${encodeURIComponent(req.cfg.model)}:generateContent`;
-  const send = (legacySchema: boolean) =>
-    callProvider(env, routes, { provider: 'google-ai-studio', directBase: GEMINI_BASE, path, headers, body: geminiBody(req, { legacySchema }), task: req.task, itemId: req.itemId });
-  try {
-    return parseGemini(await send(false));
-  } catch (e) {
-    if (req.cfg.json === 'schema' && refusesResponseFormat(e)) return parseGemini(await send(true));
-    throw e;
-  }
+  const json = await callProvider(env, routes, { provider: 'google-ai-studio', directBase: GEMINI_BASE, path, headers, body: geminiBody(req), task: req.task, itemId: req.itemId });
+  return parseGemini(json);
 }

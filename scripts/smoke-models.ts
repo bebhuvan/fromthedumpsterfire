@@ -2,12 +2,12 @@
 // one PDF or image call where the model takes them. Prints tokens (cached and reasoning too) and
 // cost per call; never prints a key.
 // Keys are read from workers/pipeline/.dev.vars (gitignored). Models whose key is missing are skipped.
-// Usage: npx tsx scripts/smoke-models.ts [modelKey ...]
+// Usage: [SMOKE_THINKING=medium] npx tsx scripts/smoke-models.ts [modelKey ...]
 //   With CF_ACCOUNT_ID and AI_GATEWAY_ID in .dev.vars the calls go through the gateway.
 
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { deflateSync } from 'node:zlib';
-import { z } from 'zod';
 import { callAnthropic } from '../packages/server/src/models/providers/anthropic.ts';
 import { callDeepseek } from '../packages/server/src/models/providers/deepseek.ts';
 import { callGemini } from '../packages/server/src/models/providers/gemini.ts';
@@ -16,6 +16,11 @@ import { costOf } from '../packages/server/src/models/cost.ts';
 import { jsonSchemaFor } from '../packages/server/src/models/schema.ts';
 import type { ModelConfig, ProviderAnswer, ProviderRequest, RoutesConfig } from '../packages/server/src/models/types.ts';
 import type { Env } from '../packages/server/src/env.ts';
+
+// zod from packages/server, not the repo root: the root has an older major, and its schemas are
+// not ones the server's toJSONSchema can read.
+const { z } = createRequire(new URL('../packages/server/package.json', import.meta.url))('zod') as typeof import('zod');
+type ZodType = import('zod').ZodType;
 
 const routes = JSON.parse(readFileSync(new URL('../packages/server/src/models/routes.json', import.meta.url), 'utf8')) as RoutesConfig;
 
@@ -93,6 +98,9 @@ function tinyPng(rgb: [number, number, number]): string {
 const card = z.object({ title: z.string(), year: z.number().int(), themes: z.array(z.string()).min(1).max(3) });
 const seen = z.object({ text: z.string(), colour: z.string() });
 
+/** SMOKE_THINKING=low|medium|high runs every call with that much thinking (default off). */
+const THINKING = (process.env.SMOKE_THINKING ?? 'off') as ProviderRequest['thinking'];
+
 function request(key: string, cfg: ModelConfig, over: Partial<ProviderRequest>): ProviderRequest {
   return {
     modelKey: key,
@@ -105,7 +113,7 @@ function request(key: string, cfg: ModelConfig, over: Partial<ProviderRequest>):
     schema: jsonSchemaFor(card),
     maxTokens: 400,
     temperature: 0,
-    thinking: 'off',
+    thinking: THINKING,
     ...over,
   };
 }
@@ -120,7 +128,7 @@ for (const [key, cfg] of Object.entries(routes.models)) {
     console.log(`${key}: skipped (no ${String(KEY[cfg.provider])} in workers/pipeline/.dev.vars)`);
     continue;
   }
-  const runs: Array<[string, ProviderRequest, z.ZodType]> = [['json', request(key, cfg, {}), card]];
+  const runs: Array<[string, ProviderRequest, ZodType]> = [['json', request(key, cfg, {}), card]];
   if (cfg.pdf) runs.push(['pdf', request(key, cfg, { prompt: 'Copy the sentence printed in the attached PDF as text, and say what colour its text is.', documents: [{ mime: 'application/pdf', base64: tinyPdf('Things worth salvaging from the archive.'), pages: 1 }], schema: jsonSchemaFor(seen) }), seen]);
   else if (cfg.vision) runs.push(['image', request(key, cfg, { prompt: 'This image is one flat colour. Name the colour, and put an empty string in text.', images: [{ mime: 'image/png', base64: tinyPng([220, 60, 40]) }], schema: jsonSchemaFor(seen) }), seen]);
   for (const [what, q, schema] of runs) {

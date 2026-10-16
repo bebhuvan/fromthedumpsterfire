@@ -38,7 +38,7 @@
 - 2026-10-16: **native model providers** (`packages/server/src/models/{providers/*,http,gateway,cost,schema,types}.ts`,
   `migrations/0003_model_call_tokens.sql`, `docs/MODELS.md`, `scripts/smoke-models.ts`). One
   adapter per provider behind the unchanged `generateJson`: Gemini 3.8 Flash (`generateContent`,
-  JSON schema via `responseFormat`, `thinkingLevel`, inline PDFs and images, media resolution),
+  JSON schema via `responseJsonSchema`, `thinkingLevel`, inline PDFs and images, media resolution),
   Claude Haiku 5.5 (Messages API, structured outputs, prompt caching on system and source, adaptive
   thinking, PDF and image blocks), DeepSeek Flash (V4.1, JSON mode, explicit thinking on or off,
   cache-hit tokens) and Z.ai GLM-5.3-Flash and the free GLM-4.7-Flash. Gemini, Claude and DeepSeek
@@ -56,7 +56,7 @@
 ### Models: what was verified (2026-10-16)
 
 - `npm run verify`: every workspace typechecks; 255 tests. New in `providers.test.ts` (37):
-  request shape per provider (schema trimming for Claude, `responseFormat` and its fallback for
+  request shape per provider (schema trimming for Claude, `responseJsonSchema` for
   Gemini, thinking on and off per provider, no temperature where refused, PDFs and images, cache
   marks only above the minimum), usage parsing with cached, cache-write and reasoning tokens,
   long-prompt and cache pricing, retries with Retry-After, no retry on auth errors, spend caps or
@@ -70,9 +70,12 @@
   thinking let Kimi and DeepSeek on Workers AI reason through all 8,000 tokens); Workers AI now
   always runs with thinking off, and the rerun cost $0.007. Preview D1 migrated to 0003; preview
   Workers deployed (pipeline `3b6544dc`, Desk `ae563573`).
-- **Not yet verified against the real APIs:** no provider keys are set (none on the preview
-  Workers, none in `.dev.vars`). `docs/MODELS.md` lists the points the smoke test must settle
-  (the `glm-4.7-flash` id, JSON mode on GLM-5.3-Flash, Gemini's `v1beta` path through the gateway).
+- Keys for Gemini, DeepSeek and Z.ai set on both Workers in preview and production (Anthropic not
+  yet). Real smoke test, direct and through the preview gateway, every answer valid, about $0.006:
+  results in `docs/MODELS.md` (Smoke test). It found Gemini refusing the `response_format` object
+  on `generateContent`; the adapter now sends `responseMimeType` + `responseJsonSchema` only.
+  Without an Anthropic key every chain skips Haiku: read, draft, clean and the Haul helpers start
+  with the next model (DeepSeek Flash or Gemini).
 
 ### Desk: what was verified (2026-10-16)
 
@@ -112,11 +115,10 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 
 ### What the editor must do
 
-1. **Provider keys (optional)** as Wrangler secrets on both Workers, never in config:
-   `GOOGLE_AI_STUDIO_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `ZAI_API_KEY`; the loop that
-   sets them all is in `docs/MODELS.md` (Keys). Without keys the routes fall back to Workers AI.
-   Then `npm run db:migrate:preview` / `db:migrate:production` for migration 0003, and
-   `npx tsx scripts/smoke-models.ts` with the keys in `workers/pipeline/.dev.vars`.
+1. **`ANTHROPIC_API_KEY`** on both Workers (Gemini, DeepSeek and Z.ai keys are set), the same way
+   as in `docs/MODELS.md` (Keys); then `npx tsx scripts/smoke-models.ts haiku claude-sonnet`.
+   Without it the chains skip Haiku. Production also needs `npm run db:migrate:production`
+   (migration 0003) before the models branch is deployed there.
 2. **Push:** `FCM_SERVICE_ACCOUNT` (Firebase service-account JSON) as a secret on the pipeline, and
    `apps/mobile/google-services.json` for the app. iOS push needs FCM tokens on iOS or an APNs sender.
 3. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in

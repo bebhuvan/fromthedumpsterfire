@@ -127,22 +127,17 @@ describe('Claude (Messages API)', () => {
 });
 
 describe('Gemini (generateContent)', () => {
-  it('asks for JSON with responseFormat, thinks at the lowest level when off, no temperature', () => {
+  it('asks for JSON with responseJsonSchema, thinks at the lowest level when off, no temperature', () => {
     const b = geminiBody(req('gemini-flash')) as Record<string, any>;
     expect(b.systemInstruction.parts[0].text).toMatch(/^S+$/);
-    expect(b.generationConfig.responseFormat.text.mimeType).toBe('application/json');
-    expect(b.generationConfig.responseFormat.text.schema.properties.items.maxItems).toBe(4);
+    expect(b.generationConfig.responseMimeType).toBe('application/json');
+    expect(b.generationConfig.responseJsonSchema.properties.items.maxItems).toBe(4);
+    expect(b.generationConfig.responseFormat).toBeUndefined();
     expect(b.generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'low' });
     expect(b.generationConfig.temperature).toBeUndefined();
     expect(b.generationConfig.maxOutputTokens).toBe(3000);
     // Stable prefix first: context before the prompt.
     expect(b.contents[0].parts.map((p: { text: string }) => p.text.slice(0, 1))).toEqual(['C', 'D']);
-  });
-  it('falls back to the older schema fields on request', () => {
-    const b = geminiBody(req('gemini-flash'), { legacySchema: true }) as Record<string, any>;
-    expect(b.generationConfig.responseMimeType).toBe('application/json');
-    expect(b.generationConfig.responseJsonSchema).toBeTruthy();
-    expect(b.generationConfig.responseFormat).toBeUndefined();
   });
   it('sends files inline with the task media resolution', () => {
     const b = geminiBody(req('gemini-flash', { documents: [{ mime: 'application/pdf', base64: 'JVBE', pages: 3 }], mediaResolution: 'high', thinking: 'medium' })) as Record<string, any>;
