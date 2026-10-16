@@ -1,23 +1,177 @@
 {
-  "$comment": "Task -> model chain. The router tries each model in order, skipping any whose provider key is not set, and falls back on errors. Workers AI models need no key and are the working fallback. Prices are USD per million tokens and are used for the spend ledger; check them against the provider's price page when you change a model. Override at deploy time with the MODEL_ROUTES var (same shape; tasks and models are merged over these).",
+  "$comment": "Task -> model chain. The router tries each model in order, skipping any whose provider key is not set, and falls back on errors. Workers AI models need no key and are the working fallback. Prices are USD per million tokens (embeddings: per million input tokens; Whisper: per audio minute) and drive the spend ledger. Workers AI prices checked 2026-10-16 against https://developers.cloudflare.com/workers-ai/platform/pricing/ (deepseek-v4-flash-0731 0.44/1.32, kimi-k2.6 0.95/4.00, llama-4-scout 0.27/0.85, llama-3.3-70b-fp8-fast 0.293/2.253, whisper-large-v3-turbo 0.0005 per audio minute, bge-m3 0.012 per M input tokens; cached-input discounts are ignored, so the ledger errs high). External provider prices are from each provider's price page; check them when you change a model. Override at deploy time with the MODEL_ROUTES var (same shape; tasks and models are merged over these).",
   "byok": false,
   "tasks": {
-    "read": { "chain": ["gemini-flash", "deepseek-chat", "wai-deepseek-flash", "wai-scout"], "maxTokens": 4000, "temperature": 0.2, "maxInputChars": 120000 },
-    "draft": { "chain": ["gemini-pro", "deepseek-chat", "wai-kimi", "wai-deepseek-flash"], "maxTokens": 8000, "temperature": 0.5, "maxInputChars": 90000 },
-    "judge": { "chain": ["gemini-pro", "deepseek-chat", "wai-kimi", "wai-deepseek-flash"], "maxTokens": 3000, "temperature": 0, "maxInputChars": 60000 },
-    "clean": { "chain": ["gemini-flash", "deepseek-chat", "wai-deepseek-flash", "wai-scout"], "maxTokens": 6000, "temperature": 0, "maxInputChars": 30000 },
-    "ocr": { "chain": ["gemini-flash", "wai-scout"], "maxTokens": 6000, "temperature": 0, "maxInputChars": 2000, "vision": true },
-    "haul": { "chain": ["gemini-pro", "deepseek-chat", "wai-kimi", "wai-deepseek-flash"], "maxTokens": 3000, "temperature": 0.5, "maxInputChars": 60000 }
+    "read": {
+      "chain": [
+        "gemini-flash",
+        "deepseek-chat",
+        "wai-deepseek-flash",
+        "wai-scout"
+      ],
+      "maxTokens": 4000,
+      "temperature": 0.2,
+      "maxInputChars": 120000
+    },
+    "draft": {
+      "chain": [
+        "gemini-pro",
+        "deepseek-chat",
+        "wai-kimi",
+        "wai-deepseek-flash"
+      ],
+      "maxTokens": 8000,
+      "temperature": 0.5,
+      "maxInputChars": 90000
+    },
+    "judge": {
+      "chain": [
+        "gemini-pro",
+        "deepseek-chat",
+        "wai-kimi",
+        "wai-deepseek-flash"
+      ],
+      "maxTokens": 3000,
+      "temperature": 0,
+      "maxInputChars": 60000
+    },
+    "clean": {
+      "chain": [
+        "gemini-flash",
+        "deepseek-chat",
+        "wai-deepseek-flash",
+        "wai-scout"
+      ],
+      "maxTokens": 6000,
+      "temperature": 0,
+      "maxInputChars": 30000
+    },
+    "ocr": {
+      "chain": [
+        "gemini-flash",
+        "wai-scout"
+      ],
+      "maxTokens": 6000,
+      "temperature": 0,
+      "maxInputChars": 2000,
+      "vision": true
+    },
+    "haul": {
+      "chain": [
+        "gemini-pro",
+        "deepseek-chat",
+        "wai-kimi",
+        "wai-deepseek-flash"
+      ],
+      "maxTokens": 3000,
+      "temperature": 0.5,
+      "maxInputChars": 60000
+    },
+    "plate": {
+      "chain": [
+        "gemini-flash",
+        "deepseek-chat",
+        "wai-deepseek-flash",
+        "wai-scout"
+      ],
+      "maxTokens": 800,
+      "temperature": 0.3,
+      "maxInputChars": 8000
+    },
+    "connect": {
+      "chain": [
+        "gemini-pro",
+        "deepseek-chat",
+        "wai-kimi",
+        "wai-deepseek-flash"
+      ],
+      "maxTokens": 3000,
+      "temperature": 0,
+      "maxInputChars": 40000
+    },
+    "thread": {
+      "chain": [
+        "gemini-pro",
+        "deepseek-chat",
+        "wai-kimi",
+        "wai-deepseek-flash"
+      ],
+      "maxTokens": 2000,
+      "temperature": 0.4,
+      "maxInputChars": 30000
+    }
   },
   "models": {
-    "gemini-flash": { "provider": "google-ai-studio", "model": "gemini-2.5-flash", "inUsdPerM": 0.3, "outUsdPerM": 2.5, "json": "schema", "vision": true },
-    "gemini-pro": { "provider": "google-ai-studio", "model": "gemini-2.5-pro", "inUsdPerM": 1.25, "outUsdPerM": 10, "json": "schema", "vision": true },
-    "deepseek-chat": { "provider": "deepseek", "model": "deepseek-chat", "inUsdPerM": 0.28, "outUsdPerM": 0.42, "json": "object" },
-    "claude-sonnet": { "provider": "anthropic", "model": "claude-sonnet-4-5", "inUsdPerM": 3, "outUsdPerM": 15, "json": "prompt" },
-    "wai-deepseek-flash": { "provider": "workers-ai", "model": "@cf/deepseek-ai/deepseek-v4-flash-0731", "inUsdPerM": 0.3, "outUsdPerM": 1.2, "json": "schema", "thinking": false },
-    "wai-kimi": { "provider": "workers-ai", "model": "@cf/moonshotai/kimi-k2.6", "inUsdPerM": 0.6, "outUsdPerM": 2.5, "json": "schema", "thinking": false },
-    "wai-scout": { "provider": "workers-ai", "model": "@cf/meta/llama-4-scout-17b-16e-instruct", "inUsdPerM": 0.27, "outUsdPerM": 0.85, "json": "schema", "vision": true },
-    "wai-llama-70b": { "provider": "workers-ai", "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast", "inUsdPerM": 0.29, "outUsdPerM": 2.25, "json": "schema" }
+    "gemini-flash": {
+      "provider": "google-ai-studio",
+      "model": "gemini-2.5-flash",
+      "inUsdPerM": 0.3,
+      "outUsdPerM": 2.5,
+      "json": "schema",
+      "vision": true
+    },
+    "gemini-pro": {
+      "provider": "google-ai-studio",
+      "model": "gemini-2.5-pro",
+      "inUsdPerM": 1.25,
+      "outUsdPerM": 10,
+      "json": "schema",
+      "vision": true
+    },
+    "deepseek-chat": {
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inUsdPerM": 0.28,
+      "outUsdPerM": 0.42,
+      "json": "object"
+    },
+    "claude-sonnet": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5",
+      "inUsdPerM": 3,
+      "outUsdPerM": 15,
+      "json": "prompt"
+    },
+    "wai-deepseek-flash": {
+      "provider": "workers-ai",
+      "model": "@cf/deepseek-ai/deepseek-v4-flash-0731",
+      "inUsdPerM": 0.44,
+      "outUsdPerM": 1.32,
+      "json": "schema",
+      "thinking": false
+    },
+    "wai-kimi": {
+      "provider": "workers-ai",
+      "model": "@cf/moonshotai/kimi-k2.6",
+      "inUsdPerM": 0.95,
+      "outUsdPerM": 4.0,
+      "json": "schema",
+      "thinking": false
+    },
+    "wai-scout": {
+      "provider": "workers-ai",
+      "model": "@cf/meta/llama-4-scout-17b-16e-instruct",
+      "inUsdPerM": 0.27,
+      "outUsdPerM": 0.85,
+      "json": "schema",
+      "vision": true
+    },
+    "wai-llama-70b": {
+      "provider": "workers-ai",
+      "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "inUsdPerM": 0.293,
+      "outUsdPerM": 2.253,
+      "json": "schema"
+    }
   },
-  "transcribe": { "model": "@cf/openai/whisper-large-v3-turbo", "usdPerAudioMinute": 0.00051 }
+  "transcribe": {
+    "model": "@cf/openai/whisper-large-v3-turbo",
+    "usdPerAudioMinute": 0.0005
+  },
+  "embed": {
+    "model": "@cf/baai/bge-m3",
+    "dimensions": 1024,
+    "usdPerMTokens": 0.012,
+    "maxBatch": 50
+  }
 }

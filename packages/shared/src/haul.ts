@@ -11,9 +11,16 @@ export interface Title {
   italic?: string;
 }
 
+/** Container of a published voice note. m4a (AAC in MP4), mp3 and wav play on Android and iOS; mp4 (Opus in MP4), webm and ogg play on Android only. */
+export type AudioFormat = 'm4a' | 'mp3' | 'wav' | 'mp4' | 'webm' | 'ogg';
+export const AUDIO_FORMATS: readonly AudioFormat[] = ['m4a', 'mp3', 'wav', 'mp4', 'webm', 'ogg'];
+export const PLAYS_ON_IOS: ReadonlySet<AudioFormat> = new Set(['m4a', 'mp3', 'wav']);
+
 export interface Audio {
   url: string;
   seconds: number;
+  /** Absent in older bundles (treat as playable everywhere). Readers on iOS skip webm and ogg. */
+  format?: AudioFormat;
 }
 
 export interface HaulSummary {
@@ -56,13 +63,19 @@ export interface Excerpt {
   locator: string;
 }
 
+/** A public-domain image. Never generated; the licence is what the holding institution states. */
 export interface Plate {
   url: string;
   width: number;
   height: number;
   caption: string;
+  /** Who holds the work, e.g. "Art Institute of Chicago" or "Wikimedia Commons". */
   credit: string;
   licence: string;
+  /** The work's own page at the institution (added 2026-10; optional in older bundles). */
+  sourceUrl?: string;
+  creator?: string;
+  date?: string;
 }
 
 export interface Marginal {
@@ -75,6 +88,10 @@ export interface WikiCard {
   summary: string;
   url: string;
 }
+
+/** The edge types the Desk offers and the judge model may assign. Older bundles may carry other labels. */
+export const EDGE_TYPES = ['Answers', 'Extends', 'Contradicts', 'Precedent of', 'Same mechanism', 'Rhymes with', 'Cites'] as const;
+export type EdgeType = (typeof EDGE_TYPES)[number];
 
 export interface Connection {
   /** Typed edge label, e.g. "Answers", "Same mechanism". */
@@ -139,6 +156,8 @@ export interface Haul {
   deck: string;
   publishedAt: string;
   swatch: Swatch;
+  /** A public-domain cover plate (optional). */
+  cover?: Plate;
   fieldNote: FieldNote;
   items: Item[];
   threads: Thread[];

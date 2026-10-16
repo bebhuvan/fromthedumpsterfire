@@ -11,6 +11,7 @@ import { ItemReview } from './screens/Item';
 import { Hauls } from './screens/Hauls';
 import { Composer } from './screens/Composer';
 import { Settings } from './screens/Settings';
+import { Links } from './screens/Links';
 
 export function App() {
   return (
@@ -62,7 +63,7 @@ function Shell() {
     }
   }, [toast]);
 
-  const section = path.startsWith('/haul') ? 'hauls' : path.startsWith('/settings') ? 'settings' : 'tray';
+  const section = path.startsWith('/haul') ? 'hauls' : path.startsWith('/settings') ? 'settings' : path.startsWith('/links') ? 'links' : 'tray';
   let screen;
   const item = /^\/item\/([\w-]+)/.exec(path);
   const haul = /^\/haul\/([\w-]+)/.exec(path);
@@ -70,6 +71,7 @@ function Shell() {
   else if (haul) screen = <Composer id={haul[1]!} />;
   else if (path === '/hauls') screen = <Hauls />;
   else if (path === '/settings') screen = <Settings />;
+  else if (path === '/links') screen = <Links />;
   else screen = <Tray />;
 
   return (
@@ -83,6 +85,9 @@ function Shell() {
           <nav className="nav" aria-label="Sections">
             <Link to="/" aria-current={section === 'tray' ? 'page' : undefined}>
               Tray
+            </Link>
+            <Link to="/links" aria-current={section === 'links' ? 'page' : undefined}>
+              Links
             </Link>
             <Link to="/hauls" aria-current={section === 'hauls' ? 'page' : undefined}>
               Hauls

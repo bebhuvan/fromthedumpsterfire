@@ -9,6 +9,8 @@ import { api, displayTitle, parseChecks, type HaulDetail, type HaulRecord, type 
 import { Link, safeHref, SaveNote, useAutosave, useLoad, useToast } from '../lib/core';
 import { NoteCompare, Spinner, TextArea, VoiceNote } from '../ui/parts';
 import { Preview } from './Preview';
+import { PlatesSection } from './Plates';
+import { FormatBadge } from '../ui/parts';
 
 const SWATCHES: Swatch[] = ['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio'];
 
@@ -112,6 +114,12 @@ export function Composer({ id }: { id: string }) {
 
       <div className="stack" style={{ gap: 30 }}>
         <Masthead haul={h} save={save} />
+        <PlatesSection target={{ kind: 'haul', id }} plates={data.plates} decision={h.cover_plate} onChange={reload} title="Cover plate" />
+        {data.fieldNoteAudio && (
+          <div className="row small muted">
+            Field-note recording to publish <FormatBadge format={data.fieldNoteAudio.format} />
+          </div>
+        )}
         <FieldNote haul={h} save={save} items={data.items} busy={busy} onMachine={machine} />
       </div>
 

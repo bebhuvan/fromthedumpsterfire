@@ -108,6 +108,7 @@ export interface HaulRow {
   fn_body: string;
   fn_highlight: string | null;
   fn_note_id: string | null;
+  cover_plate: string | null;
   route: string;
   questions: string;
   colophon: string;
@@ -130,6 +131,7 @@ export interface NoteRow {
   transcript_clean: string | null;
   deleted_words: string | null;
   clean_method: string | null;
+  format: string | null;
   created_at: string;
 }
 

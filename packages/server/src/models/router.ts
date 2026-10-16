@@ -11,7 +11,7 @@ import { assertBudget, recordCall } from '../spend';
 import { errorMessage, FatalError } from '../util';
 
 export type Provider = 'workers-ai' | 'google-ai-studio' | 'deepseek' | 'anthropic' | 'openai' | 'openrouter';
-export type TaskName = 'read' | 'draft' | 'judge' | 'clean' | 'ocr' | 'haul';
+export type TaskName = 'read' | 'draft' | 'judge' | 'clean' | 'ocr' | 'haul' | 'plate' | 'connect' | 'thread';
 
 export interface ModelConfig {
   provider: Provider;
@@ -38,6 +38,7 @@ export interface RoutesConfig {
   tasks: Record<TaskName, TaskConfig>;
   models: Record<string, ModelConfig>;
   transcribe: { model: string; usdPerAudioMinute: number };
+  embed: { model: string; dimensions: number; usdPerMTokens: number; maxBatch: number };
 }
 
 const KEY_FOR: Record<Exclude<Provider, 'workers-ai'>, keyof Env> = {
@@ -58,6 +59,7 @@ export function loadRoutes(env: Pick<Env, 'MODEL_ROUTES'>): RoutesConfig {
       tasks: { ...base.tasks, ...(o.tasks ?? {}) },
       models: { ...base.models, ...(o.models ?? {}) },
       transcribe: { ...base.transcribe, ...(o.transcribe ?? {}) },
+      embed: { ...base.embed, ...(o.embed ?? {}) },
     };
   } catch {
     return base;
@@ -271,8 +273,22 @@ export async function generateJson<T>(env: Env, req: GenerateRequest<T>): Promis
   throw new ModelError(`Every model for "${req.task}" failed. ${failures.join(' | ')}`);
 }
 
-/** Speech to text with Workers AI Whisper (through the gateway), recorded in the ledger. */
-export async function transcribeAudio(env: Env, audio: Uint8Array, opts: { itemId?: string | null; seconds?: number; language?: string } = {}): Promise<{ text: string; seconds: number; costUsd: number }> {
+export interface TranscriptSegment {
+  /** Seconds from the start of the audio that was sent. */
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface Transcript {
+  text: string;
+  seconds: number;
+  costUsd: number;
+  segments: TranscriptSegment[];
+}
+
+/** Speech to text with Workers AI Whisper (through the gateway), recorded in the ledger. Segments carry timestamps. */
+export async function transcribeAudio(env: Env, audio: Uint8Array, opts: { itemId?: string | null; seconds?: number; language?: string } = {}): Promise<Transcript> {
   const routes = loadRoutes(env);
   await assertBudget(env);
   const started = Date.now();
@@ -283,15 +299,51 @@ export async function transcribeAudio(env: Env, audio: Uint8Array, opts: { itemI
       task: 'transcribe',
       vad_filter: true,
       ...(opts.language ? { language: opts.language } : {}),
-    })) as { text?: string; transcription_info?: { duration?: number }; segments?: Array<{ end: number }> };
-    const seconds = out.transcription_info?.duration ?? out.segments?.at(-1)?.end ?? opts.seconds ?? 0;
+    })) as { text?: string; transcription_info?: { duration?: number }; segments?: Array<{ start?: number; end?: number; text?: string }> };
+    const segments: TranscriptSegment[] = (out.segments ?? [])
+      .filter((s) => typeof s.text === 'string' && s.text.trim())
+      .map((s) => ({ start: Number(s.start ?? 0), end: Number(s.end ?? s.start ?? 0), text: s.text!.trim() }));
+    const seconds = out.transcription_info?.duration ?? segments.at(-1)?.end ?? opts.seconds ?? 0;
     const costUsd = (seconds / 60) * routes.transcribe.usdPerAudioMinute;
     await recordCall(env, { task: 'transcribe', provider: wai(), model: routes.transcribe.model, itemId: opts.itemId, audioSeconds: seconds, costUsd, latencyMs: Date.now() - started, ok: true });
-    return { text: (out.text ?? '').trim(), seconds, costUsd };
+    return { text: (out.text ?? '').trim(), seconds, costUsd, segments };
   } catch (e) {
     await recordCall(env, { task: 'transcribe', provider: wai(), model: routes.transcribe.model, itemId: opts.itemId, costUsd: 0, latencyMs: Date.now() - started, ok: false, error: errorMessage(e) });
     throw e;
   }
+}
+
+/** Rough token count for embedding cost: about four characters a token for English. */
+const approxTokens = (s: string) => Math.ceil(s.length / 4);
+
+/**
+ * Embed texts with Workers AI (bge-m3 by default), in batches, through the gateway, recorded in the
+ * ledger. Returns one vector per input, in order.
+ */
+export async function embedTexts(env: Env, texts: string[], opts: { itemId?: string | null } = {}): Promise<{ vectors: number[][]; model: string; costUsd: number }> {
+  const routes = loadRoutes(env);
+  const { model, maxBatch, usdPerMTokens, dimensions } = routes.embed;
+  const vectors: number[][] = [];
+  let costUsd = 0;
+  for (let i = 0; i < texts.length; i += maxBatch) {
+    const batch = texts.slice(i, i + maxBatch);
+    await assertBudget(env);
+    const started = Date.now();
+    try {
+      const out = (await runWorkersAi(env, model, { text: batch })) as { data?: number[][]; shape?: number[]; usage?: { prompt_tokens?: number } };
+      const data = out.data ?? [];
+      if (data.length !== batch.length || data.some((v) => v.length !== dimensions)) throw new ModelError(`embedding answer had ${data.length} vectors of ${data[0]?.length ?? 0} dims; expected ${batch.length} of ${dimensions}`);
+      const tokens = out.usage?.prompt_tokens ?? batch.reduce((n, t) => n + approxTokens(t), 0);
+      const cost = (tokens * usdPerMTokens) / 1_000_000;
+      costUsd += cost;
+      await recordCall(env, { task: 'embed', provider: wai(), model, itemId: opts.itemId, inputTokens: tokens, costUsd: cost, latencyMs: Date.now() - started, ok: true });
+      vectors.push(...data);
+    } catch (e) {
+      await recordCall(env, { task: 'embed', provider: wai(), model, itemId: opts.itemId, costUsd: 0, latencyMs: Date.now() - started, ok: false, error: errorMessage(e) });
+      throw e;
+    }
+  }
+  return { vectors, model, costUsd };
 }
 
 /** For the settings screen: which models each task would use right now. Never exposes secrets. */
@@ -301,6 +353,7 @@ export function describeRoutes(env: Env) {
     gatewayMissing: gatewayState.missing,
     byok: routes.byok,
     transcribe: routes.transcribe,
+    embed: routes.embed,
     tasks: Object.fromEntries(
       Object.entries(routes.tasks).map(([name, t]) => [
         name,

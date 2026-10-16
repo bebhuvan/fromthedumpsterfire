@@ -58,11 +58,31 @@ export function TypeSelect({ value, onChange, className = 'select' }: { value: C
 
 // ---------------------------------------------------------------- voice notes
 
+/**
+ * AAC in MP4 first: it plays on iOS and Android, so the note can be published to both. WebM/Ogg
+ * (Opus) are the fallback; they play on Android only and the Desk marks them so.
+ */
+export const RECORDER_TYPES = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4;codecs=aac', 'audio/aac', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+
 function pickMime(): string {
-  for (const m of ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg;codecs=opus']) {
+  for (const m of RECORDER_TYPES) {
     if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported?.(m)) return m;
   }
   return '';
+}
+
+const IOS_FORMATS = new Set(['m4a', 'mp3', 'wav']);
+
+/** "Android only" for a note whose format iOS cannot play (it still publishes). */
+export function FormatBadge({ format }: { format?: string | null }) {
+  if (!format) return null;
+  return IOS_FORMATS.has(format) ? (
+    <span className="badge" title="Plays on iOS and Android">{format}</span>
+  ) : (
+    <span className="badge warn" title="iOS cannot play this recording. It still publishes; iPhone readers will not see the play button. Record in Safari or upload an m4a or mp3 to fix.">
+      {format} · Android only
+    </span>
+  );
 }
 
 /**
@@ -110,7 +130,7 @@ export function VoiceNote({ target, itemId, haulId, onNote, label = 'Voice note'
       r.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
         const type = r.mimeType || 'audio/webm';
-        void upload(new Blob(chunks.current, { type }), `note.${type.includes('mp4') ? 'm4a' : 'webm'}`);
+        void upload(new Blob(chunks.current, { type }), `note.${type.includes('mp4') || type.includes('aac') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm'}`);
       };
       r.start(1000);
       setSecs(0);
@@ -171,7 +191,10 @@ export function NoteCompare({ note, onUse }: { note: Note; onUse?: (text: string
   return (
     <div className="voice">
       <div className="panel plate">
-        <div className="label">Your voice note{note.seconds ? ` · ${Math.floor(note.seconds / 60)}:${String(Math.round(note.seconds % 60)).padStart(2, '0')}` : ''} · as spoken</div>
+        <div className="row between">
+          <div className="label">Your voice note{note.seconds ? ` · ${Math.floor(note.seconds / 60)}:${String(Math.round(note.seconds % 60)).padStart(2, '0')}` : ''} · as spoken</div>
+          <FormatBadge format={note.format} />
+        </div>
         <p className="muted">{note.transcript_raw || '(no speech found)'}</p>
         <audio controls preload="none" src={`/api/notes/${note.id}/audio`} style={{ width: '100%', marginTop: 10 }} />
       </div>

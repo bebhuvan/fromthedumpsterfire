@@ -24,6 +24,7 @@ import {
   resolveWikiTopic,
   runChecks,
   SECRET_NAMES,
+  sniffAudioFormat,
   spendStatus,
   type CheckRow,
   type DraftRow,
@@ -39,6 +40,7 @@ import {
 import { AccessDenied, devBypassAllowed, KNOWN_ENVIRONMENTS, readAssertion, verifyOwner } from './access';
 import { captureEntries, captureFile, entriesFromPaste, type CaptureEntry } from './capture';
 import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY_HEADERS, withHeaders } from './security';
+import { m6, platesFor } from './milestone6';
 
 type App = { Bindings: Env; Variables: { owner: string } };
 const app = new Hono<App>();
@@ -179,6 +181,7 @@ app.get('/api/settings', async (c) => {
     recentCalls: calls.results,
     spendByTask: byTask.results,
     filesBase: c.env.FILES_BASE,
+    bindings: { vectors: Boolean(c.env.VECTORS), browser: Boolean(c.env.BROWSER), images: Boolean(c.env.IMAGES), files: Boolean(c.env.FILES) },
   });
 });
 
@@ -267,7 +270,7 @@ app.get('/api/items', async (c) => {
 app.get('/api/items/:id', async (c) => {
   const id = c.req.param('id');
   const item = await itemOr404(c.env, id);
-  const [source, excerpts, drafts, wiki, checks, notes, run, haul, connections] = await Promise.all([
+  const [source, excerpts, drafts, wiki, checks, notes, run, haul, connections, plates, suggestions] = await Promise.all([
     c.env.DB.prepare('SELECT * FROM sources WHERE item_id = ?').bind(id).first<SourceRow>(),
     c.env.DB.prepare('SELECT * FROM excerpts WHERE item_id = ? ORDER BY chosen DESC, origin DESC, start').bind(id).all<ExcerptRow>(),
     c.env.DB.prepare('SELECT * FROM drafts WHERE item_id = ? ORDER BY kind, position').bind(id).all<DraftRow>(),
@@ -277,6 +280,11 @@ app.get('/api/items/:id', async (c) => {
     c.env.DB.prepare('SELECT * FROM runs WHERE item_id = ? ORDER BY started_at DESC LIMIT 1').bind(id).first(),
     c.env.DB.prepare('SELECT h.id, h.number, h.status FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ?').bind(id).first(),
     c.env.DB.prepare('SELECT c.*, i.title AS to_title FROM connections c JOIN items i ON i.id = c.to_item_id WHERE c.item_id = ?').bind(id).all(),
+    platesFor(c.env, { itemId: id }),
+    c.env.DB.prepare(
+      `SELECT s.*, a.title AS from_title, a.title_choice AS from_choice, b.title AS to_title, b.title_choice AS to_choice FROM suggestions s
+       JOIN items a ON a.id = s.from_item_id JOIN items b ON b.id = s.to_item_id WHERE s.from_item_id = ? OR s.to_item_id = ? ORDER BY s.status = 'proposed' DESC, s.confidence DESC`,
+    ).bind(id, id).all(),
   ]);
   return c.json({
     item,
@@ -289,6 +297,8 @@ app.get('/api/items/:id', async (c) => {
     run,
     haul,
     connections: connections.results,
+    plates,
+    suggestions: suggestions.results,
   });
 });
 
@@ -370,14 +380,14 @@ app.put('/api/items/:id/source', async (c) => {
 });
 
 app.post('/api/items/:id/refetch', async (c) => {
-  await itemOr404(c.env, c.req.param('id'));
+  if ((await itemOr404(c.env, c.req.param('id'))).kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own; change its ends instead' }, 409);
   await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = NULL WHERE id = ?`).bind(c.req.param('id')).run();
   await c.env.INGEST_QUEUE.send({ kind: 'ingest', itemId: c.req.param('id') });
   return c.json({ ok: true });
 });
 
 app.post('/api/items/:id/redraft', async (c) => {
-  await itemOr404(c.env, c.req.param('id'));
+  if ((await itemOr404(c.env, c.req.param('id'))).kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own; change its ends instead' }, 409);
   await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = 'Redrafting' WHERE id = ?`).bind(c.req.param('id')).run();
   await c.env.INGEST_QUEUE.send({ kind: 'redraft', itemId: c.req.param('id') });
   return c.json({ ok: true });
@@ -533,12 +543,14 @@ app.delete('/api/connections/:id', async (c) => {
 async function storeNote(env: Env, file: File, target: string, refs: { itemId?: string; haulId?: string }): Promise<string> {
   if (file.size > 25 * 1024 * 1024) throw Object.assign(new Error('Voice notes over 25 MB are not supported'), { status: 413 });
   const id = newId('vn_');
-  const mime = file.type || 'audio/webm';
-  const ext = mime.includes('mp4') || mime.includes('m4a') ? 'm4a' : mime.includes('mpeg') ? 'mp3' : mime.includes('ogg') ? 'ogg' : mime.includes('wav') ? 'wav' : 'webm';
-  const key = `notes/${id}.${ext}`;
-  await env.MEDIA.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: mime } });
-  await env.DB.prepare('INSERT INTO notes (id, item_id, haul_id, target, audio_key, mime, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .bind(id, refs.itemId ?? null, refs.haulId ?? null, target, key, mime, nowIso())
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  // The format is read from the bytes, not trusted from the browser: it decides where the note can play.
+  const format = sniffAudioFormat(bytes, file.type);
+  const mime = { m4a: 'audio/mp4', mp4: 'audio/mp4', mp3: 'audio/mpeg', wav: 'audio/wav', webm: 'audio/webm', ogg: 'audio/ogg' }[format];
+  const key = `notes/${id}.${format}`;
+  await env.MEDIA.put(key, bytes, { httpMetadata: { contentType: mime } });
+  await env.DB.prepare('INSERT INTO notes (id, item_id, haul_id, target, audio_key, mime, format, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, refs.itemId ?? null, refs.haulId ?? null, target, key, mime, format, nowIso())
     .run();
   return id;
 }
@@ -601,7 +613,9 @@ async function haulDetail(env: Env, id: string) {
     ).bind(id).all()
   ).results;
   const versions = (await env.DB.prepare('SELECT * FROM haul_versions WHERE haul_id = ? ORDER BY version DESC').bind(id).all()).results;
-  return { haul: { ...h, route: parseJson(h.route, []), questions: parseJson(h.questions, []) }, items, versions };
+  const plates = await platesFor(env, { haulId: id });
+  const notes = (await env.DB.prepare('SELECT id, target, mime, format, seconds FROM notes WHERE id = ?').bind(h.fn_note_id ?? '').all()).results;
+  return { haul: { ...h, route: parseJson(h.route, []), questions: parseJson(h.questions, []) }, items, versions, plates, fieldNoteAudio: notes[0] ?? null };
 }
 
 app.get('/api/hauls/:id', async (c) => c.json(await haulDetail(c.env, c.req.param('id'))));
@@ -678,11 +692,18 @@ app.post('/api/hauls/:id/publish', async (c) => {
   return c.json(r, r.ok ? 200 : 422);
 });
 
-// Published files, for checking a preview deployment's bundles (production serves them from R2 directly).
+app.route('/', m6);
+
+// Stored files, behind the lock. Published paths (hauls/...) come from the public FILES bucket, so a
+// preview deployment can check its bundles (production readers get them from R2 directly); private
+// material (chosen plates, voice notes) comes from MEDIA. Uploads and snapshots have their own routes.
+const PRIVATE_PREFIXES = ['plates/', 'notes/'];
 app.get('/files/*', async (c) => {
   const key = decodeURIComponent(new URL(c.req.url).pathname.replace(/^\/files\//, ''));
-  if (!key.startsWith('hauls/')) throw notFound();
-  const obj = await c.env.MEDIA.get(key);
+  if (key.includes('..') || key.startsWith('/')) throw notFound();
+  const bucket = key.startsWith('hauls/') ? c.env.FILES : PRIVATE_PREFIXES.some((p) => key.startsWith(p)) ? c.env.MEDIA : null;
+  if (!bucket) throw notFound();
+  const obj = await bucket.get(key);
   if (!obj) throw notFound();
   return new Response(obj.body, { headers: fileHeaders(obj.httpMetadata?.contentType, key.split('/').pop()) });
 });

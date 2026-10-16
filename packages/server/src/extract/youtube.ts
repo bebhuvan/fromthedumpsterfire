@@ -12,7 +12,8 @@ export interface YouTubeInfo {
   description: string;
   publishDate?: string;
   captions?: { text: string; times: Array<{ offset: number; ms: number }>; lang: string; auto: boolean };
-  audio?: { url: string; mime: string; bytes: number };
+  /** The smallest audio stream; DASH MP4 streams carry their init and index ranges so long ones can be cut on segment boundaries. */
+  audio?: { url: string; mime: string; bytes: number; dash?: { initRange: { start: number; end: number }; indexRange: { start: number; end: number } } };
   playable: boolean;
   reason?: string;
 }
@@ -122,11 +123,17 @@ export async function fetchYouTube(url: string): Promise<YouTubeInfo> {
         if (text) info.captions = { text, times, lang: pick.languageCode, auto: pick.kind === 'asr' };
       }
     }
-    const formats: Array<{ url?: string; mimeType?: string; contentLength?: string; bitrate?: number }> = j.streamingData?.adaptiveFormats ?? [];
-    const audio = formats
-      .filter((f) => f.url && f.mimeType?.startsWith('audio/'))
-      .sort((a, b) => (a.bitrate ?? 0) - (b.bitrate ?? 0))[0];
-    if (audio?.url) info.audio = { url: audio.url, mime: audio.mimeType!.split(';')[0]!, bytes: Number(audio.contentLength ?? 0) };
+    type Fmt = { url?: string; mimeType?: string; contentLength?: string; bitrate?: number; initRange?: { start: string; end: string }; indexRange?: { start: string; end: string } };
+    const formats: Fmt[] = j.streamingData?.adaptiveFormats ?? [];
+    const audios = formats.filter((f) => f.url && f.mimeType?.startsWith('audio/')).sort((a, b) => (a.bitrate ?? 0) - (b.bitrate ?? 0));
+    // Prefer an MP4 stream with a segment index (it can be split for long videos), else the smallest.
+    const audio = audios.find((f) => f.mimeType!.startsWith('audio/mp4') && f.initRange && f.indexRange) ?? audios[0];
+    if (audio?.url) {
+      const r = (x?: { start: string; end: string }) => (x ? { start: Number(x.start), end: Number(x.end) } : undefined);
+      const initRange = r(audio.initRange);
+      const indexRange = r(audio.indexRange);
+      info.audio = { url: audio.url, mime: audio.mimeType!.split(';')[0]!, bytes: Number(audio.contentLength ?? 0), ...(initRange && indexRange ? { dash: { initRange, indexRange } } : {}) };
+    }
     return info;
   }
   throw new Error(`YouTube would not return this video (${lastReason})`);

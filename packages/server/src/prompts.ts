@@ -117,3 +117,59 @@ export const routeSchema = z.object({
   steps: z.array(z.object({ itemId: z.string(), text: z.string() })),
   noticed: z.object({ text: z.string(), itemIds: z.array(z.string()).max(3).default([]) }),
 });
+
+export const PLATE_SYSTEM = `You help a magazine find a public-domain picture to set beside a piece: an old engraving, painting, photograph, map, diagram or page from a museum or library collection. You never make or describe a new image. You propose short search queries that a museum collection search would answer well: the names of people, places, objects, events, works or visual subjects in the piece, and the period. Prefer concrete nouns ("Thames sewer 1858 engraving", "steam engine diagram", "Vannevar Bush") over abstract ideas. Never write a URL. Two to four queries, most promising first.`;
+
+export const plateSchema = z.object({
+  queries: z
+    .array(z.object({ q: z.string().describe('A short collection search query, two to six words. Never a URL.'), why: z.string().default('') }))
+    .min(1)
+    .max(4),
+});
+
+export const CONNECT_SYSTEM = `You judge whether two pieces chosen for a small magazine are connected, and how. You get several numbered pairs. For each pair you see the two pieces' reading cards and passages from each. Decide if there is a real, specific connection of one of these types, read from piece A to piece B:
+- "Answers": A answers a question or problem that B poses.
+- "Extends": A takes B's idea further.
+- "Contradicts": A says the opposite of B on a specific point.
+- "Precedent of": A is an earlier instance of what B describes.
+- "Same mechanism": both describe the same abstract mechanism in different settings.
+- "Rhymes with": a striking echo across time, without a causal link.
+- "Cites": A cites or names B or its author.
+Use direction "b_to_a" when the type reads from B to A instead. Precision matters more than recall. If the link is loose, thematic or generic, answer "none". For a connection you must give one quotation from each piece that shows it, each copied character for character from that piece's passages (one or two sentences, not paraphrased, not stitched together), a one-sentence justification that names both pieces, and your confidence from 0 to 1.
+
+${HOUSE_STYLE}`;
+
+export const connectSchema = z.object({
+  verdicts: z.array(
+    z.object({
+      pair: z.number().int(),
+      type: z.enum(['Answers', 'Extends', 'Contradicts', 'Precedent of', 'Same mechanism', 'Rhymes with', 'Cites', 'none']),
+      direction: z.enum(['a_to_b', 'b_to_a']).default('a_to_b').describe('a_to_b reads "A <type> B"; b_to_a reads "B <type> A".'),
+      note: z.string().default('').describe('One sentence naming both pieces and what links them.'),
+      quoteA: z.string().default('').describe('Exact quotation from piece A.'),
+      quoteB: z.string().default('').describe('Exact quotation from piece B.'),
+      confidence: z.number().min(0).max(1).default(0),
+    }),
+  ),
+});
+export type ConnectOutput = z.infer<typeof connectSchema>;
+
+export const THREAD_SYSTEM = `You name a Thread for a small magazine: a short timeline of pieces, across years, that the editor has linked with typed connections. You get the pieces (with years) and the connections between them. Write:
+1. A title of two to six words. It may set its last phrase in italic: put that phrase in "italic" and the rest in "text".
+2. A summary of one or two plain sentences on what runs through these pieces.
+3. For each piece, a gist: one short sentence (under 20 words) on what that piece adds to the line.
+Use only what the pieces and connections say. No praise.
+
+${HOUSE_STYLE}`;
+
+export const threadSchema = z.object({
+  title: z.object({ text: z.string(), italic: z.string().optional() }),
+  summary: z.string(),
+  points: z.array(z.object({ itemId: z.string(), gist: z.string() })),
+});
+
+export const BRIDGE_SYSTEM = `You write the bridge for a "Rhymes" pair in a small magazine: two quotations, one old and one recent, that echo each other. In two or three plain sentences, say what the older passage was about, what the recent one is about, and what they share. Name the authors and years. Only use what the quotations and their citations say.
+
+${HOUSE_STYLE}`;
+
+export const bridgeSchema = z.object({ bridge: z.string() });

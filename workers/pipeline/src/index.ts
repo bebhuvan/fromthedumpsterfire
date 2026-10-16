@@ -5,14 +5,19 @@ import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep, type Workflo
 import { NonRetryableError } from 'cloudflare:workflows';
 import {
   applyFields,
+  assertAffordable,
   draftItem,
+  embedAndFindCandidates,
+  fetchChunk,
+  findPlates,
+  judgeCandidates,
+  loadRoutes,
+  stitchTranscript,
   draftQuestions,
   draftRoute,
   errorMessage,
-  fetchRange,
   fetchSource,
   getItem,
-  joinTranscript,
   judgeNotes,
   notifyAll,
   nowIso,
@@ -24,6 +29,8 @@ import {
   storeSource,
   transcribeAudio,
   type AudioPlan,
+  type Candidate,
+  type ChunkTranscript,
   type Env,
   type HaulRow,
   type ItemWorkflowParams,
@@ -71,6 +78,9 @@ export class ItemWorkflow extends WorkflowEntrypoint<Env, ItemWorkflowParams> {
               return { audio: null as null | { plan: AudioPlan; meta: SourceMeta }, words: r.words };
             }
             await applyFields(env, itemId, outcome.fields);
+            // The whole job's estimated cost must fit under the ceiling before the first chunk.
+            const minutes = (outcome.plan.seconds || outcome.plan.chunks.length * 3 * 60) / 60;
+            await assertAffordable(env, minutes * loadRoutes(env).transcribe.usdPerAudioMinute * 1.1, `transcribing about ${Math.round(minutes)} minutes of audio`);
             await setStatus(env, itemId, 'fetching', `Transcribing ${outcome.plan.chunks.length} part${outcome.plan.chunks.length === 1 ? '' : 's'} of audio`);
             return { audio: { plan: outcome.plan, meta: outcome.meta }, words: 0 };
           }),
@@ -78,23 +88,27 @@ export class ItemWorkflow extends WorkflowEntrypoint<Env, ItemWorkflowParams> {
 
         if (fetched.audio) {
           const { plan, meta } = fetched.audio;
-          const parts: string[] = [];
+          // One durable step per chunk; each returns its text and timed segments (small).
+          const parts: ChunkTranscript[] = [];
           for (const [i, chunk] of plan.chunks.entries()) {
-            const text = await step.do(`transcribe-${i + 1}-of-${plan.chunks.length}`, RETRY, () =>
+            const part = await step.do(`transcribe-${i + 1}-of-${plan.chunks.length}`, RETRY, () =>
               guard(async () => {
                 await mark(`transcribe ${i + 1}/${plan.chunks.length}`);
-                const bytes = await fetchRange(plan.url, chunk.start, chunk.end);
+                const bytes = await fetchChunk(plan.url, chunk);
                 const t = await transcribeAudio(env, bytes, { itemId });
-                return t.text;
+                return { at: chunk.at, overlap: chunk.overlap, seconds: t.seconds, text: t.text, segments: t.segments } satisfies ChunkTranscript;
               }),
             );
-            parts.push(text);
+            parts.push(part);
           }
           await step.do('store-transcript', ONCE, () =>
             guard(async () => {
-              const text = joinTranscript(parts);
+              const { text, times } = stitchTranscript(parts);
               if (!text.trim()) throw new NonRetryableError('The transcription came back empty');
-              await storeSource(env, itemId, { kind: 'text', text, extractor: 'whisper', meta: { ...meta, note: 'Machine transcript of the audio. Check quotes against the recording.' }, fields: {} });
+              const note = plan.exactTimes
+                ? 'Machine transcript of the audio. Check quotes against the recording.'
+                : 'Machine transcript of the audio; times are estimated from the bitrate. Check quotes against the recording.';
+              await storeSource(env, itemId, { kind: 'text', text, extractor: 'whisper', meta: { ...meta, times, note }, fields: {} });
               return true;
             }),
           );
@@ -103,6 +117,29 @@ export class ItemWorkflow extends WorkflowEntrypoint<Env, ItemWorkflowParams> {
 
       const read = await step.do('read', RETRY, () => guard(async () => (await mark('read'), readItem(env, itemId))));
       await step.do('wiki', RETRY, () => guard(async () => (await mark('wiki'), resolveWiki(env, itemId, read.queries))));
+      // Plates and connections are helpers: a failure there never fails the item.
+      await step.do('plate', RETRY, () =>
+        guard(async () => {
+          await mark('plate');
+          return findPlates(env, itemId).catch((e) => {
+            if (e instanceof SpendCeilingError) throw e;
+            return { queries: [], added: 0, error: errorMessage(e).slice(0, 200) };
+          });
+        }),
+      );
+      const found = await step.do('embed', RETRY, () =>
+        guard(async () => {
+          await mark('embed');
+          return embedAndFindCandidates(env, itemId).catch((e) => {
+            if (e instanceof SpendCeilingError) throw e;
+            console.warn(JSON.stringify({ event: 'embed-failed', itemId, error: errorMessage(e) }));
+            return { embedded: 0, candidates: [] as Candidate[], vectorRoute: false };
+          });
+        }),
+      );
+      if (found.candidates.length) {
+        await step.do('connect', RETRY, () => guard(async () => (await mark('connect'), judgeCandidates(env, itemId, found.candidates))));
+      }
       await step.do('draft', RETRY, () => guard(async () => (await mark('draft'), draftItem(env, itemId))));
       await step.do('judge', RETRY, () => guard(async () => (await mark('judge'), setStatus(env, itemId, 'checking'), judgeNotes(env, itemId))));
       await step.do('check', RETRY, async () => {
@@ -153,6 +190,13 @@ async function handle(env: Env, msg: QueueMessage): Promise<void> {
         await env.DB.prepare('UPDATE haul_versions SET notified = 1 WHERE haul_id = ? AND version = ?').bind(msg.haulId, msg.version ?? 1).run();
       }
       console.log(JSON.stringify({ event: 'notify', haul: h.number, ...report }));
+      return;
+    }
+    case 'connect': {
+      // Look for connections again (after an edit, or once more items exist).
+      if (!msg.itemId) return;
+      const found = await embedAndFindCandidates(env, msg.itemId);
+      await judgeCandidates(env, msg.itemId, found.candidates);
       return;
     }
     case 'haul-draft': {

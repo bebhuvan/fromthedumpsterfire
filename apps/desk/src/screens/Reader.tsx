@@ -80,7 +80,7 @@ export interface Selection {
   text: string;
 }
 
-export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, busy }: { source: Source; chosen: Excerpt | null; candidates: Excerpt[]; onExcerpt: (s: Selection) => void; onHighlight: (s: Selection) => void; busy?: boolean }) {
+export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, busy, actionLabel = 'Make excerpt', allowHighlight = true }: { source: Source; chosen: Excerpt | null; candidates: Excerpt[]; onExcerpt: (s: Selection) => void; onHighlight: (s: Selection) => void; busy?: boolean; actionLabel?: string; allowHighlight?: boolean }) {
   const body = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<(Selection & { x: number; y: number; inside: boolean }) | null>(null);
   const bl = useMemo(() => blocks(source.text), [source.text]);
@@ -158,9 +158,9 @@ export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, bus
       {sel && (
         <div className="sel-bar" style={{ left: sel.x, top: sel.y }} role="toolbar" aria-label="Selection">
           <button type="button" className="btn small" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => (onExcerpt(sel), setSel(null), window.getSelection()?.removeAllRanges())}>
-            Make excerpt
+            {actionLabel}
           </button>
-          {sel.inside && (
+          {sel.inside && allowHighlight && (
             <button type="button" className="btn small" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => (onHighlight(sel), setSel(null), window.getSelection()?.removeAllRanges())}>
               Mark highlight
             </button>
@@ -186,6 +186,7 @@ export function extractorLabel(x: string): string {
     pasted: 'as you pasted it',
     oembed: 'the post',
     description: 'video description',
+    browser: 'rendered in a browser, then extracted',
   };
   return m[x] ?? x;
 }
