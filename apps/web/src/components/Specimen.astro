@@ -6,7 +6,7 @@ import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Highlighted from './Highlighted.astro';
 import { formOf, headword, speaker } from '../lib/forms';
-import { firstSentence, paths, titleText } from '../lib/site';
+import { firstSentence, paths, safeHref, titleText } from '../lib/site';
 
 interface Props {
   haul: Haul;
@@ -21,6 +21,8 @@ const len = titleText(item.title).length;
 const hw = headword(item.title.text);
 const ex = item.excerpt;
 // The opening crop scales its title so long titles still fit the specimen.
+// A card carries its plate like a print clipped to it.
+const plate = item.plate ? safeHref(item.plate.url) : undefined;
 const size = len > 40 ? 'sz-s' : len > 22 ? 'sz-m' : 'sz-l';
 ---
 <li class:list={['sp', `sp-${form}`, `t-${item.type}`]}>
@@ -70,6 +72,8 @@ const size = len > 40 ? 'sz-s' : len > 22 ? 'sz-m' : 'sz-l';
         <span class="sp-call"><span>FDF {haulSlug(haul.number)}.{n}</span><span>{typeLabel[item.type]}</span></span>
         <span class="sp-hw">{hw.head}{hw.article ? <>, <i>{hw.article}</i></> : null}</span>
         <span class="sp-d">{item.source.date}</span>
+        {ex ? <span class="sp-ce">{ex.text}</span> : null}
+        {plate ? <img class="sp-print" src={plate} width={item.plate!.width} height={item.plate!.height} alt="" loading="lazy" decoding="async" /> : null}
         <span class="sp-punch" aria-hidden="true"></span>
       </>
     ) : null}

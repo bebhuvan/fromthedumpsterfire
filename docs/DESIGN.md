@@ -29,7 +29,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Screen | The one bold moment |
 |---|---|
 | Waiting page (before Haul 001) | the struck masthead: *From the* ~~Internet~~ **Dumpster Fire**, the strike in ember |
-| Haul cover | the ghost Haul number, huge, in the Haul's colour, bleeding off the right edge |
+| Haul cover | the ghost Haul number, huge, in the Haul's colour, bleeding off the right edge. On the home page the cover also carries the nameplate (the struck masthead across the page with a ruled strap line), as a magazine's front does; the header then drops its small masthead |
 | Essay, post | the title, set huge (a magazine opening) |
 | Poem | the broadside sheet |
 | Rhymes | the two years facing each other |
@@ -42,7 +42,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 |---|---|---|
 | essay, post | magazine opening | huge title across margin and column; the why as an italic standfirst; the excerpt as a pull-in with the editor's highlight in the type colour; machine notes beside it in the margin |
 | paper | journal offprint | a running citation line; centred title and authors; the abstract block; numbered sections (Why it's here, Notes, References) with the numbers hanging in the margin |
-| talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps, **B.** in ember italic for the editor, MACHINE in blue; the dateline where timestamps would go |
+| talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps with the dateline under it, **B.** in ember italic for the editor, MACHINE in blue once for all the machine's notes (one turn); the speaker's words run past the column at 30–46px |
 | poem | broadside | one sheet in the poem colour, the poem alone in Newsreader Text italic (28–44px, leading 1.38), poet and source at the foot |
 | rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
 | rabbit hole | catalogue card | a sheet in the type colour with a call number (`FDF 001.6`), the headword with its article moved to the end, the entry, the machine's note, a punch hole; the plate beside it |
@@ -55,14 +55,13 @@ catalogue drawer; each names where it points, then the title in display serif, t
 
 ## The cover
 
-The ghost number and title; the field note in the reading column with the route in the margin (days
-in sans, the machine's step in blue); **In this Haul** as *specimens*: each item shown as a small
+The ghost number and title; the field note in the reading column, ending on the ember **B.** as its end mark, with the route in the margin (days in sans, the machine's step in blue, and each step citing the item it led to by its number in small raised ember, as a page cites a figure); **In this Haul** as *specimens*: each item shown as a small
 specimen of its own form (a cropped opening, a two-page spread, a transcript strip, an offprint with
 its abstract, a coral broadside, a 3×5 card with its punch hole, a book page), with the number in
 ember, the type and the first sentence of the why under it. Wide forms take seven of twelve columns,
-narrow ones four, cards six, packed densely so the table stays uneven but full; on phones they stack
+narrow ones four, cards six (the card carries its plate like a clipped print), across the full width under a ruled **In this Haul** head, packed densely so the table stays uneven but full; on phones they stack
 in order, each keeping its own width and side. Then the thread as a list of years, and the colophon.
-The archive lists back issues, each with its ghost number in the Haul's colour.
+The archive lists back issues, each with its ghost number in the Haul's colour, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
 
 ## Ember
 

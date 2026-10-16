@@ -21,7 +21,7 @@ interface Props {
   runhead?: { href: string; left: string; right?: string };
   /** Folio at the foot of the page (an item's number in its Haul). */
   folio?: { left: string; number: string | number };
-  /** Hide the small masthead when the page carries the big one. */
+  /** Drop the small masthead from the header when the page carries the big one. */
   bigMast?: boolean;
 }
 
@@ -69,10 +69,12 @@ const nav = [
   <body>
     <a class="skip" href="#main">Skip to content</a>
     <header class="wrap top">
-      <a class="top-home" href={paths.home} aria-label={`${SITE_NAME}, latest Haul`}>
-        <span class="flame" aria-hidden="true"></span>
-        {bigMast ? null : <Masthead class="mast-s" />}
-      </a>
+      {bigMast ? null : (
+        <a class="top-home" href={paths.home} aria-label={`${SITE_NAME}, latest Haul`}>
+          <span class="flame" aria-hidden="true"></span>
+          <Masthead class="mast-s" />
+        </a>
+      )}
       <nav class="top-nav" aria-label="Sections">
         {nav.map((n) => <a href={n.href} aria-current={section === n.key ? 'page' : undefined}>{n.label}</a>)}
       </nav>

@@ -4,16 +4,16 @@ import type { Marginal } from '@fdf/shared/haul';
 
 interface Props {
   notes: Marginal[];
-  /** Transcript rows put a MACHINE speaker label beside each note. */
+  /** In a transcript the notes are one turn, under one MACHINE speaker label. */
   rows?: boolean;
 }
 const { notes, rows } = Astro.props;
 ---
 {rows
-  ? notes.map((n) => (
+  ? notes.length ? (
       <div class="g tl">
         <p class="m who machine">Machine</p>
-        <p class="c note machine">{n.text} <cite>{n.cite}</cite></p>
+        <div class="c tl-notes">{notes.map((n) => <p class="note machine">{n.text} <cite>{n.cite}</cite></p>)}</div>
       </div>
-    ))
+    ) : null
   : notes.map((n) => <p class="note machine"><span class="sr">The machine notes: </span>{n.text} <cite>{n.cite}</cite></p>)}

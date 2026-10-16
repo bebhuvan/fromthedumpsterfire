@@ -88,3 +88,10 @@ Dated, newest last. Don't reopen these without a new reason.
 - **The broadside is set in Newsreader Text italic**, not the display italic, which read tight and
   mannered at poster size. The editor picked this from four settings.
 - **No dotted leaders.** See also is a set of reference slips; the search index is title and count.
+- **The home page carries the nameplate.** The editor found the landing underpowered: the brand lived
+  only in a small header line. The struck masthead now runs across the top of the home cover with a
+  strap line; the ghost number stays the loud thing below it.
+- **The route cites items by number** (small raised ember numerals), replacing the tiny type squares,
+  so the route and the specimens read as one system.
+- **Search is a word, not an icon**, in the navigation; the archive also has its own search line. A
+  magnifier would be the only icon on the site.

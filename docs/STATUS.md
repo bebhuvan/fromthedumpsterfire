@@ -117,6 +117,12 @@
   pills, rounded cards, the boxed marginalia and the SVG arrows are gone (`Chip.astro`, `Arrow.astro`
   deleted). Verified locally with `wrangler dev` on the sample Haul and with an empty bucket (waiting
   page): 360, 390 and 1280 px, light and dark, no horizontal scroll; `npm run verify` passes.
+- 2026-10-16: **landing and transcript pass.** The home cover carries the nameplate (struck masthead
+  with a strap line); the route cites items by number in ember; the field note ends on the ember B.;
+  specimens use the full width and the card shows its plate; the transcript puts the dateline under the
+  speaker, gives the speaker's words the width, and sets all machine notes as one MACHINE turn; the
+  archive has a search line. Fixed a phone overflow on the rabbit-hole page (the plate widened its
+  grid). Checked at 390, 1280 and 1600 px, light and dark.
 
 ### Web: what was verified (2026-10-16)
 

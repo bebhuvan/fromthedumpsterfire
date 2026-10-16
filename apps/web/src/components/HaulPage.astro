@@ -8,6 +8,7 @@ import Title from './Title.astro';
 import Highlighted from './Highlighted.astro';
 import Voice from './Voice.astro';
 import Specimen from './Specimen.astro';
+import Masthead from './Masthead.astro';
 import { fullDate, longDate, objects, paths, titleText } from '../lib/site';
 
 interface Props {
@@ -17,6 +18,9 @@ interface Props {
 const { haul, home } = Astro.props;
 const note = haul.fieldNote;
 const typeOf = new Map(haul.items.map((i) => [i.id, i.type]));
+// The route cites the contents by number, the way a page cites a figure.
+const numOf = new Map(haul.items.map((i, n) => [i.id, String(n + 1).padStart(2, '0')]));
+const last = note.paragraphs.length - 1;
 const thread = haul.threads[0];
 ---
 <Base
@@ -25,8 +29,15 @@ const thread = haul.threads[0];
   path={home ? paths.home : paths.haul(haul.number)}
   type={home ? 'website' : 'article'}
   section={home ? 'latest' : undefined}
+  bigMast={home}
 >
-  <section class:list={['ghost', `s-${haul.swatch}`]} aria-labelledby="haul-title">
+  {home ? (
+    <section class="wrap nameplate" aria-label="From the Dumpster Fire">
+      <p class="np-name"><Masthead /></p>
+      <p class="np-strap"><span>An irregular magazine of things worth salvaging from the internet and the archive</span><span>Chosen by one editor, read with machines</span></p>
+    </section>
+  ) : null}
+  <section class:list={['ghost', `s-${haul.swatch}`, { 'ghost-home': home }]} aria-labelledby="haul-title">
     <div class="wrap ghost-in">
       <span class="numeral" aria-hidden="true">{haulSlug(haul.number)}</span>
       <p class="gmeta">Haul {haulSlug(haul.number)} · <time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time> · {objects(haul.items.length).toLowerCase()}</p>
@@ -47,9 +58,8 @@ const thread = haul.threads[0];
               <li class:list={[{ 'by-machine': machine }, t ? `t-${t}` : null]}>
                 <span class="day">{step.day}</span>
                 <span class:list={['rt', { machine }]}>
-                  {t ? <span class="key" aria-hidden="true"></span> : null}
                   {machine ? <span class="sr">The machine noticed: </span> : null}
-                  {step.itemId ? <a href={paths.item(haul.number, step.itemId)}>{step.text}</a> : step.text}
+                  {step.itemId ? <a href={paths.item(haul.number, step.itemId)}>{step.text}<span class="xref" aria-label={`, item ${numOf.get(step.itemId)}`}>{numOf.get(step.itemId)}</span></a> : step.text}
                 </span>
               </li>
             );
@@ -60,13 +70,14 @@ const thread = haul.threads[0];
     <div class="c fn-c">
       <Title title={note.title} as="h2" class="h-sec" id="fn-title" />
       {note.audio ? <Voice audio={note.audio} label="Hear it as I said it" /> : null}
-      {note.paragraphs.map((para) => <Highlighted text={para} highlight={note.highlight} />)}
-      <p class="sign" aria-label="Bhuvanesh, the editor">B.</p>
+      {note.paragraphs.map((para, i) => (
+        <Highlighted text={para} highlight={note.highlight}>{i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}</Highlighted>
+      ))}
     </div>
   </section>
 
   <section class="wrap g contents" aria-labelledby="contents-title">
-    <h2 class="m mh" id="contents-title">In this Haul</h2>
+    <h2 class="mh sp-h" id="contents-title">In this Haul <span>{objects(haul.items.length).toLowerCase()}, each set in its own printed form</span></h2>
     <ol class="sp-list">
       {haul.items.map((item) => <Specimen haul={haul} item={item} />)}
     </ol>

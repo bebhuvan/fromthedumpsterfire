@@ -14,6 +14,11 @@ const { hauls } = await archive();
     <div class="c">
       <Title title={{ text: 'Every', italic: 'Haul' }} as="h1" class="h-title" />
       <p class="deck">Newest first. Each Haul keeps its own colour, so the archive reads like a run of back issues.</p>
+      <form class="find-in" action={paths.search} method="get" role="search">
+        <label class="sr" for="aq">Search every Haul</label>
+        <input class="search-input find-in-q" id="aq" name="q" type="search" placeholder="Look for a person, a year, an idea" autocomplete="off" spellcheck="false" enterkeyhint="search" />
+        <button class="find-in-go" type="submit">Search</button>
+      </form>
     </div>
   </section>
   <section class="wrap g contents" aria-label="Hauls">

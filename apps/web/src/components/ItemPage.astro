@@ -75,7 +75,7 @@ const licence = item.plate ? item.plate.licence.charAt(0).toUpperCase() + item.p
 
     {form === 'transcript' || form === 'facing' ? (
       <header class="wrap g tr-head">
-        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{form === 'facing' && item.rhyme ? <span>{item.rhyme.then.year} and {item.rhyme.now.year}</span> : <span>{item.source.name}, {item.source.date}</span>}{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
+        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{form === 'facing' && item.rhyme ? <span>{item.rhyme.then.year} and {item.rhyme.now.year}</span> : null}{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
         <div class="c">
           <Title title={item.title} as="h1" class="h-item" id="item-title" />
           {form === 'transcript' ? <p class="byline">{item.creator}</p> : null}
@@ -216,10 +216,9 @@ const licence = item.plate ? item.plate.licence.charAt(0).toUpperCase() + item.p
 
     {form === 'transcript' ? (
       <section class="wrap transcript" aria-label="From the transcript">
-        <div class="g tl"><p class="m when">{item.source.name}<br />{item.source.date}</p></div>
         {item.excerpt ? (
-          <div class="g tl">
-            <p class="m who">{speaker(item.creator)}</p>
+          <div class="g tl tl-said">
+            <p class="m who">{speaker(item.creator)}<span class="when">{item.source.name}, {item.source.date}</span></p>
             <blockquote class="c said" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
           </div>
         ) : null}
