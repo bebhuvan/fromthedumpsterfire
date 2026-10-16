@@ -123,6 +123,11 @@
   speaker, gives the speaker's words the width, and sets all machine notes as one MACHINE turn; the
   archive has a search line. Fixed a phone overflow on the rabbit-hole page (the plate widened its
   grid). Checked at 390, 1280 and 1600 px, light and dark.
+- 2026-10-16: **See also and About.** See also entries are catalogue guide cards (a ruled edge with a
+  staggered tab in the colour of what each points to) instead of grey slips. About is rebuilt from the
+  magazine's forms: a big title, the two voices as a transcript, five house rules each with the check
+  behind it, and a key to the forms (`formGuide` in `apps/web/src/lib/forms.ts`). On the web preview
+  only; the reader app does not have this pass or the landing pass yet.
 
 ### Web: what was verified (2026-10-16)
 
