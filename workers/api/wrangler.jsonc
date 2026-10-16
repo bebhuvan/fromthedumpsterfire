@@ -31,8 +31,8 @@
         "AI_GATEWAY_ID": "fdf-preview",
         // Access: the team domain and the application's AUD tag, from the Zero Trust dashboard.
         // Empty values deny every Desk request (fail closed).
-        "ACCESS_TEAM_DOMAIN": "",
-        "ACCESS_AUD": "",
+        "ACCESS_TEAM_DOMAIN": "nameless-cell-b28f.cloudflareaccess.com",
+        "ACCESS_AUD": "7563cb7bfd315acef12832457cb54f0294d9cb9d2612d4198a91066b78ddef4f",
         "OWNER_EMAIL": "owner@example.com"
       },
       "d1_databases": [
@@ -50,18 +50,18 @@
       "name": "fdf-desk",
       "vars": {
         "ENVIRONMENT": "production",
-        "SPEND_WARN_USD": "0",
-        "SPEND_CEILING_USD": "0",
+        "SPEND_WARN_USD": "8",
+        "SPEND_CEILING_USD": "10",
         "FILES_BASE": "https://files.fromthedumpsterfire.com",
         "SITE_BASE": "https://fromthedumpsterfire.com",
         "CF_ACCOUNT_ID": "169758eb3d46dcbb6dba025317257426",
         "AI_GATEWAY_ID": "fdf",
-        "ACCESS_TEAM_DOMAIN": "",
-        "ACCESS_AUD": "",
+        "ACCESS_TEAM_DOMAIN": "nameless-cell-b28f.cloudflareaccess.com",
+        "ACCESS_AUD": "fb6c6d7db7c68cb8be14e68af742081fe5ee0582d8c2eafc622ce36d735519c5",
         "OWNER_EMAIL": "owner@example.com"
       },
       "d1_databases": [
-        { "binding": "DB", "database_name": "fdf-desk", "database_id": "PLACEHOLDER_SET_AT_PROVISION", "migrations_dir": "../../migrations" }
+        { "binding": "DB", "database_name": "fdf-desk", "database_id": "73a6d440-5bc9-4583-9a67-e8be10f23c7a", "migrations_dir": "../../migrations" }
       ],
       "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files" }],
       "ai": { "binding": "AI" },
