@@ -12,6 +12,8 @@ Read these before working:
 - `docs/DESIGN.md`: the visual system. Tokens live in `packages/shared/src/tokens.ts`.
 - `docs/DECISIONS.md`: settled decisions and what was rejected. Don't relitigate them.
 - `docs/STATUS.md`: what's built and what's next. Update it as you go.
+- `docs/VOICE.md`: the editor's measured writing voice and the AI patterns to keep out of machine
+  drafts. Machine-usable form in `packages/shared/src/voice.ts`.
 
 ## Non-negotiables
 
@@ -30,7 +32,7 @@ Read these before working:
 ## Layout
 
 ```
-apps/web          Astro site (not built yet)
+apps/web          public website: Astro on the fdf-web Worker, rendering published bundles from R2 per request
 apps/desk         the Desk UI: Vite + React SPA, served by workers/api (private, behind Access)
 apps/mobile       Expo reader app
 workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
@@ -38,7 +40,8 @@ workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
                   threads (connect.ts), rhymes, publish, FCM
-packages/shared   schema types, design tokens, style check, verbatim, cleanup, detect, validator
+packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
+                  validator
 migrations/       D1 migrations
 scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts
 ```
@@ -69,6 +72,24 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts
   `docs/ARCHITECTURE.md` (Running the Desk). What is deployed and what the editor must set up:
   `docs/STATUS.md`.
 
+## The website (apps/web)
+
+- Astro server output on the `fdf-web` Worker. Pages render per request from the R2 binding `FILES`
+  (`fdf-files` / `fdf-public-preview`, read only), so a Desk publish needs no deploy. The wrapper in
+  `src/worker/index.ts` does redirects, the 405 rule, the edge cache (key: deploy version + index
+  `updatedAt` + path) and all security headers; the data layer is `src/lib/store.ts`.
+- Every bundle passes `validateHaul` before it renders; a failing bundle falls back to an earlier
+  version or a 503, never a crash. URL shapes in `src/lib/site.ts` match the app's deep links
+  (`/haul/<n>`, `/haul/<n>/<item>`, `/haul/<n>/thread/<id>`).
+- Never `set:html`; bundle text is always escaped, italic title tails render as `<em>`, external
+  links go through `safeHref` (http/https only). No inline scripts or styles: the CSP in
+  `src/worker/lib.ts` is `script-src 'self'; style-src 'self'`.
+- Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
+  sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.
+- Client JS is only the theme toggle and search. `npm run web:dev` (put `FDF_USE_SEED=1` in
+  `apps/web/.dev.vars` for sample data), `npm run deploy:web:preview`, `npm run deploy:web`.
+  `npm run size -w @fdf/web` measures the Worker bundle.
+
 ## The reader app (apps/mobile)
 
 - Expo 57 with Continuous Native Generation: never edit `android/` or `ios/`; configure in `app.json`.
@@ -78,8 +99,12 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts
 - `src/App.tsx` (navigator + deep links in `src/nav.ts`), `src/routes.tsx` (params to data),
   `src/screens/*`, `src/ui/*` (type roles in `type.tsx`), `src/lib/data.ts` (offline-first bundles).
 - Fonts are embedded static cuts; use the names in `src/theme.ts` and never set fontWeight/fontStyle.
-- Build a release APK: `cd apps/mobile && npx expo prebuild -p android --clean && cd android &&
-  ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a` (ANDROID_HOME=~/android-sdk).
+- Build a release APK: `cd apps/mobile && npm run prebuild:android && npm run build:android`
+  (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS
+  bundle to rebuild: Gradle's up-to-date check only watches apps/mobile, so edits in
+  packages/shared would otherwise ship a stale bundle.
+- Plates and voice notes must be served from our files host. Archives such as Wikimedia refuse the
+  app's image requests (403 even with a descriptive User-Agent), so never hotlink them.
 
 ## Conventions
 

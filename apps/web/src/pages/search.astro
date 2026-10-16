@@ -1,0 +1,50 @@
+---
+// Search every Haul. Results are scored in the browser over /search.json (built with the site);
+// the A to Z index below works without JavaScript.
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import { archive } from '../lib/runtime';
+import { topicIndex } from '../lib/search';
+import { paths, titleText } from '../lib/site';
+
+const { hauls } = await archive();
+const topics = topicIndex(hauls);
+---
+<Base title="Search" description="Search every Haul: people, places, years and ideas." path={paths.search} section="search">
+  <div class="wrap">
+    <div class="read">
+      <div class="page-head">
+        <h1 class="sr">Search</h1>
+        <form class="search-form" action={paths.search} method="get" role="search" data-search-form>
+          <label class="sr" for="q">Search every Haul</label>
+          <input class="search-input" id="q" name="q" type="search" placeholder="Search every Haul" autocomplete="off" spellcheck="false" enterkeyhint="search" />
+        </form>
+        <noscript><p class="lede">Search runs in your browser and needs JavaScript. The index of people, places and ideas below works without it.</p></noscript>
+        <div class="filters" data-filters hidden></div>
+        <p class="meta search-status" aria-live="polite" data-status></p>
+        <ol class="results" data-results></ol>
+      </div>
+
+      <div data-browse>
+        <p><button class="pill wide" type="button" data-surprise hidden>Surprise me<span class="ext" aria-hidden="true">→</span></button></p>
+        <section class="section-pad" aria-labelledby="index-title">
+          <Title title={{ text: 'The index' }} as="h2" class="title-s" id="index-title" />
+          <p class="meta">People, places and ideas across every Haul, from the Wikipedia layer</p>
+          <div class="topics">
+            {topics.map((t) => (
+              <details>
+                <summary><span>{t.title}</span><span class="meta">{t.items.length}</span></summary>
+                <ul>
+                  {t.items.map(({ n, item }) => <li><a href={paths.item(n, item.id)}>{titleText(item.title)}<span class="meta"> · {item.creator} · Haul {n}</span></a></li>)}
+                </ul>
+              </details>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <script>
+    import '../scripts/search';
+  </script>
+</Base>

@@ -45,15 +45,15 @@
       "name": "fdf-pipeline",
       "vars": {
         "ENVIRONMENT": "production",
-        "SPEND_WARN_USD": "0",
-        "SPEND_CEILING_USD": "0",
+        "SPEND_WARN_USD": "8",
+        "SPEND_CEILING_USD": "10",
         "FILES_BASE": "https://files.fromthedumpsterfire.com",
         "SITE_BASE": "https://fromthedumpsterfire.com",
         "CF_ACCOUNT_ID": "169758eb3d46dcbb6dba025317257426",
         "AI_GATEWAY_ID": "fdf"
       },
       "d1_databases": [
-        { "binding": "DB", "database_name": "fdf-desk", "database_id": "PLACEHOLDER_SET_AT_PROVISION", "migrations_dir": "../../migrations" }
+        { "binding": "DB", "database_name": "fdf-desk", "database_id": "73a6d440-5bc9-4583-9a67-e8be10f23c7a", "migrations_dir": "../../migrations" }
       ],
       "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-media" }],
       "ai": { "binding": "AI" },

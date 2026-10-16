@@ -1,0 +1,11 @@
+---
+import HaulPage from '../../../components/HaulPage.astro';
+import Unavailable from '../../../components/Unavailable.astro';
+import { archive } from '../../../lib/runtime';
+import { findHaul } from '../../../lib/site';
+
+const found = findHaul(await archive(), Astro.params.n);
+if (found.kind === 'missing') return new Response(null, { status: 404 });
+if (found.kind === 'failed') Astro.response.status = 503;
+---
+{found.kind === 'ok' ? <HaulPage haul={found.haul} /> : <Unavailable what={`Haul ${Astro.params.n}`} />}

@@ -1,0 +1,89 @@
+---
+import '../styles/global.css';
+import { palettes } from '@fdf/shared/tokens';
+import { absolute, paths, SITE_DESCRIPTION, SITE_NAME } from '../lib/site';
+
+interface Props {
+  /** Page title without the site name; omit on the home page. */
+  title?: string;
+  description?: string;
+  /** Canonical path, e.g. "/haul/1". Defaults to the current path. */
+  path?: string;
+  type?: 'website' | 'article';
+  image?: { url: string; width: number; height: number; alt: string };
+  /** Which top-level section is current, for aria-current in the nav. */
+  section?: 'latest' | 'threads' | 'archive' | 'search' | 'about';
+  noindex?: boolean;
+}
+
+const { title, description = SITE_DESCRIPTION, path = Astro.url.pathname, type = 'website', image, section, noindex } = Astro.props;
+const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
+const canonical = absolute(path);
+const nav = [
+  { key: 'latest', href: paths.home, label: 'Latest' },
+  { key: 'threads', href: paths.threads, label: 'Threads' },
+  { key: 'archive', href: paths.archive, label: 'Archive' },
+  { key: 'search', href: paths.search, label: 'Search' },
+  { key: 'about', href: paths.about, label: 'About' },
+] as const;
+---
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : null}
+    <meta name="theme-color" content={palettes.light.bg} media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content={palettes.dark.bg} media="(prefers-color-scheme: dark)" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={title ?? SITE_NAME} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content={type} />
+    <meta property="og:locale" content="en_IN" />
+    {image ? <meta property="og:image" content={image.url} /> : <meta property="og:image" content={absolute('/og.png')} />}
+    {image ? <meta property="og:image:width" content={String(image.width)} /> : <meta property="og:image:width" content="1200" />}
+    {image ? <meta property="og:image:height" content={String(image.height)} /> : <meta property="og:image:height" content="630" />}
+    <meta property="og:image:alt" content={image ? image.alt : `${SITE_NAME}: the ember flame and the masthead`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="alternate" type="application/rss+xml" title={SITE_NAME} href={paths.feed} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/NewsreaderText-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/NewsreaderDisplay-Medium.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/tokens.css" />
+    <script is:inline src="/theme-init.js"></script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="wrap site-head">
+      <a class="mast" href={paths.home} aria-label={`${SITE_NAME}, latest Haul`}><span class="flame" aria-hidden="true"></span>{SITE_NAME}</a>
+      <nav class="site-nav label" aria-label="Sections">
+        {nav.map((n) => <a href={n.href} aria-current={section === n.key ? 'page' : undefined}>{n.label}</a>)}
+      </nav>
+      <div class="head-tools">
+        <button class="theme-toggle" type="button" hidden aria-label="Switch to dark theme" data-theme-toggle><span class="disc" aria-hidden="true"></span></button>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="wrap">
+      <div class="site-foot">
+        <p>Things worth salvaging from the internet and the archive. The serif is the editor; <span class="machine">the blue sans is the machine.</span></p>
+        <nav class="label" aria-label="More">
+          <a href={paths.archive}>Every Haul</a>
+          <a href={paths.threads}>Threads</a>
+          <a href={paths.about}>How it's made</a>
+          <a href={paths.feed}>RSS</a>
+        </nav>
+      </div>
+    </footer>
+    <script>
+      import '../scripts/theme';
+    </script>
+  </body>
+</html>

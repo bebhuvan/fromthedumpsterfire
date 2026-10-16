@@ -14,7 +14,7 @@ Reader app + website ◄─────┴──── published Haul bundle (R2
 
 | Surface | Who | Tech |
 |---|---|---|
-| Website | readers | Astro on Workers static assets, fromthedumpsterfire.com |
+| Website | readers | Astro on a Worker (`apps/web`, `fdf-web`), rendering bundles from R2 per request, fromthedumpsterfire.com |
 | Reader app | readers | Expo (React Native), Android + iOS, reads published bundles, offline |
 | Desk | editor only | Vite + React SPA (`apps/desk`) + PWA served by `workers/api` at desk.fromthedumpsterfire.com, behind Cloudflare Access |
 | Capture | editor only | Desk share target (Android), iOS Shortcut, optional Telegram bot |
@@ -58,8 +58,8 @@ Every step writes its output and cost to D1 so the Desk can show provenance.
 ## Publish
 
 The Desk's Publish action freezes the Haul in D1 and writes a versioned bundle to R2:
-`hauls/001/v1/haul.json` plus assets, and updates `hauls/index.json`. The website rebuilds from the
-bundle; the app fetches the index, downloads the Haul for offline reading, and receives a push.
+`hauls/001/v1/haul.json` plus assets, and updates `hauls/index.json`. The website reads the new
+bundle from R2 within a minute (no rebuild); the app fetches the index, downloads the Haul for offline reading, and receives a push.
 Corrections publish a new version with a visible changelog entry.
 
 ## Cost guardrails
@@ -258,3 +258,54 @@ WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 - `npx tsx scripts/verify-bundle.ts <filesBase> hauls/001/v1/haul.json [publishedFilesBase]` validates a
   published bundle; with the third argument it also checks every plate and audio URL is under it and
   fetches each one. `npx tsx scripts/probe-plates.ts "query"` shows what each collection returns.
+
+## The website (built)
+
+`apps/web` is an Astro site with server output on one Worker, `fdf-web` (`fdf-web-preview` on
+workers.dev for the preview env). Pages render at request time from the published bundles in R2, so
+the Desk's publish is the only step: no rebuild, no deploy.
+
+```
+Desk publish ─► R2 fdf-files: hauls/index.json, hauls/NNN/vN/haul.json (immutable)
+                     │  FILES binding (read only)
+browser ─► fdf-web Worker ─► wrapper (src/worker/index.ts)
+              │                ├─ www → apex, aliases, 405, security + cache headers
+              │                ├─ index updatedAt (re-read every 20 s per isolate)
+              │                ├─ edge cache: key = deploy version + updatedAt + path ─► HIT
+              │                └─ MISS ─► Astro render ─► store (validateHaul per path+etag) ─► cache.put
+              └─ /_astro/*, /fonts/*, og.png, favicon: static assets, no Worker
+```
+
+**Wrapper.** Runs first for everything except fonts, hashed CSS/JS and a few static files
+(`run_worker_first` with exclusions; their headers come from `public/_headers`). It redirects `www.`
+to the apex, maps the app's aliases (`/haul/<n>/note` to `/haul/<n>#field-note`, `/haul/001/…` to
+`/haul/1/…`, `/hauls` to `/archive`, trailing slashes), refuses non-GET/HEAD with 405, reads the index's
+`updatedAt`, and looks the page up in `caches.default` under `deploy version / updatedAt / path` (query
+ignored). On a miss it calls the Astro handler and stores 200 responses for a day; a new publish or
+correction changes `updatedAt`, so old pages are simply never asked for again, and a new deploy changes
+the version. Every response gets the CSP (no inline script or style), nosniff, frame-ancestors none,
+HSTS, referrer and permissions policies, and `cache-control: public, max-age=30` for pages. Non-production
+hosts get `X-Robots-Tag: noindex`. The Cache API is a no-op on workers.dev, so the preview renders every
+request.
+
+**Store** (`src/lib/store.ts`, bound to `FILES` in `src/lib/runtime.ts`). The index is shape-checked
+(bundle paths must be `hauls/NNN/vN/haul.json`); a missing index means the waiting page; an unreadable
+one falls back to the last good copy in memory, else 503. Each bundle is validated with `validateHaul`
+(with the index) once per path and etag; the result is trusted for five minutes, then the etag is
+re-checked with a HEAD. A bundle that fails is logged and never rendered: the store tries up to five
+earlier versions (validated without the index, since a correction may change the title) and serves the
+newest good one; if none, that Haul's pages answer 503. `FDF_USE_SEED=1` (in `apps/web/.dev.vars`, never
+honoured in production) swaps R2 for the sample Haul for `astro dev`.
+
+**Pages.** `/` (latest Haul, or the waiting page while the index is empty), `/haul/<n>` (cover band,
+field note with the route, contents, colophon and corrections), `/haul/<n>/<item>` (standard, Rhymes
+and poem layouts), `/haul/<n>/thread/<id>`, `/threads`, `/archive`, `/search` (vanilla script over
+`/search.json`, same weighting as the app), `/feed.xml`, `/sitemap.xml`, all rendered on request.
+Prerendered: `/about`, 404, `/503`, `/tokens.css` (from `packages/shared/src/tokens.ts`), and
+`/.well-known/assetlinks.json` / `apple-app-site-association` when `ANDROID_CERT_SHA256` /
+`APPLE_APP_ID` are set at build time.
+
+**Build and deploy.** `CLOUDFLARE_ENV=preview|production astro build` (the Cloudflare Vite plugin writes
+`dist/server/wrangler.json` for that env), then `wrangler deploy` from `apps/web`; the root scripts
+`deploy:web:preview` and `deploy:web` do both. Worker size: 776 KiB, 202 KiB gzipped. Measured CPU: 0 to
+1 ms per rendered page.

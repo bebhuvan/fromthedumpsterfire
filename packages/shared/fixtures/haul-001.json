@@ -143,6 +143,7 @@
       "creator": "via Wikipedia",
       "source": { "name": "Wikipedia", "date": "London, 1858", "url": "https://en.wikipedia.org/wiki/Great_Stink" },
       "why": { "text": "The summer London's river finally made Parliament act. Some problems only get infrastructure once they are impossible to ignore." },
+      "plate": { "url": "https://files.fromthedumpsterfire.com/seed/silent-highwayman.jpg", "width": 975, "height": 745, "caption": "“The Silent Highwayman”: Death rows the Thames.", "credit": "Punch, 10 July 1858, via Wikimedia Commons", "licence": "public domain" },
       "marginalia": [
         { "text": "The crisis led to Joseph Bazalgette's sewer network, much of which London still uses.", "cite": "Wikipedia: Great Stink" }
       ],

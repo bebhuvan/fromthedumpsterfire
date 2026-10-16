@@ -30,7 +30,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
-    "doctor": "expo-doctor"
+    "doctor": "expo-doctor",
+    "build:android": "cd android && ./gradlew :app:createBundleReleaseJsAndAssets --rerun && ./gradlew assembleRelease -PreactNativeArchitectures=${ARCH:-arm64-v8a}",
+    "prebuild:android": "expo prebuild -p android --clean"
   },
   "private": true,
   "expo": {

@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import { paths } from '../lib/site';
+
+export const prerender = true;
+
+const promises = [
+  'Every quotation is matched word for word against its source.',
+  'Every link is fetched and working when a Haul ships.',
+  'Every note from the machine names its source.',
+  "The editor's words are never rewritten.",
+  'No generated images. Plates come from the public domain, with their licence.',
+];
+---
+<Base title="How it's made" description="One editor chooses everything. Machines read closely, find connections and check facts, and their words are always marked." path={paths.about} section="about">
+  <div class="wrap">
+    <div class="read">
+      <div class="page-head">
+        <Title title={{ text: "How it's", italic: 'made' }} as="h1" class="title-m" />
+      </div>
+      <div class="prose">
+        <p>From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays, talks, papers, poems, podcasts, passages and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.</p>
+      </div>
+
+      <section class="section-pad" aria-labelledby="voices-title">
+        <h2 class="h-section" id="voices-title">Two voices</h2>
+        <div class="voices">
+          <div class="editor-voice">
+            <p class="note">This is the editor. One person chooses everything, mostly by voice, and every word set like this is theirs.</p>
+          </div>
+          <div class="machine-voice">
+            <p class="machine">This is the machine. It reads each piece closely, finds connections across time, drafts context and checks facts. Anything it writes is set like this, and the editor checks it before it ships.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="promise-title">
+        <h2 class="h-section" id="promise-title">What we promise</h2>
+        <ul class="promises">
+          {promises.map((line) => <li>{line}</li>)}
+        </ul>
+      </section>
+
+      <section class="section-pad" aria-labelledby="read-title">
+        <h2 class="h-section" id="read-title">Other ways to read</h2>
+        <div class="prose read-ways">
+          <p>New Hauls arrive in the <a href={paths.feed}>RSS feed</a> as soon as they are published. Every Haul stays online in the <a href={paths.archive}>archive</a>.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</Base>

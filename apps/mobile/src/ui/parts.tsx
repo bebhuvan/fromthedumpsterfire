@@ -95,7 +95,10 @@ export function Divider() {
   return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: p.rule }} />;
 }
 
-const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+const mmss = (sec: number) => {
+  const s = Math.max(0, Math.round(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
 /**
  * The editor's voice. The native player is only created on first tap, so a screen full of
@@ -122,8 +125,11 @@ function ActiveVoice({ audio, label, compact }: { audio: Audio; label: string; c
     if (status.didJustFinish || status.currentTime >= status.duration - 0.2) player.seekTo(0);
     player.play();
   };
-  const remaining = status.duration ? status.duration - status.currentTime : audio.seconds;
-  return <VoiceButton playing={status.playing} label={label} seconds={remaining} compact={compact} onPress={toggle} progress={status.duration ? status.currentTime / status.duration : 0} />;
+  // At the end the player can report a position just past the duration; a finished note shows its full length again.
+  const duration = status.duration > 0 ? status.duration : audio.seconds;
+  const finished = status.didJustFinish || (!status.playing && status.currentTime >= duration - 0.2);
+  const at = finished ? 0 : Math.min(Math.max(status.currentTime, 0), duration);
+  return <VoiceButton playing={status.playing} label={label} seconds={duration - at} compact={compact} onPress={toggle} progress={at / duration} />;
 }
 
 function VoiceButton({ playing, label, seconds, compact, onPress, progress = 0 }: { playing: boolean; label: string; seconds: number; compact?: boolean; onPress: () => void; progress?: number }) {

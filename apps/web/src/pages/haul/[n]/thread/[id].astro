@@ -1,0 +1,13 @@
+---
+import ThreadPage from '../../../../components/ThreadPage.astro';
+import Unavailable from '../../../../components/Unavailable.astro';
+import { archive } from '../../../../lib/runtime';
+import { findHaul } from '../../../../lib/site';
+
+const found = findHaul(await archive(), Astro.params.n);
+if (found.kind === 'missing') return new Response(null, { status: 404 });
+const thread = found.kind === 'ok' ? found.haul.threads.find((t) => t.id === Astro.params.id) : undefined;
+if (found.kind === 'ok' && !thread) return new Response(null, { status: 404 });
+if (found.kind === 'failed') Astro.response.status = 503;
+---
+{found.kind === 'ok' && thread ? <ThreadPage haul={found.haul} thread={thread} /> : <Unavailable what={`Haul ${Astro.params.n}`} />}
