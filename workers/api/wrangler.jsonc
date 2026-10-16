@@ -74,8 +74,13 @@
       "ai": { "binding": "AI" },
       "queues": { "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest" }] },
       "ratelimits": [{ "name": "DEVICE_LIMITER", "namespace_id": "4102", "simple": { "limit": 20, "period": 60 } }],
-      // Production routes (add when the zone is ready): desk.fromthedumpsterfire.com/* behind an
-      // Access application, and api.fromthedumpsterfire.com/v1/* public for the reader app.
+      // desk.fromthedumpsterfire.com sits behind the "FDF Desk" Access application (owner only);
+      // api.fromthedumpsterfire.com is public at the edge, and the Worker answers only the exact
+      // public routes there (POST /v1/devices, GET /v1/health); everything else needs Access.
+      "routes": [
+        { "pattern": "desk.fromthedumpsterfire.com", "custom_domain": true },
+        { "pattern": "api.fromthedumpsterfire.com", "custom_domain": true }
+      ],
       "workers_dev": false,
       "preview_urls": false
     }
