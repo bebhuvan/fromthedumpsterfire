@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Broadside type: four settings</title>
+<link rel="stylesheet" href="style.css">
+<script src="theme.js"></script>
+<style>
+  .pv { max-width: 980px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 64px; display: grid; gap: 40px; }
+  .pv h1 { font: 500 30px/1.1 var(--display); }
+  .pv .lede { color: var(--ink2); font-size: 17px; margin-top: 8px; max-width: 34em; }
+  .pv .k { font: 500 14px/1.4 var(--sans); color: var(--ink2); margin-bottom: 10px; }
+  .pv .k b { color: var(--ink); font-weight: 600; }
+  .sheet { background: var(--coral); padding: 56px 28px 22px; display: flex; flex-direction: column; gap: 56px; }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; font-size: 16px; border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); padding-top: 12px; }
+  .foot span:first-child { font: 500 18px var(--display); }
+  .p1 { font: 400 italic clamp(36px, 6.4vw, 72px)/1.1 var(--display); letter-spacing: -0.012em; max-width: 11em; }
+  .p2 { font: 400 clamp(34px, 5.4vw, 60px)/1.2 var(--display); letter-spacing: -0.005em; max-width: 12em; }
+  .p3 { font: 400 italic clamp(28px, 4.2vw, 44px)/1.38 var(--serif); max-width: 15em; }
+  .p4 { font: 400 clamp(26px, 3.8vw, 40px)/1.45 var(--serif); text-align: center; max-width: 14em; margin-inline: auto; }
+  .s4 .foot { justify-content: center; text-align: center; flex-direction: column; align-items: center; }
+  @media (min-width: 700px) { .sheet { padding: 96px 72px 30px; } }
+</style>
+</head>
+<body>
+<main class="pv">
+  <header>
+    <h1>The broadside, four ways</h1>
+    <p class="lede">Same coral sheet, same poem. Only the type changes. Pick a number.</p>
+  </header>
+  <section><p class="k"><b>1. Now</b> · display italic, large and tight</p>
+    <div class="sheet"><p class="p1">The butterfly counts not months but moments, and has time enough.</p><p class="foot"><span>Rabindranath Tagore</span><span><i>Stray Birds</i>, 1916</span></p></div></section>
+  <section><p class="k"><b>2. Upright display</b> · roman, open spacing, a printed poster</p>
+    <div class="sheet"><p class="p2">The butterfly counts not months but moments, and has time enough.</p><p class="foot"><span>Rabindranath Tagore</span><span><i>Stray Birds</i>, 1916</span></p></div></section>
+  <section><p class="k"><b>3. Text italic</b> · the book cut, softer and warmer, more air between lines</p>
+    <div class="sheet"><p class="p3">The butterfly counts not months but moments, and has time enough.</p><p class="foot"><span>Rabindranath Tagore</span><span><i>Stray Birds</i>, 1916</span></p></div></section>
+  <section class="s4"><p class="k"><b>4. Classic broadside</b> · upright book cut, centred, generous leading</p>
+    <div class="sheet"><p class="p4">The butterfly counts not months but moments, and has time enough.</p><p class="foot"><span>Rabindranath Tagore</span><span><i>Stray Birds</i>, 1916</span></p></div></section>
+</main>
+</body>
+</html>

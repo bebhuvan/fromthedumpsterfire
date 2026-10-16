@@ -1,6 +1,6 @@
 ---
-// The editor's voice, in the browser's own player. preload="none" means a page full of voice notes
-// costs nothing until someone presses play.
+// The editor's voice, in the browser's own player, set on a ruled line. preload="none" means a page
+// full of voice notes costs nothing until someone presses play.
 import type { Audio } from '@fdf/shared/haul';
 import { safeHref } from '../lib/site';
 
@@ -14,7 +14,7 @@ const mmss = `${Math.floor(audio.seconds / 60)}:${String(Math.floor(audio.second
 ---
 {src ? (
   <div class="voice">
-    <span class="voice-label">{label} <span class="meta">{mmss}</span></span>
+    <span class="voice-label"><i>{label}</i> <span class="voice-t">{mmss}</span></span>
     <audio controls preload="none" src={src} aria-label={`${label}, ${mmss}`}></audio>
   </div>
 ) : null}

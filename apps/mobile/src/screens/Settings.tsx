@@ -6,7 +6,7 @@ import { reader, useReader, type TextSize, type ThemePref } from '@/lib/store';
 import { clearDownloads, storageUsed } from '@/lib/data';
 import { disablePush, enablePush } from '@/lib/push';
 import { go } from '@/nav';
-import { Body, Label, Meta, Note, Title } from '@/ui/type';
+import { Body, Meta, Note, Title } from '@/ui/type';
 import { Section, TopBar } from '@/ui/parts';
 import { Row, Segmented, Toggle } from '@/ui/controls';
 import { Screen } from '@/ui/screen';
@@ -61,7 +61,7 @@ export function Settings() {
       </Section>
 
       <Section title="Reading">
-        <Label muted style={{ marginTop: 16, marginBottom: 10 }}>Appearance</Label>
+        <Meta style={{ marginTop: 16, marginBottom: 4 }}>Appearance</Meta>
         <Segmented<ThemePref>
           label="Appearance"
           value={theme}
@@ -72,7 +72,7 @@ export function Settings() {
             { value: 'dark', label: 'Dark' },
           ]}
         />
-        <Label muted style={{ marginTop: 22, marginBottom: 10 }}>Text size</Label>
+        <Meta style={{ marginTop: 24, marginBottom: 4 }}>Text size</Meta>
         <Segmented<TextSize>
           label="Text size"
           value={textSize}
@@ -84,7 +84,7 @@ export function Settings() {
             { value: 'larger', label: 'Larger' },
           ]}
         />
-        <View style={[styles.preview, { backgroundColor: p.plate }]}>
+        <View style={[styles.preview, { borderColor: p.rule }]}>
           <Note>Everyone cites the memex and almost nobody reads the essay.</Note>
           <Body style={{ marginTop: 8 }}>The summation of human experience is being expanded at a prodigious rate.</Body>
         </View>
@@ -101,7 +101,7 @@ export function Settings() {
             title="Downloaded Hauls"
             detail={storage.count ? `${storage.count} ${storage.count === 1 ? 'Haul' : 'Hauls'} · ${kb(storage.bytes)}` : 'Nothing downloaded beyond what ships with the app'}
             onPress={storage.count ? clear : undefined}
-            right={storage.count ? <Label muted>Remove</Label> : undefined}
+            right={storage.count ? <Meta>Remove</Meta> : undefined}
           />
         </View>
       </Section>
@@ -125,6 +125,6 @@ export function Settings() {
 }
 
 const styles = StyleSheet.create({
-  preview: { marginTop: 14, borderRadius: 16, padding: 16 },
+  preview: { marginTop: 18, paddingVertical: 16, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
   ext: { fontFamily: fonts.sansMedium, fontSize: 15 },
 });

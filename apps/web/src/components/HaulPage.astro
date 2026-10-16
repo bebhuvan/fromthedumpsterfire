@@ -1,14 +1,15 @@
 ---
-// One Haul: the cover band, the field note with the route, the contents and the colophon.
-// Mirrors the app's Cover and FieldNote screens, laid out as the web issue page in the canvas.
+// One Haul's cover. The ghost number is the page's one loud thing; the field note sits in the reading
+// column with the route in the margin; the contents show each item as a small specimen of its own
+// printed form (Specimen.astro). Mirrors the app's Cover screen.
 import { haulSlug, type Haul } from '@fdf/shared/haul';
-import { typeLabel } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
 import Highlighted from './Highlighted.astro';
 import Voice from './Voice.astro';
-import Arrow from './Arrow.astro';
-import { firstSentence, fullDate, joinMeta, longDate, objects, pad2, paths, titleText } from '../lib/site';
+import Specimen from './Specimen.astro';
+import Masthead from './Masthead.astro';
+import { fullDate, longDate, objects, paths, titleText } from '../lib/site';
 
 interface Props {
   haul: Haul;
@@ -17,8 +18,10 @@ interface Props {
 const { haul, home } = Astro.props;
 const note = haul.fieldNote;
 const typeOf = new Map(haul.items.map((i) => [i.id, i.type]));
+// The route cites the contents by number, the way a page cites a figure.
+const numOf = new Map(haul.items.map((i, n) => [i.id, String(n + 1).padStart(2, '0')]));
+const last = note.paragraphs.length - 1;
 const thread = haul.threads[0];
-const year = (d: string) => /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(d)?.[1] ?? '';
 ---
 <Base
   title={home ? undefined : `Haul ${haul.number}: ${titleText(haul.title)}`}
@@ -26,99 +29,86 @@ const year = (d: string) => /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(d)?.[1] ?? '';
   path={home ? paths.home : paths.haul(haul.number)}
   type={home ? 'website' : 'article'}
   section={home ? 'latest' : undefined}
+  bigMast={home}
 >
-  <section class:list={['band', `s-${haul.swatch}`]} aria-labelledby="haul-title">
-    <div class="wrap band-inner">
-      <div class="band-num">
-        <p class="label">Haul · <time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time> · {objects(haul.items.length)}</p>
-        <span class="numeral" aria-hidden="true">{haulSlug(haul.number)}</span>
-      </div>
-      <div class="band-title">
-        <p class="sr">Haul {haul.number}</p>
-        <Title title={haul.title} as="h1" class="title-xl" id="haul-title" />
-        <p class="deck">{haul.deck}</p>
-      </div>
+  {home ? (
+    <section class="wrap nameplate" aria-label="From the Dumpster Fire">
+      <p class="np-name"><Masthead /></p>
+      <p class="np-strap"><span>An irregular magazine of things worth salvaging from the internet and the archive</span><span>Chosen by one editor, read with machines</span></p>
+    </section>
+  ) : null}
+  <section class:list={['ghost', `s-${haul.swatch}`, { 'ghost-home': home }]} aria-labelledby="haul-title">
+    <div class="wrap ghost-in">
+      <span class="numeral" aria-hidden="true">{haulSlug(haul.number)}</span>
+      <p class="gmeta">Haul {haulSlug(haul.number)} · <time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time> · {objects(haul.items.length).toLowerCase()}</p>
+      <h1 class="cover-title display" id="haul-title"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>
+      <p class="cover-deck">{haul.deck}</p>
     </div>
   </section>
 
-  <section class="wrap fieldnote" id="field-note" aria-labelledby="fn-title">
-    <div>
-      <span class="chip t-talk">Field note</span>
-      <Title title={note.title} as="h2" class="title-m" id="fn-title" />
+  <section class="wrap g fn" id="field-note" aria-labelledby="fn-title">
+    {note.route.length ? (
+      <div class="m fn-m">
+        <h2 class="mh" id="route-title">The route</h2>
+        <ol class="route" aria-labelledby="route-title">
+          {note.route.map((step) => {
+            const t = step.itemId ? typeOf.get(step.itemId) : undefined;
+            const machine = step.by === 'machine';
+            return (
+              <li class:list={[{ 'by-machine': machine }, t ? `t-${t}` : null]}>
+                <span class="day">{step.day}</span>
+                <span class:list={['rt', { machine }]}>
+                  {machine ? <span class="sr">The machine noticed: </span> : null}
+                  {step.itemId ? <a href={paths.item(haul.number, step.itemId)}>{step.text}<span class="xref" aria-label={`, item ${numOf.get(step.itemId)}`}>{numOf.get(step.itemId)}</span></a> : step.text}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    ) : null}
+    <div class="c fn-c">
+      <Title title={note.title} as="h2" class="h-sec" id="fn-title" />
       {note.audio ? <Voice audio={note.audio} label="Hear it as I said it" /> : null}
-    </div>
-    <div class="fieldnote-text">
-      {note.paragraphs.map((para, i) => <Highlighted text={para} highlight={note.highlight} class={i === 0 ? 'dropcap' : undefined} />)}
-      <p class="sign" aria-label="Bhuvanesh, the editor">B.</p>
+      {note.paragraphs.map((para, i) => (
+        <Highlighted text={para} highlight={note.highlight}>{i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}</Highlighted>
+      ))}
     </div>
   </section>
 
-  {note.route.length ? (
-    <section class="wrap" aria-labelledby="route-title">
-      <div class="route rule-top">
-        <div class="route-head">
-          <h2 class="h-section" id="route-title">The route</h2>
-          <span class="label muted">How this Haul was found</span>
-        </div>
-        <div>
-          <ol class="route-list">
-            {note.route.map((step) => {
-              const t = step.itemId ? typeOf.get(step.itemId) : undefined;
-              const machine = step.by === 'machine';
-              return (
-                <li class:list={['step', { 'by-machine': machine }, t ? `t-${t}` : null]}>
-                  <span class="step-day">{step.day}</span>
-                  <span class="step-dot" aria-hidden="true"></span>
-                  <span class="step-body">
-                    {machine ? <span class="sr">The machine noticed: </span> : null}
-                    {step.itemId ? <a href={paths.item(haul.number, step.itemId)}>{step.text}</a> : step.text}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-          <p class="route-key meta"><span>Serif: the editor's finds.</span> <span class="machine">Blue: a link the machine noticed.</span></p>
-          {thread ? (
-            <p><a class="pill wide" href={paths.thread(haul.number, thread.id)}>Follow the thread: {titleText(thread.title)}<Arrow /></a></p>
-          ) : null}
-        </div>
+  <section class="wrap g contents" aria-labelledby="contents-title">
+    <h2 class="mh sp-h" id="contents-title">In this Haul <span>{objects(haul.items.length).toLowerCase()}, each set in its own printed form</span></h2>
+    <ol class="sp-list">
+      {haul.items.map((item) => <Specimen haul={haul} item={item} />)}
+    </ol>
+  </section>
+
+  {thread ? (
+    <section class="wrap g row" aria-labelledby="thread-title">
+      <h2 class="m mh" id="thread-title">The thread</h2>
+      <div class="c thread">
+        <p class="th-t"><a href={paths.thread(haul.number, thread.id)}><Title title={thread.title} as="span" /></a></p>
+        <ol class="years">
+          {thread.points.map((pt) => <li class:list={{ in: pt.inHaul }}><span>{pt.year}</span>{pt.title}</li>)}
+        </ol>
+        <p class="machine small">{thread.provenance}</p>
       </div>
     </section>
   ) : null}
 
-  <section class="wrap" aria-labelledby="contents-title">
-    <div class="section-pad rule-top">
-    <h2 class="h-section" id="contents-title">In this Haul</h2>
-    <ol class="cards">
-      {haul.items.map((item, i) => (
-        <li class="plain">
-          <a class:list={['card', `t-${item.type}`]} href={paths.item(haul.number, item.id)}>
-            <span class="label">{joinMeta(pad2(i + 1), typeLabel[item.type], year(item.source.date))}</span>
-            <span class:list={['card-title', { poem: item.type === 'poem' }]}>{item.title.text}{item.title.italic ? ' ' : ''}{item.title.italic ? <em>{item.title.italic}</em> : null}</span>
-            <span class="card-by">{item.creator}</span>
-            <span class="card-why">{firstSentence(item.why.text)}</span>
-          </a>
-        </li>
-      ))}
-    </ol>
-    </div>
-  </section>
-
-  <section class="wrap" aria-labelledby="colophon-title">
-    <div class="colophon rule-top">
-      <h2 class="h-section" id="colophon-title">Colophon</h2>
-      <div>
-        <p>{haul.colophon}</p>
-        {haul.corrections?.length ? (
-          <div class="corrections">
-            <h3 class="label">Corrections</h3>
-            <ul>
-              {haul.corrections.map((c) => <li><time datetime={c.date.slice(0, 10)}>{longDate(c.date)}</time>: {c.text}</li>)}
-            </ul>
-            <p class="meta">This is version {haul.version} of Haul {haul.number}.</p>
-          </div>
-        ) : null}
-      </div>
+  <section class="wrap g row colo" aria-labelledby="colophon-title">
+    <h2 class="m mh" id="colophon-title">Colophon</h2>
+    <div class="c">
+      <p>{haul.colophon}</p>
+      {haul.corrections?.length ? (
+        <div class="corrections">
+          <h3 class="mh">Corrections</h3>
+          <ul>
+            {haul.corrections.map((c) => <li><time datetime={c.date.slice(0, 10)}>{longDate(c.date)}</time>: {c.text}</li>)}
+          </ul>
+          <p class="small ink2">This is version {haul.version} of Haul {haul.number}.</p>
+        </div>
+      ) : null}
     </div>
   </section>
 </Base>

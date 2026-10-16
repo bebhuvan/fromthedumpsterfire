@@ -1,53 +1,89 @@
 ---
+// How it's made. The page uses the magazine's own forms: the two voices as a transcript, the promises
+// as house rules with the check behind each, and a key to the printed forms.
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
+import { formGuide, formName } from '../lib/forms';
 import { paths } from '../lib/site';
 
 export const prerender = true;
 
-const promises = [
-  'Every quotation is matched word for word against its source.',
-  'Every link is fetched and working when a Haul ships.',
-  'Every note from the machine names its source.',
-  "The editor's words are never rewritten.",
-  'No generated images. Plates come from the public domain, with their licence.',
+const rules = [
+  {
+    rule: 'Every quotation is matched word for word against its source.',
+    how: 'Each excerpt is compared with the text of the source as fetched. If it does not match, it does not ship.',
+  },
+  {
+    rule: 'Every link is fetched and working when a Haul ships.',
+    how: 'Machines never write links. Code finds each one in a real source and fetches it before publishing.',
+  },
+  {
+    rule: 'Every note from the machine names its source.',
+    how: 'Each note is checked against the source it cites. A note that fails the check is dropped.',
+  },
+  {
+    rule: "The editor's words are never rewritten.",
+    how: 'Voice notes are cleaned only by deleting fillers and fixing punctuation. The code allows nothing else.',
+  },
+  {
+    rule: 'No generated images.',
+    how: 'Plates come from public-domain archives, with the licence printed under each one.',
+  },
 ];
 ---
 <Base title="How it's made" description="One editor chooses everything. Machines read closely, find connections and check facts, and their words are always marked." path={paths.about} section="about">
-  <div class="wrap">
-    <div class="read">
-      <div class="page-head">
-        <Title title={{ text: "How it's", italic: 'made' }} as="h1" class="title-m" />
-      </div>
-      <div class="prose">
-        <p>From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays, talks, papers, poems, podcasts, passages and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.</p>
-      </div>
+  <header class="wrap g ab-open">
+    <p class="m meta"><span>About</span><span>Five house rules</span></p>
+    <Title title={{ text: "How it's", italic: 'made' }} as="h1" class="ab-t display" />
+    <p class="c deck">From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays, talks, papers, poems, podcasts, passages and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.</p>
+  </header>
 
-      <section class="section-pad" aria-labelledby="voices-title">
-        <h2 class="h-section" id="voices-title">Two voices</h2>
-        <div class="voices">
-          <div class="editor-voice">
-            <p class="note">This is the editor. One person chooses everything, mostly by voice, and every word set like this is theirs.</p>
-          </div>
-          <div class="machine-voice">
-            <p class="machine">This is the machine. It reads each piece closely, finds connections across time, drafts context and checks facts. Anything it writes is set like this, and the editor checks it before it ships.</p>
-          </div>
-        </div>
-      </section>
-
-      <section aria-labelledby="promise-title">
-        <h2 class="h-section" id="promise-title">What we promise</h2>
-        <ul class="promises">
-          {promises.map((line) => <li>{line}</li>)}
-        </ul>
-      </section>
-
-      <section class="section-pad" aria-labelledby="read-title">
-        <h2 class="h-section" id="read-title">Other ways to read</h2>
-        <div class="prose read-ways">
-          <p>New Hauls arrive in the <a href={paths.feed}>RSS feed</a> as soon as they are published. Every Haul stays online in the <a href={paths.archive}>archive</a>.</p>
-        </div>
-      </section>
+  <section class="wrap transcript ab-voices" aria-labelledby="voices-title">
+    <h2 class="sr" id="voices-title">Two voices</h2>
+    <div class="g tl">
+      <p class="m who who-ed"><span aria-hidden="true">B.</span><span class="sr">The editor</span></p>
+      <p class="c ed">This is the editor. One person chooses everything, mostly by voice, and every word set like this is theirs.</p>
     </div>
-  </div>
+    <div class="g tl">
+      <p class="m who machine">Machine</p>
+      <p class="c machine ab-m">This is the machine. It reads each piece closely, finds connections across time, drafts context and checks facts. Anything it writes is set like this, and the editor checks it before it ships.</p>
+    </div>
+  </section>
+
+  <section class="wrap g row" aria-labelledby="rules-title">
+    <h2 class="m mh" id="rules-title">House rules</h2>
+    <ol class="mc rules">
+      {rules.map((r, i) => (
+        <li class="g">
+          <span class="m rule-n" aria-hidden="true">{i + 1}</span>
+          <div class="c">
+            <p class="rule-t">{r.rule}</p>
+            <p class="rule-how">{r.how}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="wrap g row" aria-labelledby="key-title">
+    <div class="m">
+      <h2 class="mh" id="key-title">Key to the forms</h2>
+      <p class="small ink2 key-note">Each kind of thing is set the way it has always been printed, so you know what you are holding before you read a word.</p>
+    </div>
+    <ul class="c formkey">
+      {formGuide.map((f) => (
+        <li class={`t-${f.type}`}>
+          <span class="fk-sw" aria-hidden="true"></span>
+          <span class="fk-name">{f.name}</span>
+          <span class="fk-form">{formName[f.form]}</span>
+          <span class="fk-how">{f.detail}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="wrap g row" aria-labelledby="read-title">
+    <h2 class="m mh" id="read-title">Other ways to read</h2>
+    <p class="c">New Hauls arrive in the <a href={paths.feed}>RSS feed</a> as soon as they are published. Every Haul stays online in the <a href={paths.archive}>archive</a>.</p>
+  </section>
 </Base>

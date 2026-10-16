@@ -1,5 +1,6 @@
 ---
-// Marks the editor's underlined phrase inside a passage. Both strings are escaped text.
+// Marks the editor's underlined phrase inside a passage. Both strings are escaped text. Anything in the
+// slot (an end mark) follows the text inside the same paragraph.
 interface Props {
   text: string;
   highlight?: string;
@@ -10,7 +11,7 @@ const { text, highlight, class: cls, as: Tag = 'p' } = Astro.props;
 const at = highlight ? text.indexOf(highlight) : -1;
 ---
 {at >= 0 && highlight ? (
-  <Tag class={cls}>{text.slice(0, at)}<mark>{highlight}</mark>{text.slice(at + highlight.length)}</Tag>
+  <Tag class={cls}>{text.slice(0, at)}<mark>{highlight}</mark>{text.slice(at + highlight.length)}<slot /></Tag>
 ) : (
-  <Tag class={cls}>{text}</Tag>
+  <Tag class={cls}>{text}<slot /></Tag>
 )}

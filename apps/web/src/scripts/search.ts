@@ -32,9 +32,11 @@ function row(h: Hit) {
     title.append(' ');
     title.append(el('em', undefined, h.doc.italic));
   }
-  main.append(title, el('span', 'meta', `${h.doc.creator} · Haul ${h.doc.n}`));
+  main.append(title, el('span', 'find-by', `${h.doc.creator} · Haul ${h.doc.n}`));
   if (h.snippet) main.append(el('span', 'find-snippet', h.snippet));
-  a.append(main, el('span', `chip t-${h.doc.type}`, typeLabel[h.doc.type]));
+  const form = el('span', `find-form t-${h.doc.type}`);
+  form.append(el('span', 'key'), typeLabel[h.doc.type]);
+  a.append(form, main);
   li.append(a);
   return li;
 }

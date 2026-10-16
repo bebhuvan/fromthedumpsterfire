@@ -9,31 +9,31 @@ const { hauls } = await archive();
 const threads = collectThreads(hauls);
 ---
 <Base title="Threads" description="Lines that run through the archive, across years and Hauls." path={paths.threads} section="threads">
-  <div class="wrap">
-    <div class="page-head">
-      <Title title={{ text: 'Threads' }} as="h1" class="title-m" />
-      <p class="lede">Lines that run through the archive, across years and Hauls. Each link between pieces cites a passage at both ends.</p>
+  <section class="wrap g page-head">
+    <p class="m meta"><span>Threads</span><span>{threads.length} so far</span></p>
+    <div class="c">
+      <Title title={{ text: 'Threads' }} as="h1" class="h-title" />
+      <p class="deck">Lines that run through the archive, across years and Hauls. Each link between pieces cites a passage at both ends.</p>
     </div>
-    {threads.length ? (
-      <ul class="shelf">
-        {threads.map(({ thread, n }) => {
-          const first = thread.points[0]?.year;
-          const last = thread.points[thread.points.length - 1]?.year;
-          return (
-            <li>
-              <a class="thread-card" href={paths.thread(n, thread.id)}>
-                <span class="label muted">{thread.points.length} points{first && last ? ` · ${first} to ${last}` : ''}</span>
-                <Title title={thread.title} as="h2" class="title-s" />
-                <span class="years" aria-hidden="true">{thread.points.map((pt) => <span class:list={{ out: !pt.inHaul }}>{pt.year}</span>)}</span>
-                <p>{thread.summary}</p>
-                <span class="meta">Latest in Haul {n}</span>
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    ) : (
-      <p class="lede">Threads appear as Hauls arrive.</p>
-    )}
-  </div>
+  </section>
+  {threads.length ? (
+    <ul class="wrap thread-list">
+      {threads.map(({ thread, n }) => {
+        const first = thread.points[0]?.year;
+        const last = thread.points[thread.points.length - 1]?.year;
+        return (
+          <li class="g row thread-row">
+            <p class="m meta"><span>{thread.points.length} points</span>{first && last ? <span>{first} to {last}</span> : null}<span>Latest in Haul {n}</span></p>
+            <div class="c">
+              <a class="th-t" href={paths.thread(n, thread.id)}><Title title={thread.title} as="span" /></a>
+              <p class="th-years" aria-hidden="true">{thread.points.map((pt) => <span class:list={{ out: !pt.inHaul }}>{pt.year}</span>)}</p>
+              <p class="th-sum">{thread.summary}</p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  ) : (
+    <div class="wrap g"><p class="c">Threads appear as Hauls arrive.</p></div>
+  )}
 </Base>

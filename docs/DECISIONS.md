@@ -76,6 +76,44 @@ Dated, newest last. Don't reopen these without a new reason.
 - **Connections are editor-made for now** (typed, with a one-sentence note in the editor's words).
   Machine edge-judging is milestone 6.
 
+## 2026-10-16 (design: Salvage)
+
+- **Visual system is Salvage** (`docs/DESIGN.md`), chosen by the editor from three comps (Margin,
+  Sheets, Index; all in `docs/design-comps/`) as the best of the three. Not any one alone: Margin was
+  the most austere, Sheets put colour everywhere without a working margin, and Index's huge
+  highlighted line competed with the forms.
+- **Each content type has its printed form**: magazine opening, offprint, transcript, broadside,
+  facing pages, catalogue card, page from the book. Chosen by type in `apps/web/src/lib/forms.ts` and
+  in the app's item screen.
+- **One loud thing per screen**: the struck masthead on the waiting page, the ghost number on the
+  Haul cover, the form itself on item pages.
+- **Ember may be used beyond the flame**, small and on purpose: the strike through "Internet", the
+  editor's "B.", the folio, the current-page underline. The editor asked for "a little of our own
+  design take (red embers)" without loudness. Still never body text, machine text or a fill.
+- **No pills, chips, badges, rounded tinted cards or boxed machine notes.** The editor called the
+  blue-text box and the rounded cards clichés. Machine notes are blue sans set as typography with
+  their source. Boxes are allowed only
+  as made things: the swatch sheets, the broadside, the catalogue card, the book page.
+- **The rhyme bridge is machine text**, set in blue sans in the gutter.
+- **Catalogue headwords move a leading article to the end** ("Great Stink, The"). Names of people are
+  not inverted, because a two-word title is not always a person ("Bell Labs").
+- **The cover's contents are specimens**, not a stack of coloured bands (the editor found the stepped
+  stack clichéd): each item is a small specimen of its own printed form (`Specimen.astro`).
+- **The broadside is set in Newsreader Text italic**, not the display italic, which read tight and
+  mannered at poster size. The editor picked this from four settings.
+- **No dotted leaders.** See also is a set of reference slips; the search index is title and count.
+- **The home page carries the nameplate.** The editor found the landing underpowered: the brand lived
+  only in a small header line. The struck masthead now runs across the top of the home cover with a
+  strap line; the ghost number stays the loud thing below it.
+- **The route cites items by number** (small raised ember numerals), replacing the tiny type squares,
+  so the route and the specimens read as one system.
+- **Search is a word, not an icon**, in the navigation; the archive also has its own search line. A
+  magnifier would be the only icon on the site.
+- **See also is guide cards, not grey slips.** The editor found the plate-grey boxed slip generic; a
+  lone slip read as a stock callout. Entries are now ruled card edges with a coloured, staggered tab.
+- **About is built from the magazine's forms** (transcript, house rules with their checks, key to the
+  forms) rather than labelled paragraphs, which the editor found off.
+
 ## 2026-10-16 (milestone 6 on the Desk)
 
 - **Plates come only from institutions' open-access APIs** (Wikimedia Commons, Art Institute of

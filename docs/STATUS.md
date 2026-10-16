@@ -108,8 +108,8 @@
 | Public API | api.fromthedumpsterfire.com: only `POST /v1/devices` and `GET /v1/health` answer; device registration checked end to end |
 | Pipeline | `fdf-pipeline`, Workflow `fdf-item`, queues `fdf-ingest` / `fdf-ingest-dlq` |
 | Data | D1 `fdf-desk` (migrations 0001–0002), R2 `fdf-media` (private), R2 `fdf-files` (public on files.fromthedumpsterfire.com: only `hauls/` and `seed/`), Vectorize `fdf-chunks` |
-| Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars). Native provider adapters are on the `worktree-fdf-models` branch, not yet in production |
-| Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)"; site `fdf-web-preview` |
+| Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars). Native provider adapters (Gemini, Claude, DeepSeek, Z.ai) with keys set on both Workers |
+| Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)". The site's preview Worker `fdf-web-preview` was deleted on 2026-10-16 at the editor's request; `npm run deploy:web:preview` recreates it |
 
 Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run deploy:production`
 (Desk + pipeline), `npm run deploy:web`; migrations: `npm run db:migrate:production`.
@@ -213,7 +213,27 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   Desk publish or correction shows within a minute with no rebuild or deploy. Rendered pages are kept
   in the edge cache under a key made of the deploy version, the index's `updatedAt` and the path.
   Production is live at https://fromthedumpsterfire.com (waiting page until Haul 001); preview at
-  https://fdf-web-preview.r-bhuvanesh2007.workers.dev.
+  https://fdf-web-preview.r-bhuvanesh2007.workers.dev (since deleted).
+- 2026-10-16: **the Salvage design on the web** (`docs/DESIGN.md`). Struck masthead in every header,
+  the big one on the waiting page; ghost number and the contents as specimens of each form on the Haul
+  cover; every
+  item set in its printed form (`src/lib/forms.ts`: opening, offprint, transcript, broadside, facing
+  pages, catalogue card, page from the book) with a working margin, running head, thumb tab, See also
+  index and ember folio. Archive, threads, thread, about, search, 404 and 503 redone to match. Chips,
+  pills, rounded cards, the boxed marginalia and the SVG arrows are gone (`Chip.astro`, `Arrow.astro`
+  deleted). Verified locally with `wrangler dev` on the sample Haul and with an empty bucket (waiting
+  page): 360, 390 and 1280 px, light and dark, no horizontal scroll; `npm run verify` passes.
+- 2026-10-16: **landing and transcript pass.** The home cover carries the nameplate (struck masthead
+  with a strap line); the route cites items by number in ember; the field note ends on the ember B.;
+  specimens use the full width and the card shows its plate; the transcript puts the dateline under the
+  speaker, gives the speaker's words the width, and sets all machine notes as one MACHINE turn; the
+  archive has a search line. Fixed a phone overflow on the rabbit-hole page (the plate widened its
+  grid). Checked at 390, 1280 and 1600 px, light and dark.
+- 2026-10-16: **See also and About.** See also entries are catalogue guide cards (a ruled edge with a
+  staggered tab in the colour of what each points to) instead of grey slips. About is rebuilt from the
+  magazine's forms: a big title, the two voices as a transcript, five house rules each with the check
+  behind it, and a key to the forms (`formGuide` in `apps/web/src/lib/forms.ts`). Deployed to production
+  (version 9e99b1dd) after merging main; the preview Worker was then deleted. The reader app does not have this pass or the landing pass yet.
 
 ### Web: what was verified (2026-10-16)
 

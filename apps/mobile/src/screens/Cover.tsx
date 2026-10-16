@@ -1,14 +1,16 @@
-import { memo } from 'react';
+// The Haul cover. One loud thing: the Haul number, huge in the Haul's colour, running off the right
+// edge. Then the field note and its route, and the contents as specimens of each find's own form.
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
-import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
-import { fonts, GUTTER, usePalette } from '@/theme';
+import { haulSlug, type Haul } from '@fdf/shared/haul';
+import { fonts, GUTTER, typeColor, usePalette } from '@/theme';
 import { longDate } from '@/lib/format';
-import { readKey, useReader } from '@/lib/store';
-import { Body, Label, Meta, Title } from '@/ui/type';
-import { Chip, Divider, Flame, Pill } from '@/ui/parts';
+import { useReader } from '@/lib/store';
+import { Body, Highlighted, Machine, Meta, Title } from '@/ui/type';
+import { Action, Apparatus, Divider, Masthead, Sign, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
+import { Specimen } from '@/ui/Specimen';
 
 export function Cover({ haul }: { haul: Haul }) {
   const p = usePalette();
@@ -17,98 +19,123 @@ export function Cover({ haul }: { haul: Haul }) {
   const place = useReader((s) => s.place);
   const resume = place && place.n === haul.number && place.item ? haul.items.find((i) => i.id === place.item) : undefined;
   const isLatestRead = resume ? haul.items.indexOf(resume) === haul.items.length - 1 : false;
+  const note = haul.fieldNote;
+  const thread = haul.threads[0];
+  const typeOf = new Map(haul.items.map((i) => [i.id, i.type]));
+  const N = Math.round(width * 0.54);
 
   const header = (
-    <View style={{ backgroundColor: p.swatch[haul.swatch], paddingTop: insets.top + 18, paddingHorizontal: GUTTER, paddingBottom: 26 }}>
-      <View style={styles.row}>
-        <Label>Haul</Label>
-        <Label muted>{longDate(haul.publishedAt)}</Label>
+    <View style={{ paddingTop: insets.top + 12, overflow: 'hidden' }}>
+      <View style={styles.topRow}>
+        <Masthead size={16} />
       </View>
-      <Text
-        accessibilityLabel={`Haul number ${haul.number}`}
-        style={[styles.numeral, { color: p.ink, fontSize: Math.min(210, width * 0.5), lineHeight: Math.min(210, width * 0.5) * 1.08 }]}
-      >
-        {haulSlug(haul.number)}
-      </Text>
+      <View style={{ height: N * 0.84, marginTop: 4 }} accessible accessibilityLabel={`Haul number ${haul.number}`}>
+        <Text numberOfLines={1} style={[styles.numeral, { color: p.swatch[haul.swatch], fontSize: N, lineHeight: N * 0.86, width: N * 2.2, right: -N * 0.16 }]}>
+          {haulSlug(haul.number)}
+        </Text>
+      </View>
+      <View style={{ paddingHorizontal: GUTTER, marginTop: -N * 0.18 }}>
+        <Meta>Haul {haulSlug(haul.number)} · {longDate(haul.publishedAt)} · {haul.items.length} objects</Meta>
+        <Title title={haul.title} size={52} style={{ marginTop: 10, lineHeight: 52 * 0.98, letterSpacing: -1.4 }} />
+        <Body style={{ marginTop: 14, fontSize: 18, lineHeight: 26 }}>{haul.deck}</Body>
+      </View>
     </View>
   );
 
   return (
     <Screen header={header}>
-      <View style={styles.mastRow}>
-        <Flame size={9} />
-        <Text style={[styles.masthead, { color: p.ink2 }]}>From the Dumpster Fire</Text>
-      </View>
-      <Title title={haul.title} size={42} style={{ marginTop: 8 }} />
-      <Body style={{ marginTop: 12, color: p.ink2, fontSize: 17, lineHeight: 25 }}>{haul.deck}</Body>
-
       {resume && !isLatestRead ? (
-        <Pressable accessibilityRole="link" onPress={() => go.item(haul.number, resume.id)} style={({ pressed }) => [styles.resume, { backgroundColor: p.plate, opacity: pressed ? 0.8 : 1 }]}>
-          <Label muted>Continue reading</Label>
+        <Pressable accessibilityRole="link" onPress={() => go.item(haul.number, resume.id)} style={({ pressed }) => [styles.resume, { borderColor: p.rule, opacity: pressed ? 0.6 : 1 }]}>
+          <Meta>Continue reading</Meta>
           <Text numberOfLines={1} style={[styles.resumeTitle, { color: p.ink }]}>{resume.title.text}{resume.title.italic ? ' ' + resume.title.italic : ''}</Text>
         </Pressable>
       ) : null}
 
-      <View style={{ marginTop: 24 }}>
-        {haul.items.map((item) => (
-          <ContentsRow key={item.id} haul={haul.number} item={item} />
-        ))}
-        <Divider />
+      <View style={{ marginTop: 40 }}>
+        <Title title={note.title} size={32} />
+        {note.audio ? (
+          <View style={{ marginTop: 18 }}>
+            <VoiceNote audio={note.audio} label="Hear it as I said it" />
+          </View>
+        ) : null}
+        <View style={{ marginTop: 16, gap: 14 }}>
+          {note.paragraphs.map((para, i) => (
+            <Highlighted key={i} text={para} highlight={note.highlight} color={p.swatch.butter} style={styles.para} />
+          ))}
+        </View>
+        <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
       </View>
 
-      <Pill label="Begin with the field note" onPress={() => go.note(haul.number)} style={{ marginTop: 28 }} />
+      <View style={{ marginTop: 26 }}>
+        <Apparatus style={{ marginBottom: 10 }}>The route</Apparatus>
+        {note.route.map((step, i) => {
+          const t = step.itemId ? typeOf.get(step.itemId) : undefined;
+          const machine = step.by === 'machine';
+          const open = step.itemId ? () => go.item(haul.number, step.itemId!) : undefined;
+          return (
+            <Pressable key={i} disabled={!open} onPress={open} accessibilityRole={open ? 'link' : undefined} style={({ pressed }) => [styles.step, pressed && { opacity: 0.6 }]}>
+              <Text style={[styles.day, { color: machine ? p.machine : p.ink2 }]}>{step.day}</Text>
+              <View style={[styles.stepKey, { backgroundColor: t ? typeColor(p, t) : 'transparent', borderColor: t ? p.rule : 'transparent' }]} />
+              {machine ? (
+                <Machine style={{ flex: 1, fontSize: 14, lineHeight: 21 }}>{step.text}</Machine>
+              ) : (
+                <Text style={[styles.stepText, { color: p.ink }]}>{step.text}</Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
 
-      <View style={styles.footer}>
-        <Pressable accessibilityRole="link" onPress={go.archive}><Text style={[styles.footLink, { color: p.ink2 }]}>Every Haul</Text></Pressable>
-        <Pressable accessibilityRole="link" onPress={go.about}><Text style={[styles.footLink, { color: p.ink2 }]}>How it's made</Text></Pressable>
-        <Pressable accessibilityRole="link" onPress={go.settings}><Text style={[styles.footLink, { color: p.ink2 }]}>Settings</Text></Pressable>
+      <View style={{ marginTop: 40 }}>
+        <Apparatus style={{ marginBottom: 14 }}>In this Haul</Apparatus>
+        <View style={{ gap: 34 }}>
+          {haul.items.map((item, i) => (
+            <Specimen key={item.id} haul={haul.number} item={item} n={i + 1} />
+          ))}
+        </View>
+      </View>
+
+      {thread ? (
+        <Action label={`Follow the thread: ${thread.title.text}${thread.title.italic ? ' ' + thread.title.italic : ''}`} onPress={() => go.thread(haul.number, thread.id)} style={{ marginTop: 36 }} />
+      ) : null}
+
+      <View style={{ marginTop: 36 }}>
+        <Apparatus style={{ marginBottom: 8 }}>Colophon</Apparatus>
+        <Text style={[styles.colophon, { color: p.ink2 }]}>{haul.colophon}</Text>
       </View>
 
       {haul.corrections?.length ? (
-        <View style={[styles.corrections, { borderColor: p.rule }]}>
-          <Label muted>Corrections</Label>
+        <View style={{ marginTop: 22 }}>
+          <Apparatus style={{ marginBottom: 6 }}>Corrections</Apparatus>
           {haul.corrections.map((c, i) => (
-            <Meta key={i} style={{ marginTop: 8, color: p.ink }}>{longDate(c.date)}: {c.text}</Meta>
+            <Meta key={i} style={{ marginTop: 6, color: p.ink }}>{longDate(c.date)}: {c.text}</Meta>
           ))}
         </View>
       ) : null}
+
+      <View style={{ marginTop: 30 }}>
+        <Divider />
+        <View style={styles.footer}>
+          <Pressable accessibilityRole="link" onPress={go.archive}><Text style={[styles.footLink, { color: p.ink2 }]}>Every Haul</Text></Pressable>
+          <Pressable accessibilityRole="link" onPress={go.about}><Text style={[styles.footLink, { color: p.ink2 }]}>How it's made</Text></Pressable>
+          <Pressable accessibilityRole="link" onPress={go.settings}><Text style={[styles.footLink, { color: p.ink2 }]}>Settings</Text></Pressable>
+        </View>
+      </View>
     </Screen>
   );
 }
 
-const ContentsRow = memo(function ContentsRow({ haul, item }: { haul: number; item: Item }) {
-  const p = usePalette();
-  const read = useReader((s) => s.read.includes(readKey(haul, item.id)));
-  return (
-    <>
-      <Divider />
-      <Pressable
-        accessibilityRole="link"
-        onPress={() => go.item(haul, item.id)}
-        style={({ pressed }) => [styles.contents, pressed && { opacity: 0.6 }]}
-      >
-        <Text numberOfLines={2} style={[styles.contentsTitle, { color: read ? p.ink2 : p.ink, fontFamily: item.type === 'poem' ? fonts.textItalic : fonts.text }]}>
-          {item.title.text}
-          {item.title.italic ? ' ' + item.title.italic : ''}
-        </Text>
-        {read ? <Text accessibilityLabel="Read" style={[styles.readMark, { color: p.ink2 }]}>Read</Text> : null}
-        <Chip type={item.type} />
-      </Pressable>
-    </>
-  );
-});
-
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  numeral: { fontFamily: fonts.displayRegular, letterSpacing: -6, marginTop: 6, marginBottom: -14, includeFontPadding: false, fontVariant: ['lining-nums'] },
-  mastRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 22 },
-  masthead: { fontFamily: fonts.displayItalic, fontSize: 16 },
-  contents: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
-  contentsTitle: { flex: 1, fontSize: 18, lineHeight: 23, includeFontPadding: false },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
-  resume: { marginTop: 22, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, gap: 6 },
-  resumeTitle: { fontFamily: fonts.text, fontSize: 17.5 },
-  readMark: { fontFamily: fonts.sansMedium, fontSize: 11.5 },
-  corrections: { marginTop: 12, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
-  footLink: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase', paddingVertical: 14 },
+  topRow: { paddingHorizontal: GUTTER, minHeight: 36, justifyContent: 'center' },
+  numeral: { position: 'absolute', top: 0, fontFamily: fonts.display, textAlign: 'right', letterSpacing: -8, includeFontPadding: false, fontVariant: ['lining-nums'] },
+  resume: { marginTop: 26, paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, gap: 4 },
+  resumeTitle: { fontFamily: fonts.displayItalic, fontSize: 19 },
+  para: { fontFamily: fonts.text, fontSize: 18, lineHeight: 27.5 },
+  step: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 7 },
+  day: { width: 40, fontFamily: fonts.sansMedium, fontSize: 12, marginTop: 4 },
+  stepKey: { width: 8, height: 8, marginTop: 8, marginRight: 10, borderWidth: StyleSheet.hairlineWidth },
+  stepText: { flex: 1, fontFamily: fonts.text, fontSize: 16, lineHeight: 23 },
+  colophon: { fontFamily: fonts.text, fontSize: 15.5, lineHeight: 23 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between' },
+  footLink: { fontFamily: fonts.sansMedium, fontSize: 13, paddingVertical: 14 },
 });

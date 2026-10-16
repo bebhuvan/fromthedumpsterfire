@@ -1,0 +1,46 @@
+---
+// Wikipedia and connections as guide cards in a catalogue drawer: a ruled edge with a staggered tab in
+// the colour of what it points to. Each names where it points, then the title, then the gloss.
+// Wikipedia summaries are Wikipedia's words (serif); connection notes are the editor's (italic).
+import type { Haul, Item } from '@fdf/shared/haul';
+import { typeLabel } from '@fdf/shared/tokens';
+import { paths, safeHref } from '../lib/site';
+
+interface Props {
+  haul: Haul;
+  item: Item;
+  /** Leave out the Wikipedia slips (the offprint lists them as references instead). */
+  noWiki?: boolean;
+}
+const { haul, item, noWiki } = Astro.props;
+const target = (id?: string) => (id ? haul.items.find((x) => x.id === id) : undefined);
+const wiki = noWiki ? [] : item.wiki;
+---
+{wiki.length || item.connections.length ? (
+  <section class="g row" aria-labelledby={`sa-${item.id}`}>
+    <h2 class="m mh" id={`sa-${item.id}`}>See also</h2>
+    <ul class="c seealso">
+      {item.connections.map((c) => {
+        const t = target(c.itemId);
+        const href = t ? paths.item(haul.number, t.id) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
+        return (
+          <li class:list={['sa', t ? `t-${t.type}` : c.threadId ? 'sa-thread' : 'sa-wiki']}>
+            <span class="sa-k">{t ? <>{haul.items.indexOf(t) + 1} · {typeLabel[t.type]}</> : c.threadId ? 'A thread' : 'From the archive'}<span class="sa-rel">{c.type}</span></span>
+            {href ? <a class="sa-t" href={href}>{c.title}</a> : <span class="sa-t">{c.title}</span>}
+            <span class="sa-g"><i>{c.note}</i></span>
+          </li>
+        );
+      })}
+      {wiki.map((w) => {
+        const href = safeHref(w.url);
+        return (
+          <li class="sa sa-wiki">
+            <span class="sa-k">Wikipedia</span>
+            {href ? <a class="sa-t" href={href} rel="noopener noreferrer" target="_blank">{w.title}<span class="sr"> (Wikipedia, opens in a new tab)</span></a> : <span class="sa-t">{w.title}</span>}
+            <span class="sa-g">{w.summary}</span>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+) : null}

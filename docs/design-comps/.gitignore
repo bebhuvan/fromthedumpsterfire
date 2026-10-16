@@ -1,0 +1,4 @@
+# Copied in by each build.mjs from _shared/
+/*/fonts/
+/*/silent-highwayman.jpg
+!/_shared/silent-highwayman.jpg

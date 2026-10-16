@@ -1,0 +1,94 @@
+---
+// One item on the cover, shown as a small specimen of its own printed form (lib/forms.ts): a cropped
+// opening, a two-page spread, a transcript strip, an offprint, a broadside, a catalogue card or a
+// book page. Under it, the number in ember, the type and the first sentence of the editor's note.
+import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
+import { typeLabel } from '@fdf/shared/tokens';
+import Highlighted from './Highlighted.astro';
+import { formOf, headword, speaker } from '../lib/forms';
+import { firstSentence, paths, safeHref, titleText } from '../lib/site';
+
+interface Props {
+  haul: Haul;
+  item: Item;
+}
+const { haul, item } = Astro.props;
+const n = haul.items.indexOf(item) + 1;
+const form = formOf(item);
+const href = paths.item(haul.number, item.id);
+const yearOf = (d: string) => /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(d)?.[1] ?? d;
+const len = titleText(item.title).length;
+const hw = headword(item.title.text);
+const ex = item.excerpt;
+// The opening crop scales its title so long titles still fit the specimen.
+// A card carries its plate like a print clipped to it.
+const plate = item.plate ? safeHref(item.plate.url) : undefined;
+const size = len > 40 ? 'sz-s' : len > 22 ? 'sz-m' : 'sz-l';
+---
+<li class:list={['sp', `sp-${form}`, `t-${item.type}`]}>
+  <a class="sp-obj" href={href} aria-label={`${n}. ${typeLabel[item.type]}: ${titleText(item.title)}, ${item.creator}`}>
+    {form === 'opening' ? (
+      <>
+        <span class="sp-meta">{item.source.name} · {item.source.date}</span>
+        <span class:list={['sp-et', size]}>{item.title.text}{item.title.italic ? ' ' : ''}{item.title.italic ? <em>{item.title.italic}</em> : null}</span>
+        <span class="sp-by">{item.creator}</span>
+        {ex ? <Highlighted as="span" class="sp-ex" text={ex.highlight ?? ex.text} highlight={ex.highlight} /> : null}
+      </>
+    ) : null}
+
+    {form === 'facing' && item.rhyme ? (
+      <>
+        <span class="sp-l"><span class="sp-y">{item.rhyme.then.year}</span><span class="sp-q">{firstSentence(item.rhyme.then.quote)}</span></span>
+        <span class="sp-r"><span class="sp-y">{item.rhyme.now.year}</span><span class="sp-q">{firstSentence(item.rhyme.now.quote)}</span></span>
+      </>
+    ) : null}
+
+    {form === 'transcript' ? (
+      <>
+        <span class="sp-who">{speaker(item.creator)}</span>
+        {ex ? <Highlighted as="span" class="sp-said" text={ex.text} highlight={ex.highlight} /> : <span class="sp-said">{titleText(item.title)}</span>}
+        <span class="sp-when">{item.source.name}, {item.source.date}</span>
+      </>
+    ) : null}
+
+    {form === 'offprint' ? (
+      <>
+        <span class="sp-rc">{item.source.name} · {yearOf(item.source.date)}</span>
+        <span class="sp-ot">{titleText(item.title)}</span>
+        <span class="sp-ob">{item.creator}</span>
+        {ex ? <><span class="sp-ab">{ex.locator || 'Abstract'}</span><Highlighted as="span" class="sp-at" text={ex.text} highlight={ex.highlight} /></> : null}
+      </>
+    ) : null}
+
+    {form === 'broadside' && ex ? (
+      <>
+        <span class="sp-pt">{ex.text}</span>
+        <span class="sp-pf">{item.creator}</span>
+      </>
+    ) : null}
+
+    {form === 'card' ? (
+      <>
+        <span class="sp-call"><span>FDF {haulSlug(haul.number)}.{n}</span><span>{typeLabel[item.type]}</span></span>
+        <span class="sp-hw">{hw.head}{hw.article ? <>, <i>{hw.article}</i></> : null}</span>
+        <span class="sp-d">{item.source.date}</span>
+        {ex ? <span class="sp-ce">{ex.text}</span> : null}
+        {plate ? <img class="sp-print" src={plate} width={item.plate!.width} height={item.plate!.height} alt="" loading="lazy" decoding="async" /> : null}
+        <span class="sp-punch" aria-hidden="true"></span>
+      </>
+    ) : null}
+
+    {form === 'page' ? (
+      <>
+        <span class="sp-bh"><span>{item.source.name}</span><span>{item.creator}</span></span>
+        {ex ? <span class="sp-bt">{ex.text}</span> : <span class="sp-bt">{titleText(item.title)}</span>}
+        <span class="sp-bf">{ex?.locator || item.source.date}</span>
+      </>
+    ) : null}
+  </a>
+  <p class="sp-cap">
+    <span class="sp-n">{String(n).padStart(2, '0')}</span>
+    <span>{typeLabel[item.type]}{form !== 'opening' && form !== 'offprint' && form !== 'card' ? <> · <span class="sp-ct">{titleText(item.title)}</span></> : null}</span>
+    <span class="sp-why">{firstSentence(item.why.text)}</span>
+  </p>
+</li>

@@ -1,0 +1,9 @@
+---
+// "From the ~~Internet~~ Dumpster Fire": the struck word is crossed out by an ember line. Screen
+// readers hear the real name.
+interface Props {
+  class?: string;
+}
+const { class: cls } = Astro.props;
+---
+<span class:list={['mast-line', cls]}><span class="sr">From the Dumpster Fire</span><span aria-hidden="true"><i>From the</i> <s>Internet</s> Dumpster Fire</span></span>

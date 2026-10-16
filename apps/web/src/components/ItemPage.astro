@@ -1,16 +1,18 @@
 ---
-// A glossed item: standard, Rhymes and poem layouts. Mirrors apps/mobile/src/screens/ItemScreen.tsx.
-// One column on phones; on wide screens the editor's note sits left, the source in the middle and
-// the machine's layer (marginalia, Wikipedia, connections) on the right.
-import type { Haul, Item } from '@fdf/shared/haul';
+// One item, set in its printed form (lib/forms.ts): a magazine opening, an offprint, a transcript,
+// a broadside, facing pages, a catalogue card or a page from the book. Every form shares the working
+// margin (meta, the machine's notes, speakers, section numbers), the running head, the thumb tab and
+// the folio. Mirrors apps/mobile/src/screens/ItemScreen.tsx.
+import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
-import Chip from './Chip.astro';
 import Highlighted from './Highlighted.astro';
 import Voice from './Voice.astro';
-import Arrow from './Arrow.astro';
-import { joinMeta, minutes, paths, safeHref, titleText } from '../lib/site';
+import Notes from './Notes.astro';
+import SeeAlso from './SeeAlso.astro';
+import { formName, formOf, headword, speaker } from '../lib/forms';
+import { paths, safeHref, titleText } from '../lib/site';
 
 interface Props {
   haul: Haul;
@@ -18,15 +20,22 @@ interface Props {
 }
 const { haul, item } = Astro.props;
 const at = haul.items.indexOf(item);
+const n = at + 1;
 const next: Item | undefined = haul.items[at + 1];
-const rhymes = item.type === 'rhymes' && !!item.rhyme;
-const poem = item.type === 'poem' && !!item.excerpt;
+const form = formOf(item);
+const H = `Haul ${haulSlug(haul.number)}`;
 const source = safeHref(item.media?.url ?? item.source.url);
-const sourceLabel = item.media ? item.media.label : item.type === 'rabbit-hole' ? 'Go down the hole' : `Read the original${item.source.name && item.source.name !== titleText(item.title) ? ` at ${item.source.name}` : ''}`;
-const hasLead = !!item.plate || rhymes || poem;
+const sourceLabel = item.media
+  ? item.media.label
+  : form === 'card'
+    ? 'Go down the hole'
+    : `Read the original${item.source.name && item.source.name !== titleText(item.title) ? ` at ${item.source.name}` : ''}`;
 const plateSrc = item.plate ? safeHref(item.plate.url) : undefined;
 const description = item.why.text.length > 200 ? item.why.text.slice(0, item.why.text.lastIndexOf(' ', 197)) + '…' : item.why.text;
-const targetType = (id?: string) => (id ? haul.items.find((x) => x.id === id)?.type : undefined);
+const longTitle = titleText(item.title).length > 34;
+const hw = headword(item.title.text);
+const matched = 'matched word for word against the source';
+const licence = item.plate ? item.plate.licence.charAt(0).toUpperCase() + item.plate.licence.slice(1) : '';
 ---
 <Base
   title={`${titleText(item.title)}, ${item.creator}`}
@@ -34,163 +43,227 @@ const targetType = (id?: string) => (id ? haul.items.find((x) => x.id === id)?.t
   path={paths.item(haul.number, item.id)}
   type="article"
   image={item.plate && plateSrc ? { url: plateSrc, width: item.plate.width, height: item.plate.height, alt: item.plate.caption || titleText(item.title) } : undefined}
+  runhead={{ href: paths.haul(haul.number), left: `${H} · ${titleText(haul.title)}`, right: formName[form] }}
+  folio={{ left: H, number: n }}
 >
-  <header class:list={['item-head', `t-${item.type}`, { 'plain-head': rhymes }]}>
-    <div class="wrap item-head-inner">
-      <div class="topbar">
-        <a class="back label" href={paths.haul(haul.number)}><Arrow back />Haul {haul.number}</a>
-        <span class="meta" aria-label={`Item ${at + 1} of ${haul.items.length}`}>{at + 1} of {haul.items.length}</span>
-      </div>
-      {rhymes ? <Chip type="rhymes" /> : <p class="label">{joinMeta(typeLabel[item.type], item.source.name, item.source.date, minutes(item.minutes))}</p>}
-      <Title title={item.title} as="h1" class="title-l" />
-      {!rhymes ? <p class="creator">{item.creator}</p> : null}
-    </div>
-  </header>
+  <nav slot="edge" class="tabs" aria-label={`Item ${n} of ${haul.items.length}`}>
+    <a class:list={['tab', 'here', `n${Math.min(n, 20)}`, `t-${item.type}`]} href={paths.haul(haul.number)} aria-label={`Item ${n} of ${haul.items.length}. Back to the contents`}>{n}</a>
+  </nav>
 
-  <div class:list={['wrap', 'item-body', `t-${item.type}`, { 'wide-lead': rhymes, 'no-lead': !hasLead }]}>
-    {hasLead ? (
-      <div class="a-lead">
+  <article class:list={[`t-${item.type}`, `form-${form}`]} aria-labelledby="item-title">
+
+    {form === 'opening' || form === 'page' ? (
+      <header class="wrap g open">
+        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.name}, {item.source.date}</span>{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
+        <Title title={item.title} as="h1" class:list={['mc', form === 'page' ? 'h-item' : 'essay-t', { 'essay-t-long': longTitle }]} id="item-title" />
+        <p class="c byline">{item.creator}</p>
+      </header>
+    ) : null}
+
+    {form === 'offprint' ? (
+      <>
+        <div class="wrap"><p class="runcite"><span>{item.creator}. {titleText(item.title)}. {item.source.name}, {item.source.date}.</span><span>{H}, item {n}</span></p></div>
+        <header class="wrap g off">
+          <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
+          <div class="c off-c">
+            <Title title={item.title} as="h1" class="off-t" id="item-title" />
+            <p class="off-by">{item.creator}</p>
+          </div>
+        </header>
+      </>
+    ) : null}
+
+    {form === 'transcript' || form === 'facing' ? (
+      <header class="wrap g tr-head">
+        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{form === 'facing' && item.rhyme ? <span>{item.rhyme.then.year} and {item.rhyme.now.year}</span> : null}{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
+        <div class="c">
+          <Title title={item.title} as="h1" class="h-item" id="item-title" />
+          {form === 'transcript' ? <p class="byline">{item.creator}</p> : null}
+          {form === 'facing' ? (
+            <>
+              <p class="standfirst rh-sf">{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+              {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
+            </>
+          ) : null}
+        </div>
+      </header>
+    ) : null}
+
+    {form === 'broadside' && item.excerpt ? (
+      <div class="wrap">
+        <figure class="bs">
+          <h1 class="sr" id="item-title">{titleText(item.title)}, {item.creator}</h1>
+          <blockquote class="bs-poem">{item.excerpt.text}</blockquote>
+          <figcaption class="bs-foot"><span class="bs-who">{item.creator}</span><span><i>{item.source.name}</i>, {item.source.date}</span></figcaption>
+        </figure>
+      </div>
+    ) : null}
+
+    {form === 'card' ? (
+      <div class="wrap card-lay">
+        <div class="card">
+          <p class="c-call"><span>FDF {haulSlug(haul.number)}.{n}</span><span>{typeLabel[item.type]}</span></p>
+          <h1 class="c-head" id="item-title">{hw.head}{hw.article ? <>, <i class="hw-the">{hw.article}</i></> : null}</h1>
+          <p class="c-dates">{item.source.date}</p>
+          <p class="c-ed">{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+          {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
+          {item.excerpt ? (
+            <blockquote class="c-ex"><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+          ) : null}
+          <Notes notes={item.marginalia} />
+          {source ? <p class="c-src">Source: <a href={source} rel="noopener noreferrer" target="_blank">{item.source.name}, {titleText(item.title)}<span class="sr"> (opens in a new tab)</span></a></p> : null}
+          <span class="punch" aria-hidden="true"></span>
+        </div>
         {item.plate && plateSrc ? (
           <figure class="plate">
             <img src={plateSrc} width={item.plate.width} height={item.plate.height} alt={item.plate.caption || `Plate for ${titleText(item.title)}`} loading="lazy" decoding="async" />
-            <figcaption>{item.plate.caption} {item.plate.credit}, {item.plate.licence}.</figcaption>
-          </figure>
-        ) : null}
-
-        {rhymes && item.rhyme ? (
-          <div class="rhyme">
-            <figure class="era s-sky">
-              <p class="era-year">{item.rhyme.then.year}</p>
-              <blockquote class="era-quote">“{item.rhyme.then.quote}”</blockquote>
-              <figcaption class="era-cite">{item.rhyme.then.cite}</figcaption>
-            </figure>
-            <div class="bridge">
-              <p class="machine"><span class="sr">The machine's bridge: </span>{item.rhyme.bridge}</p>
-            </div>
-            <figure class="era era-now">
-              <p class="era-year">{item.rhyme.now.year}</p>
-              <blockquote class="era-quote">“{item.rhyme.now.quote}”</blockquote>
-              <figcaption class="era-cite">{item.rhyme.now.cite}</figcaption>
-            </figure>
-          </div>
-        ) : null}
-
-        {poem && item.excerpt ? (
-          <figure class="poem-block">
-            <blockquote class="poem-text">{item.excerpt.text}</blockquote>
-            <figcaption class="meta">{item.creator}, {item.source.name}</figcaption>
+            <figcaption><span>{item.plate.caption}</span><span class="cr">{item.plate.credit}. {licence}.</span></figcaption>
           </figure>
         ) : null}
       </div>
     ) : null}
 
-    <section class="a-why" aria-labelledby="why-title">
-      <div class="why-head">
-        <h2 class="h-section" id="why-title">{rhymes ? 'My two bits' : "Why it's here"}</h2>
+    {form === 'facing' && item.rhyme ? (
+      <div class="wrap">
+        <div class="spread">
+          <section class="leaf leaf-then" aria-label={`Then, ${item.rhyme.then.year}`}>
+            <p class="leaf-y">{item.rhyme.then.year}</p>
+            <blockquote><p class="leaf-q">{item.rhyme.then.quote}</p></blockquote>
+            <p class="leaf-c">{item.rhyme.then.cite}</p>
+            <p class="leaf-f" aria-hidden="true">then</p>
+          </section>
+          <div class="gutter"><p class="machine"><span class="sr">The machine's bridge: </span>{item.rhyme.bridge}</p></div>
+          <section class="leaf leaf-now" aria-label={`Now, ${item.rhyme.now.year}`}>
+            <p class="leaf-y">{item.rhyme.now.year}</p>
+            <blockquote><p class="leaf-q">{item.rhyme.now.quote}</p></blockquote>
+            <p class="leaf-c">{item.rhyme.now.cite}</p>
+            <p class="leaf-f" aria-hidden="true">now</p>
+          </section>
+        </div>
       </div>
-      <p class="note note-block">{item.why.text}</p>
-      <p class="sign" aria-label="Bhuvanesh, the editor">B.</p>
-      {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
-    </section>
-
-    {item.excerpt && !poem ? (
-      <figure class="a-excerpt">
-        <div class="quote-mark" aria-hidden="true">“</div>
-        <blockquote cite={safeHref(item.source.url)}>
-          <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} class="excerpt" />
-        </blockquote>
-        <figcaption class="meta excerpt-meta">{joinMeta(item.excerpt.locator || undefined, 'matched word for word against the source')}</figcaption>
-      </figure>
     ) : null}
 
-    <div class="a-act item-actions">
-      {source ? (
-        <a class="pill wide" href={source} rel="noopener noreferrer" target="_blank">{sourceLabel}<span class="ext" aria-hidden="true">↗</span><span class="sr"> (opens in a new tab)</span></a>
-      ) : null}
-    </div>
-
-    {item.connections.length ? (
-      <section class="a-edges" aria-labelledby="edges-title">
-        <h2 class="h-section" id="edges-title">Where it connects</h2>
-        <ul class="edges">
-          {item.connections.map((c) => {
-            const t = targetType(c.itemId);
-            const href = c.itemId ? paths.item(haul.number, c.itemId) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
-            return (
-              <li>
-                <a class:list={['edge', t ? `t-${t}` : null]} href={href}>
-                  <span class="label">{c.type}</span>
-                  <span class="edge-title">{c.title}</span>
-                  <span class="edge-note">{c.note}</span>
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+    {form === 'opening' || form === 'broadside' || form === 'page' ? (
+      <section class="wrap g why" aria-labelledby="why-title">
+        <div class="m">
+          <h2 class="mh" id="why-title">Why it's here</h2>
+          {!item.excerpt || form !== 'opening' ? <div class="m-notes"><Notes notes={item.marginalia} /></div> : null}
+        </div>
+        <div class="c">
+          <p class:list={[form === 'opening' ? 'standfirst' : 'ed']}>{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+          {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
+        </div>
       </section>
     ) : null}
 
-    {item.marginalia.length || item.wiki.length ? (
-      <div class="a-side">
-        {item.marginalia.length ? (
-          <section class="marginalia" aria-labelledby="margin-title">
-            <div class="marginalia-head">
-              <h2 class="machine-label" id="margin-title">Marginalia</h2>
-              <span class="meta">Machine-read, editor-checked</span>
-            </div>
-            <ul>
-              {item.marginalia.map((m) => (
-                <li>
-                  <p class="machine">{m.text}</p>
-                  <span class="cite">Source: {m.cite}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+    {form === 'opening' && item.excerpt ? (
+      <figure class="wrap g pull">
+        <figcaption class="m pull-m"><span class="loc">{item.excerpt.locator ? `${item.excerpt.locator}, ` : ''}{matched}</span><Notes notes={item.marginalia} /></figcaption>
+        <blockquote class="c pull-q" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+      </figure>
+    ) : null}
 
-        {item.wiki.length ? (
-          <section aria-labelledby="wiki-title">
-            <h2 class="h-section" id="wiki-title">Further, via Wikipedia</h2>
-            <ul class="wiki">
-              {item.wiki.map((w) => {
-                const href = safeHref(w.url);
-                return (
-                  <li>
-                    {href ? (
-                      <a href={href} rel="noopener noreferrer" target="_blank">
-                        <span class="wiki-title"><span>{w.title}</span><span class="ext" aria-hidden="true">↗</span></span>
-                        <span class="wiki-sum">{w.summary}</span>
-                      </a>
-                    ) : (
-                      <div class="plain-wiki"><span class="wiki-title"><span>{w.title}</span></span><span class="wiki-sum">{w.summary}</span></div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
-
+    {form === 'page' && item.excerpt ? (
+      <div class="wrap g">
+        <figure class="c bookpage">
+          <p class="bp-head"><span>{item.source.name}</span><span>{item.creator}</span></p>
+          <blockquote cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} class="bp-text" /></blockquote>
+          <figcaption class="bp-foot">{item.excerpt.locator || item.source.date}</figcaption>
+        </figure>
       </div>
     ) : null}
-  </div>
 
-  <div class="wrap">
-    <div class="read-next">
-      {next ? (
-        <a class:list={['next', `t-${next.type}`]} href={paths.item(haul.number, next.id)}>
-          <span class="label">Next · {typeLabel[next.type]}</span>
-          <Title title={next.title} as="span" class="title-s" />
-          <span class="card-by">{next.creator}</span>
-        </a>
-      ) : (
-        <div class="next next-end">
-          <p class="label">End of Haul {haul.number}</p>
-          <p>{haul.colophon}</p>
-          <p><a href={paths.haul(haul.number)}>Back to the cover</a></p>
+    {form === 'offprint' ? (
+      <>
+        {item.excerpt ? (
+          <section class="wrap g" aria-labelledby="abs">
+            <div class="c abstract">
+              <h2 id="abs">{item.excerpt.locator || 'Abstract'}</h2>
+              <blockquote cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+              <p class="small ink2">As the editor marked it, {matched}.</p>
+            </div>
+          </section>
+        ) : null}
+        {[
+          { h: "Why it's here", kind: 'why' },
+          ...(item.marginalia.length ? [{ h: 'Notes', kind: 'notes' }] : []),
+          ...(item.wiki.length ? [{ h: 'References', kind: 'refs' }] : []),
+        ].map((s, i) => (
+          <section class="wrap g sec" aria-labelledby={`sec-${i}`}>
+            <p class="m sec-n" aria-hidden="true">{i + 1}</p>
+            <div class="c">
+              <h2 class="sec-h" id={`sec-${i}`}><span class="sr">{i + 1}. </span>{s.h}</h2>
+              {s.kind === 'why' ? (
+                <>
+                  <p class="ed">{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+                  {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
+                </>
+              ) : null}
+              {s.kind === 'notes' ? <Notes notes={item.marginalia} /> : null}
+              {s.kind === 'refs' ? (
+                <ol class="refs">
+                  {item.wiki.map((w, j) => {
+                    const href = safeHref(w.url);
+                    return <li><span class="rn">[{j + 1}]</span><span>{href ? <a href={href} rel="noopener noreferrer" target="_blank">{w.title}</a> : w.title}. {w.summary} <span class="ink2 small">Wikipedia.</span></span></li>;
+                  })}
+                </ol>
+              ) : null}
+            </div>
+          </section>
+        ))}
+      </>
+    ) : null}
+
+    {form === 'transcript' ? (
+      <section class="wrap transcript" aria-label="From the transcript">
+        {item.excerpt ? (
+          <div class="g tl tl-said">
+            <p class="m who">{speaker(item.creator)}<span class="when">{item.source.name}, {item.source.date}</span></p>
+            <blockquote class="c said" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+          </div>
+        ) : null}
+        <div class="g tl">
+          <p class="m who who-ed"><span aria-hidden="true">B.</span><span class="sr">The editor, Bhuvanesh</span></p>
+          <div class="c">
+            <p class="ed">{item.why.text}</p>
+            {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
+          </div>
         </div>
-      )}
-    </div>
-  </div>
+        <Notes notes={item.marginalia} rows />
+      </section>
+    ) : null}
+
+    {form === 'facing' && item.marginalia.length ? (
+      <div class="wrap g row"><p class="m mh">Notes</p><div class="c"><Notes notes={item.marginalia} /></div></div>
+    ) : null}
+
+    {item.plate && plateSrc && form !== 'card' ? (
+      <div class="wrap g">
+        <figure class="c plate">
+          <img src={plateSrc} width={item.plate.width} height={item.plate.height} alt={item.plate.caption || `Plate for ${titleText(item.title)}`} loading="lazy" decoding="async" />
+          <figcaption><span>{item.plate.caption}</span><span class="cr">{item.plate.credit}. {licence}.</span></figcaption>
+        </figure>
+      </div>
+    ) : null}
+
+    {source && form !== 'card' ? (
+      <div class="wrap g">
+        <p class="c src"><a href={source} rel="noopener noreferrer" target="_blank">{sourceLabel}<span class="sr"> (opens in a new tab)</span></a><span>{item.source.date}{item.minutes ? ` · ${item.minutes} minutes` : ''}</span></p>
+      </div>
+    ) : null}
+
+    <div class="wrap"><SeeAlso haul={haul} item={item} noWiki={form === 'offprint'} /></div>
+  </article>
+
+  <nav class="wrap g row next" aria-label="Next in this Haul">
+    <p class="m mh">{next ? 'Next' : `End of ${H}`}</p>
+    {next ? (
+      <a class:list={['c', 'next-a', `t-${next.type}`]} href={paths.item(haul.number, next.id)}>
+        <span class="next-k"><span class="key" aria-hidden="true"></span>{at + 2} · {typeLabel[next.type]}</span>
+        <Title title={next.title} as="span" class="next-t" />
+      </a>
+    ) : (
+      <a class="c next-a" href={paths.haul(haul.number)}><span class="next-k">The contents</span><Title title={haul.title} as="span" class="next-t" /></a>
+    )}
+  </nav>
 </Base>
