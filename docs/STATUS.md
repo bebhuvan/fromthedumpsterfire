@@ -55,7 +55,7 @@
 
 ### Models: what was verified (2026-10-16)
 
-- `npm run verify`: every workspace typechecks; 254 tests. New in `providers.test.ts` (36):
+- `npm run verify`: every workspace typechecks; 255 tests. New in `providers.test.ts` (37):
   request shape per provider (schema trimming for Claude, `responseFormat` and its fallback for
   Gemini, thinking on and off per provider, no temperature where refused, PDFs and images, cache
   marks only above the minimum), usage parsing with cached, cache-write and reasoning tokens,
@@ -64,6 +64,12 @@
   metadata header with the key only in a header, Z.ai direct, fallback down the chain on 529 and
   on a truncated answer with every call in the ledger at the right cost, the repair turn, PDF
   capability gates, the pre-call ceiling check, and scanned-PDF transcription in page batches.
+- Local end to end (`wrangler dev`, both Workers, real Workers AI, no provider keys): a pasted
+  Jevons passage ran read, plate, embed, draft and judge to `ready` through the new router; the
+  ledger rows carry the new token columns. The first run found a regression (draft's `low`
+  thinking let Kimi and DeepSeek on Workers AI reason through all 8,000 tokens); Workers AI now
+  always runs with thinking off, and the rerun cost $0.007. Preview D1 migrated to 0003; preview
+  Workers deployed (pipeline `3b6544dc`, Desk `ae563573`).
 - **Not yet verified against the real APIs:** no provider keys are set (none on the preview
   Workers, none in `.dev.vars`). `docs/MODELS.md` lists the points the smoke test must settle
   (the `glm-4.7-flash` id, JSON mode on GLM-5.3-Flash, Gemini's `v1beta` path through the gateway).
