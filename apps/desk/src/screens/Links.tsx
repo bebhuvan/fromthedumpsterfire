@@ -222,13 +222,14 @@ function ThreadCard({ thread, onSaved }: { thread: ThreadUi; onSaved: () => void
   const [italic, setItalic] = useState(thread.title_italic ?? '');
   const [summary, setSummary] = useState(thread.summary);
   const [gists, setGists] = useState<Record<string, string>>(Object.fromEntries(thread.points.map((p) => [p.itemId, p.gist])));
+  const [years, setYears] = useState<Record<string, string>>(Object.fromEntries(thread.points.map((p) => [p.itemId, p.year])));
   const [busy, setBusy] = useState(false);
   const machine = thread.status === 'proposed' && !thread.edited;
   const style = checkStyle([title, italic, summary].filter(Boolean).join('. '), { strict: false });
   async function save(status?: ThreadUi['status']) {
     setBusy(true);
     try {
-      await api.patch(`/api/threads/${thread.id}`, { title_text: title, title_italic: italic || null, summary, gists, ...(status ? { status } : {}) });
+      await api.patch(`/api/threads/${thread.id}`, { title_text: title, title_italic: italic || null, summary, gists, years, ...(status ? { status } : {}) });
       toast(status === 'approved' ? 'Thread approved; it publishes with any Haul it touches' : status === 'rejected' ? 'Thread set aside' : 'Saved');
       onSaved();
     } catch (e) {
@@ -261,7 +262,7 @@ function ThreadCard({ thread, onSaved }: { thread: ThreadUi; onSaved: () => void
       <ol className="timeline">
         {thread.points.map((p) => (
           <li key={p.itemId} data-type={p.item?.type}>
-            <span className="yr num">{p.year || '—'}</span>
+            <input className="yr num" style={{ width: 56, border: 0, background: 'transparent', padding: 0 }} value={years[p.itemId] ?? ''} onChange={(e) => setYears({ ...years, [p.itemId]: e.target.value })} placeholder="Year" aria-label="Year" />
             <span className="stack" style={{ gap: 4 }}>
               <span className="serif" style={{ fontSize: 15.5 }}>
                 {p.item ? <Link to={`/item/${p.itemId}`}>{displayTitle(p.item)}</Link> : 'A deleted item'}

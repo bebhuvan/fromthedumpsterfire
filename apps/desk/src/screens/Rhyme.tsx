@@ -143,6 +143,7 @@ function EndPanel({ end, detail, sources, call }: { end: 'then' | 'now'; detail:
             candidates={[]}
             actionLabel="Use as the quote"
             allowHighlight={false}
+            sticky={false}
             onExcerpt={(s: Selection) => call(() => api.put<RhymeDetail>(`/api/rhymes/${rid}/${end}/quote`, s), 'Quote set. Found word for word.')}
             onHighlight={() => {}}
           />

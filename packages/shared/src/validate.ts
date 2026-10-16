@@ -33,7 +33,11 @@ export interface ValidateOptions {
 }
 
 class Collector {
-  constructor(readonly opts: ValidateOptions = {}) {}
+  // A plain field, not a parameter property: scripts run this file with Node's type stripping.
+  readonly opts: ValidateOptions;
+  constructor(opts: ValidateOptions = {}) {
+    this.opts = opts;
+  }
   hosted(v: unknown, path: string) {
     const base = this.opts.filesBase?.replace(/\/$/, '');
     if (base && typeof v === 'string' && !v.startsWith(`${base}/`)) this.err(path, 'hosted', `must be published under ${base}/ (copy it next to the bundle; never hotlink)`);

@@ -106,6 +106,7 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
     });
     if (rendered) {
       const rEx = extractArticle(rendered.html, rendered.url);
+      console.log(JSON.stringify({ event: 'browser-rendered', url: rendered.url, html: rendered.html.length, text: rEx.text.length, before: ex.text.length, blocked: rendered.blocked.slice(0, 5), blockedCount: rendered.blocked.length }));
       if (rEx.text.length > ex.text.length) {
         ex = rEx;
         html = rendered.html;

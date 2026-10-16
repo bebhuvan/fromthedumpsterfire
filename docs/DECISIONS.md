@@ -61,3 +61,25 @@ Dated, newest last. Don't reopen these without a new reason.
   theirs. The machine never writes in the editor's first person.
 - **Connections are editor-made for now** (typed, with a one-sentence note in the editor's words).
   Machine edge-judging is milestone 6.
+
+## 2026-10-16 (milestone 6 on the Desk)
+
+- **Plates come only from institutions' open-access APIs** (Wikimedia Commons, Art Institute of
+  Chicago, The Met; Smithsonian and Rijksmuseum when keyed), filtered on the institution's own
+  public-domain or CC0 marking. The model proposes searches, never images or URLs. Chosen images are
+  copied to our storage and published from FILES; archives are never hotlinked (Wikimedia refuses
+  app image loaders).
+- **Two buckets.** MEDIA is private; FILES is public and only `publish.ts` writes `hauls/` there.
+- **Connections need a quote from both ends**, each verified verbatim against stored source text,
+  or they are dropped. Pairs are claimed before judging so none is paid for twice. The editor keeps
+  a link only with a note in their own words (or by adopting the machine's sentence explicitly),
+  because the app sets connection notes in the editor's serif.
+- **Threads are connected components of kept links**, large ones split at their weakest edges
+  (fewest shared neighbours). Label propagation was tried and rejected: with deterministic tie-breaks
+  it floods one label across a bridge edge.
+- **Embeddings: `@cf/baai/bge-m3`** (multilingual, 1024 dims, the cheapest Workers AI embedding at
+  $0.012 per million tokens). Batches of 20; a batch of 50 long chunks hung in testing.
+- **Browser Rendering is opt-in** (`BROWSER_FALLBACK=on`): request interception vets every request,
+  but WebSockets and the browser's own DNS lookup cannot be intercepted.
+- **Voice notes prefer AAC in MP4**; WebM/Ogg notes still publish with a format field and an
+  "Android only" warning rather than being blocked.

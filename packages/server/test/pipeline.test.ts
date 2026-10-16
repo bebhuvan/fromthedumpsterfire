@@ -114,6 +114,12 @@ describe('article extraction', () => {
     expect(ex.text.slice(ex.headings[0]!.offset, ex.headings[0]!.offset + 12)).toBe('## The poems');
     void parseHTML;
   });
+  it('drops footnote markers so quotes copied without them still match', () => {
+    const body = `<p>The very contrary is the truth.<sup class="reference"><a href="#n6">[6]</a></sup> New modes of economy lead to more use.<sup>[citation needed]</sup> In 10<sup>3</sup> cases.</p>`;
+    const ex = extractArticle(`<html><body><article>${body.repeat(6)}</article></body></html>`, 'https://en.wikipedia.org/wiki/X');
+    expect(ex.text).toContain('The very contrary is the truth. New modes of economy lead to more use. In 103 cases.');
+    expect(ex.text).not.toMatch(/\[6\]|citation needed/);
+  });
 });
 
 describe('model answers', () => {

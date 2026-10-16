@@ -8,6 +8,7 @@ import type { Plate } from '@fdf/shared/haul';
 import type { Env } from './env';
 import type { ItemRow } from './db';
 import { getItem } from './db';
+import { relevant } from './wiki';
 import { generateJson } from './models/router';
 import { PLATE_SYSTEM, plateSchema, type ReadingCard } from './prompts';
 import { guardedFetch, finalUrlOf } from './extract/guard';
@@ -109,6 +110,25 @@ export function commonsIsPublicDomain(meta: Record<string, { value?: string } | 
   return { ok: false, licence: short || code };
 }
 
+/** Commons titles often carry catalogue ids ("LCCN2006691752", "(21177395802)", "RMG PV2058"). */
+export function cleanCommonsTitle(t: string): string {
+  return t
+    .replace(/\s*\bLCCN\s?\d{6,}\b/gi, '')
+    .replace(/\s*\(\d{6,}\)/g, '')
+    .replace(/\s+-\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Commons "Artist" fields repeat themselves ("Unknown author Unknown author") or say nothing. */
+export function cleanCommonsCreator(a: string): string | undefined {
+  let s = a.replace(/\s+/g, ' ').trim();
+  const half = s.length / 2;
+  if (Number.isInteger(half - 0.5) && s.slice(0, half - 0.5) === s.slice(half + 0.5)) s = s.slice(0, half - 0.5);
+  if (!s || /^(unknown|anonymous|unknown author|author unknown|see below|not provided)\.?$/i.test(s)) return undefined;
+  return truncate(s, 120);
+}
+
 /** Width and height from the first bytes of a JPEG, PNG, GIF or WebP. */
 export function imageSize(b: Uint8Array): { width: number; height: number; mime: string } | null {
   if (b.length < 24) return null;
@@ -204,15 +224,16 @@ export async function searchCommons(q: string, limit = 4): Promise<PlateCandidat
     out.push({
       provider: 'commons',
       providerId: String(p.pageid),
-      title: stripHtml(meta.ObjectName?.value) || p.title.replace(/^File:/, '').replace(/\.[a-z]{3,4}$/i, ''),
-      creator: truncate(stripHtml(meta.Artist?.value), 120) || undefined,
+      title: cleanCommonsTitle(stripHtml(meta.ObjectName?.value) || p.title.replace(/^File:/, '').replace(/\.[a-z]{3,4}$/i, '')),
+      creator: cleanCommonsCreator(stripHtml(meta.Artist?.value)),
       date: truncate(stripHtml(meta.DateTimeOriginal?.value).replace(/\s*(date )?QS:.*$/, '').trim(), 40) || undefined,
       institution: 'Wikimedia Commons',
       licence: lic.licence,
       licenceUrl: lic.licence === 'CC0' ? CC0 : stripHtml(meta.LicenseUrl?.value) || undefined,
       sourceUrl: ii.descriptionurl,
       imageUrl,
-      thumbUrl: typeof ii.thumburl === 'string' ? ii.thumburl.replace(/\/\d+px-/, '/400px-') : imageUrl,
+      // Wikimedia serves standard thumbnail widths only (250, 330, 500, 960, 1280...).
+      thumbUrl: typeof ii.thumburl === 'string' ? ii.thumburl.replace(/\/\d+px-/, '/500px-') : imageUrl,
       width: ii.thumbwidth ?? ii.width,
       height: ii.thumbheight ?? ii.height,
     });
@@ -258,6 +279,9 @@ export async function searchMet(q: string, limit = 3): Promise<PlateCandidate[]>
     if (r.status !== 'fulfilled') continue;
     const o = r.value;
     if (!o.isPublicDomain || !o.primaryImageSmall || !String(o.objectURL ?? '').startsWith('https://')) continue;
+    // The Met's search matches loosely (any field); keep works whose own description shares a word with the query.
+    const about = [o.title, o.objectName, o.artistDisplayName, o.culture, ...(Array.isArray(o.tags) ? o.tags.map((t: { term?: string }) => t.term) : [])].filter(Boolean).join(' ');
+    if (!relevant(q, about)) continue;
     out.push({
       provider: 'met',
       providerId: String(o.objectID),

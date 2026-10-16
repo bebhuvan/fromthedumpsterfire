@@ -85,7 +85,7 @@ CREATE INDEX suggestions_to ON suggestions (to_item_id, status);
 CREATE TABLE judged_pairs (
   a       TEXT NOT NULL,
   b       TEXT NOT NULL,
-  outcome TEXT NOT NULL,                      -- edge, none, dropped
+  outcome TEXT NOT NULL,                      -- pending, edge, none, or 'dropped: <reasons>'
   at      TEXT NOT NULL,
   PRIMARY KEY (a, b)
 );

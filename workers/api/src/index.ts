@@ -181,7 +181,8 @@ app.get('/api/settings', async (c) => {
     recentCalls: calls.results,
     spendByTask: byTask.results,
     filesBase: c.env.FILES_BASE,
-    bindings: { vectors: Boolean(c.env.VECTORS), browser: Boolean(c.env.BROWSER) && c.env.BROWSER_FALLBACK === 'on', images: Boolean(c.env.IMAGES), files: Boolean(c.env.FILES) },
+    // The Desk Worker's own bindings (Vectorize and Browser Rendering are bound to the pipeline).
+    bindings: { files: Boolean(c.env.FILES), images: Boolean(c.env.IMAGES) },
   });
 });
 

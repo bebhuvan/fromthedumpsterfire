@@ -135,7 +135,7 @@ export const CONNECT_SYSTEM = `You judge whether two pieces chosen for a small m
 - "Same mechanism": both describe the same abstract mechanism in different settings.
 - "Rhymes with": a striking echo across time, without a causal link.
 - "Cites": A cites or names B or its author.
-Use direction "b_to_a" when the type reads from B to A instead. Precision matters more than recall. If the link is loose, thematic or generic, answer "none". For a connection you must give one quotation from each piece that shows it, each copied character for character from that piece's passages (one or two sentences, not paraphrased, not stitched together), a one-sentence justification that names both pieces, and your confidence from 0 to 1.
+Use direction "b_to_a" when the type reads from B to A instead. Precision matters more than recall. If the link is loose, thematic or generic, answer "none". For a connection you must give one quotation from each piece that shows it, each copied character for character from that piece's passages (one or two sentences, not paraphrased, not stitched together), a one-sentence justification that names both pieces by their titles or authors (never "piece A" or "piece B"; the editor reads it without this prompt), and your confidence from 0 to 1.
 
 ${HOUSE_STYLE}`;
 
@@ -157,7 +157,7 @@ export type ConnectOutput = z.infer<typeof connectSchema>;
 export const THREAD_SYSTEM = `You name a Thread for a small magazine: a short timeline of pieces, across years, that the editor has linked with typed connections. You get the pieces (with years) and the connections between them. Write:
 1. A title of two to six words. It may set its last phrase in italic: put that phrase in "italic" and the rest in "text".
 2. A summary of one or two plain sentences on what runs through these pieces.
-3. For each piece, a gist: one short sentence (under 20 words) on what that piece adds to the line.
+3. For each piece, a gist: one short sentence (under 20 words) on what that piece adds to the line, and the year the piece belongs to on a timeline: the year of the work, event or idea it is about, as stated in the piece (for an encyclopedia article about an 1865 book, 1865).
 Use only what the pieces and connections say. No praise.
 
 ${HOUSE_STYLE}`;
@@ -165,7 +165,7 @@ ${HOUSE_STYLE}`;
 export const threadSchema = z.object({
   title: z.object({ text: z.string(), italic: z.string().optional() }),
   summary: z.string(),
-  points: z.array(z.object({ itemId: z.string(), gist: z.string() })),
+  points: z.array(z.object({ itemId: z.string(), gist: z.string(), year: z.string().optional().describe('Four digits, from the piece itself.') })),
 });
 
 export const BRIDGE_SYSTEM = `You write the bridge for a "Rhymes" pair in a small magazine: two quotations, one old and one recent, that echo each other. In two or three plain sentences, say what the older passage was about, what the recent one is about, and what they share. Name the authors and years. Only use what the quotations and their citations say.

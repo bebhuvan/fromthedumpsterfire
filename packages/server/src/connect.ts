@@ -279,6 +279,7 @@ export function verifyVerdict(
   if ((qa && qa.text.length > 600) || (qb && qb.text.length > 600)) problems.push('a quotation is longer than two sentences');
   const style = checkStyle(v.note);
   if (!v.note.trim()) problems.push('no justification');
+  else if (/\bpiece [ab]\b|\bpair \d/i.test(v.note)) problems.push('the justification must name both pieces by title or author, not "piece A" or "piece B"');
   else if (!style.ok) problems.push(`the justification breaks the house style: ${describeIssues(style.issues).replace(/\n/g, ' ')}`);
   if (v.confidence < CONFIDENCE_MIN) problems.push('confidence below threshold');
   if (problems.length || !qa || !qb) return { edge: null, problems };
@@ -333,7 +334,17 @@ export async function judgeCandidates(env: Env, itemId: string, candidates: Cand
   const others = await Promise.all(
     candidates.map(async (c) => ({ c, item: (await getItem(env, c.otherId))!, src: (await getSource(env, c.otherId))!, card: await readingCard(env, c.otherId) })),
   );
-  const live = others.filter((o) => o.item && o.src);
+  // Claim each pair before paying for it: two items finishing at once must not judge the same pair
+  // twice. A claim left 'pending' by a crashed run expires after an hour.
+  const live: typeof others = [];
+  for (const o of others.filter((x) => x.item && x.src)) {
+    const [a, b] = pairKey(itemId, o.item.id);
+    const stale = new Date(Date.now() - 3600_000).toISOString();
+    await env.DB.prepare(`DELETE FROM judged_pairs WHERE a = ? AND b = ? AND outcome = 'pending' AND at < ?`).bind(a, b, stale).run();
+    const claim = await env.DB.prepare(`INSERT OR IGNORE INTO judged_pairs (a, b, outcome, at) VALUES (?, ?, 'pending', ?)`).bind(a, b, nowIso()).run();
+    if (claim.meta.changes) live.push(o);
+  }
+  if (!live.length) return { judged: 0, kept: 0, dropped: 0 };
   const per = Math.floor(loadRoutes(env).tasks.connect.maxInputChars / Math.max(1, live.length) / 2) - 600;
 
   // Recent rejections teach the judge what the editor does not want.
@@ -397,7 +408,9 @@ export async function judgeCandidates(env: Env, itemId: string, candidates: Cand
   live.forEach((o, i) => {
     const edge = results.get(i);
     const [a, b] = pairKey(itemId, o.item.id);
-    const outcome = edge ? 'edge' : results.has(i) ? 'none' : 'dropped';
+    // A dropped pair keeps its reasons, so the Desk (and we) can see why the judge's answer failed.
+    const outcome = edge ? 'edge' : results.has(i) ? 'none' : `dropped: ${(failures.get(i) ?? []).join('; ')}`.slice(0, 500);
+    if (!edge && !results.has(i)) console.warn(JSON.stringify({ event: 'edge-dropped', itemId, other: o.item.id, problems: failures.get(i) }));
     stmts.push(env.DB.prepare('INSERT OR REPLACE INTO judged_pairs (a, b, outcome, at) VALUES (?, ?, ?, ?)').bind(a, b, outcome, now));
     if (!edge) return;
     kept++;
@@ -426,7 +439,7 @@ export async function judgeCandidates(env: Env, itemId: string, candidates: Cand
     );
   });
   if (stmts.length) await env.DB.batch(stmts);
-  return { judged: live.length, kept, dropped: live.length - kept - [...results.values()].filter((x) => x === null).length };
+  return { judged: live.length, kept, dropped: live.filter((_, i) => !results.has(i)).length };
 }
 
 // ---------------------------------------------------------------- editor actions
@@ -649,17 +662,29 @@ async function draftThread(env: Env, itemIds: string[], edges: Array<Edge & { ty
       { what: 'summary', r: checkStyle(data.summary) },
       ...data.points.map((p) => ({ what: `gist for ${p.itemId}`, r: checkStyle(p.gist) })),
     ].filter((x) => !x.r.ok);
+    const titleWords = [title.text, title.italic].filter(Boolean).join(' ').split(/\s+/).length;
+    if (titleWords > 7) issues.push({ what: 'title', r: { ok: false, issues: [{ rule: 'length', severity: 'error', message: `The title has ${titleWords} words; use two to six, with no colon.` }] } as never });
     if (issues.length && attempt < 2) {
       feedback = `\n\nYour previous answer broke the house style:\n${issues.map((i) => `${i.what}: ${describeIssues(i.r.issues)}`).join('\n')}\nWrite it again.`;
       continue;
     }
     if (issues.some((i) => i.what === 'title' || i.what === 'summary')) return null; // still failing: dropped
     const gists = new Map(data.points.filter((p) => checkStyle(p.gist).ok).map((p) => [p.itemId, p.gist.trim()]));
-    const ordered = [...items].sort((x, y) => (yearFor(x) || '9999').localeCompare(yearFor(y) || '9999') || x.captured_at.localeCompare(y.captured_at));
+    // The year a point belongs to: the model's (the work's or event's year, which for a reference
+    // article differs from its publication date) only if that year appears in the item's own source
+    // text; otherwise the item's date.
+    const years = new Map<string, string>();
+    for (const it of items) {
+      const proposed = data.points.find((p) => p.itemId === it.id)?.year?.trim() ?? '';
+      const src = /^\d{4}$/.test(proposed) ? await getSource(env, it.id) : null;
+      years.set(it.id, src && new RegExp(`\\b${proposed}\\b`).test(src.text) ? proposed : yearFor(it));
+    }
+    const yearOfPoint = (it: ItemRow) => years.get(it.id) ?? '';
+    const ordered = [...items].sort((x, y) => (yearOfPoint(x) || '9999').localeCompare(yearOfPoint(y) || '9999') || x.captured_at.localeCompare(y.captured_at));
     const points: StoredPoint[] = ordered.map((it, i) => {
       const prev = ordered.slice(0, i).reverse();
       const e = prev.map((p) => local.find((x) => (x.a === it.id && x.b === p.id) || (x.b === it.id && x.a === p.id))).find(Boolean) ?? local.find((x) => x.a === it.id || x.b === it.id);
-      return { itemId: it.id, year: yearFor(it), gist: gists.get(it.id) ?? '', edge: e?.type ?? '' };
+      return { itemId: it.id, year: yearOfPoint(it), gist: gists.get(it.id) ?? '', edge: e?.type ?? '' };
     });
     const now = nowIso();
     const id = newId('th_');

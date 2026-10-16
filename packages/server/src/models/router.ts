@@ -133,7 +133,22 @@ export const gatewayState = { missing: false };
 
 const isMissingGateway = (e: unknown) => /2001|configure AI Gateway/i.test(errorMessage(e));
 
+/** A Workers AI call that never answers must fail (and be retried), not hang the step. */
+export const AI_TIMEOUT_MS = 150_000;
+
+function timed<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
+  let t: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    t = setTimeout(() => reject(new ModelError(`${what} did not answer within ${Math.round(ms / 1000)} s`)), ms);
+  });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(t));
+}
+
 export async function runWorkersAi(env: Env, model: string, input: Record<string, unknown>, gw: Record<string, unknown> = {}): Promise<unknown> {
+  return timed(runWorkersAiRaw(env, model, input, gw), AI_TIMEOUT_MS, model);
+}
+
+async function runWorkersAiRaw(env: Env, model: string, input: Record<string, unknown>, gw: Record<string, unknown> = {}): Promise<unknown> {
   if (env.AI_GATEWAY_ID && !gatewayState.missing) {
     try {
       return await env.AI.run(model as never, input as never, { gateway: { id: env.AI_GATEWAY_ID, ...gw } } as never);

@@ -133,7 +133,9 @@ function PlateCard({ plate: p, onChoose, onSetAside, busy, chooseLabel = 'Use th
       <div className="frame">
         <img src={`/api/plates/${p.id}/thumb`} alt={p.title} loading="lazy" />
       </div>
-      <span className="t">{p.title}</span>
+      <a className="t" href={safeHref(p.source_url)} target="_blank" rel="noreferrer noopener" title="The work's page at the institution" style={{ textDecoration: 'none' }}>
+        {p.title}
+      </a>
       <span className="m">
         {[p.creator, p.date].filter(Boolean).join(', ')}
         {p.creator || p.date ? ' · ' : ''}
@@ -152,9 +154,6 @@ function PlateCard({ plate: p, onChoose, onSetAside, busy, chooseLabel = 'Use th
             Set aside
           </button>
         )}
-        <a className="btn quiet small" href={safeHref(p.source_url)} target="_blank" rel="noreferrer noopener" aria-label="The work's page at the institution">
-          ↗
-        </a>
       </span>
     </div>
   );

@@ -1,5 +1,5 @@
 // Fetch a published Haul bundle and the index and run the shared validator on them.
-// Usage: node --experimental-strip-types scripts/verify-bundle.ts <filesBase> <path> [publishedFilesBase]
+// Usage: npx tsx scripts/verify-bundle.ts <filesBase> <path> [publishedFilesBase]
 //   e.g. scripts/verify-bundle.ts http://127.0.0.1:8787/files hauls/001/v1/haul.json
 // With publishedFilesBase (the FILES_BASE the bundle was published with), every plate and audio URL
 // must sit under it, and each one is fetched from <filesBase> to prove it was copied.

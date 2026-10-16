@@ -2,7 +2,7 @@
 // (guarded fetch, copy to private storage, decision recorded) with the network stubbed.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { choosePlate, commonsIsPublicDomain, defaultCaption, imageSize, interleave, storeCandidates } from '../src/plates';
+import { choosePlate, cleanCommonsCreator, cleanCommonsTitle, commonsIsPublicDomain, defaultCaption, imageSize, interleave, storeCandidates } from '../src/plates';
 import { makeEnv } from './fake-env';
 import { fakeJpeg, seedHaul } from './seed';
 
@@ -34,6 +34,13 @@ describe('image measurement and captions', () => {
   it('builds the caption from the institution metadata only', () => {
     expect(defaultCaption({ title: 'The Silent Highwayman.', creator: 'Punch', date: '1858' })).toBe('The Silent Highwayman. Punch, 1858.');
     expect(defaultCaption({ title: 'Untitled' })).toBe('Untitled.');
+  });
+  it('cleans Commons titles and creators', () => {
+    expect(cleanCommonsTitle("Steam engine - Mr. Watt's double steam engine from his specification of 1782 LCCN2006691752")).toBe("Steam engine - Mr. Watt's double steam engine from his specification of 1782");
+    expect(cleanCommonsTitle('Victoria Embankment (21177395802)')).toBe('Victoria Embankment');
+    expect(cleanCommonsCreator('Unknown author Unknown author')).toBeUndefined();
+    expect(cleanCommonsCreator('Punch Punch')).toBe('Punch');
+    expect(cleanCommonsCreator('William Lionel Wyllie')).toBe('William Lionel Wyllie');
   });
   it('interleaves providers', () => {
     expect(interleave<string | number | boolean>([[1, 2, 3], ['a'], [true, false]], 5)).toEqual([1, 'a', true, 2, false]);

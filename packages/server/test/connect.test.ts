@@ -73,6 +73,7 @@ describe('verifyVerdict', () => {
     expect(verifyVerdict({ ...good, note: "It's not about coal, it's about compute." }, a, b).problems.join()).toMatch(/house style/);
     expect(verifyVerdict({ ...good, confidence: 0.3 }, a, b).problems).toEqual(['confidence below threshold']);
     expect(verifyVerdict({ ...good, type: 'none' }, a, b).edge).toBeNull();
+    expect(verifyVerdict({ ...good, note: 'Piece B cites the book that is piece A.' }, a, b).problems.join()).toMatch(/by title/);
   });
 });
 
@@ -126,6 +127,21 @@ describe('candidates and judging', () => {
     // The pair is recorded: looking again finds no candidate to pay for.
     const again = await embedAndFindCandidates(env, 'it_nadella');
     expect(again.candidates.find((c) => c.otherId === 'it_jevons')).toBeUndefined();
+  });
+
+  it('judges a pair once even when both items finish at the same time', async () => {
+    const env = makeEnv(
+      ai(() =>
+        answer({ verdicts: [{ pair: 0, type: 'Rhymes with', direction: 'a_to_b', note: 'Nadella in 2025 repeats what Jevons argued in 1865.', quoteA: 'The very contrary is the truth.', quoteB: 'Jevons paradox strikes again!', confidence: 0.9 }] }),
+      ),
+      { VECTORS: undefined } as never,
+    );
+    await seedCards(env);
+    const [x, y] = await Promise.all([embedAndFindCandidates(env, 'it_jevons'), embedAndFindCandidates(env, 'it_nadella')]);
+    await Promise.all([judgeCandidates(env, 'it_jevons', x.candidates), judgeCandidates(env, 'it_nadella', y.candidates)]);
+    const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM suggestions').first<{ n: number }>();
+    expect(n!.n).toBe(1);
+    expect(env.aiCalls.filter((c) => !c.model.includes('bge')).length).toBe(1);
   });
 
   it('works without Vectorize (entities and mechanisms only)', async () => {

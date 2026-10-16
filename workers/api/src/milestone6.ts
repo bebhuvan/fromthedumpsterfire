@@ -130,16 +130,20 @@ m6.get('/api/plates/:id/thumb', async (c) => {
     const obj = await c.env.MEDIA.get(p.r2_key);
     if (obj) return new Response(obj.body, { headers: fileHeaders(p.mime ?? 'image/jpeg', 'plate') });
   }
-  const res = await guardedFetch(p.thumb_url || p.image_url, { headers: { 'user-agent': USER_AGENT, accept: 'image/*' }, timeoutMs: 15_000 });
-  const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
-  if (!res.ok || !IMAGE_TYPES.has(type)) {
-    await res.body?.cancel();
-    return c.json({ error: 'Thumbnail unavailable' }, 502);
+  // The thumbnail first, then the rendition if a provider's thumbnail size is refused.
+  for (const u of [...new Set([p.thumb_url, p.image_url].filter((x): x is string => Boolean(x)))]) {
+    const res = await guardedFetch(u, { headers: { 'user-agent': USER_AGENT, accept: 'image/*' }, timeoutMs: 15_000 }).catch(() => null);
+    if (!res) continue;
+    const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
+    if (!res.ok || !IMAGE_TYPES.has(type)) {
+      await res.body?.cancel();
+      continue;
+    }
+    // Capped on the bytes actually read, whatever Content-Length says.
+    const bytes = await readCapped(res.body, 8 * 1024 * 1024, 'thumbnail').catch(() => null);
+    if (bytes) return new Response(bytes, { headers: { ...fileHeaders(type, 'thumb'), 'cache-control': 'private, max-age=86400' } });
   }
-  // Capped on the bytes actually read, whatever Content-Length says.
-  const bytes = await readCapped(res.body, 8 * 1024 * 1024, 'thumbnail').catch(() => null);
-  if (!bytes) return c.json({ error: 'Thumbnail too large' }, 502);
-  return new Response(bytes, { headers: { ...fileHeaders(type, 'thumb'), 'cache-control': 'private, max-age=86400' } });
+  return c.json({ error: 'Thumbnail unavailable' }, 502);
 });
 
 // ------------------------------------------------------------------ suggested connections
@@ -209,11 +213,15 @@ m6.patch('/api/threads/:id', async (c) => {
       title_italic: z.string().trim().max(120).nullable().optional(),
       summary: z.string().trim().min(1).max(600).optional(),
       gists: z.record(z.string(), z.string().max(240)).optional(),
+      years: z.record(z.string(), z.string().max(12)).optional(),
       status: z.enum(['proposed', 'approved', 'rejected']).optional(),
     }),
   );
-  const points = parseJson<StoredPoint[]>(t.points, []).map((p) => (b.gists && p.itemId in b.gists ? { ...p, gist: b.gists[p.itemId]!.trim() } : p));
-  const edited = b.title_text !== undefined || b.title_italic !== undefined || b.summary !== undefined || b.gists !== undefined;
+  const points = parseJson<StoredPoint[]>(t.points, [])
+    .map((p) => (b.gists && p.itemId in b.gists ? { ...p, gist: b.gists[p.itemId]!.trim() } : p))
+    .map((p) => (b.years && p.itemId in b.years ? { ...p, year: b.years[p.itemId]!.trim() } : p))
+    .sort((x, y) => (x.year || '9999').localeCompare(y.year || '9999'));
+  const edited = b.title_text !== undefined || b.title_italic !== undefined || b.summary !== undefined || b.gists !== undefined || b.years !== undefined;
   if (b.status === 'approved') {
     const title = b.title_text ?? t.title_text;
     const summary = b.summary ?? t.summary;
