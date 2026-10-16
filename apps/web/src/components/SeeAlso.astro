@@ -4,16 +4,16 @@
 // Wikipedia summaries are Wikipedia's words (serif); connection notes are the editor's (italic).
 import type { Haul, Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
-import { paths, safeHref } from '../lib/site';
+import { findItemAcrossHauls, paths, safeHref } from '../lib/site';
 
 interface Props {
   haul: Haul;
   item: Item;
+  allHauls?: Haul[];
   /** Leave out the Wikipedia slips (the offprint lists them as references instead). */
   noWiki?: boolean;
 }
-const { haul, item, noWiki } = Astro.props;
-const target = (id?: string) => (id ? haul.items.find((x) => x.id === id) : undefined);
+const { haul, item, allHauls, noWiki } = Astro.props;
 const wiki = noWiki ? [] : item.wiki;
 ---
 {wiki.length || item.connections.length ? (
@@ -21,11 +21,23 @@ const wiki = noWiki ? [] : item.wiki;
     <h2 class="m mh" id={`sa-${item.id}`}>See also</h2>
     <ul class="c seealso">
       {item.connections.map((c) => {
-        const t = target(c.itemId);
-        const href = t ? paths.item(haul.number, t.id) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
+        const found = findItemAcrossHauls(c.itemId, haul, allHauls);
+        const t = found?.item;
+        const tHaul = found?.haul ?? haul;
+        const href = t ? paths.item(tHaul.number, t.id) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
+        const inSameHaul = t && tHaul.number === haul.number;
         return (
           <li class:list={['sa', t ? `t-${t.type}` : c.threadId ? 'sa-thread' : 'sa-wiki']}>
-            <span class="sa-k">{t ? <>{haul.items.indexOf(t) + 1} · {typeLabel[t.type]}</> : c.threadId ? 'A thread' : 'From the archive'}<span class="sa-rel">{c.type}</span></span>
+            <span class="sa-k">
+              {t
+                ? inSameHaul
+                  ? <>{haul.items.indexOf(t) + 1} · {typeLabel[t.type]}</>
+                  : <>Haul {tHaul.number} · {typeLabel[t.type]}</>
+                : c.threadId
+                  ? 'A thread'
+                  : 'From the archive'}
+              <span class="sa-rel">{c.type}</span>
+            </span>
             {href ? <a class="sa-t" href={href}>{c.title}</a> : <span class="sa-t">{c.title}</span>}
             <span class="sa-g"><i>{c.note}</i></span>
           </li>
@@ -34,10 +46,16 @@ const wiki = noWiki ? [] : item.wiki;
       {wiki.map((w) => {
         const href = safeHref(w.url);
         return (
-          <li class="sa sa-wiki">
+          <li class="sa sa-wiki" itemprop="mentions" itemscope itemtype="https://schema.org/Thing">
             <span class="sa-k">Wikipedia</span>
-            {href ? <a class="sa-t" href={href} rel="noopener noreferrer" target="_blank">{w.title}<span class="sr"> (Wikipedia, opens in a new tab)</span></a> : <span class="sa-t">{w.title}</span>}
-            <span class="sa-g">{w.summary}</span>
+            {href ? (
+              <a class="sa-t" href={href} itemprop="sameAs url" rel="noopener noreferrer" target="_blank">
+                <span itemprop="name">{w.title}</span><span class="sr"> (Wikipedia, opens in a new tab)</span>
+              </a>
+            ) : (
+              <span class="sa-t" itemprop="name">{w.title}</span>
+            )}
+            <span class="sa-g" itemprop="description">{w.summary}</span>
           </li>
         );
       })}

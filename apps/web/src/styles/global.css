@@ -504,6 +504,7 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .topics summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: baseline; padding-block: 10px; cursor: pointer; list-style: none; font-size: 18px; }
 .topics summary::-webkit-details-marker { display: none; }
 .topics details[open] summary { font-style: italic; }
+.topic-sum { padding: 2px 0 8px 1.2em; }
 .topics ul { display: grid; gap: 6px; padding: 0 0 14px 1.2em; font-size: 17px; }
 
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

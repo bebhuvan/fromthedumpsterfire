@@ -193,14 +193,34 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   magazine's forms: a big title, the two voices as a transcript, five house rules each with the check
   behind it, and a key to the forms (`formGuide` in `apps/web/src/lib/forms.ts`). Deployed to production
   (version 9e99b1dd) after merging main; the preview Worker was then deleted. The reader app does not have this pass or the landing pass yet.
+- 2026-10-16: **SEO, GEO, and LLM search visibility pass.** Complete Generative Engine Optimization (GEO)
+  and traditional search optimization for the public site:
+  - **LLM endpoints & Markdown mirrors**: `/llms.txt` (curated index following the llms.txt standard),
+    `/llms-full.txt` (full Markdown corpus of every published issue with Editor vs Machine attribution),
+    and per-page Markdown mirrors (`/haul/<n>.md`, `/haul/<n>/<item>.md`, `/haul/<n>/thread/<id>.md`)
+    with `<link rel="alternate" type="text/markdown">` and `Accept: text/markdown` content negotiation.
+  - **Schema.org Microdata**: Zero `set:html` and strict `script-src 'self'` CSP preserved by using
+    HTML5 Microdata (`Periodical`, `PublicationIssue`, `Article`, `CreativeWork`, `ItemList`,
+    `BreadcrumbList`) and Wikipedia knowledge-graph grounding (`itemprop="mentions"` with `<link itemprop="sameAs">`).
+  - **OpenGraph & Twitter Card completeness**: public-domain cover plates resolved for social sharing,
+    `article:published_time`, `article:modified_time` from corrections, `article:author`, `article:section`,
+    `article:tag`, and `max-image-preview:large` / `max-snippet:-1` robots directives.
+  - **Enhanced feeds & crawlability**: rich RSS 2.0 with full `content:encoded`, `dc:creator`, and topic
+    `<category>` tags; sitemap with accurate `lastmod` on all sections and LLM endpoints; `robots.txt`
+    welcoming AI and search crawlers (`Googlebot`, `Bingbot`, `OAI-SearchBot`, `ChatGPT-User`, `PerplexityBot`,
+    `Claude-SearchBot`, `Applebot`); HTTP `Link` discovery headers; cross-Haul connection linking;
+    enriched Wikipedia summaries in `/search` A–Z index.
+  - `apps/web` tests expanded from 26 to 43; `npm run verify` passes with 229 tests green across the repo.
 
 ### Web: what was verified (2026-10-16)
 
-- `npm run verify`: every workspace typechecks (including `astro check` for apps/web) and 174 tests
-  pass; 26 are the web's: safeHref, search index and scoring, the request-time store (validation,
+- `npm run verify`: every workspace typechecks (including `astro check` for apps/web) and 229 tests
+  pass; 43 are the web's: safeHref, search index and scoring, the request-time store (validation,
   fallback to the previous version, 503 when no version is good, missing or bad index, a new publish
   seen after the index TTL, validation cached per path and etag), the cache key and policy, RSS
-  escaping, tokens CSS, app-link generation and the Worker's redirects.
+  escaping and full `content:encoded`, tokens CSS, app-link generation, the Worker's redirects,
+  `llms.txt` and `llms-full.txt` formatting and attribution, per-page Markdown mirrors, `Accept: text/markdown`
+  negotiation, HTTP `Link` discovery headers, cross-Haul link resolution, and sitemap last-modified dates.
 - **No-rebuild path, on the deployed preview:** with the preview bucket empty the site showed the
   waiting page; I uploaded the sample Haul to `fdf-public-preview` (`hauls/001/v1/haul.json` and
   `hauls/index.json`) and, without redeploying, the home page showed Haul 1 within 12 seconds, with

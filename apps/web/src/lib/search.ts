@@ -110,11 +110,13 @@ export function around(text: string, term: string): string | undefined {
 
 /** People, places and ideas across the archive, from the Wikipedia layer, A to Z. */
 export function topicIndex(hauls: Haul[]) {
-  const map = new Map<string, { title: string; items: { n: number; item: Item }[] }>();
+  const map = new Map<string, { title: string; summary?: string; url?: string; items: { n: number; item: Item }[] }>();
   for (const h of hauls)
     for (const item of h.items)
       for (const w of item.wiki) {
-        const e = map.get(w.title) ?? { title: w.title, items: [] };
+        const e = map.get(w.title) ?? { title: w.title, summary: w.summary, url: w.url, items: [] };
+        if (!e.summary && w.summary) e.summary = w.summary;
+        if (!e.url && w.url) e.url = w.url;
         if (!e.items.some((x) => x.n === h.number && x.item.id === item.id)) e.items.push({ n: h.number, item });
         map.set(w.title, e);
       }

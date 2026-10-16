@@ -4,12 +4,12 @@
 import Base from '../layouts/Base.astro';
 import { archive } from '../lib/runtime';
 import { topicIndex } from '../lib/search';
-import { paths, titleText } from '../lib/site';
+import { paths, safeHref, titleText } from '../lib/site';
 
 const { hauls } = await archive();
 const topics = topicIndex(hauls);
 ---
-<Base title="Search" description="Search every Haul: people, places, years and ideas." path={paths.search} section="search">
+<Base title="Search" description="Search every Haul: people, places, years and ideas." path={paths.search} section="search" markdownPath={paths.llms}>
   <section class="wrap g page-head">
     <h1 class="m mh">Search</h1>
     <div class="c">
@@ -32,14 +32,25 @@ const topics = topicIndex(hauls);
         <p><button class="textbtn" type="button" data-surprise hidden>Open something at random</button></p>
       </div>
       <div class="c topics">
-        {topics.map((t) => (
-          <details>
-            <summary><span>{t.title}</span><span class="ptr">{t.items.length}</span></summary>
-            <ul>
-              {t.items.map(({ n, item }) => <li><a href={paths.item(n, item.id)}>{titleText(item.title)}</a><span class="ink2 small"> · {item.creator} · Haul {n}</span></li>)}
-            </ul>
-          </details>
-        ))}
+        {topics.map((t) => {
+          const wikiUrl = safeHref(t.url);
+          return (
+            <details>
+              <summary><span>{t.title}</span><span class="ptr">{t.items.length}</span></summary>
+              <div>
+                {t.summary ? (
+                  <p class="small ink2 topic-sum">
+                    {t.summary}
+                    {wikiUrl ? <a href={wikiUrl} rel="noopener noreferrer" target="_blank"> Wikipedia<span class="sr"> (opens in a new tab)</span></a> : null}
+                  </p>
+                ) : null}
+                <ul>
+                  {t.items.map(({ n, item }) => <li><a href={paths.item(n, item.id)}>{titleText(item.title)}</a><span class="ink2 small"> · {item.creator} · Haul {n}</span></li>)}
+                </ul>
+              </div>
+            </details>
+          );
+        })}
       </div>
     </section>
   </div>

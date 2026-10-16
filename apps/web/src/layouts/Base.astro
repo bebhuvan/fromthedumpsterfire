@@ -3,7 +3,8 @@
 // optional running head under it, and an optional ember folio above the footer.
 import '../styles/global.css';
 import { palettes } from '@fdf/shared/tokens';
-import { absolute, paths, SITE_DESCRIPTION, SITE_NAME } from '../lib/site';
+import { absolute, EDITOR_NAME, paths, SITE_DESCRIPTION, SITE_NAME } from '../lib/site';
+import { markdownMirrorFor } from '../worker/lib';
 import Masthead from '../components/Masthead.astro';
 
 interface Props {
@@ -23,11 +24,39 @@ interface Props {
   folio?: { left: string; number: string | number };
   /** Drop the small masthead from the header when the page carries the big one. */
   bigMast?: boolean;
+  /** Optional article metadata for OpenGraph, meta tags, and Schema.org. */
+  publishedAt?: string;
+  modifiedAt?: string;
+  author?: string;
+  articleSection?: string;
+  tags?: string[];
+  /** Optional path to the Markdown mirror of this page (e.g. "/haul/1.md" or "/llms.txt"). */
+  markdownPath?: string;
 }
 
-const { title, description = SITE_DESCRIPTION, path = Astro.url.pathname, type = 'website', image, section, noindex, runhead, folio, bigMast } = Astro.props;
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  path = Astro.url.pathname,
+  type = 'website',
+  image,
+  section,
+  noindex,
+  runhead,
+  folio,
+  bigMast,
+  publishedAt,
+  modifiedAt,
+  author,
+  articleSection,
+  tags,
+  markdownPath = markdownMirrorFor(path) ?? undefined,
+} = Astro.props;
 const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
+const socialTitle = title ?? SITE_NAME;
 const canonical = absolute(path);
+const ogImageUrl = image ? image.url : absolute('/og.png');
+const ogImageAlt = image ? image.alt : `${SITE_NAME}: the ember flame and the masthead`;
 const nav = [
   { key: 'latest', href: paths.home, label: 'Latest' },
   { key: 'threads', href: paths.threads, label: 'Threads' },
@@ -43,22 +72,38 @@ const nav = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <meta name="author" content={author ? `${EDITOR_NAME}; ${author}` : EDITOR_NAME} />
     <link rel="canonical" href={canonical} />
-    {noindex ? <meta name="robots" content="noindex" /> : null}
+    {noindex ? (
+      <meta name="robots" content="noindex" />
+    ) : (
+      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    )}
     <meta name="theme-color" content={palettes.light.bg} media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content={palettes.dark.bg} media="(prefers-color-scheme: dark)" />
     <meta property="og:site_name" content={SITE_NAME} />
-    <meta property="og:title" content={title ?? SITE_NAME} />
+    <meta property="og:title" content={socialTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content={type} />
     <meta property="og:locale" content="en_IN" />
-    {image ? <meta property="og:image" content={image.url} /> : <meta property="og:image" content={absolute('/og.png')} />}
-    {image ? <meta property="og:image:width" content={String(image.width)} /> : <meta property="og:image:width" content="1200" />}
-    {image ? <meta property="og:image:height" content={String(image.height)} /> : <meta property="og:image:height" content="630" />}
-    <meta property="og:image:alt" content={image ? image.alt : `${SITE_NAME}: the ember flame and the masthead`} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content={image ? String(image.width) : '1200'} />
+    <meta property="og:image:height" content={image ? String(image.height) : '630'} />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    {type === 'article' && publishedAt ? <meta property="article:published_time" content={publishedAt.slice(0, 10)} /> : null}
+    {type === 'article' && modifiedAt ? <meta property="article:modified_time" content={modifiedAt.slice(0, 10)} /> : null}
+    {type === 'article' ? <meta property="article:author" content={EDITOR_NAME} /> : null}
+    {type === 'article' && author && author !== EDITOR_NAME ? <meta property="article:author" content={author} /> : null}
+    {type === 'article' && articleSection ? <meta property="article:section" content={articleSection} /> : null}
+    {type === 'article' && tags?.map((t) => <meta property="article:tag" content={t} />)}
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="alternate" type="application/rss+xml" title={SITE_NAME} href={paths.feed} />
+    <meta name="twitter:title" content={socialTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
+    <link rel="alternate" type="application/rss+xml" title={SITE_NAME} href={absolute(paths.feed)} />
+    {markdownPath ? <link rel="alternate" type="text/markdown" title={`${socialTitle} (Markdown)`} href={absolute(markdownPath)} /> : null}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preload" href="/fonts/NewsreaderText-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/NewsreaderDisplay-Medium.woff2" as="font" type="font/woff2" crossorigin />
@@ -81,14 +126,35 @@ const nav = [
       <button class="tog" type="button" hidden aria-label="Switch to dark theme" data-theme-toggle><span aria-hidden="true"></span></button>
     </header>
     {runhead ? (
-      <div class="wrap"><p class="runhead"><a href={runhead.href}>{runhead.left}</a>{runhead.right ? <span>{runhead.right}</span> : null}</p></div>
+      <div class="wrap">
+        <p class="runhead" itemscope itemtype="https://schema.org/BreadcrumbList">
+          <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <a itemprop="item" href={runhead.href}><span itemprop="name">{runhead.left}</span></a>
+            <meta itemprop="position" content="1" />
+          </span>
+          {runhead.right ? (
+            <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+              <link itemprop="item" href={canonical} />
+              <span itemprop="name">{runhead.right}</span>
+              <meta itemprop="position" content="2" />
+            </span>
+          ) : null}
+        </p>
+      </div>
     ) : null}
     <slot name="edge" />
     <main id="main" tabindex="-1">
       <slot />
     </main>
     {folio ? <p class="wrap folio"><span>{folio.left}</span><span class="folio-n">{folio.number}</span></p> : null}
-    <footer class="wrap g foot">
+    <footer class="wrap g foot" itemscope itemtype="https://schema.org/Periodical">
+      <meta itemprop="name" content={SITE_NAME} />
+      <meta itemprop="description" content={SITE_DESCRIPTION} />
+      <meta itemprop="inLanguage" content="en-IN" />
+      <link itemprop="url" href={absolute(paths.home)} />
+      <span itemprop="editor" itemscope itemtype="https://schema.org/Person" hidden>
+        <meta itemprop="name" content={EDITOR_NAME} />
+      </span>
       <p class="m foot-mark"><span class="flame" aria-hidden="true"></span><Masthead /></p>
       <p class="c foot-line">Things worth salvaging from the internet and the archive. The serif is the editor; <span class="machine">the blue sans is the machine.</span></p>
       <nav class="c foot-nav" aria-label="More">

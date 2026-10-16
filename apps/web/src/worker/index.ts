@@ -7,20 +7,38 @@
 import { handle } from '@astrojs/cloudflare/handler';
 import { getStore } from '../lib/runtime';
 import { IndexUnavailable } from '../lib/store';
-import { aliasFor, sameOriginRedirect, APEX, cacheControl, EDGE_TTL, isImmutable, pageCacheKey, SECURITY, type Env } from './lib';
+import {
+  aliasFor,
+  APEX,
+  cacheControl,
+  discoveryLinkHeader,
+  EDGE_TTL,
+  isImmutable,
+  markdownMirrorFor,
+  pageCacheKey,
+  prefersMarkdown,
+  sameOriginRedirect,
+  SECURITY,
+  type Env,
+} from './lib';
 
 interface Ctx {
   waitUntil(p: Promise<unknown>): void;
   passThroughOnException(): void;
 }
 
-function finish(res: Response, url: URL, env: Env, head: boolean, cacheStatus?: string): Response {
+function finish(res: Response, url: URL, env: Env, head: boolean, cacheStatus?: string, originalPath?: string): Response {
   const out = new Response(head ? null : res.body, res);
   for (const [k, v] of Object.entries(SECURITY)) out.headers.set(k, v);
   if (url.protocol === 'https:') out.headers.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
-  out.headers.set('cache-control', cacheControl(url.pathname, res.status));
+  out.headers.set('cache-control', cacheControl(url.pathname, res.status, originalPath !== undefined && originalPath !== url.pathname));
   out.headers.delete('cdn-cache-control');
-  if (out.headers.get('content-type') === 'text/html') out.headers.set('content-type', 'text/html; charset=utf-8');
+  const ct = out.headers.get('content-type') ?? '';
+  if (ct === 'text/html') out.headers.set('content-type', 'text/html; charset=utf-8');
+  if (ct.startsWith('text/html') || ct.startsWith('text/markdown')) {
+    out.headers.set('link', discoveryLinkHeader(originalPath ?? url.pathname));
+    out.headers.append('vary', 'Accept');
+  }
   if (cacheStatus) out.headers.set('x-fdf-cache', cacheStatus);
   if (url.pathname.startsWith('/.well-known/')) out.headers.set('content-type', 'application/json');
   if (env.ENVIRONMENT !== 'production' || url.hostname !== APEX) out.headers.set('x-robots-tag', 'noindex');
@@ -49,8 +67,12 @@ export default {
     const target = alias ? sameOriginRedirect(alias, url) : null;
     if (target) return Response.redirect(target, 301);
 
+    const originalPath = url.pathname;
+    const mdMirror = prefersMarkdown(request.headers.get('accept')) ? markdownMirrorFor(url.pathname) : null;
+    if (mdMirror) url.pathname = mdMirror;
+
     const head = request.method === 'HEAD';
-    const get = head ? new Request(request.url, { method: 'GET', headers: request.headers }) : request;
+    const get = head || mdMirror ? new Request(url.toString(), { method: 'GET', headers: request.headers }) : request;
 
     // Static files (assets that slipped past the run_worker_first exclusions) need no data.
     if (isImmutable(url.pathname)) return finish(await env.ASSETS.fetch(get), url, env, head);
@@ -69,7 +91,7 @@ export default {
     const key = new Request(pageCacheKey(url.origin, env.CF_VERSION_METADATA?.id ?? 'dev', updatedAt, url.pathname));
     if (cache) {
       const hit = await cache.match(key).catch(() => undefined);
-      if (hit) return finish(hit, url, env, head, 'HIT');
+      if (hit) return finish(hit, url, env, head, 'HIT', originalPath);
     }
 
     let res: Response;
@@ -89,6 +111,6 @@ export default {
       stored.headers.set('cache-control', EDGE_TTL);
       ctx.waitUntil(cache.put(key, stored).catch((e: unknown) => console.error('[fdf] cache put failed', e)));
     }
-    return finish(res, url, env, head, cache ? 'MISS' : undefined);
+    return finish(res, url, env, head, cache ? 'MISS' : undefined, originalPath);
   },
 };

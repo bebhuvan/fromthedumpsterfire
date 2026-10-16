@@ -12,13 +12,22 @@ import Voice from './Voice.astro';
 import Notes from './Notes.astro';
 import SeeAlso from './SeeAlso.astro';
 import { formName, formOf, headword, speaker } from '../lib/forms';
-import { paths, safeHref, titleText } from '../lib/site';
+import {
+  absolute,
+  EDITOR_NAME,
+  haulCoverImage,
+  haulLastmod,
+  paths,
+  safeHref,
+  titleText,
+} from '../lib/site';
 
 interface Props {
   haul: Haul;
   item: Item;
+  allHauls?: Haul[];
 }
-const { haul, item } = Astro.props;
+const { haul, item, allHauls } = Astro.props;
 const at = haul.items.indexOf(item);
 const n = at + 1;
 const next: Item | undefined = haul.items[at + 1];
@@ -36,21 +45,59 @@ const longTitle = titleText(item.title).length > 34;
 const hw = headword(item.title.text);
 const matched = 'matched word for word against the source';
 const licence = item.plate ? item.plate.licence.charAt(0).toUpperCase() + item.plate.licence.slice(1) : '';
+const lastmod = haulLastmod(haul);
+const ogImage =
+  item.plate && plateSrc
+    ? { url: plateSrc, width: item.plate.width, height: item.plate.height, alt: item.plate.caption || titleText(item.title) }
+    : haulCoverImage(haul);
 ---
 <Base
   title={`${titleText(item.title)}, ${item.creator}`}
   description={description}
   path={paths.item(haul.number, item.id)}
   type="article"
-  image={item.plate && plateSrc ? { url: plateSrc, width: item.plate.width, height: item.plate.height, alt: item.plate.caption || titleText(item.title) } : undefined}
+  image={ogImage}
   runhead={{ href: paths.haul(haul.number), left: `${H} · ${titleText(haul.title)}`, right: formName[form] }}
   folio={{ left: H, number: n }}
+  publishedAt={haul.publishedAt}
+  modifiedAt={lastmod}
+  author={item.creator}
+  articleSection={typeLabel[item.type]}
+  tags={item.wiki.map((w) => w.title)}
+  markdownPath={paths.itemMd(haul.number, item.id)}
 >
   <nav slot="edge" class="tabs" aria-label={`Item ${n} of ${haul.items.length}`}>
     <a class:list={['tab', 'here', `n${Math.min(n, 20)}`, `t-${item.type}`]} href={paths.haul(haul.number)} aria-label={`Item ${n} of ${haul.items.length}. Back to the contents`}>{n}</a>
   </nav>
 
-  <article class:list={[`t-${item.type}`, `form-${form}`]} aria-labelledby="item-title">
+  <article
+    class:list={[`t-${item.type}`, `form-${form}`]}
+    aria-labelledby="item-title"
+    itemscope
+    itemtype="https://schema.org/Article"
+  >
+    <meta itemprop="headline" content={`${titleText(item.title)} — ${item.creator}`} />
+    <meta itemprop="description" content={description} />
+    <meta itemprop="datePublished" content={haul.publishedAt.slice(0, 10)} />
+    <meta itemprop="dateModified" content={lastmod} />
+    <meta itemprop="articleSection" content={typeLabel[item.type]} />
+    <link itemprop="mainEntityOfPage" href={absolute(paths.item(haul.number, item.id))} />
+    {ogImage ? <link itemprop="image" href={ogImage.url} /> : null}
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person" hidden>
+      <meta itemprop="name" content={EDITOR_NAME} />
+    </span>
+    <span itemprop="isPartOf" itemscope itemtype="https://schema.org/PublicationIssue" hidden>
+      <meta itemprop="issueNumber" content={String(haul.number)} />
+      <meta itemprop="name" content={`${H}: ${titleText(haul.title)}`} />
+      <link itemprop="url" href={absolute(paths.haul(haul.number))} />
+    </span>
+    <span itemprop="about citation" itemscope itemtype="https://schema.org/CreativeWork" hidden>
+      <meta itemprop="name" content={titleText(item.title)} />
+      <meta itemprop="author" content={item.creator} />
+      <meta itemprop="publisher" content={item.source.name} />
+      <meta itemprop="datePublished" content={item.source.date} />
+      {source ? <link itemprop="url" href={source} /> : null}
+    </span>
 
     {form === 'opening' || form === 'page' ? (
       <header class="wrap g open">
@@ -204,7 +251,21 @@ const licence = item.plate ? item.plate.licence.charAt(0).toUpperCase() + item.p
                 <ol class="refs">
                   {item.wiki.map((w, j) => {
                     const href = safeHref(w.url);
-                    return <li><span class="rn">[{j + 1}]</span><span>{href ? <a href={href} rel="noopener noreferrer" target="_blank">{w.title}</a> : w.title}. {w.summary} <span class="ink2 small">Wikipedia.</span></span></li>;
+                    return (
+                      <li itemprop="mentions" itemscope itemtype="https://schema.org/Thing">
+                        <span class="rn">[{j + 1}]</span>
+                        <span>
+                          {href ? (
+                            <a href={href} itemprop="sameAs url" rel="noopener noreferrer" target="_blank">
+                              <span itemprop="name">{w.title}</span>
+                            </a>
+                          ) : (
+                            <span itemprop="name">{w.title}</span>
+                          )}
+                          . <span itemprop="description">{w.summary}</span> <span class="ink2 small">Wikipedia.</span>
+                        </span>
+                      </li>
+                    );
                   })}
                 </ol>
               ) : null}
@@ -252,7 +313,7 @@ const licence = item.plate ? item.plate.licence.charAt(0).toUpperCase() + item.p
       </div>
     ) : null}
 
-    <div class="wrap"><SeeAlso haul={haul} item={item} noWiki={form === 'offprint'} /></div>
+    <div class="wrap"><SeeAlso haul={haul} item={item} allHauls={allHauls} noWiki={form === 'offprint'} /></div>
   </article>
 
   <nav class="wrap g row next" aria-label="Next in this Haul">

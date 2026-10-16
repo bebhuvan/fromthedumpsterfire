@@ -42,7 +42,7 @@ export function aliasFor(raw: string): string | null {
   if (pathname !== raw) return pathname;
   const note = /^\/haul\/(\d+)\/note\/?$/.exec(pathname);
   if (note) return `/haul/${note[1]}#field-note`;
-  const padded = /^\/haul\/0+(\d+)(\/.*)?$/.exec(pathname);
+  const padded = /^\/haul\/0+(\d+)(\/.*|\.md)?$/.exec(pathname);
   if (padded) return `/haul/${padded[1]}${padded[2] ?? ''}`;
   if (pathname === '/hauls' || pathname === '/hauls/') return '/archive';
   if (pathname === '/index.html') return '/';
@@ -56,12 +56,62 @@ export function sameOriginRedirect(alias: string, base: URL): string | null {
   return to.origin === base.origin ? to.toString() : null;
 }
 
+/** Markdown mirror path for a canonical HTML route, or null when none applies. */
+export function markdownMirrorFor(pathname: string): string | null {
+  if (pathname.endsWith('.md') || pathname.endsWith('.txt') || pathname.endsWith('.xml') || pathname.endsWith('.json')) {
+    return null;
+  }
+  if (pathname === '/' || pathname === '/about' || pathname === '/archive' || pathname === '/threads') {
+    return '/llms.txt';
+  }
+  if (/^\/haul\/[1-9]\d{0,5}$/.test(pathname)) return `${pathname}.md`;
+  if (/^\/haul\/[1-9]\d{0,5}\/thread\/[a-z0-9-]+$/i.test(pathname)) return `${pathname}.md`;
+  if (/^\/haul\/[1-9]\d{0,5}\/[a-z0-9-]+$/i.test(pathname)) return `${pathname}.md`;
+  return null;
+}
+
+/** True when an HTTP Accept header explicitly prefers text/markdown over text/html. */
+export function prefersMarkdown(accept: string | null | undefined): boolean {
+  if (!accept) return false;
+  let mdQ = -1;
+  let htmlQ = -1;
+  for (const part of accept.split(',')) {
+    const [media, ...params] = part.trim().split(';');
+    const mime = media?.trim().toLowerCase();
+    let q = 1.0;
+    for (const param of params) {
+      const [k, v] = param.trim().split('=');
+      if (k?.trim().toLowerCase() === 'q') {
+        const parsed = Number.parseFloat(v?.trim() ?? '1');
+        if (!Number.isNaN(parsed)) q = parsed;
+      }
+    }
+    if (mime === 'text/markdown' && q > mdQ) mdQ = q;
+    if (mime === 'text/html' && q > htmlQ) htmlQ = q;
+  }
+  return mdQ > 0 && mdQ >= htmlQ;
+}
+
+/** HTTP Link header advertising feeds and Markdown mirrors for crawlers and LLM agents. */
+export function discoveryLinkHeader(pathname: string): string {
+  const links = [
+    `<https://${APEX}/feed.xml>; rel="alternate"; type="application/rss+xml"`,
+    `<https://${APEX}/llms.txt>; rel="llms-txt"`,
+  ];
+  const md = markdownMirrorFor(pathname);
+  if (md) links.push(`<https://${APEX}${md}>; rel="alternate"; type="text/markdown"`);
+  return links.join(', ');
+}
+
 /** Files that never change under a given name; everything else is a page or a generated file. */
 export const isImmutable = (pathname: string) => pathname.startsWith('/_astro/') || pathname.startsWith('/fonts/');
 
 /** What the browser may keep. Pages and generated files are short so a publish shows within a minute. */
-export function cacheControl(pathname: string, status: number): string {
+export function cacheControl(pathname: string, status: number, negotiated = false): string {
   if (status >= 500) return 'no-store';
+  // A Markdown answer on an HTML address (Accept negotiation). Shared caches in front of the Worker
+  // key on the URL and ignore Vary, so it must never be stored there or browsers could be served it.
+  if (negotiated) return 'private, no-store';
   if (status >= 400) return 'public, max-age=60';
   if (isImmutable(pathname)) return 'public, max-age=31536000, immutable';
   return 'public, max-age=30, must-revalidate';

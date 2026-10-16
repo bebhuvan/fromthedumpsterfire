@@ -4,26 +4,55 @@
 import { haulSlug, type Haul, type Thread } from '@fdf/shared/haul';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
-import { paths, titleText } from '../lib/site';
+import {
+  absolute,
+  EDITOR_NAME,
+  findItemAcrossHauls,
+  haulCoverImage,
+  haulLastmod,
+  paths,
+  titleText,
+} from '../lib/site';
 
 interface Props {
   haul: Haul;
   thread: Thread;
+  allHauls?: Haul[];
 }
-const { haul, thread } = Astro.props;
+const { haul, thread, allHauls } = Astro.props;
 const first = Number.parseInt(thread.points[0]?.year ?? '', 10);
 const last = Number.parseInt(thread.points[thread.points.length - 1]?.year ?? '', 10);
 const span = Number.isFinite(first) && Number.isFinite(last) && last > first ? last - first : 0;
+const lastmod = haulLastmod(haul);
+const title = `${titleText(thread.title)}, a thread`;
 ---
 <Base
-  title={`${titleText(thread.title)}, a thread`}
+  title={title}
   description={thread.summary}
   path={paths.thread(haul.number, thread.id)}
   type="article"
+  image={haulCoverImage(haul)}
   section="threads"
   runhead={{ href: paths.haul(haul.number), left: `Haul ${haulSlug(haul.number)} · ${titleText(haul.title)}`, right: 'Thread' }}
+  publishedAt={haul.publishedAt}
+  modifiedAt={lastmod}
+  articleSection="Thread"
+  markdownPath={paths.threadMd(haul.number, thread.id)}
 >
-  <section class="wrap g page-head">
+  <section class="wrap g page-head" itemscope itemtype="https://schema.org/Article">
+    <meta itemprop="headline" content={title} />
+    <meta itemprop="description" content={thread.summary} />
+    <meta itemprop="datePublished" content={haul.publishedAt.slice(0, 10)} />
+    <meta itemprop="dateModified" content={lastmod} />
+    <link itemprop="mainEntityOfPage" href={absolute(paths.thread(haul.number, thread.id))} />
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person" hidden>
+      <meta itemprop="name" content={EDITOR_NAME} />
+    </span>
+    <span itemprop="isPartOf" itemscope itemtype="https://schema.org/PublicationIssue" hidden>
+      <meta itemprop="issueNumber" content={String(haul.number)} />
+      <meta itemprop="name" content={`Haul ${haulSlug(haul.number)}: ${titleText(haul.title)}`} />
+      <link itemprop="url" href={absolute(paths.haul(haul.number))} />
+    </span>
     <p class="m meta"><span>Thread</span><span>{thread.points.length} points</span>{span ? <span>{span} years</span> : null}</p>
     <div class="c">
       <Title title={thread.title} as="h1" class="h-title" />
@@ -31,17 +60,35 @@ const span = Number.isFinite(first) && Number.isFinite(last) && last > first ? l
     </div>
   </section>
 
-  <ol class="wrap chron">
-    {thread.points.map((pt) => (
-      <li class:list={['g', 'pt', { out: !pt.inHaul }]}>
-        <p class="m pt-y">{pt.year}</p>
-        <div class="c">
-          <p class="pt-t">{pt.itemId ? <a href={paths.item(haul.number, pt.itemId)}>{pt.title}</a> : pt.title}<span class="sr">{pt.inHaul ? ' (in this Haul)' : ' (from the archive)'}</span></p>
-          <p class="pt-g">{pt.gist}</p>
-          <p class="pt-e machine">{pt.edge}</p>
-        </div>
-      </li>
-    ))}
+  <ol class="wrap chron" itemscope itemtype="https://schema.org/ItemList">
+    <meta itemprop="numberOfItems" content={String(thread.points.length)} />
+    {thread.points.map((pt, idx) => {
+      const found = findItemAcrossHauls(pt.itemId, haul, allHauls);
+      const targetItem = found?.item;
+      const targetHaul = found?.haul ?? haul;
+      const href = targetItem ? paths.item(targetHaul.number, targetItem.id) : undefined;
+      return (
+        <li
+          class:list={['g', 'pt', { out: !pt.inHaul }]}
+          itemprop="itemListElement"
+          itemscope
+          itemtype="https://schema.org/ListItem"
+        >
+          <meta itemprop="position" content={String(idx + 1)} />
+          <meta itemprop="name" content={`${pt.year} — ${pt.title}`} />
+          <meta itemprop="description" content={`${pt.edge}: ${pt.gist}`} />
+          <p class="m pt-y">{pt.year}</p>
+          <div class="c">
+            <p class="pt-t">
+              {href ? <a href={href} itemprop="url">{pt.title}</a> : pt.title}
+              <span class="sr">{pt.inHaul ? ' (in this Haul)' : ' (from the archive)'}</span>
+            </p>
+            <p class="pt-g">{pt.gist}</p>
+            <p class="pt-e machine">{pt.edge}</p>
+          </div>
+        </li>
+      );
+    })}
   </ol>
 
   <section class="wrap g row">

@@ -8,7 +8,7 @@ import { paths } from '../lib/site';
 const { hauls } = await archive();
 const threads = collectThreads(hauls);
 ---
-<Base title="Threads" description="Lines that run through the archive, across years and Hauls." path={paths.threads} section="threads">
+<Base title="Threads" description="Lines that run through the archive, across years and Hauls." path={paths.threads} section="threads" markdownPath={paths.llms}>
   <section class="wrap g page-head">
     <p class="m meta"><span>Threads</span><span>{threads.length} so far</span></p>
     <div class="c">

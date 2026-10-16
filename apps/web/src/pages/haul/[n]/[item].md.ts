@@ -1,0 +1,16 @@
+import type { APIRoute } from 'astro';
+import { itemMarkdown } from '../../../lib/markdown';
+import { archive } from '../../../lib/runtime';
+import { findHaul } from '../../../lib/site';
+
+export const GET: APIRoute = async ({ params }) => {
+  const a = await archive();
+  const found = findHaul(a, params.n);
+  if (found.kind === 'missing') return new Response(null, { status: 404 });
+  if (found.kind === 'failed') return new Response('Unavailable', { status: 503 });
+  const item = found.haul.items.find((i) => i.id === params.item);
+  if (!item) return new Response(null, { status: 404 });
+  return new Response(itemMarkdown(found.haul, item, a.hauls), {
+    headers: { 'content-type': 'text/markdown; charset=utf-8' },
+  });
+};

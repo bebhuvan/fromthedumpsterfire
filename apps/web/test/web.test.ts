@@ -3,13 +3,14 @@ import type { Haul, HaulIndex } from '@fdf/shared/haul';
 import seedHaul from '@fdf/shared/fixtures/haul-001.json';
 import seedIndex from '@fdf/shared/fixtures/index.json';
 import { buildSearchIndex, query, topicIndex, around } from '../src/lib/search';
-import { firstSentence, fullDate, objects, safeHref } from '../src/lib/site';
+import { firstSentence, fullDate, objects, safeHref, findItemAcrossHauls, haulCoverImage } from '../src/lib/site';
 import { createStore, memoryBucket, checkIndex, IndexUnavailable } from '../src/lib/store';
 import { findHaul } from '../src/lib/site';
-import { esc, rss } from '../src/lib/xml';
+import { esc, rss, sitemap } from '../src/lib/xml';
+import { itemMarkdown, threadMarkdown, llmsTxt, llmsFullTxt } from '../src/lib/markdown';
 import { tokensCss } from '../src/lib/tokens-css';
 import { assetLinks, appleAppSiteAssociation } from '../src/lib/applinks';
-import { aliasFor, cacheControl, pageCacheKey, sameOriginRedirect } from '../src/worker/lib';
+import { aliasFor, cacheControl, pageCacheKey, sameOriginRedirect, markdownMirrorFor, prefersMarkdown, discoveryLinkHeader } from '../src/worker/lib';
 
 const haul = seedHaul as Haul;
 const index = seedIndex as HaulIndex;
@@ -251,6 +252,8 @@ describe('edge cache', () => {
     expect(cacheControl('/haul/1', 200)).toBe('public, max-age=30, must-revalidate');
     expect(cacheControl('/fonts/a.woff2', 200)).toContain('immutable');
     expect(cacheControl('/haul/1', 503)).toBe('no-store');
+    // Markdown served on an HTML address must stay out of shared caches, which ignore Vary.
+    expect(cacheControl('/haul/1.md', 200, true)).toBe('private, no-store');
     expect(aliasFor('/haul/1/')).toBe('/haul/1');
     expect(aliasFor('/')).toBeNull();
   });
@@ -270,3 +273,126 @@ describe('redirects never leave the site', () => {
     expect(sameOriginRedirect('https://evil.com/', base)).toBeNull();
   });
 });
+
+describe('LLM & GEO markdown generation', () => {
+  it('generates llms.txt matching the specification', () => {
+    const text = llmsTxt([haul]);
+    expect(text).toContain('# From the Dumpster Fire');
+    expect(text).toContain('## House Rules & Verification Invariants');
+    expect(text).toContain('## Machine-Readable Endpoints');
+    expect(text).toContain('/llms-full.txt');
+    expect(text).toContain('/feed.xml');
+    expect(text).toContain('/search.json');
+    expect(text).toContain('/sitemap.xml');
+    expect(text).toContain('[Haul 001: What cheap things cost]');
+    expect(text).toContain('https://fromthedumpsterfire.com/haul/1.md');
+    expect(text).toContain('[As We May Think]');
+    expect(text).toContain('https://fromthedumpsterfire.com/haul/1/as-we-may-think.md');
+    expect(text).toContain('[The price of plenty]');
+    expect(text).toContain('https://fromthedumpsterfire.com/haul/1/thread/price-of-plenty.md');
+  });
+
+  it('generates llms-full.txt with complete issue content', () => {
+    const text = llmsFullTxt([haul]);
+    expect(text).toContain('# From the Dumpster Fire — Complete Corpus');
+    expect(text).toContain('## Field Note: Words got cheap this year');
+    expect(text).toContain('When something becomes cheap, we use far more of it');
+    expect(text).toContain('Douglas Engelbart read it as a young Navy radar technician');
+    expect(text).toContain('The Great Stink');
+    expect(text).toContain('The Silent Highwayman');
+  });
+
+  it('generates item Markdown with explicit attribution and links', () => {
+    const bush = haul.items.find((i) => i.id === 'as-we-may-think')!;
+    const md = itemMarkdown(haul, bush, [haul]);
+    expect(md).toContain('# As We May Think — Vannevar Bush');
+    expect(md).toContain('Why it\'s here (Editor — Bhuvanesh)');
+    expect(md).toContain('Verbatim Excerpt (Section 1, matched word for word)');
+    expect(md).toContain('Machine Marginalia (Verified against cited sources)');
+    expect(md).toContain('Wikipedia Entities & Concepts');
+    expect(md).toContain('https://en.wikipedia.org/wiki/Memex');
+    expect(md).toContain('https://fromthedumpsterfire.com/haul/1/coal-question');
+  });
+
+  it('generates thread Markdown with chronology and provenance', () => {
+    const thread = haul.threads[0]!;
+    const md = threadMarkdown(haul, thread, [haul]);
+    expect(md).toContain('# Thread: The price of plenty');
+    expect(md).toContain('## Chronology');
+    expect(md).toContain('1858 — [The Great Stink]');
+    expect(md).toContain('https://fromthedumpsterfire.com/haul/1/great-stink');
+    expect(md).toContain('1971 — Herbert Simon');
+    expect(md).toContain('Provenance (Machine)');
+  });
+});
+
+describe('markdown mirrors and discovery headers', () => {
+  it('maps canonical paths to markdown mirrors and rejects others', () => {
+    expect(markdownMirrorFor('/')).toBe('/llms.txt');
+    expect(markdownMirrorFor('/about')).toBe('/llms.txt');
+    expect(markdownMirrorFor('/archive')).toBe('/llms.txt');
+    expect(markdownMirrorFor('/threads')).toBe('/llms.txt');
+    expect(markdownMirrorFor('/haul/1')).toBe('/haul/1.md');
+    expect(markdownMirrorFor('/haul/1/as-we-may-think')).toBe('/haul/1/as-we-may-think.md');
+    expect(markdownMirrorFor('/haul/1/thread/price-of-plenty')).toBe('/haul/1/thread/price-of-plenty.md');
+    expect(markdownMirrorFor('/haul/1.md')).toBeNull();
+    expect(markdownMirrorFor('/feed.xml')).toBeNull();
+  });
+
+  it('detects when client prefers markdown', () => {
+    expect(prefersMarkdown('text/markdown, text/html;q=0.9')).toBe(true);
+    expect(prefersMarkdown('text/markdown')).toBe(true);
+    expect(prefersMarkdown('text/html;q=0.8, text/markdown;q=0.9')).toBe(true);
+    expect(prefersMarkdown('text/html;q=1.0, text/markdown;q=0.5')).toBe(false);
+    expect(prefersMarkdown('text/html,application/xhtml+xml,application/xml;q=0.9')).toBe(false);
+    expect(prefersMarkdown('*/*')).toBe(false);
+    expect(prefersMarkdown(null)).toBe(false);
+  });
+
+  it('builds discovery Link header with feed, llms.txt, and markdown mirror', () => {
+    const header = discoveryLinkHeader('/haul/1');
+    expect(header).toContain('<https://fromthedumpsterfire.com/feed.xml>; rel="alternate"; type="application/rss+xml"');
+    expect(header).toContain('<https://fromthedumpsterfire.com/llms.txt>; rel="llms-txt"');
+    expect(header).toContain('<https://fromthedumpsterfire.com/haul/1.md>; rel="alternate"; type="text/markdown"');
+  });
+});
+
+describe('SEO & metadata helpers', () => {
+  it('resolves items across hauls and falls back correctly', () => {
+    const found = findItemAcrossHauls('as-we-may-think', haul, [haul]);
+    expect(found?.haul.number).toBe(1);
+    expect(found?.item.creator).toBe('Vannevar Bush');
+    expect(findItemAcrossHauls('non-existent', haul, [haul])).toBeUndefined();
+    expect(findItemAcrossHauls(undefined, haul)).toBeUndefined();
+  });
+
+  it('picks cover image from haul cover or first item plate', () => {
+    const img = haulCoverImage(haul);
+    expect(img?.url).toBe('https://files.fromthedumpsterfire.com/seed/silent-highwayman.jpg');
+    expect(img?.width).toBe(975);
+    expect(img?.height).toBe(745);
+    const noPlates = clone(haul);
+    for (const item of noPlates.items) delete item.plate;
+    expect(haulCoverImage(noPlates)).toBeUndefined();
+  });
+
+  it('includes lastmod and new LLM endpoints in sitemap', () => {
+    const xml = sitemap([haul]);
+    expect(xml).toContain('<loc>https://fromthedumpsterfire.com/</loc><lastmod>2026-10-15</lastmod>');
+    expect(xml).toContain('<loc>https://fromthedumpsterfire.com/archive</loc><lastmod>2026-10-15</lastmod>');
+    expect(xml).toContain('<loc>https://fromthedumpsterfire.com/llms.txt</loc><lastmod>2026-10-15</lastmod>');
+    expect(xml).toContain('<loc>https://fromthedumpsterfire.com/llms-full.txt</loc><lastmod>2026-10-15</lastmod>');
+    expect(xml).toContain('<loc>https://fromthedumpsterfire.com/haul/1</loc><lastmod>2026-10-15</lastmod>');
+  });
+
+  it('emits rich content:encoded and dc:creator in RSS feed', () => {
+    const xml = rss([haul]);
+    expect(xml).toContain('<dc:creator>Bhuvanesh</dc:creator>');
+    expect(xml).toContain('<category>Memex</category>');
+    expect(xml).toContain('<category>Vannevar Bush</category>');
+    expect(xml).toContain('<content:encoded>');
+    expect(xml).toContain('&lt;h2&gt;In Haul 001&lt;/h2&gt;');
+    expect(xml).toContain('Vannevar Bush');
+  });
+});
+

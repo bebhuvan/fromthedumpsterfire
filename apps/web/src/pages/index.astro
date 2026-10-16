@@ -18,7 +18,7 @@ if (broken) Astro.response.status = 503;
 ) : latest ? (
   <HaulPage haul={latest} home />
 ) : (
-  <Base title="The first Haul is on its way" description="An irregular magazine of things worth pulling out of the internet and the archive before they burn." path={paths.home} section="latest" bigMast>
+  <Base title="The first Haul is on its way" description="An irregular magazine of things worth pulling out of the internet and the archive before they burn." path={paths.home} section="latest" bigMast markdownPath={paths.llms}>
     <section class="wrap g mast" aria-label="From the Dumpster Fire">
       <p class="mc mast-a" aria-hidden="true">From the</p>
       <p class="mc mast-b" aria-hidden="true"><s>Internet</s></p>

@@ -8,7 +8,7 @@ import { longDate, objects, paths, titleText } from '../lib/site';
 
 const { hauls } = await archive();
 ---
-<Base title="Every Haul" description="Every Haul so far, newest first." path={paths.archive} section="archive">
+<Base title="Every Haul" description="Every Haul so far, newest first." path={paths.archive} section="archive" markdownPath={paths.llms}>
   <section class="wrap g page-head">
     <p class="m meta"><span>The archive</span><span>{objects(hauls.length).replace(/objects?/, hauls.length === 1 ? 'Haul' : 'Hauls')}</span></p>
     <div class="c">

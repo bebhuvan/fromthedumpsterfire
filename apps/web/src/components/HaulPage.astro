@@ -9,7 +9,19 @@ import Highlighted from './Highlighted.astro';
 import Voice from './Voice.astro';
 import Specimen from './Specimen.astro';
 import Masthead from './Masthead.astro';
-import { fullDate, longDate, objects, paths, titleText } from '../lib/site';
+import {
+  absolute,
+  EDITOR_NAME,
+  fullDate,
+  haulCoverImage,
+  haulLastmod,
+  longDate,
+  objects,
+  paths,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  titleText,
+} from '../lib/site';
 
 interface Props {
   haul: Haul;
@@ -21,15 +33,25 @@ const typeOf = new Map(haul.items.map((i) => [i.id, i.type]));
 // The route cites the contents by number, the way a page cites a figure.
 const numOf = new Map(haul.items.map((i, n) => [i.id, String(n + 1).padStart(2, '0')]));
 const last = note.paragraphs.length - 1;
-const thread = haul.threads[0];
+const slug = haulSlug(haul.number);
+const issueTitle = `Haul ${haul.number}: ${titleText(haul.title)}`;
+const coverImage = haulCoverImage(haul);
+const lastmod = haulLastmod(haul);
+const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))];
 ---
 <Base
-  title={home ? undefined : `Haul ${haul.number}: ${titleText(haul.title)}`}
-  description={haul.deck}
+  title={home ? `Haul ${slug}: ${titleText(haul.title)}` : issueTitle}
+  description={home ? `${haul.deck} ${SITE_DESCRIPTION}` : haul.deck}
   path={home ? paths.home : paths.haul(haul.number)}
-  type={home ? 'website' : 'article'}
+  type="article"
+  image={coverImage}
   section={home ? 'latest' : undefined}
   bigMast={home}
+  publishedAt={haul.publishedAt}
+  modifiedAt={lastmod}
+  articleSection={`Haul ${slug}`}
+  tags={tags}
+  markdownPath={paths.haulMd(haul.number)}
 >
   {home ? (
     <section class="wrap nameplate" aria-label="From the Dumpster Fire">
@@ -37,12 +59,29 @@ const thread = haul.threads[0];
       <p class="np-strap"><span>An irregular magazine of things worth salvaging from the internet and the archive</span><span>Chosen by one editor, read with machines</span></p>
     </section>
   ) : null}
-  <section class:list={['ghost', `s-${haul.swatch}`, { 'ghost-home': home }]} aria-labelledby="haul-title">
+  <section
+    class:list={['ghost', `s-${haul.swatch}`, { 'ghost-home': home }]}
+    aria-labelledby="haul-title"
+    itemscope
+    itemtype="https://schema.org/PublicationIssue"
+  >
+    <meta itemprop="issueNumber" content={String(haul.number)} />
+    <meta itemprop="datePublished" content={haul.publishedAt.slice(0, 10)} />
+    <meta itemprop="dateModified" content={lastmod} />
+    <link itemprop="url" href={absolute(paths.haul(haul.number))} />
+    {coverImage ? <link itemprop="image" href={coverImage.url} /> : null}
+    <span itemprop="author" itemscope itemtype="https://schema.org/Person" hidden>
+      <meta itemprop="name" content={EDITOR_NAME} />
+    </span>
+    <span itemprop="isPartOf" itemscope itemtype="https://schema.org/Periodical" hidden>
+      <meta itemprop="name" content={SITE_NAME} />
+      <link itemprop="url" href={absolute(paths.home)} />
+    </span>
     <div class="wrap ghost-in">
-      <span class="numeral" aria-hidden="true">{haulSlug(haul.number)}</span>
-      <p class="gmeta">Haul {haulSlug(haul.number)} · <time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time> · {objects(haul.items.length).toLowerCase()}</p>
-      <h1 class="cover-title display" id="haul-title"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>
-      <p class="cover-deck">{haul.deck}</p>
+      <span class="numeral" aria-hidden="true">{slug}</span>
+      <p class="gmeta">Haul {slug} · <time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time> · {objects(haul.items.length).toLowerCase()}</p>
+      <h1 class="cover-title display" id="haul-title" itemprop="name headline"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>
+      <p class="cover-deck" itemprop="description">{haul.deck}</p>
     </div>
   </section>
 
@@ -83,9 +122,9 @@ const thread = haul.threads[0];
     </ol>
   </section>
 
-  {thread ? (
-    <section class="wrap g row" aria-labelledby="thread-title">
-      <h2 class="m mh" id="thread-title">The thread</h2>
+  {haul.threads.map((thread, ti) => (
+    <section class="wrap g row" aria-labelledby={`thread-title-${ti}`}>
+      <h2 class="m mh" id={`thread-title-${ti}`}>{haul.threads.length > 1 ? `Thread ${ti + 1}` : 'The thread'}</h2>
       <div class="c thread">
         <p class="th-t"><a href={paths.thread(haul.number, thread.id)}><Title title={thread.title} as="span" /></a></p>
         <ol class="years">
@@ -94,7 +133,7 @@ const thread = haul.threads[0];
         <p class="machine small">{thread.provenance}</p>
       </div>
     </section>
-  ) : null}
+  ))}
 
   <section class="wrap g row colo" aria-labelledby="colophon-title">
     <h2 class="m mh" id="colophon-title">Colophon</h2>
