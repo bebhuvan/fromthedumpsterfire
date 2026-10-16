@@ -1,37 +1,93 @@
-# Design
+# Design: Salvage
 
-Reference canvas (private): https://claude.ai/artifact/Ekw9KxVrRjzG3XGUu6fqqw
-Screens: cover, field note, glossed item, Rhymes, Thread, dark cover and item, web issue page, Desk.
+The visual system for the web edition and the reader app, chosen 2026-10-16 from three comp
+directions (Margin, Sheets, Index) as the best of all three. Comps, generators and screenshots:
+`docs/design-comps/` (`salvage/` is the chosen one; published privately at
+https://claude.ai/artifact/7q5AydF5JcmMSx38d3nEiT). The brief it answers: `docs/DESIGN-BRIEF.md`.
+Tokens live in `packages/shared/src/tokens.ts`.
+
+Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/Ekw9KxVrRjzG3XGUu6fqqw.
 
 ## Principles
 
-- Clean and simple. A white ground with a full dark mode. Soft but bright colour. Typography carries it.
+- **White ground, full dark mode, soft bright colour per content type.** Typography carries it.
 - **Type roles encode authorship.** Serif (Newsreader) is the editor and the source. A sans in machine
-  blue (Schibsted Grotesk) is always and only the machine.
-- **Colour encodes content type**, the same everywhere (app, web, archive, Desk).
-- **The highlighter** marks the exact line the editor underlined in an excerpt.
-- Finite issues; no feeds. No gradients, glows, sparkle icons, emoji, AI imagery, or "AI summary" boxes.
+  blue (Schibsted Grotesk) is always and only the machine: marginalia, the machine's route step, the
+  rhyme bridge, thread edges and provenance.
+- **Every content type gets the printed form that thing has always had** (below). A reader should
+  know what they are holding before reading a word.
+- **One loud thing per screen**; everything around it is quiet.
+- **Asymmetry with rules**: a wide working margin on the left, an off-centre reading column, air on
+  the right. Objects sit where they mean something.
+- **Content first.** Chrome recedes: small sans navigation, no buttons that look like buttons unless
+  they are controls.
+- Finite issues; no feeds. No gradients, glows, shadows, sparkle icons, emoji, AI imagery, "AI
+  summary" boxes, pills, chips, badges or rounded tinted cards.
+
+## The loud thing, per screen
+
+| Screen | The one bold moment |
+|---|---|
+| Waiting page (before Haul 001) | the struck masthead: *From the* ~~Internet~~ **Dumpster Fire**, the strike in ember |
+| Haul cover | the ghost Haul number, huge, in the Haul's colour, bleeding off the right edge |
+| Essay, post | the title, set huge (a magazine opening) |
+| Poem | the broadside sheet |
+| Rhymes | the two years facing each other |
+| Rabbit hole | the catalogue card |
+| Paper, talk, passage | the marked line (abstract, the speaker's words, the page) |
+
+## Forms
+
+| Type | Form | On the page |
+|---|---|---|
+| essay, post | magazine opening | huge title across margin and column; the why as an italic standfirst; the excerpt as a pull-in with the editor's highlight in the type colour; machine notes beside it in the margin |
+| paper | journal offprint | a running citation line; centred title and authors; the abstract block; numbered sections (Why it's here, Notes, References) with the numbers hanging in the margin |
+| talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps, **B.** in ember italic for the editor, MACHINE in blue; the dateline where timestamps would go |
+| poem | broadside | one sheet in the poem colour, the poem alone in large display italic, poet and source at the foot |
+| rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
+| rabbit hole | catalogue card | a sheet in the type colour with a call number (`FDF 001.6`), the headword with its article moved to the end, the entry, the machine's note, a punch hole; the plate beside it |
+| passage | page from the book | a plate-grey page with a running head (book, author), the passage justified, the locator as the folio |
+
+Shared by every item page: the running head (Haul and title, then the form's name), a thumb tab on
+the right edge in the type colour at a height set by the item's number (7px on phones, a numbered tab
+from 1100px), **See also** set as an index (entry, dotted leader, pointer such as *Wikipedia*, *item
+2* or *thread*, then the gloss), *Next* as a ruled link, and an ember folio with the item's number.
+
+## The cover
+
+The ghost number and title; the field note in the reading column with the route in the margin (days
+in sans, the machine's step in blue); **In this Haul** as a fanned stack of square-edged sheets in
+each type's colour, touching, each stepped in a little on both sides, carrying number, type, title,
+creator and year, the line the editor marked (in display serif) and the first sentence of the why;
+then the thread as a list of years, and the colophon. The archive uses the same stack, one sheet per
+Haul in its own colour.
+
+## Ember
+
+Ember (`#FF4F1F` light, `#FF6A3D` dark) is the brand's fire, used small and on purpose: the flame,
+the strike through "Internet", the editor's **B.**, the folio number, the current-page underline in
+the navigation, and the numbers on the About page's promises. Never body text, never machine text,
+never a fill.
 
 ## Type
 
 | Role | Face | Notes |
 |---|---|---|
-| Display, headings | Newsreader, display optical size, 500; italics at 400 for the second phrase | Bodoni was tried and rejected: hairlines vanish on phones |
-| Body, excerpts, editor notes | Newsreader text cut; editor notes in italic | Newsreader has no old-style figures; its default numerals are used throughout |
-| Labels, UI, machine voice | Schibsted Grotesk 400–700 | labels uppercase, 11px, 0.12em tracking, 600 |
+| Display, headings | Newsreader Display 500; italics at 400 for the second phrase | Bodoni was tried and rejected: hairlines vanish on phones |
+| Body, excerpts, editor notes | Newsreader Text; editor notes in italic | default numerals throughout |
+| Labels, UI, machine voice | Schibsted Grotesk 400–600 | margin labels in sentence case, 13–14px; speaker names uppercase with 0.1em tracking |
 
-React Native cannot drive the optical-size axis, so ship static cuts (text and display) of Newsreader.
+React Native cannot drive the optical-size axis, so the app ships static cuts (text and display).
 
-## Brand
+## Layout (web)
 
-The mark is an ember flame on ink (app icon), drawn as a teardrop with an inner cut. Ember is used only
-for the brand: icon, splash, and the small flame beside the masthead. Never for text, never for UI
-state, never mixed up with the machine blue. Options considered: ember on white, white on ember (read
-as a water drop), the italic f with a lit tip (too small at icon size).
+- Gutter 16px phone, 28px from 640px, 48px from 1000px. From 1000px the grid is margin (17rem),
+  column (38rem), air (the rest), with a 40–72px gap. `.m`, `.c`, `.mc` place things.
+- Phone: one column; margin content moves under the thing it annotates.
 
 ## Tokens
 
-Defined in `packages/shared/src/tokens.ts`; summarised here.
+Defined in `packages/shared/src/tokens.ts`.
 
 | Token | Light | Dark |
 |---|---|---|
@@ -41,13 +97,15 @@ Defined in `packages/shared/src/tokens.ts`; summarised here.
 | rule | #E6E6EA | #2A2A31 |
 | plate | #F4F4F6 | #1B1B20 |
 | machine | #4651D2 | #A3ACFF |
-| ember (brand only) | #FF4F1F | #FF6A3D |
-| essay (lilac) | #E9E5FF | #2C2752 |
-| rhymes (sky) | #DDEEFF | #16324D |
-| talk (butter) | #FFF2AE | #433B12 |
-| paper (mint) | #D4F5E5 | #173F2F |
-| poem (pink) | #FFE1EA | #4C2333 |
-| rabbit hole (peach) | #FFE4CF | #4B2F19 |
+| ember | #FF4F1F | #FF6A3D |
+| apricot (essay, post) | #FFE0C2 | #4D2E14 |
+| coral (poem, passage) | #FFD8D0 | #4E2320 |
+| butter (talk, video, podcast; the field-note highlighter) | #FFF0A6 | #433B12 |
+| sky (rhymes) | #DCEBFF | #15304B |
+| mint (paper) | #D2F3E2 | #163D2D |
+| pistachio (rabbit hole) | #E6F2C8 | #2E3915 |
 
-Primary actions are inverted pills (ink on bg swapped). Cards are rounded (12–20px), filled with a
-type colour or `plate`, never bordered on one side.
+## Brand
+
+The mark is an ember flame on ink (app icon), drawn as a teardrop. The masthead is
+*From the* ~~Internet~~ Dumpster Fire, the strike drawn in ember.

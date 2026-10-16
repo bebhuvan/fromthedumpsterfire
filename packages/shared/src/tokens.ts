@@ -12,7 +12,7 @@ export interface Palette {
   rule: string;
   plate: string;
   machine: string;
-  /** Brand only: the icon, splash and the masthead flame. Never body text. */
+  /** The brand's fire, small and on purpose: the flame, the masthead strike, the editor's "B.", the folio. Never body or machine text, never a fill. */
   ember: string;
   invBg: string;
   invInk: string;

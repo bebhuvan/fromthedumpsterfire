@@ -11,12 +11,12 @@ interface Props {
 const { what = 'This page' } = Astro.props;
 ---
 <Base title="Back shortly" path={Astro.url.pathname} noindex>
-  <div class="wrap">
-    <div class="read page-head">
-      <p class="label muted">503</p>
-      <Title title={{ text: 'Back', italic: 'shortly' }} as="h1" class="title-m" />
-      <p class="lede">{what} is being checked and will be back in a few minutes. Nothing is lost.</p>
-      <p class="actions-404"><a href={paths.archive}>Every Haul</a> · <a href={paths.about}>How it's made</a></p>
+  <section class="wrap g page-head">
+    <p class="m meta"><span>503</span></p>
+    <div class="c">
+      <Title title={{ text: 'Back', italic: 'shortly' }} as="h1" class="h-title" />
+      <p class="deck">{what} is being checked and will be back in a few minutes. Nothing is lost.</p>
+      <p class="src"><a href={paths.archive}>Every Haul</a> <a href={paths.about}>How it's made</a></p>
     </div>
-  </div>
+  </section>
 </Base>

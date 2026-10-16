@@ -1,0 +1,46 @@
+---
+// Wikipedia and connections set as an index: the entry, a dotted leader, a pointer, then the gloss.
+// Wikipedia summaries are Wikipedia's words (serif); connection notes are the editor's (italic).
+import type { Haul, Item } from '@fdf/shared/haul';
+import { paths, safeHref } from '../lib/site';
+
+interface Props {
+  haul: Haul;
+  item: Item;
+  /** Leave out the Wikipedia rows (the offprint lists them as references instead). */
+  noWiki?: boolean;
+}
+const { haul, item, noWiki } = Astro.props;
+const position = (id?: string) => (id ? haul.items.findIndex((x) => x.id === id) + 1 : 0);
+const wiki = noWiki ? [] : item.wiki;
+---
+{wiki.length || item.connections.length ? (
+  <section class="g row" aria-labelledby={`sa-${item.id}`}>
+    <h2 class="m mh" id={`sa-${item.id}`}>See also</h2>
+    <ul class="c seealso">
+      {wiki.map((w) => {
+        const href = safeHref(w.url);
+        return (
+          <li class="sa">
+            {href ? <a href={href} rel="noopener noreferrer" target="_blank">{w.title}<span class="sr"> (Wikipedia, opens in a new tab)</span></a> : <span>{w.title}</span>}
+            <span class="lead" aria-hidden="true"></span>
+            <span class="ptr" aria-hidden="true">Wikipedia</span>
+            <span class="sa-g">{w.summary}</span>
+          </li>
+        );
+      })}
+      {item.connections.map((c) => {
+        const at = position(c.itemId);
+        const href = c.itemId && at ? paths.item(haul.number, c.itemId) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
+        return (
+          <li class="sa">
+            {href ? <a href={href}>{c.title}</a> : <span>{c.title}</span>}
+            <span class="lead" aria-hidden="true"></span>
+            <span class="ptr">{at ? `item ${at}` : c.threadId ? 'thread' : 'archive'}</span>
+            <span class="sa-g"><span class="sa-t">{c.type}.</span> <i>{c.note}</i></span>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+) : null}

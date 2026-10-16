@@ -1,19 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
-import Arrow from '../components/Arrow.astro';
 import { paths } from '../lib/site';
 
 export const prerender = true;
 ---
 <Base title="Not found" path="/404" noindex>
-  <div class="wrap">
-    <div class="read page-head">
-      <p class="label muted">404</p>
-      <Title title={{ text: 'Nothing here,', italic: 'or it burned' }} as="h1" class="title-m" />
-      <p class="lede">The page you asked for isn't part of any Haul. It may have moved, or the link may be mistyped.</p>
-      <p class="actions-404"><a class="pill wide" href={paths.home}>Go to the latest Haul<Arrow /></a></p>
-      <p class="actions-404"><a href={paths.archive}>Every Haul</a> · <a href={paths.search}>Search</a></p>
+  <section class="wrap g page-head">
+    <p class="m meta"><span>404</span></p>
+    <div class="c">
+      <Title title={{ text: 'Nothing here,', italic: 'or it burned' }} as="h1" class="h-title" />
+      <p class="deck">The page you asked for isn't part of any Haul. It may have moved, or the link may be mistyped.</p>
+      <p class="src"><a href={paths.home}>The latest Haul</a> <a href={paths.archive}>Every Haul</a> <a href={paths.search}>Search</a></p>
     </div>
-  </div>
+  </section>
 </Base>

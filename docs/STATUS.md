@@ -108,6 +108,14 @@
   in the edge cache under a key made of the deploy version, the index's `updatedAt` and the path.
   Production is live at https://fromthedumpsterfire.com (waiting page until Haul 001); preview at
   https://fdf-web-preview.r-bhuvanesh2007.workers.dev.
+- 2026-10-16: **the Salvage design on the web** (`docs/DESIGN.md`). Struck masthead in every header,
+  the big one on the waiting page; ghost number and a fanned stack of sheets on the Haul cover; every
+  item set in its printed form (`src/lib/forms.ts`: opening, offprint, transcript, broadside, facing
+  pages, catalogue card, page from the book) with a working margin, running head, thumb tab, See also
+  index and ember folio. Archive, threads, thread, about, search, 404 and 503 redone to match. Chips,
+  pills, rounded cards, the boxed marginalia and the SVG arrows are gone (`Chip.astro`, `Arrow.astro`
+  deleted). Verified locally with `wrangler dev` on the sample Haul and with an empty bucket (waiting
+  page): 360, 390 and 1280 px, light and dark, no horizontal scroll; `npm run verify` passes.
 
 ### Web: what was verified (2026-10-16)
 

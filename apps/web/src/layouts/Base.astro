@@ -1,7 +1,10 @@
 ---
+// The page frame (design: Salvage, docs/DESIGN.md). A small struck masthead in every header, an
+// optional running head under it, and an optional ember folio above the footer.
 import '../styles/global.css';
 import { palettes } from '@fdf/shared/tokens';
 import { absolute, paths, SITE_DESCRIPTION, SITE_NAME } from '../lib/site';
+import Masthead from '../components/Masthead.astro';
 
 interface Props {
   /** Page title without the site name; omit on the home page. */
@@ -14,9 +17,15 @@ interface Props {
   /** Which top-level section is current, for aria-current in the nav. */
   section?: 'latest' | 'threads' | 'archive' | 'search' | 'about';
   noindex?: boolean;
+  /** Running head under the header: left links back to the Haul, right names the form. */
+  runhead?: { href: string; left: string; right?: string };
+  /** Folio at the foot of the page (an item's number in its Haul). */
+  folio?: { left: string; number: string | number };
+  /** Hide the small masthead when the page carries the big one. */
+  bigMast?: boolean;
 }
 
-const { title, description = SITE_DESCRIPTION, path = Astro.url.pathname, type = 'website', image, section, noindex } = Astro.props;
+const { title, description = SITE_DESCRIPTION, path = Astro.url.pathname, type = 'website', image, section, noindex, runhead, folio, bigMast } = Astro.props;
 const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
 const canonical = absolute(path);
 const nav = [
@@ -59,28 +68,33 @@ const nav = [
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
-    <header class="wrap site-head">
-      <a class="mast" href={paths.home} aria-label={`${SITE_NAME}, latest Haul`}><span class="flame" aria-hidden="true"></span>{SITE_NAME}</a>
-      <nav class="site-nav label" aria-label="Sections">
+    <header class="wrap top">
+      <a class="top-home" href={paths.home} aria-label={`${SITE_NAME}, latest Haul`}>
+        <span class="flame" aria-hidden="true"></span>
+        {bigMast ? null : <Masthead class="mast-s" />}
+      </a>
+      <nav class="top-nav" aria-label="Sections">
         {nav.map((n) => <a href={n.href} aria-current={section === n.key ? 'page' : undefined}>{n.label}</a>)}
+        <button class="tog" type="button" hidden aria-label="Switch to dark theme" data-theme-toggle><span aria-hidden="true"></span></button>
       </nav>
-      <div class="head-tools">
-        <button class="theme-toggle" type="button" hidden aria-label="Switch to dark theme" data-theme-toggle><span class="disc" aria-hidden="true"></span></button>
-      </div>
     </header>
+    {runhead ? (
+      <div class="wrap"><p class="runhead"><a href={runhead.href}>{runhead.left}</a>{runhead.right ? <span>{runhead.right}</span> : null}</p></div>
+    ) : null}
+    <slot name="edge" />
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    <footer class="wrap">
-      <div class="site-foot">
-        <p>Things worth salvaging from the internet and the archive. The serif is the editor; <span class="machine">the blue sans is the machine.</span></p>
-        <nav class="label" aria-label="More">
-          <a href={paths.archive}>Every Haul</a>
-          <a href={paths.threads}>Threads</a>
-          <a href={paths.about}>How it's made</a>
-          <a href={paths.feed}>RSS</a>
-        </nav>
-      </div>
+    {folio ? <p class="wrap folio"><span>{folio.left}</span><span class="folio-n">{folio.number}</span></p> : null}
+    <footer class="wrap g foot">
+      <p class="m foot-mark"><span class="flame" aria-hidden="true"></span><Masthead /></p>
+      <p class="c foot-line">Things worth salvaging from the internet and the archive. The serif is the editor; <span class="machine">the blue sans is the machine.</span></p>
+      <nav class="c foot-nav" aria-label="More">
+        <a href={paths.archive}>Every Haul</a>
+        <a href={paths.threads}>Threads</a>
+        <a href={paths.about}>How it's made</a>
+        <a href={paths.feed}>RSS</a>
+      </nav>
     </footer>
     <script>
       import '../scripts/theme';

@@ -73,6 +73,9 @@ scripts/          verify-bundle.ts
   `src/worker/lib.ts` is `script-src 'self'; style-src 'self'`.
 - Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
   sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.
+- Design is Salvage (`docs/DESIGN.md`): each item renders in its printed form, chosen in
+  `src/lib/forms.ts`; one loud thing per screen; no pills, chips or rounded cards. Comps and the
+  screenshot script (`docs/design-comps/_shared/shoot.mjs`, takes a URL) are in `docs/design-comps/`.
 - Client JS is only the theme toggle and search. `npm run web:dev` (put `FDF_USE_SEED=1` in
   `apps/web/.dev.vars` for sample data), `npm run deploy:web:preview`, `npm run deploy:web`.
   `npm run size -w @fdf/web` measures the Worker bundle.

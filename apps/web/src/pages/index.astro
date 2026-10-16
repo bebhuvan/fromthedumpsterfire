@@ -1,7 +1,6 @@
 ---
 import HaulPage from '../components/HaulPage.astro';
 import Base from '../layouts/Base.astro';
-import Title from '../components/Title.astro';
 import Unavailable from '../components/Unavailable.astro';
 import { archive } from '../lib/runtime';
 import { paths } from '../lib/site';
@@ -11,23 +10,48 @@ const newest = index.hauls[0]?.number;
 const latest = hauls[0];
 const broken = newest !== undefined && failed.has(newest);
 if (broken) Astro.response.status = 503;
+
+// What a Haul holds, each type with the printed form it is set in.
+const forms = [
+  { type: 'essay', name: 'Essays', form: 'set as a magazine opens one.' },
+  { type: 'paper', name: 'Papers', form: 'as offprints: abstract first, sections numbered.' },
+  { type: 'talk', name: 'Talks and podcasts', form: 'as transcripts, speakers in the margin.' },
+  { type: 'poem', name: 'Poems', form: 'as broadsides: one sheet, nothing else on it.' },
+  { type: 'rhymes', name: 'Rhymes', form: 'as facing pages: then on the left, now on the right.' },
+  { type: 'rabbit-hole', name: 'Rabbit holes', form: 'as catalogue cards with their cross-references.' },
+  { type: 'passage', name: 'Passages', form: 'as a page from the book.' },
+] as const;
 ---
 {broken ? (
   <Unavailable what={`Haul ${newest}`} />
 ) : latest ? (
   <HaulPage haul={latest} home />
 ) : (
-  <Base title="The first Haul is on its way" description="An irregular magazine of things worth pulling out of the internet and the archive before they burn." path={paths.home} section="latest">
-    <div class="wrap">
-      <div class="read">
-        <div class="page-head">
-          <Title title={{ text: 'Haul 001 is being', italic: 'gathered' }} as="h1" class="title-m" />
-        </div>
-        <div class="prose">
-          <p>From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays, talks, papers, poems, podcasts, passages and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.</p>
-          <p>The first one is not out yet. <a href={paths.about}>Read how it's made</a>, or follow the <a href={paths.feed}>RSS feed</a> to hear when it lands.</p>
-        </div>
+  <Base title="The first Haul is on its way" description="An irregular magazine of things worth pulling out of the internet and the archive before they burn." path={paths.home} section="latest" bigMast>
+    <section class="wrap g mast" aria-label="From the Dumpster Fire">
+      <p class="mc mast-a" aria-hidden="true">From the</p>
+      <p class="mc mast-b" aria-hidden="true"><s>Internet</s></p>
+      <p class="mast-c"><span class="sr">From the </span>Dumpster Fire</p>
+    </section>
+    <section class="wrap g head" aria-labelledby="wait-title">
+      <p class="m meta"><span>Haul 001</span><span>Being gathered</span></p>
+      <div class="c">
+        <h1 class="h-title display" id="wait-title">Haul 001 is being <em>gathered</em></h1>
+        <p class="deck">A magazine of things worth pulling out of the internet and the archive before they burn. It arrives in Hauls, when there is enough worth sending.</p>
       </div>
-    </div>
+    </section>
+    <section class="wrap g row" aria-labelledby="holds-title">
+      <h2 class="m mh" id="holds-title">What a Haul holds</h2>
+      <ul class="c forms">
+        {forms.map((f) => <li class={`t-${f.type}`}><span class="key" aria-hidden="true"></span><span><b>{f.name}</b>, {f.form}</span></li>)}
+      </ul>
+    </section>
+    <section class="wrap g row" aria-labelledby="until-title">
+      <h2 class="m mh" id="until-title">Until then</h2>
+      <div class="c">
+        <p>The first one is not out yet. Read <a href={paths.about}>how it's made</a>, or follow the <a href={paths.feed}>RSS feed</a> to hear when it lands.</p>
+        <p class="machine small">Chosen and annotated by one editor, mostly by voice. Language models read, cross-link and check; anything they write is set in this blue.</p>
+      </div>
+    </section>
   </Base>
 )}

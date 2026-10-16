@@ -1,0 +1,19 @@
+---
+// The machine's notes: blue sans, each with the source it was checked against. Never boxed.
+import type { Marginal } from '@fdf/shared/haul';
+
+interface Props {
+  notes: Marginal[];
+  /** Transcript rows put a MACHINE speaker label beside each note. */
+  rows?: boolean;
+}
+const { notes, rows } = Astro.props;
+---
+{rows
+  ? notes.map((n) => (
+      <div class="g tl">
+        <p class="m who machine">Machine</p>
+        <p class="c note machine">{n.text} <cite>{n.cite}</cite></p>
+      </div>
+    ))
+  : notes.map((n) => <p class="note machine"><span class="sr">The machine notes: </span>{n.text} <cite>{n.cite}</cite></p>)}

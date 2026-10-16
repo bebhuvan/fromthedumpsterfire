@@ -29,13 +29,13 @@ await send('Page.enable');
 for (const p of pages) for (const width of widths) for (const scheme of ['light', 'dark']) {
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
   await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 600 });
-  await send('Page.navigate', { url: 'file://' + resolve(dir, p + '.html') });
+  await send('Page.navigate', { url: dir.startsWith('http') ? dir + p : 'file://' + resolve(dir, p + '.html') });
   await new Promise((r) => setTimeout(r, 800));
   const m = await send('Runtime.evaluate', { expression: 'JSON.stringify([document.documentElement.scrollHeight, document.documentElement.scrollWidth])', returnByValue: true });
   const [h, sw] = JSON.parse(m.result.result.value);
   if (sw > width) console.log(`OVERFLOW ${p} @${width}: scrollWidth ${sw}`);
   const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: Math.min(h, 8000), scale: 1 } });
-  writeFileSync(join(out, `${p}-${width}-${scheme}.png`), Buffer.from(shot.result.data, 'base64'));
+  writeFileSync(join(out, `${p.replace(/^\/$/, 'home').replace(/^\//, '').replace(/\//g, '_')}-${width}-${scheme}.png`), Buffer.from(shot.result.data, 'base64'));
 }
 ws.close();
 chrome.kill();
