@@ -95,6 +95,54 @@
 - `@fdf/shared/voice` is not wired yet: `editorVoice` into the title/route prompts, `voiceCheck`
   beside `checkStyle` in the regeneration loop, `dictionaryHints` into the transcription prompt.
 
+- 2026-10-16: **the website** (`apps/web`): Astro static build of every published Haul, served by the
+  `fdf-web` Worker. Pages for the latest Haul, each Haul (cover, field note with the route, contents,
+  colophon, corrections), items (standard, Rhymes, poem; excerpt with highlight, cited marginalia in
+  the machine voice, Wikipedia cards, connections, next item), threads, archive, about, search, 404,
+  RSS, sitemap and OG tags. Light and dark (system, plus a toggle kept in localStorage). Fonts are
+  self-hosted woff2 subsets of the app's cuts (about 230 KB for all eight; a page loads four or five).
+  Client JS is the theme toggle (0.6 KB) and search (3.3 KB). Preview deployed at
+  https://fdf-web-preview.r-bhuvanesh2007.workers.dev (built from the sample Haul).
+
+### Web: what was verified (2026-10-16)
+
+- `npm run verify` (all workspaces typecheck, including `astro check` for apps/web; 124 tests, 20 of them
+  new for the web: safeHref, search index and scoring, bundle loading and validation failure, latest
+  version wins, RSS escaping, tokens CSS, app-link generation, Worker aliases).
+- A build against a locally served bundle with a plate, voice notes, a v2 correction and an item whose
+  creator was `<script>…</script>` rendered the plate with its credit and licence, the audio players,
+  the corrections log, and escaped the script text everywhere.
+- Screenshots of every page at 360, 390 and 1280 px, light and dark, from the deployed preview: no
+  horizontal scroll, no console or CSP errors. The toggle switches and persists across pages; search
+  returns ranked rows; computed styles confirm machine text in Schibsted Grotesk in machine blue and
+  editor notes in Newsreader italic.
+- Deployed preview: CSP, HSTS, noindex and cache headers present; `/haul/1/note` redirects to the
+  field note; unknown paths return the 404 page with status 404; POST returns 405.
+
+### Web: what the editor must do
+
+1. **Production deploy** when `files.fromthedumpsterfire.com` serves real bundles:
+   `npm run deploy:web`. It builds without the seed (the build fails if the bundles can't be read or
+   don't validate) and attaches the custom domains `fromthedumpsterfire.com` and
+   `www.fromthedumpsterfire.com` (www redirects to the apex). The zone must be on this Cloudflare account.
+2. **App links:** set `ANDROID_CERT_SHA256` (release signing certificate SHA-256, from
+   `eas credentials` or Play Console › App integrity) and, for iOS, `APPLE_APP_ID` (`TEAMID.com.fromthedumpsterfire.app`)
+   in the build environment. Until then no `/.well-known/assetlinks.json` is published and Android
+   will not verify the app's `autoVerify` intent filter. TODO: fingerprint unknown.
+
+### Web: known gaps
+
+- **Rebuild on publish is manual.** The site is static, so a new Haul or correction appears only after
+  a rebuild and deploy. Next step: a Workers Builds deploy hook (or a GitHub Action) that the Desk
+  calls after `publishHaul`.
+- The app's archive deep link is `/hauls`; the site's archive is `/archive` (and `/hauls` redirects
+  there). Both open the app on Android because its intent filter matches the `/haul` prefix.
+- An item id of `note` or `thread` would collide with app routes; the build refuses such a bundle.
+  The Desk's slug generator should avoid them.
+- Voice notes use the browser's own audio player (no custom player, no JS).
+- No per-item OG image unless the item has a plate; the default share image is `public/og.png`
+  (rendered from `scripts/og.html`).
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress
@@ -102,7 +150,7 @@
 3. **Pipeline v1**: item Workflow: fetch, transcribe, clean (deletion-only), reading card, draft, checks: built.
 4. **Desk v1**: tray, item review, voice capture, Android share target, quote extraction: built,
    preview deployed; edge Access to switch on.
-5. **Web**: Astro issue page in the canvas design, light and dark.
+5. **Web**: built; preview deployed; production waits on real bundles at files.fromthedumpsterfire.com.
 6. **Connections**: Vectorize, entity linking, edge judging, Threads.
 7. **Backfill**: import old site archive and reading history.
 8. **Push**: client done; needs google-services.json, the Worker endpoint and FCM credentials.

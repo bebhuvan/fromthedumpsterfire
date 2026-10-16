@@ -1,0 +1,14 @@
+---
+// A display title. The italic tail is structured data in the bundle, rendered as <em>; the text is
+// always escaped by Astro, never injected as HTML.
+import type { Title as TitleData } from '@fdf/shared/haul';
+
+interface Props {
+  title: TitleData;
+  as?: 'h1' | 'h2' | 'h3' | 'span' | 'p';
+  class?: string;
+  id?: string;
+}
+const { title, as: Tag = 'h2', class: cls = '', id } = Astro.props;
+---
+<Tag class:list={['display', 'title', cls]} id={id}>{title.text}{title.italic ? ' ' : ''}{title.italic ? <em>{title.italic}</em> : null}</Tag>

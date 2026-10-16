@@ -14,7 +14,7 @@ Reader app + website ◄─────┴──── published Haul bundle (R2
 
 | Surface | Who | Tech |
 |---|---|---|
-| Website | readers | Astro on Workers static assets, fromthedumpsterfire.com |
+| Website | readers | Astro static build on Workers static assets (`apps/web`, Worker `fdf-web`), fromthedumpsterfire.com |
 | Reader app | readers | Expo (React Native), Android + iOS, reads published bundles, offline |
 | Desk | editor only | Vite + React SPA (`apps/desk`) + PWA served by `workers/api` at desk.fromthedumpsterfire.com, behind Cloudflare Access |
 | Capture | editor only | Desk share target (Android), iOS Shortcut, optional Telegram bot |
@@ -163,3 +163,32 @@ WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
   proxies the API to port 8787.
 - Preview: `npm run db:migrate:preview`, `npm run deploy:preview`.
 - `npx tsx scripts/verify-bundle.ts <filesBase> hauls/001/v1/haul.json` validates a published bundle.
+
+## The website (built)
+
+`apps/web` is a static Astro build served by one Worker, `fdf-web` (`fdf-web-preview` on workers.dev
+for the preview env). The Worker runs first on every request (`run_worker_first`): it redirects
+`www.` to the apex, maps the app's aliases (`/haul/<n>/note` to `/haul/<n>#field-note`, `/haul/001/…`
+to `/haul/1/…`, `/hauls` to `/archive`), refuses non-GET/HEAD, then serves the asset and adds the
+security headers (strict CSP with no inline script or style, nosniff, frame-ancestors none, HSTS,
+referrer and permissions policies) and cache headers (hashed `/_astro/*` and `/fonts/*` immutable,
+pages five minutes). Anything not on `fromthedumpsterfire.com` in production gets `X-Robots-Tag: noindex`.
+
+```
+R2 files.fromthedumpsterfire.com ─► astro build (validateHaul on every bundle, fail on error) ─► dist/
+   hauls/index.json, hauls/NNN/vN/haul.json                                                       │
+browser ─► fdf-web Worker (redirects, headers) ─► ASSETS (dist/) ◄─────────── wrangler deploy ◄───┘
+```
+
+**Build data.** `src/lib/data.ts` reads the index from `FILES_BASE`, checks each bundle path
+against `hauls/NNN/vN/haul.json`, validates every bundle with the index, keeps the highest version per
+Haul and fails the build on any error. `FDF_USE_SEED=1` uses `packages/shared/fixtures`; in `astro dev`
+a failed fetch falls back to the fixtures. The site has to be rebuilt and redeployed after a publish
+(see STATUS for the open item on triggering that from the Desk).
+
+**Pages.** `/` (latest Haul), `/haul/<n>` (cover band, field note with the route, contents,
+colophon and corrections), `/haul/<n>/<item>` (standard, Rhymes and poem layouts),
+`/haul/<n>/thread/<id>`, `/threads`, `/archive`, `/search` (vanilla script over `/search.json`, same
+weighting as the app), `/about`, 404, `/feed.xml`, `/sitemap.xml`, `/tokens.css` (generated from
+`packages/shared/src/tokens.ts`), and `/.well-known/assetlinks.json` / `apple-app-site-association`
+only when `ANDROID_CERT_SHA256` / `APPLE_APP_ID` are set at build time.

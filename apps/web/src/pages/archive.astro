@@ -1,0 +1,31 @@
+---
+import { haulSlug } from '@fdf/shared/haul';
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import { archive } from '../lib/data';
+import { longDate, objects, paths, titleText } from '../lib/site';
+
+const { hauls } = await archive();
+---
+<Base title="Every Haul" description="Every Haul so far, newest first." path={paths.archive} section="archive">
+  <div class="wrap">
+    <div class="page-head">
+      <Title title={{ text: 'Every', italic: 'Haul' }} as="h1" class="title-m" />
+      <p class="lede">Each Haul keeps its own colour, so the archive reads like a shelf.</p>
+    </div>
+    <ol class="shelf" reversed>
+      {hauls.map((h) => (
+        <li>
+          <a class:list={['haul-card', `s-${h.swatch}`]} href={paths.haul(h.number)} aria-label={`Haul ${h.number}: ${titleText(h.title)}`}>
+            <span class="haul-card-head">
+              <span class="haul-card-num" aria-hidden="true">{haulSlug(h.number)}</span>
+              <span class="label">{longDate(h.publishedAt)}</span>
+            </span>
+            <Title title={h.title} as="span" class="title-s" />
+            <span class="meta">{objects(h.items.length)}{h.version > 1 ? ` · corrected, version ${h.version}` : ''}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </div>
+</Base>

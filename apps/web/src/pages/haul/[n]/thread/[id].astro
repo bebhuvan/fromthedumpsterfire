@@ -1,0 +1,59 @@
+---
+// A thread timeline. Mirrors apps/mobile/src/screens/ThreadScreen.tsx.
+import type { GetStaticPaths } from 'astro';
+import type { Haul, Thread } from '@fdf/shared/haul';
+import Base from '../../../../layouts/Base.astro';
+import Title from '../../../../components/Title.astro';
+import Arrow from '../../../../components/Arrow.astro';
+import { archive } from '../../../../lib/data';
+import { paths, titleText } from '../../../../lib/site';
+
+export const getStaticPaths = (async () => {
+  const { hauls } = await archive();
+  return hauls.flatMap((haul) => haul.threads.map((thread) => ({ params: { n: String(haul.number), id: thread.id }, props: { haul, thread } })));
+}) satisfies GetStaticPaths;
+
+const { haul, thread } = Astro.props as { haul: Haul; thread: Thread };
+const first = Number.parseInt(thread.points[0]?.year ?? '', 10);
+const last = Number.parseInt(thread.points[thread.points.length - 1]?.year ?? '', 10);
+const span = Number.isFinite(first) && Number.isFinite(last) && last > first ? last - first : 0;
+---
+<Base title={`${titleText(thread.title)}, a thread`} description={thread.summary} path={paths.thread(haul.number, thread.id)} type="article" section="threads">
+  <div class="wrap">
+    <div class="read">
+      <div class="topbar">
+        <a class="back label" href={paths.haul(haul.number)}><Arrow back />Haul {haul.number}</a>
+      </div>
+      <div class="page-head">
+        <p class="label muted">Thread · {thread.points.length} points{span ? ` · ${span} years` : ''}</p>
+        <Title title={thread.title} as="h1" class="title-m" />
+        <p class="lede">{thread.summary}</p>
+        <p class="legend meta">
+          <span><span class="dot filled" aria-hidden="true"></span>In this Haul</span>
+          <span><span class="dot" aria-hidden="true"></span>From the archive</span>
+        </p>
+      </div>
+
+      <ol class="timeline">
+        {thread.points.map((pt) => (
+          <li class="point">
+            <span class="point-year">{pt.year}</span>
+            <span class:list={['dot', { filled: pt.inHaul }]} aria-hidden="true"></span>
+            <span class="point-body">
+              {pt.itemId ? <a class="point-title" href={paths.item(haul.number, pt.itemId)}>{pt.title}</a> : <span class="point-title">{pt.title}</span>}
+              <span class="sr">{pt.inHaul ? '(in this Haul)' : '(from the archive)'}</span>
+              <span class="point-gist">{pt.gist}</span>
+              <span class="point-edge machine-label">{pt.edge}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      <div class="provenance">
+        <p class="machine">{thread.provenance}</p>
+      </div>
+
+      <p><a class="pill wide route-back" href={paths.note(haul.number)}>Back to the field note<Arrow /></a></p>
+    </div>
+  </div>
+</Base>

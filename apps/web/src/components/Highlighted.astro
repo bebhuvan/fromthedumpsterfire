@@ -1,0 +1,16 @@
+---
+// Marks the editor's underlined phrase inside a passage. Both strings are escaped text.
+interface Props {
+  text: string;
+  highlight?: string;
+  class?: string;
+  as?: 'p' | 'span';
+}
+const { text, highlight, class: cls, as: Tag = 'p' } = Astro.props;
+const at = highlight ? text.indexOf(highlight) : -1;
+---
+{at >= 0 && highlight ? (
+  <Tag class={cls}>{text.slice(0, at)}<mark>{highlight}</mark>{text.slice(at + highlight.length)}</Tag>
+) : (
+  <Tag class={cls}>{text}</Tag>
+)}

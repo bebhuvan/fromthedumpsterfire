@@ -32,7 +32,7 @@ Read these before working:
 ## Layout
 
 ```
-apps/web          Astro site (not built yet)
+apps/web          public website: Astro static build + a tiny Worker (fdf-web) for headers and redirects
 apps/desk         the Desk UI: Vite + React SPA, served by workers/api (private, behind Access)
 apps/mobile       Expo reader app
 workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
@@ -58,6 +58,20 @@ scripts/          verify-bundle.ts
 - Local: `workers/api/.dev.vars` with `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`; see
   `docs/ARCHITECTURE.md` (Running the Desk). What is deployed and what the editor must set up:
   `docs/STATUS.md`.
+
+## The website (apps/web)
+
+- Static Astro build from the published bundles (`FILES_BASE`, default files.fromthedumpsterfire.com);
+  `FDF_USE_SEED=1` uses the sample Haul. Every bundle goes through `validateHaul` and the build fails
+  on any error. Data loading is in `src/lib/data.ts`; URL shapes in `src/lib/site.ts` match the app's
+  deep links (`/haul/<n>`, `/haul/<n>/<item>`, `/haul/<n>/thread/<id>`).
+- Never `set:html`; bundle text is always escaped, italic title tails render as `<em>`, external
+  links go through `safeHref` (http/https only). No inline scripts or styles: the CSP in
+  `src/worker/lib.ts` is `script-src 'self'; style-src 'self'`.
+- Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
+  sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.
+- Client JS is only the theme toggle and search. `npm run web:dev`, `npm run web:build`,
+  `npm run deploy:web:preview`. Production deploy (`npm run deploy:web`) is the editor's call.
 
 ## The reader app (apps/mobile)
 

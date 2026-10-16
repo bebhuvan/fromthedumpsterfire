@@ -1,0 +1,20 @@
+---
+// The editor's voice, in the browser's own player. preload="none" means a page full of voice notes
+// costs nothing until someone presses play.
+import type { Audio } from '@fdf/shared/haul';
+import { safeHref } from '../lib/site';
+
+interface Props {
+  audio: Audio;
+  label: string;
+}
+const { audio, label } = Astro.props;
+const src = safeHref(audio.url);
+const mmss = `${Math.floor(audio.seconds / 60)}:${String(Math.floor(audio.seconds % 60)).padStart(2, '0')}`;
+---
+{src ? (
+  <div class="voice">
+    <span class="voice-label">{label} <span class="meta">{mmss}</span></span>
+    <audio controls preload="none" src={src} aria-label={`${label}, ${mmss}`}></audio>
+  </div>
+) : null}
