@@ -70,12 +70,11 @@
   thinking let Kimi and DeepSeek on Workers AI reason through all 8,000 tokens); Workers AI now
   always runs with thinking off, and the rerun cost $0.007. Preview D1 migrated to 0003; preview
   Workers deployed (pipeline `3b6544dc`, Desk `ae563573`).
-- Keys for Gemini, DeepSeek and Z.ai set on both Workers in preview and production (Anthropic not
-  yet). Real smoke test, direct and through the preview gateway, every answer valid, about $0.006:
+- Keys for all four providers set on both Workers in preview and production. Real smoke test, direct and through the preview gateway, every answer valid, about $0.006:
   results in `docs/MODELS.md` (Smoke test). It found Gemini refusing the `response_format` object
   on `generateContent`; the adapter now sends `responseMimeType` + `responseJsonSchema` only.
-  Without an Anthropic key every chain skips Haiku: read, draft, clean and the Haul helpers start
-  with the next model (DeepSeek Flash or Gemini).
+  It also found the AI Gateway answering repeat requests from its response cache (a Redraft would
+  get the old draft back, charged as new); generation calls now skip that cache.
   Plate and clean now use the paid GLM-5.3-Flash (editor's choice): the free GLM-4.7-Flash was
   overloaded on two of five smoke calls.
 
@@ -117,10 +116,8 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 
 ### What the editor must do
 
-1. **`ANTHROPIC_API_KEY`** on both Workers (Gemini, DeepSeek and Z.ai keys are set), the same way
-   as in `docs/MODELS.md` (Keys); then `npx tsx scripts/smoke-models.ts haiku claude-sonnet`.
-   Without it the chains skip Haiku. Production also needs `npm run db:migrate:production`
-   (migration 0003) before the models branch is deployed there.
+1. **Approve the models branch for production.** Provider keys are set on both Workers; production
+   needs `npm run db:migrate:production` (migration 0003) before `npm run deploy:production`.
 2. **Push:** `FCM_SERVICE_ACCOUNT` (Firebase service-account JSON) as a secret on the pipeline, and
    `apps/mobile/google-services.json` for the app. iOS push needs FCM tokens on iOS or an APNs sender.
 3. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in

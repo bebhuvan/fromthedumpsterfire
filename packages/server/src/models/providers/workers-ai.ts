@@ -50,7 +50,9 @@ export async function callWorkersAi(env: Env, req: ProviderRequest): Promise<Pro
   if (cfg.thinking !== 'none') input.chat_template_kwargs = { thinking: false, enable_thinking: false };
   if (cfg.json === 'schema') input.response_format = { type: 'json_schema', json_schema: req.schema };
   else if (cfg.json === 'object') input.response_format = { type: 'json_object' };
-  const out = (await runWorkersAi(env, cfg.model, input, { skipCache: false })) as Record<string, unknown>;
+  // Generation skips the gateway's response cache, as provider calls do (gateway.ts); embeddings and
+  // transcripts may use it.
+  const out = (await runWorkersAi(env, cfg.model, input, { skipCache: true })) as Record<string, unknown>;
   const usage = (out.usage ?? {}) as Record<string, number>;
   let content: unknown = out.response;
   const choices = out.choices as Array<{ message?: { content?: unknown }; finish_reason?: string }> | undefined;

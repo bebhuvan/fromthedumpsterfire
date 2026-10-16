@@ -61,6 +61,9 @@ export async function callProvider(env: Env, routes: RoutesConfig, call: Provide
   if (viaGateway) {
     if (env.CF_AIG_TOKEN) headers['cf-aig-authorization'] = `Bearer ${env.CF_AIG_TOKEN}`;
     headers['cf-aig-metadata'] = JSON.stringify({ task: call.task, ...(call.itemId ? { item: call.itemId } : {}), env: env.ENVIRONMENT });
+    // Never answer from the gateway's response cache: a Redraft sends the same request as the first
+    // draft and must get a new answer. Repeat input is discounted by the provider's prompt cache.
+    headers['cf-aig-skip-cache'] = 'true';
   }
   try {
     return (await postJson(url, headers, call.body, { provider: call.provider, ...call.post })).json;

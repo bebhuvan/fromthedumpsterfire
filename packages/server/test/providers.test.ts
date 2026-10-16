@@ -299,6 +299,7 @@ describe('generateJson across providers', () => {
     expect(seen[0]!.headers['x-api-key']).toBe(keys.ANTHROPIC_API_KEY);
     expect(seen[0]!.headers['cf-aig-authorization']).toBe('Bearer cf-token-0000000000');
     expect(JSON.parse(seen[0]!.headers['cf-aig-metadata']!)).toMatchObject({ task: 'draft', item: 'it_9' });
+    expect(seen[0]!.headers['cf-aig-skip-cache']).toBe('true');
     expect(seen[0]!.url).not.toMatch(/key/i);
   });
 

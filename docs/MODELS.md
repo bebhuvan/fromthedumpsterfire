@@ -85,6 +85,13 @@ shown, stored or sent back.
 - **DeepSeek and Z.ai:** automatic prefix caches; the adapters put stable text first in the user
   turn. Hits show as `prompt_cache_hit_tokens` (DeepSeek) and `prompt_tokens_details.cached_tokens`.
 
+- **AI Gateway response cache:** skipped for every generation call (`cf-aig-skip-cache: true`;
+  `skipCache` on Workers AI). The smoke test showed the gateway returning a stored answer in 99 ms
+  for an identical request, which the ledger then charged as a real call; and a Redraft sends the
+  same first request as the original draft, so it would get the same draft back. Embeddings and
+  transcripts still use the gateway cache. Claude's prompt cache, measured the same day: a repeat
+  PDF call read 1,820 of 1,853 input tokens from cache and cost $0.000036 against $0.000244.
+
 Callers decide what is stable: `draftItem` sends the item header, card, Wikipedia extracts and
 source as `context`, and only the feedback changes between attempts.
 
@@ -296,7 +303,8 @@ What it settled:
   Reasoning tokens are reported. The free GLM-4.7-Flash is often overloaded (1305, a 429): two of
   five calls failed after three tries, one took 68 s. It is no longer in any chain; plate and clean
   use the paid GLM-5.3-Flash.
-- **Still to run:** Claude Haiku and Sonnet (no key yet); GLM PDF input stays off.
+- **Claude** (key added later the same day): Haiku and Sonnet valid on JSON and PDF; cache writes
+  and reads priced as documented. GLM PDF input stays off.
 
 ## Keys
 
