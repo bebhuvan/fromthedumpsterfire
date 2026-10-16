@@ -32,7 +32,7 @@ The reader app has no editor mode. All write routes sit behind Access.
 | `AI` | Workers AI | Whisper transcription, embeddings, `toMarkdown` for PDFs |
 | `VECTORS` | Vectorize | embeddings for connection candidates |
 | `BROWSER` | Browser Rendering | snapshots of JS-heavy pages |
-| AI Gateway | | Gemini Flash (reading cards, drafts) and a stronger judge model; caching, cost logs, spend cap |
+| AI Gateway | | Provider endpoints for Gemini, Claude and DeepSeek (Z.ai direct); logs per task and item. Spend is enforced from the Desk's own ledger |
 | Cron | | weekly link re-checks |
 | Access | | protects the Desk and write routes |
 
@@ -190,17 +190,31 @@ hostnames, no private, loopback, link-local, CGNAT or metadata addresses (IPv4, 
 forms), DNS-over-HTTPS resolution checked, redirects followed by hand and re-checked (5 hops).
 
 **Models.** `packages/server/src/models/routes.json` maps tasks (`read`, `draft`, `judge`, `clean`,
-`ocr`, `haul`, `plate`, `connect`, `thread`) to a chain of models, plus `transcribe` (Whisper) and
-`embed` (bge-m3); `generateJson`, `transcribeAudio` and `embedTexts` in `router.ts` are the only
-ways to call a model; the router skips models whose key is missing and falls back on
-errors. External providers go through the AI Gateway OpenAI-compatible endpoint
-(`/compat/chat/completions`, model `provider/model`); Workers AI goes through the AI binding's
-gateway option (if the named gateway does not exist yet, calls go direct and are logged as
-`workers-ai-direct`). Outputs are JSON validated with zod, with one repair attempt. Every call is
-recorded in `model_calls` with tokens and cost; `assertBudget` refuses calls once the month's total
-reaches `SPEND_CEILING_USD` (zero means no calls). Override routes per deploy with `MODEL_ROUTES`.
-Workers AI prices in `routes.json` were checked on 2026-10-16 against
-https://developers.cloudflare.com/workers-ai/platform/pricing/ (the dated table is also in `spend.ts`).
+`ocr`, `haul`, `plate`, `connect`, `thread`, `bridge`) to a chain of models, plus `transcribe`
+(Whisper) and `embed` (bge-m3); `generateJson`, `transcribeAudio` and `embedTexts` in `router.ts`
+are the only ways to call a model. Each model declares its capabilities (JSON schema or JSON
+object, vision, PDF and page limit, thinking, caching, context and output limits, whether it takes
+a temperature) and its prices (input, cached input, cache write, output, reasoning, long-prompt
+tier); each task declares a thinking level, whether to attach PDFs, and a media resolution. The
+router skips models whose key is missing or that lack a capability the call needs, and falls back
+on errors. Each provider has a native adapter in `models/providers/`: Gemini `generateContent`,
+the Claude Messages API, DeepSeek and Z.ai chat completions, and Workers AI through the AI binding.
+Gemini, Claude and DeepSeek go through AI Gateway's provider endpoints
+(`gateway.ai.cloudflare.com/v1/{account}/{gateway}/{provider}/…`, with `cf-aig-metadata` naming the
+task and item); Z.ai has no built-in gateway provider and is called directly unless `routes.gateway`
+names a custom provider; Workers AI goes through the AI binding's gateway option (if the named
+gateway does not exist yet, calls go direct and are logged as `workers-ai-direct`). `models/http.ts`
+retries 429 and 5xx with backoff and honours `Retry-After`; auth errors and exhausted balances move
+to the next model. Outputs are JSON validated with zod, with one repair turn. Every call is
+recorded in `model_calls` with input tokens (cached and cache-written among them), output tokens
+(reasoning among them) and cost (`models/cost.ts` prices each kind); `assertBudget` refuses a call
+whose worst-case cost would take the month past `SPEND_CEILING_USD` (zero means no calls). The
+draft step sends its source as cacheable `context`, so redrafts read it from Claude's prompt cache;
+the read step attaches the source PDF for models that read PDFs; scanned PDFs are transcribed by
+the `ocr` task (`ocrPdf` in `extract/pdf.ts`). Override routes per deploy with `MODEL_ROUTES`.
+Provider capabilities, prices and sources, dated, are in `docs/MODELS.md`; Workers AI prices were
+checked on 2026-10-16 against https://developers.cloudflare.com/workers-ai/platform/pricing/ (the
+dated table is also in `spend.ts`). `npx tsx scripts/smoke-models.ts` runs one real call per model.
 
 **Voice notes.** Whisper (`@cf/openai/whisper-large-v3-turbo`), then a model cleanup that is only
 accepted if `checkDeletionOnly` proves it removed fillers or stutters and changed punctuation or

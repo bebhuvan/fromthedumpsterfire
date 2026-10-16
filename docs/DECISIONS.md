@@ -47,8 +47,22 @@ Dated, newest last. Don't reopen these without a new reason.
 - **Models through a task router with fallbacks.** Task chains live in
   `packages/server/src/models/routes.json`; keys decide availability; Workers AI models (DeepSeek V4
   Flash, Kimi K2.6 with thinking off, Llama 4 Scout for vision) are the working fallback when no
-  provider keys are set. Reasoning models are run with thinking off: with it on, long drafts spent
-  the whole output budget on reasoning and returned truncated JSON.
+  provider keys are set. Reasoning models were first run with thinking off: with it on, long drafts
+  spent the whole output budget on reasoning and returned truncated JSON. Since 2026-10-16 each task
+  sets a thinking level and the adapters add a thinking allowance on top of the answer's budget, so
+  judge and connect think (medium) and clean, OCR and plate do not.
+- **Native provider adapters, not one OpenAI-compatible call** (2026-10-16). Gemini, Claude,
+  DeepSeek and Z.ai each get their own adapter so their JSON-schema modes, thinking controls,
+  prompt caching, PDF input and usage fields are used properly. Capabilities and prices are config
+  in `routes.json`. Rejected: the gateway's `/compat` endpoint for everything (no PDFs, no cache
+  marks, no thinking control, no cached or reasoning token counts).
+- **Paid models first for bulk tasks once keys are set** (the editor's choice, 2026-10-16): Claude
+  Haiku 5.5 reads, drafts and cleans; DeepSeek Flash with thinking judges notes and links (a
+  different family from the drafter); GLM-5.3-Flash (paid; the free GLM-4.7-Flash was too often overloaded) proposes plate searches; Gemini 3.8 Flash
+  does OCR. About $0.03 per item. Workers AI stays last in every chain. Chains and their reasoning:
+  `docs/MODELS.md`.
+- **The extracted text stays the source of truth when a model reads the PDF.** Native PDF input is
+  context for the reading card; excerpts and quotes are matched against our own extraction.
 - **Spend is enforced from our own ledger** (`model_calls`), checked before every call; AI Gateway
   logs are a second view, not the source of truth. Production ships with a zero ceiling (no calls)
   until the editor sets one.

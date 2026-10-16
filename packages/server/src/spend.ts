@@ -1,7 +1,10 @@
-// The spend ledger. Every model call is recorded in D1 with its cost; before each call the month's
-// total is compared with SPEND_CEILING_USD and the call is refused once it is reached.
+// The spend ledger. Every model call is recorded in D1 with its cost and its token counts (input,
+// of which cached and cache-written; output, of which reasoning). Before each call the month's total
+// plus the worst case that call could cost is compared with SPEND_CEILING_USD, and the call is
+// refused if it could cross it.
 //
-// The cost table itself lives in models/routes.json (per model, plus `transcribe` and `embed`).
+// The cost table itself lives in models/routes.json (per model, plus `transcribe` and `embed`);
+// models/cost.ts prices each kind of token. External provider prices are dated in docs/MODELS.md.
 // Workers AI prices there were checked on 2026-10-16 against
 // https://developers.cloudflare.com/workers-ai/platform/pricing/ (USD per million tokens):
 //   @cf/deepseek-ai/deepseek-v4-flash-0731    in 0.44   out 1.32
@@ -10,7 +13,7 @@
 //   @cf/meta/llama-3.3-70b-instruct-fp8-fast  in 0.293  out 2.253
 //   @cf/openai/whisper-large-v3-turbo         0.0005 per audio minute
 //   @cf/baai/bge-m3 (embeddings)              0.012 per million input tokens
-// Cached-input discounts are not modelled, so the ledger errs on the high side.
+// Workers AI does not report cached tokens, so its calls are priced as uncached (errs high).
 
 import type { Env } from './env';
 import { FatalError, newId, nowIso } from './util';
@@ -20,8 +23,13 @@ export interface CallRecord {
   provider: string;
   model: string;
   itemId?: string | null;
+  /** All input tokens, cached included. */
   inputTokens?: number;
+  cachedInputTokens?: number;
+  cacheWriteTokens?: number;
+  /** All output tokens, reasoning included. */
   outputTokens?: number;
+  reasoningTokens?: number;
   audioSeconds?: number;
   costUsd: number;
   latencyMs: number;
@@ -61,11 +69,21 @@ export async function spendStatus(env: Env): Promise<SpendStatus> {
   return { spentUsd, warnUsd, ceilingUsd, state };
 }
 
-/** Throws SpendCeilingError when the month's spend has reached the ceiling. A zero ceiling means no model calls. */
-export async function assertBudget(env: Env): Promise<void> {
+/**
+ * Throws SpendCeilingError when the month's spend has reached the ceiling, or when the next call's
+ * worst-case cost would take it past. A zero ceiling means no model calls.
+ */
+export async function assertBudget(env: Env, nextCallUsd = 0, what = 'the next model call'): Promise<void> {
   const ceiling = Number(env.SPEND_CEILING_USD ?? 0);
   const spent = await monthSpend(env);
   if (!(ceiling > 0) || spent >= ceiling) throw new SpendCeilingError(spent, ceiling);
+  if (nextCallUsd > 0 && spent + nextCallUsd > ceiling) {
+    throw new SpendCeilingError(
+      spent,
+      ceiling,
+      `Spend ceiling: ${what} could cost up to $${nextCallUsd.toFixed(3)}, and $${spent.toFixed(2)} of $${ceiling.toFixed(2)} is already spent this month. Raise SPEND_CEILING_USD to continue.`,
+    );
+  }
 }
 
 /**
@@ -87,8 +105,8 @@ export async function assertAffordable(env: Env, estimateUsd: number, what: stri
 
 export async function recordCall(env: Env, r: CallRecord): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO model_calls (id, at, task, provider, model, item_id, input_tokens, output_tokens, audio_seconds, cost_usd, latency_ms, ok, error)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO model_calls (id, at, task, provider, model, item_id, input_tokens, cached_input_tokens, cache_write_tokens, output_tokens, reasoning_tokens, audio_seconds, cost_usd, latency_ms, ok, error)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       newId('mc_'),
@@ -98,7 +116,10 @@ export async function recordCall(env: Env, r: CallRecord): Promise<void> {
       r.model,
       r.itemId ?? null,
       r.inputTokens ?? 0,
+      r.cachedInputTokens ?? 0,
+      r.cacheWriteTokens ?? 0,
       r.outputTokens ?? 0,
+      r.reasoningTokens ?? 0,
       r.audioSeconds ?? 0,
       r.costUsd,
       r.latencyMs,

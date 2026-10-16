@@ -5,15 +5,15 @@
 import { checkStyle, describeIssues } from '@fdf/shared/style';
 import { findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
 import type { Env } from './env';
-import type { DraftRow, ExcerptRow, ItemRow, MarginalBody, WikiRow } from './db';
+import type { DraftRow, ExcerptRow, ItemRow, MarginalBody, SourceRow, WikiRow } from './db';
 import { getItem, getSource, setStatus, upsertCheck } from './db';
 import type { FetchOutcome, SourceMeta } from './ingest';
 import { generateJson } from './models/router';
 import { DRAFT_SYSTEM, draftSchema, JUDGE_SYSTEM, judgeSchema, READ_SYSTEM, readSchema, type DraftOutput, type ReadingCard } from './prompts';
 import { checkLink } from './extract/http';
 import { firstSentence, resolveWikiTopic } from './wiki';
-import { loadRoutes } from './models/router';
-import { newId, nowIso, parseJson, truncate, wordCount } from './util';
+import { loadRoutes, MAX_INLINE_PDF_BYTES, type DocumentInput } from './models/router';
+import { newId, nowIso, parseJson, toBase64, truncate, wordCount } from './util';
 import { pageAt } from './extract/pdf';
 import { msToClock } from './extract/youtube';
 import { rhymeQuoteRows } from './rhymes';
@@ -88,17 +88,37 @@ function itemHeader(item: ItemRow): string {
 
 // ---------------------------------------------------------------- read
 
+const PDF_ATTACHED = 'The original PDF may be attached: use it for layout, tables, figures and captions. Copy every quotation from the SOURCE TEXT below, character for character.';
+
+/**
+ * The source PDF, for models that read PDFs natively, when the item came from one with a text
+ * layer. The extracted text stays the source of truth: quotations are matched against it.
+ */
+export async function sourcePdf(env: Env, src: SourceRow): Promise<DocumentInput[]> {
+  if (!src.snapshot_key?.endsWith('.pdf') || src.extractor === 'ocr') return [];
+  const meta = parseJson<SourceMeta>(src.meta, {});
+  const pages = meta.pages?.length ?? 0;
+  if (!pages) return [];
+  const obj = await env.MEDIA.get(src.snapshot_key);
+  if (!obj) return [];
+  const bytes = new Uint8Array(await obj.arrayBuffer());
+  if (bytes.length > MAX_INLINE_PDF_BYTES) return [];
+  return [{ mime: 'application/pdf', base64: toBase64(bytes), pages }];
+}
+
 export async function readItem(env: Env, itemId: string): Promise<{ queries: string[] }> {
   const item = await getItem(env, itemId);
   const src = await getSource(env, itemId);
   if (!item || !src) throw new Error('Item or source missing');
   await setStatus(env, itemId, 'reading');
   const max = loadRoutes(env).tasks.read.maxInputChars;
+  const documents = await sourcePdf(env, src);
   const { data, model } = await generateJson(env, {
     task: 'read',
     system: READ_SYSTEM,
-    prompt: `${itemHeader(item)}\n\nSOURCE TEXT:\n"""\n${truncate(src.text, max)}\n"""`,
+    prompt: `${itemHeader(item)}${documents.length ? `\n\n${PDF_ATTACHED}` : ''}\n\nSOURCE TEXT:\n"""\n${truncate(src.text, max)}\n"""`,
     schema: readSchema,
+    documents,
     itemId,
   });
   // Quotables are only kept if they are really in the source.
@@ -208,7 +228,17 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
     const feedback: string = attempts && out
       ? `\n\nYour previous draft had problems. Fix them and return the whole draft again.\n${failures.map((f) => `${f.what}:\n${f.why}`).join('\n')}\nPrevious draft:\n${JSON.stringify(out)}`
       : '';
-    const r: { data: DraftOutput; model: string } = await generateJson(env, { task: 'draft', system: DRAFT_SYSTEM, prompt: basePrompt + feedback, schema: draftSchema, itemId, temperature: attempts ? 0.3 : undefined });
+    // The item and source are the same on every attempt: sent as cacheable context, with only the
+    // feedback changing, so a redraft reads them from the provider's prompt cache.
+    const r: { data: DraftOutput; model: string } = await generateJson(env, {
+      task: 'draft',
+      system: DRAFT_SYSTEM,
+      context: basePrompt,
+      prompt: feedback.trim() || 'Draft the apparatus for this item.',
+      schema: draftSchema,
+      itemId,
+      temperature: attempts ? 0.3 : undefined,
+    });
     out = r.data;
     model = r.model;
     failures = auditDraft(r.data, src.text, cards);

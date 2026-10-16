@@ -1,63 +1,75 @@
-// The model router. Every model call goes through Cloudflare AI Gateway: Workers AI through the AI
-// binding's gateway option, external providers through the gateway's OpenAI-compatible endpoint.
-// Tasks map to a chain of models in routes.json, so providers and models change by config.
-// Outputs are JSON, validated against a zod schema; an invalid answer gets one repair attempt,
-// then the next model in the chain is tried.
+// The model router. Tasks map to a chain of models in routes.json, so providers and models change by
+// config. Each provider has a native adapter in ./providers (Gemini generateContent, the Claude
+// Messages API, DeepSeek and Z.ai chat completions, Workers AI through the AI binding), reached
+// through Cloudflare AI Gateway's provider endpoints where the gateway supports the provider.
+// Capabilities (vision, PDF, JSON schema, thinking, caching, limits) and prices are declared per
+// model in routes.json. Outputs are JSON, validated against a zod schema; an invalid answer gets one
+// repair turn, then the next model in the chain is tried. The spend ceiling is checked before every
+// call against the worst case that call could cost.
 
 import { z } from 'zod';
 import type { Env } from '../env';
 import defaults from './routes.json';
 import { assertBudget, recordCall } from '../spend';
 import { errorMessage, FatalError } from '../util';
+import { costOf, worstCaseCost } from './cost';
+import { gatewaySlug, gatewayState } from './gateway';
+import { ProviderError } from './http';
+import { callAnthropic } from './providers/anthropic';
+import { callDeepseek } from './providers/deepseek';
+import { callGemini } from './providers/gemini';
+import { callWorkersAi, runWorkersAi, wai } from './providers/workers-ai';
+import { callZai } from './providers/zai';
+import { jsonSchemaFor } from './schema';
+import {
+  approxTokens,
+  ModelError,
+  type DocumentInput,
+  type ImageInput,
+  type ModelConfig,
+  type Provider,
+  type ProviderAnswer,
+  type ProviderRequest,
+  type RoutesConfig,
+  type TaskName,
+  type Usage,
+} from './types';
 
-export type Provider = 'workers-ai' | 'google-ai-studio' | 'deepseek' | 'anthropic' | 'openai' | 'openrouter';
-export type TaskName = 'read' | 'draft' | 'judge' | 'clean' | 'ocr' | 'haul' | 'plate' | 'connect' | 'thread';
-
-export interface ModelConfig {
-  provider: Provider;
-  model: string;
-  inUsdPerM: number;
-  outUsdPerM: number;
-  /** How to ask for JSON: a JSON schema, plain JSON-object mode, or only by prompt. */
-  json: 'schema' | 'object' | 'prompt';
-  vision?: boolean;
-  /** Reasoning models: false asks the model not to think out loud (faster, and the output budget goes to the answer). */
-  thinking?: boolean;
-}
-
-export interface TaskConfig {
-  chain: string[];
-  maxTokens: number;
-  temperature: number;
-  maxInputChars: number;
-  vision?: boolean;
-}
-
-export interface RoutesConfig {
-  byok: boolean;
-  tasks: Record<TaskName, TaskConfig>;
-  models: Record<string, ModelConfig>;
-  transcribe: { model: string; usdPerAudioMinute: number };
-  embed: { model: string; dimensions: number; usdPerMTokens: number; maxBatch: number };
-}
+export * from './types';
+export { gatewayState } from './gateway';
+export { runWorkersAi, AI_TIMEOUT_MS } from './providers/workers-ai';
+export { costOf } from './cost';
 
 const KEY_FOR: Record<Exclude<Provider, 'workers-ai'>, keyof Env> = {
   'google-ai-studio': 'GOOGLE_AI_STUDIO_API_KEY',
   deepseek: 'DEEPSEEK_API_KEY',
   anthropic: 'ANTHROPIC_API_KEY',
+  zai: 'ZAI_API_KEY',
   openai: 'OPENAI_API_KEY',
   openrouter: 'OPENAI_API_KEY',
 };
+
+type LegacyModel = Partial<ModelConfig> & { inUsdPerM?: number; outUsdPerM?: number };
+
+/** Accept the older flat price fields in a MODEL_ROUTES override. */
+function normaliseModel(m: LegacyModel): ModelConfig {
+  const prices = m.prices ?? { in: m.inUsdPerM ?? 0, out: m.outUsdPerM ?? 0 };
+  const { inUsdPerM: _i, outUsdPerM: _o, ...rest } = m;
+  return { json: 'prompt', ...rest, prices } as ModelConfig;
+}
 
 export function loadRoutes(env: Pick<Env, 'MODEL_ROUTES'>): RoutesConfig {
   const base = defaults as unknown as RoutesConfig;
   if (!env.MODEL_ROUTES) return base;
   try {
-    const o = JSON.parse(env.MODEL_ROUTES) as Partial<RoutesConfig>;
+    const o = JSON.parse(env.MODEL_ROUTES) as Partial<Omit<RoutesConfig, 'models'>> & { models?: Record<string, LegacyModel> };
+    const models = { ...base.models };
+    for (const [k, m] of Object.entries(o.models ?? {})) models[k] = normaliseModel({ ...(base.models[k] ?? {}), ...m });
     return {
       byok: o.byok ?? base.byok,
+      gateway: { ...base.gateway, ...(o.gateway ?? {}) },
       tasks: { ...base.tasks, ...(o.tasks ?? {}) },
-      models: { ...base.models, ...(o.models ?? {}) },
+      models,
       transcribe: { ...base.transcribe, ...(o.transcribe ?? {}) },
       embed: { ...base.embed, ...(o.embed ?? {}) },
     };
@@ -69,24 +81,33 @@ export function loadRoutes(env: Pick<Env, 'MODEL_ROUTES'>): RoutesConfig {
 /** Whether a model can be called with the secrets this deployment has. */
 export function modelAvailable(env: Env, routes: RoutesConfig, cfg: ModelConfig): boolean {
   if (cfg.provider === 'workers-ai') return true;
-  if (routes.byok && env.CF_AIG_TOKEN) return true;
-  return Boolean(env[KEY_FOR[cfg.provider]]);
+  if (env[KEY_FOR[cfg.provider]]) return true;
+  // BYOK: the gateway holds the key, so it must be reachable through the gateway.
+  return Boolean(routes.byok && env.CF_AIG_TOKEN && env.AI_GATEWAY_ID && gatewaySlug(routes, cfg.provider));
 }
 
-export interface ImageInput {
-  mime: string;
-  base64: string;
-}
+export type { ImageInput, DocumentInput };
 
 export interface GenerateRequest<T> {
   task: TaskName;
   system: string;
+  /**
+   * The long part of the prompt that repeats across calls (item header, source text). Sent before
+   * `prompt` and marked for prompt caching where the provider supports it.
+   */
+  context?: string;
   prompt: string;
   schema: z.ZodType<T>;
   images?: ImageInput[];
+  /** Source files (PDFs) for models that read them natively; others get only the text. */
+  documents?: DocumentInput[];
+  /** Skip models that cannot read the documents (OCR of a scanned PDF has no text to fall back on). */
+  requireDocuments?: boolean;
   itemId?: string | null;
   /** Override the task's temperature, e.g. to vary a regeneration. */
   temperature?: number;
+  /** Override the task's answer budget, e.g. for a many-page transcription. */
+  maxTokens?: number;
 }
 
 export interface GenerateResult<T> {
@@ -96,107 +117,7 @@ export interface GenerateResult<T> {
   costUsd: number;
 }
 
-interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string | Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }>;
-}
-
-interface RawAnswer {
-  content: unknown;
-  inputTokens: number;
-  outputTokens: number;
-}
-
-export class ModelError extends Error {}
-
-function jsonSchemaFor(schema: z.ZodType): Record<string, unknown> {
-  const js = z.toJSONSchema(schema, { target: 'draft-7' }) as Record<string, unknown>;
-  delete js.$schema;
-  return js;
-}
-
-async function callWorkersAi(env: Env, cfg: ModelConfig, messages: ChatMessage[], task: TaskConfig, temperature: number, schema: Record<string, unknown> | null): Promise<RawAnswer> {
-  const input: Record<string, unknown> = { messages, max_tokens: task.maxTokens, temperature };
-  if (cfg.thinking === false) input.chat_template_kwargs = { thinking: false, enable_thinking: false };
-  if (schema && cfg.json === 'schema') input.response_format = { type: 'json_schema', json_schema: schema };
-  else if (cfg.json !== 'prompt') input.response_format = { type: 'json_object' };
-  const out = (await runWorkersAi(env, cfg.model, input, { skipCache: false })) as Record<string, unknown>;
-  return parseAnswer(out);
-}
-
-/**
- * Whether the configured gateway was found missing in this isolate. Workers AI refuses a gateway id
- * that does not exist (error 2001); calls then go direct so the pipeline keeps running, the ledger
- * marks them, and the Desk's settings page says the gateway needs creating.
- */
-export const gatewayState = { missing: false };
-
-const isMissingGateway = (e: unknown) => /2001|configure AI Gateway/i.test(errorMessage(e));
-
-/** A Workers AI call that never answers must fail (and be retried), not hang the step. */
-export const AI_TIMEOUT_MS = 150_000;
-
-function timed<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
-  let t: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    t = setTimeout(() => reject(new ModelError(`${what} did not answer within ${Math.round(ms / 1000)} s`)), ms);
-  });
-  return Promise.race([p, timeout]).finally(() => clearTimeout(t));
-}
-
-export async function runWorkersAi(env: Env, model: string, input: Record<string, unknown>, gw: Record<string, unknown> = {}): Promise<unknown> {
-  return timed(runWorkersAiRaw(env, model, input, gw), AI_TIMEOUT_MS, model);
-}
-
-async function runWorkersAiRaw(env: Env, model: string, input: Record<string, unknown>, gw: Record<string, unknown> = {}): Promise<unknown> {
-  if (env.AI_GATEWAY_ID && !gatewayState.missing) {
-    try {
-      return await env.AI.run(model as never, input as never, { gateway: { id: env.AI_GATEWAY_ID, ...gw } } as never);
-    } catch (e) {
-      if (!isMissingGateway(e)) throw e;
-      gatewayState.missing = true;
-      console.warn(JSON.stringify({ event: 'ai-gateway-missing', gateway: env.AI_GATEWAY_ID }));
-    }
-  }
-  return env.AI.run(model as never, input as never);
-}
-
-const wai = () => (gatewayState.missing ? 'workers-ai-direct' : 'workers-ai');
-
-async function callGateway(env: Env, routes: RoutesConfig, cfg: ModelConfig, messages: ChatMessage[], task: TaskConfig, temperature: number, schema: Record<string, unknown> | null): Promise<RawAnswer> {
-  if (!env.CF_ACCOUNT_ID || !env.AI_GATEWAY_ID) throw new FatalError('CF_ACCOUNT_ID and AI_GATEWAY_ID must be set to reach external models');
-  const url = `https://gateway.ai.cloudflare.com/v1/${env.CF_ACCOUNT_ID}/${env.AI_GATEWAY_ID}/compat/chat/completions`;
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
-  if (env.CF_AIG_TOKEN) headers['cf-aig-authorization'] = `Bearer ${env.CF_AIG_TOKEN}`;
-  if (!(routes.byok && env.CF_AIG_TOKEN) && cfg.provider !== 'workers-ai') {
-    const key = env[KEY_FOR[cfg.provider]];
-    if (typeof key === 'string' && key) headers.authorization = `Bearer ${key}`;
-  }
-  const body: Record<string, unknown> = {
-    model: `${cfg.provider}/${cfg.model}`,
-    messages,
-    max_tokens: task.maxTokens,
-    temperature,
-  };
-  if (schema && cfg.json === 'schema') body.response_format = { type: 'json_schema', json_schema: { name: 'answer', schema, strict: false } };
-  else if (cfg.json === 'object') body.response_format = { type: 'json_object' };
-  const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-  const text = await res.text();
-  if (!res.ok) throw new ModelError(`${cfg.provider} ${res.status}: ${text.slice(0, 300)}`);
-  return parseAnswer(JSON.parse(text) as Record<string, unknown>);
-}
-
-function parseAnswer(out: Record<string, unknown>): RawAnswer {
-  const usage = (out.usage ?? {}) as Record<string, number>;
-  let content: unknown = out.response;
-  const choices = out.choices as Array<{ message?: { content?: unknown; reasoning_content?: unknown } }> | undefined;
-  if (content === undefined && choices?.[0]?.message) content = choices[0].message.content ?? null;
-  return {
-    content,
-    inputTokens: usage.prompt_tokens ?? usage.input_tokens ?? 0,
-    outputTokens: usage.completion_tokens ?? usage.output_tokens ?? 0,
-  };
-}
+export { ModelError };
 
 /** Pull a JSON value out of a model answer: an object, a string of JSON, or JSON inside fences or prose. */
 export function extractJson(content: unknown): unknown {
@@ -213,8 +134,39 @@ export function extractJson(content: unknown): unknown {
   }
 }
 
-function costOf(cfg: ModelConfig, a: RawAnswer): number {
-  return (a.inputTokens * cfg.inUsdPerM + a.outputTokens * cfg.outUsdPerM) / 1_000_000;
+function callModel(env: Env, routes: RoutesConfig, req: ProviderRequest): Promise<ProviderAnswer> {
+  switch (req.cfg.provider) {
+    case 'workers-ai':
+      return callWorkersAi(env, req);
+    case 'google-ai-studio':
+      return callGemini(env, routes, req);
+    case 'anthropic':
+      return callAnthropic(env, routes, req);
+    case 'deepseek':
+      return callDeepseek(env, routes, req);
+    case 'zai':
+      return callZai(env, routes, req);
+    default:
+      throw new ModelError(`No adapter for provider "${req.cfg.provider}"`);
+  }
+}
+
+/** Tokens a page or image may cost at most, for the pre-call spend check. */
+const WORST_PAGE_TOKENS = 3500;
+const WORST_IMAGE_TOKENS = 5000;
+
+/** Output a call could spend: the answer's budget plus the largest thinking allowance any adapter adds. */
+function worstOutputTokens(cfg: ModelConfig, maxTokens: number, thinking: string): number {
+  if (cfg.thinking === 'none') return maxTokens;
+  return maxTokens + (thinking === 'off' ? 3000 : 24000);
+}
+
+/** Documents a model may take for this task, or null when the model must be skipped. */
+function documentsFor(cfg: ModelConfig, docs: DocumentInput[], wanted: boolean, required: boolean): DocumentInput[] | null {
+  if (!docs.length || !wanted) return required ? null : [];
+  const fits = cfg.pdf && docs.every((d) => d.pages <= (cfg.pdfMaxPages ?? 100));
+  if (fits) return docs;
+  return required ? null : [];
 }
 
 export async function generateJson<T>(env: Env, req: GenerateRequest<T>): Promise<GenerateResult<T>> {
@@ -230,58 +182,76 @@ export async function generateJson<T>(env: Env, req: GenerateRequest<T>): Promis
     if (!cfg) continue;
     if (!modelAvailable(env, routes, cfg)) continue;
     if (req.images?.length && !cfg.vision) continue;
+    const documents = documentsFor(cfg, req.documents ?? [], task.pdf !== false, Boolean(req.requireDocuments));
+    if (!documents) continue;
+    const provider = cfg.provider === 'workers-ai' ? wai() : cfg.provider;
 
-    const system = `${req.system}\n\nAnswer with one JSON object only, matching this JSON schema:\n${JSON.stringify(schema)}`;
-    const userContent: ChatMessage['content'] = req.images?.length
-      ? [{ type: 'text', text: req.prompt }, ...req.images.map((im) => ({ type: 'image_url' as const, image_url: { url: `data:${im.mime};base64,${im.base64}` } }))]
-      : req.prompt;
-    let messages: ChatMessage[] = [
-      { role: 'system', content: system },
-      { role: 'user', content: userContent },
-    ];
+    const base: ProviderRequest = {
+      modelKey: key,
+      cfg,
+      task: req.task,
+      itemId: req.itemId,
+      system: req.system,
+      context: req.context,
+      prompt: req.prompt,
+      images: req.images ?? [],
+      documents,
+      schema,
+      maxTokens: req.maxTokens ?? task.maxTokens,
+      temperature,
+      thinking: task.thinking ?? 'off',
+      mediaResolution: task.mediaResolution,
+    };
+    let preq = base;
 
     for (let attempt = 0; attempt < 2; attempt++) {
-      await assertBudget(env);
+      const inTokens =
+        approxTokens(preq.system + (preq.context ?? '') + preq.prompt + (preq.repair?.previous ?? '')) +
+        approxTokens(JSON.stringify(schema)) +
+        documents.reduce((n, d) => n + d.pages * WORST_PAGE_TOKENS, 0) +
+        preq.images.length * WORST_IMAGE_TOKENS;
+      await assertBudget(env, worstCaseCost(cfg.prices, inTokens, worstOutputTokens(cfg, base.maxTokens, base.thinking)), `${req.task} on ${key}`);
       const started = Date.now();
-      let answer: RawAnswer | null = null;
+      let answer: ProviderAnswer | null = null;
+      const record = (ok: boolean, usage: Usage | undefined, error?: string) =>
+        recordCall(env, {
+          task: req.task,
+          provider,
+          model: cfg.model,
+          itemId: req.itemId,
+          inputTokens: usage?.inputTokens,
+          cachedInputTokens: usage?.cachedInputTokens,
+          cacheWriteTokens: usage?.cacheWriteTokens,
+          outputTokens: usage?.outputTokens,
+          reasoningTokens: usage?.reasoningTokens,
+          costUsd: usage ? costOf(cfg.prices, usage) : 0,
+          latencyMs: Date.now() - started,
+          ok,
+          error,
+        });
       try {
-        answer =
-          cfg.provider === 'workers-ai'
-            ? await callWorkersAi(env, cfg, messages, task, temperature, schema)
-            : await callGateway(env, routes, cfg, messages, task, temperature, schema);
+        answer = await callModel(env, routes, preq);
+        if (answer.finish === 'length') throw new ModelError(`answer cut off at the output limit (${answer.usage.outputTokens} tokens, ${answer.usage.reasoningTokens} reasoning)`);
+        if (answer.finish === 'filter' || answer.finish === 'refusal') throw new ModelError(`the model declined to answer (${answer.finish})`);
         const parsed = extractJson(answer.content);
         const result = req.schema.safeParse(parsed);
-        const costUsd = costOf(cfg, answer);
+        const costUsd = costOf(cfg.prices, answer.usage);
         if (result.success) {
-          await recordCall(env, { task: req.task, provider: cfg.provider === 'workers-ai' ? wai() : cfg.provider, model: cfg.model, itemId: req.itemId, inputTokens: answer.inputTokens, outputTokens: answer.outputTokens, costUsd, latencyMs: Date.now() - started, ok: true });
+          await record(true, answer.usage);
           return { data: result.data, modelKey: key, model: cfg.model, costUsd };
         }
         const problem = result.error.issues.slice(0, 8).map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
-        await recordCall(env, { task: req.task, provider: cfg.provider === 'workers-ai' ? wai() : cfg.provider, model: cfg.model, itemId: req.itemId, inputTokens: answer.inputTokens, outputTokens: answer.outputTokens, costUsd, latencyMs: Date.now() - started, ok: false, error: `schema: ${problem}` });
+        await record(false, answer.usage, `schema: ${problem}`);
         failures.push(`${key}: schema (${problem})`);
-        // One repair attempt with the validation errors.
-        messages = [
-          ...messages,
-          { role: 'assistant', content: typeof answer.content === 'string' ? answer.content : JSON.stringify(answer.content) },
-          { role: 'user', content: `That JSON did not match the schema: ${problem}. Reply again with the corrected JSON object only.` },
-        ];
+        // One repair turn with the validation errors; the stable prefix is unchanged, so it caches.
+        preq = { ...base, repair: { previous: typeof answer.content === 'string' ? answer.content : JSON.stringify(answer.content), problem } };
       } catch (e) {
         if (e instanceof FatalError) throw e;
         const msg = errorMessage(e);
-        await recordCall(env, {
-          task: req.task,
-          provider: cfg.provider === 'workers-ai' ? wai() : cfg.provider,
-          model: cfg.model,
-          itemId: req.itemId,
-          inputTokens: answer?.inputTokens,
-          outputTokens: answer?.outputTokens,
-          costUsd: answer ? costOf(cfg, answer) : 0,
-          latencyMs: Date.now() - started,
-          ok: false,
-          error: msg,
-        });
+        await record(false, answer?.usage, msg);
         failures.push(`${key}: ${msg.slice(0, 200)}`);
-        break; // transport or parse failure: move to the next model
+        if (e instanceof ProviderError) console.warn(JSON.stringify({ event: 'model-call-failed', task: req.task, model: key, status: e.status, retryable: e.retryable }));
+        break; // transport, refusal or parse failure: move to the next model
       }
     }
   }
@@ -341,9 +311,6 @@ export function hintPrompt(hints: readonly string[], maxChars = 600): string {
   return out ? `${out}.` : '';
 }
 
-/** Rough token count for embedding cost: about four characters a token for English. */
-const approxTokens = (s: string) => Math.ceil(s.length / 4);
-
 /**
  * Embed texts with Workers AI (bge-m3 by default), in batches, through the gateway, recorded in the
  * ledger. Returns one vector per input, in order.
@@ -387,7 +354,15 @@ export function describeRoutes(env: Env) {
         name,
         t.chain.map((key) => {
           const cfg = routes.models[key];
-          return { key, provider: cfg?.provider ?? 'unknown', model: cfg?.model ?? 'unknown', available: cfg ? modelAvailable(env, routes, cfg) : false };
+          return {
+            key,
+            provider: cfg?.provider ?? 'unknown',
+            model: cfg?.model ?? 'unknown',
+            available: cfg ? modelAvailable(env, routes, cfg) : false,
+            viaGateway: cfg ? cfg.provider === 'workers-ai' || Boolean(env.AI_GATEWAY_ID && gatewaySlug(routes, cfg.provider)) : false,
+            thinking: cfg && cfg.thinking !== 'none' ? (t.thinking ?? 'off') : 'none',
+            prices: cfg?.prices,
+          };
         }),
       ]),
     ),

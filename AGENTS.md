@@ -12,6 +12,8 @@ Read these before working:
 - `docs/DESIGN.md`: the visual system. Tokens live in `packages/shared/src/tokens.ts`.
 - `docs/DECISIONS.md`: settled decisions and what was rejected. Don't relitigate them.
 - `docs/STATUS.md`: what's built and what's next. Update it as you go.
+- `docs/MODELS.md`: each model provider's capabilities, limits, prices and sources, and the chain
+  per task with its reasoning and cost.
 - `docs/VOICE.md`: the editor's measured writing voice and the AI patterns to keep out of machine
   drafts. Machine-usable form in `packages/shared/src/voice.ts`.
 
@@ -43,7 +45,7 @@ packages/server   Worker-side code shared by both: D1, model router, extraction,
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator
 migrations/       D1 migrations
-scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts
+scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts
 ```
 
 ## The Desk (apps/desk, workers/*, packages/server)
@@ -56,8 +58,10 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts
   (`extract/stream.ts`), never trusting Content-Length. Browser Rendering is opt-in
   (`BROWSER_FALLBACK=on`) and vets every request the page makes.
 - Model calls only through `generateJson` / `transcribeAudio` / `embedTexts` in
-  `packages/server/src/models/router.ts` (routes in `routes.json`, ledger and ceiling in `spend.ts`).
-  Prompts and schemas in `prompts.ts`.
+  `packages/server/src/models/router.ts` (chains, capabilities and prices in `routes.json`; native
+  adapters in `models/providers/`; retries in `models/http.ts`; ledger and ceiling in `spend.ts`).
+  Prompts and schemas in `prompts.ts`. Provider facts, dated, in `docs/MODELS.md`: re-check the
+  provider's docs before changing a model id, price or parameter. Never send a provider key in a URL.
 - Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/`. Only
   `publish.ts` writes to FILES; published plates and voice notes are copied there (never hotlinked),
   and `validateHaul(…, { filesBase })` enforces it.

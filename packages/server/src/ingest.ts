@@ -144,7 +144,7 @@ async function fromPdfBytes(env: Env, bytes: Uint8Array, url: string | null, nam
     kind: 'text',
     text: pdf.text,
     extractor: pdf.extractor,
-    meta: { pages: pdf.pages },
+    meta: { pages: pdf.pages, ...(pdf.extractor === 'ocr' ? { note: 'Transcribed from a scanned PDF by a model. Check it against the PDF before you excerpt.' } : {}) },
     fields: {
       // No filename fallback: the reading card supplies a real title when the PDF has none.
       title: pdf.meta.title,

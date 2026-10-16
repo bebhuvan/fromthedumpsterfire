@@ -168,7 +168,7 @@ app.get('/api/settings', async (c) => {
   const [spend, devices, calls, byTask] = await Promise.all([
     spendStatus(c.env),
     c.env.DB.prepare('SELECT platform, enabled, COUNT(*) AS n FROM devices GROUP BY platform, enabled').all(),
-    c.env.DB.prepare('SELECT at, task, provider, model, input_tokens, output_tokens, audio_seconds, cost_usd, latency_ms, ok, error FROM model_calls ORDER BY at DESC LIMIT 40').all(),
+    c.env.DB.prepare('SELECT at, task, provider, model, input_tokens, cached_input_tokens, output_tokens, reasoning_tokens, audio_seconds, cost_usd, latency_ms, ok, error FROM model_calls ORDER BY at DESC LIMIT 40').all(),
     c.env.DB.prepare('SELECT task, COUNT(*) AS calls, SUM(cost_usd) AS cost FROM model_calls WHERE at >= ? GROUP BY task').bind(new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString()).all(),
   ]);
   return c.json({
