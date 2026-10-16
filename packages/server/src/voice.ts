@@ -2,6 +2,7 @@
 // but it is only accepted if the token diff proves it deleted fillers and changed punctuation and
 // nothing else; otherwise the code-only cleanup is used. The editor's words are never reworded.
 
+import { dictionaryHints } from '@fdf/shared/voice';
 import { checkDeletionOnly, cleanupDeterministic } from '@fdf/shared/cleanup';
 import { AUDIO_FORMATS, type AudioFormat } from '@fdf/shared/haul';
 import type { Env } from './env';
@@ -73,7 +74,7 @@ export async function processNote(env: Env, noteId: string): Promise<NoteRow> {
   const obj = await env.MEDIA.get(note.audio_key);
   if (!obj) throw new Error('The audio is missing from storage');
   const audio = new Uint8Array(await obj.arrayBuffer());
-  const t = await transcribeAudio(env, audio, { itemId: note.item_id, seconds: note.seconds ?? undefined });
+  const t = await transcribeAudio(env, audio, { itemId: note.item_id, seconds: note.seconds ?? undefined, hints: dictionaryHints });
   const clean = await cleanTranscript(env, t.text, note.item_id);
   await env.DB.prepare(
     'UPDATE notes SET transcript_raw = ?, transcript_clean = ?, deleted_words = ?, clean_method = ?, seconds = COALESCE(?, seconds) WHERE id = ?',

@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { BANNED_WORDS } from '@fdf/shared/style';
+import { editorVoice } from '@fdf/shared/voice';
 
 export const HOUSE_STYLE = `House style for anything you write:
 - Plain, specific English for an Indian reader of a good newspaper. British and Indian spelling (colour, organise, programme).
@@ -57,10 +58,14 @@ export type ReadingCard = z.infer<typeof readSchema>;
 export const DRAFT_SYSTEM = `You draft apparatus for one item in From the Dumpster Fire, a magazine where one editor chooses things worth saving and a machine adds short, checked notes in the margins. The editor approves or cuts every line you write. You write:
 
 1. Three title options for the item as it will appear in the magazine. Short, plain, specific, drawn from the piece. One may simply be the original title. A title may set its last phrase in italic: put that phrase in "italic" and the rest in "text".
+   The editor may adopt a title as his own, so titles follow the editor's register below. The excerpts and notes stay in the machine's plain, factual voice.
 2. Two or three excerpt candidates: passages copied character for character from the source, each one to three sentences, the most quotable and representative. For each, give the single sentence or clause the editor might underline as "highlight" (it must be an exact substring of the quote).
 3. Two to four marginal notes: short factual notes (one or two sentences each) that give a reader context they would not get from the piece: when and where it appeared, who the author was, what happened next, a precise date or number. Every note must cite its evidence. Cite the source with an exact quotation from it, or cite one of the Wikipedia articles provided by its exact title. Only state what the cited evidence supports. Never invent facts. Never praise.
 
-${HOUSE_STYLE}`;
+${HOUSE_STYLE}
+
+The editor's register, for the title options only:
+${editorVoice}`;
 
 export const draftSchema = z.object({
   titles: z.array(z.object({ text: z.string(), italic: z.string().optional() })).min(1).max(4),
@@ -111,7 +116,10 @@ export const questionsSchema = z.object({ questions: z.array(z.string()).min(2).
 
 export const ROUTE_SYSTEM = `You draft "the route" for an issue of From the Dumpster Fire: a short timeline of how the editor's week went from one find to the next, drawn from when each item was captured and the editor's notes. Write one short line per item, in the third person about the editor or as a plain description of the step (never pretend to be the editor, never write "I"). Then add exactly one line about a link you noticed between two of the items, naming both, which the editor may not have seen. Keep every line under 25 words.
 
-${HOUSE_STYLE}`;
+${HOUSE_STYLE}
+
+The editor may adopt these lines, so follow his register:
+${editorVoice}`;
 
 export const routeSchema = z.object({
   steps: z.array(z.object({ itemId: z.string(), text: z.string() })),
@@ -160,7 +168,10 @@ export const THREAD_SYSTEM = `You name a Thread for a small magazine: a short ti
 3. For each piece, a gist: one short sentence (under 20 words) on what that piece adds to the line, and the year the piece belongs to on a timeline: the year of the work, event or idea it is about, as stated in the piece (for an encyclopedia article about an 1865 book, 1865).
 Use only what the pieces and connections say. No praise.
 
-${HOUSE_STYLE}`;
+${HOUSE_STYLE}
+
+The editor may adopt the title, so it follows his register:
+${editorVoice}`;
 
 export const threadSchema = z.object({
   title: z.object({ text: z.string(), italic: z.string().optional() }),

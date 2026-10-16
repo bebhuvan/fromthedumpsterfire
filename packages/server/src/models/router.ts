@@ -303,7 +303,7 @@ export interface Transcript {
 }
 
 /** Speech to text with Workers AI Whisper (through the gateway), recorded in the ledger. Segments carry timestamps. */
-export async function transcribeAudio(env: Env, audio: Uint8Array, opts: { itemId?: string | null; seconds?: number; language?: string } = {}): Promise<Transcript> {
+export async function transcribeAudio(env: Env, audio: Uint8Array, opts: { itemId?: string | null; seconds?: number; language?: string; hints?: readonly string[] } = {}): Promise<Transcript> {
   const routes = loadRoutes(env);
   await assertBudget(env);
   const started = Date.now();
@@ -314,6 +314,8 @@ export async function transcribeAudio(env: Env, audio: Uint8Array, opts: { itemI
       task: 'transcribe',
       vad_filter: true,
       ...(opts.language ? { language: opts.language } : {}),
+      // Whisper reads about 224 tokens of initial prompt; spelled-out names fix recurring garbles.
+      ...(opts.hints?.length ? { initial_prompt: hintPrompt(opts.hints) } : {}),
     })) as { text?: string; transcription_info?: { duration?: number }; segments?: Array<{ start?: number; end?: number; text?: string }> };
     const segments: TranscriptSegment[] = (out.segments ?? [])
       .filter((s) => typeof s.text === 'string' && s.text.trim())
@@ -326,6 +328,17 @@ export async function transcribeAudio(env: Env, audio: Uint8Array, opts: { itemI
     await recordCall(env, { task: 'transcribe', provider: wai(), model: routes.transcribe.model, itemId: opts.itemId, costUsd: 0, latencyMs: Date.now() - started, ok: false, error: errorMessage(e) });
     throw e;
   }
+}
+
+/** Proper nouns for Whisper's initial prompt, most useful first, kept well under its token window. */
+export function hintPrompt(hints: readonly string[], maxChars = 600): string {
+  let out = '';
+  for (const h of hints) {
+    const next = out ? `${out}, ${h}` : h;
+    if (next.length > maxChars) break;
+    out = next;
+  }
+  return out ? `${out}.` : '';
 }
 
 /** Rough token count for embedding cost: about four characters a token for English. */
