@@ -95,3 +95,7 @@ Dated, newest last. Don't reopen these without a new reason.
   so the route and the specimens read as one system.
 - **Search is a word, not an icon**, in the navigation; the archive also has its own search line. A
   magnifier would be the only icon on the site.
+- **See also is guide cards, not grey slips.** The editor found the plate-grey boxed slip generic; a
+  lone slip read as a stock callout. Entries are now ruled card edges with a coloured, staggered tab.
+- **About is built from the magazine's forms** (transcript, house rules with their checks, key to the
+  forms) rather than labelled paragraphs, which the editor found off.

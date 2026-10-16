@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Unavailable from '../components/Unavailable.astro';
 import { archive } from '../lib/runtime';
 import { paths } from '../lib/site';
+import { formGuide } from '../lib/forms';
 
 const { hauls, index, failed } = await archive();
 const newest = index.hauls[0]?.number;
@@ -11,16 +12,6 @@ const latest = hauls[0];
 const broken = newest !== undefined && failed.has(newest);
 if (broken) Astro.response.status = 503;
 
-// What a Haul holds, each type with the printed form it is set in.
-const forms = [
-  { type: 'essay', name: 'Essays', form: 'set as a magazine opens one.' },
-  { type: 'paper', name: 'Papers', form: 'as offprints: abstract first, sections numbered.' },
-  { type: 'talk', name: 'Talks and podcasts', form: 'as transcripts, speakers in the margin.' },
-  { type: 'poem', name: 'Poems', form: 'as broadsides: one sheet, nothing else on it.' },
-  { type: 'rhymes', name: 'Rhymes', form: 'as facing pages: then on the left, now on the right.' },
-  { type: 'rabbit-hole', name: 'Rabbit holes', form: 'as catalogue cards with their cross-references.' },
-  { type: 'passage', name: 'Passages', form: 'as a page from the book.' },
-] as const;
 ---
 {broken ? (
   <Unavailable what={`Haul ${newest}`} />
@@ -43,7 +34,7 @@ const forms = [
     <section class="wrap g row" aria-labelledby="holds-title">
       <h2 class="m mh" id="holds-title">What a Haul holds</h2>
       <ul class="c forms">
-        {forms.map((f) => <li class={`t-${f.type}`}><span class="key" aria-hidden="true"></span><span><b>{f.name}</b>, {f.form}</span></li>)}
+        {formGuide.map((f) => <li class={`t-${f.type}`}><span class="key" aria-hidden="true"></span><span><b>{f.name}</b>, {f.how}</span></li>)}
       </ul>
     </section>
     <section class="wrap g row" aria-labelledby="until-title">

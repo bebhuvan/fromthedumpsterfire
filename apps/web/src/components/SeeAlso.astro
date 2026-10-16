@@ -1,6 +1,6 @@
 ---
-// Wikipedia and connections as reference slips: square, plate-grey, joined by hairlines like the
-// cards in a catalogue drawer. Each slip names where it points, then the title, then the gloss.
+// Wikipedia and connections as guide cards in a catalogue drawer: a ruled edge with a staggered tab in
+// the colour of what it points to. Each names where it points, then the title, then the gloss.
 // Wikipedia summaries are Wikipedia's words (serif); connection notes are the editor's (italic).
 import type { Haul, Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
@@ -24,8 +24,8 @@ const wiki = noWiki ? [] : item.wiki;
         const t = target(c.itemId);
         const href = t ? paths.item(haul.number, t.id) : c.threadId ? paths.thread(haul.number, c.threadId) : undefined;
         return (
-          <li class:list={['sa', t ? `t-${t.type}` : null]}>
-            <span class="sa-k">{t ? <><span class="key" aria-hidden="true"></span>{haul.items.indexOf(t) + 1} · {typeLabel[t.type]}</> : c.threadId ? 'A thread' : 'From the archive'}<span class="sa-rel">{c.type}</span></span>
+          <li class:list={['sa', t ? `t-${t.type}` : c.threadId ? 'sa-thread' : 'sa-wiki']}>
+            <span class="sa-k">{t ? <>{haul.items.indexOf(t) + 1} · {typeLabel[t.type]}</> : c.threadId ? 'A thread' : 'From the archive'}<span class="sa-rel">{c.type}</span></span>
             {href ? <a class="sa-t" href={href}>{c.title}</a> : <span class="sa-t">{c.title}</span>}
             <span class="sa-g"><i>{c.note}</i></span>
           </li>
@@ -34,7 +34,7 @@ const wiki = noWiki ? [] : item.wiki;
       {wiki.map((w) => {
         const href = safeHref(w.url);
         return (
-          <li class="sa">
+          <li class="sa sa-wiki">
             <span class="sa-k">Wikipedia</span>
             {href ? <a class="sa-t" href={href} rel="noopener noreferrer" target="_blank">{w.title}<span class="sr"> (Wikipedia, opens in a new tab)</span></a> : <span class="sa-t">{w.title}</span>}
             <span class="sa-g">{w.summary}</span>

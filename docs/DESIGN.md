@@ -50,8 +50,14 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 
 Shared by every item page: the running head (Haul and title, then the form's name), a thumb tab on
 the right edge in the type colour at a height set by the item's number (7px on phones, a numbered tab
-from 1100px), **See also** as reference slips (square, plate-grey, joined by hairlines like a
-catalogue drawer; each names where it points, then the title in display serif, then the gloss), *Next* as a ruled link, and an ember folio with the item's number.
+from 1100px), **See also** as guide cards in a catalogue drawer (no fill or box: a ruled edge with a tab standing
+up from it in the colour of what it points to, staggered across the width as real guide-card tabs are;
+grey for Wikipedia, ink for a thread; each names where it points, then the title in display serif,
+then the gloss), *Next* as a ruled link, and an ember folio with the item's number.
+
+The About page uses the same forms: the title as a magazine opening, the two voices as a transcript
+(B. and MACHINE in the margin), the promises as numbered house rules each with the check that keeps
+it, and a key to the forms (each type's swatch, its form and what that form looks like).
 
 ## The cover
 

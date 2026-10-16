@@ -37,6 +37,17 @@ export const formName: Record<Form, string> = {
   page: 'A page from the book',
 };
 
+/** What a Haul holds, each type with the printed form it is set in (waiting page, About). */
+export const formGuide = [
+  { type: 'essay', name: 'Essays', form: 'opening' as Form, how: 'set as a magazine opens one.', detail: 'The title set huge, the reason it is here as the standfirst.' },
+  { type: 'paper', name: 'Papers', form: 'offprint' as Form, how: 'as offprints: abstract first, sections numbered.', detail: 'Abstract first, sections numbered, references at the end.' },
+  { type: 'talk', name: 'Talks and podcasts', form: 'transcript' as Form, how: 'as transcripts, speakers in the margin.', detail: 'Speakers in the margin, the line that matters set large.' },
+  { type: 'poem', name: 'Poems', form: 'broadside' as Form, how: 'as broadsides: one sheet, nothing else on it.', detail: "One sheet in the poem's colour, nothing else on it." },
+  { type: 'rhymes', name: 'Rhymes', form: 'facing' as Form, how: 'as facing pages: then on the left, now on the right.', detail: 'Then on the left, now on the right, the link between them in the gutter.' },
+  { type: 'rabbit-hole', name: 'Rabbit holes', form: 'card' as Form, how: 'as catalogue cards with their cross-references.', detail: 'A call number, the headword, the entry and its cross-references.' },
+  { type: 'passage', name: 'Passages', form: 'page' as Form, how: 'as a page from the book.', detail: 'The passage justified, under its running head, with its page.' },
+] as const;
+
 /** The words the editor marked in an item, shown on its sheet in the contents. */
 export const marked = (item: Item): string | undefined => item.excerpt?.highlight ?? item.excerpt?.text ?? item.rhyme?.now.quote;
 
