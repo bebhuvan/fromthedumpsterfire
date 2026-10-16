@@ -2,7 +2,7 @@
 // needs a binding the current worker lacks fails loudly rather than reaching for a default.
 
 export interface QueueMessage {
-  kind: 'ingest' | 'redraft' | 'notify' | 'haul-draft';
+  kind: 'ingest' | 'redraft' | 'notify' | 'haul-draft' | 'connect';
   itemId?: string;
   haulId?: string;
   version?: number;
@@ -17,7 +17,18 @@ export interface ItemWorkflowParams {
 
 export interface Env {
   DB: D1Database;
+  /** Private: uploads/, notes/, snapshots/, plates/ (chosen images before publish). Never public. */
   MEDIA: R2Bucket;
+  /** Public: only published bundles live here (hauls/...). Only publish.ts writes to it. */
+  FILES: R2Bucket;
+  /** Vectorize index of source chunks and reading cards (bge-m3, 1024 dims, cosine). Optional: connections skip the vector route without it. */
+  VECTORS?: Vectorize;
+  /** Browser Rendering, for pages that need JavaScript. Optional: the fallback is off without it. */
+  BROWSER?: Fetcher;
+  /** "on" turns on the Browser Rendering fallback (default off; see extract/browser.ts for why). */
+  BROWSER_FALLBACK?: string;
+  /** Cloudflare Images, to resize a chosen plate. Optional: the provider's own rendition is kept without it. */
+  IMAGES?: ImagesBinding;
   AI: Ai;
   INGEST_QUEUE: Queue<QueueMessage>;
   ITEM_WORKFLOW: Workflow<ItemWorkflowParams>;
@@ -51,6 +62,9 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   OPENAI_API_KEY?: string;
   FCM_SERVICE_ACCOUNT?: string;
+  /** Open-access image APIs that need a key; each provider is skipped when its key is missing. */
+  SMITHSONIAN_API_KEY?: string;
+  RIJKSMUSEUM_API_KEY?: string;
 }
 
 export const SECRET_NAMES = [
@@ -60,4 +74,6 @@ export const SECRET_NAMES = [
   'ANTHROPIC_API_KEY',
   'OPENAI_API_KEY',
   'FCM_SERVICE_ACCOUNT',
+  'SMITHSONIAN_API_KEY',
+  'RIJKSMUSEUM_API_KEY',
 ] as const;

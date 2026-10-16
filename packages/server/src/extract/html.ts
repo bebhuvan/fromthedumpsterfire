@@ -126,6 +126,9 @@ export function flatten(root: Element): { text: string; headings: Array<{ offset
       return;
     }
     if (tag === 'IMG') return;
+    // Footnote markers ("[12]", "[a]", "[citation needed]") are apparatus, not the author's text:
+    // keeping them breaks verbatim matching of quotes that a reader (or a model) copies without them.
+    if (tag === 'SUP' && /^\s*\[(\d{1,4}|[a-z]{1,2}|note \d+|[a-z][a-z ]{2,24})\]\s*$/i.test(el.textContent ?? '')) return;
     const block = BLOCK.has(tag);
     if (block) flush();
     if (/^H[1-6]$/.test(tag)) currentHeading = true;

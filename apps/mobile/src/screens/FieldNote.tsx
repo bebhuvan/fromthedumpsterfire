@@ -4,7 +4,7 @@ import { go } from '@/nav';
 import { haulSlug, type Haul } from '@fdf/shared/haul';
 import { fonts, typeColor, usePalette } from '@/theme';
 import { Highlighted, Machine, Title } from '@/ui/type';
-import { Action, Apparatus, Folio, RunHead, Sign, TopBar, VoiceNote } from '@/ui/parts';
+import { Action, Apparatus, Folio, RunHead, Sign, TopBar, VoiceNote, playable } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 
 export function FieldNote({ haul }: { haul: Haul }) {
@@ -24,7 +24,7 @@ export function FieldNote({ haul }: { haul: Haul }) {
     >
       <Title title={note.title} size={44} style={{ marginTop: 24 }} />
 
-      {note.audio ? (
+      {note.audio && playable(note.audio) ? (
         <View style={{ marginTop: 22 }}>
           <VoiceNote audio={note.audio} label="Hear it as I said it" />
         </View>

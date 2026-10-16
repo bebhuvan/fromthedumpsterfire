@@ -36,12 +36,14 @@ apps/web          public website: Astro on the fdf-web Worker, rendering publish
 apps/desk         the Desk UI: Vite + React SPA, served by workers/api (private, behind Access)
 apps/mobile       Expo reader app
 workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
-workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, draft, judge, check, push)
-packages/server   Worker-side code shared by both: D1, model router, extraction, publish, FCM
+workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate, embed, connect, draft,
+                  judge, check, push)
+packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
+                  threads (connect.ts), rhymes, publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator
 migrations/       D1 migrations
-scripts/          verify-bundle.ts
+scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts
 ```
 
 ## The Desk (apps/desk, workers/*, packages/server)
@@ -49,13 +51,24 @@ scripts/          verify-bundle.ts
 - Every request runs the Worker first; the in-Worker Access check is fail-closed. Public routes are
   exact method + path (`POST /v1/devices`, `GET /v1/health`). Never add a route that skips the lock
   without adding it to `isPublicRoute` and a test. UI writes send `x-desk: 1` and JSON.
-- Every fetch of a URL that came from the editor or a source goes through `guardedFetch` (SSRF).
-- Model calls only through `generateJson` / `transcribeAudio` in `packages/server/src/models/router.ts`
-  (routes in `routes.json`, ledger and ceiling in `spend.ts`). Prompts and schemas in `prompts.ts`.
+- Every fetch of a URL that came from the editor or a source goes through `guardedFetch` (SSRF),
+  and every untrusted body is read with a byte cap on what is actually streamed
+  (`extract/stream.ts`), never trusting Content-Length. Browser Rendering is opt-in
+  (`BROWSER_FALLBACK=on`) and vets every request the page makes.
+- Model calls only through `generateJson` / `transcribeAudio` / `embedTexts` in
+  `packages/server/src/models/router.ts` (routes in `routes.json`, ledger and ceiling in `spend.ts`).
+  Prompts and schemas in `prompts.ts`.
+- Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/`. Only
+  `publish.ts` writes to FILES; published plates and voice notes are copied there (never hotlinked),
+  and `validateHaul(…, { filesBase })` enforces it.
+- Machine-suggested connections, rhyme quotes and plate metadata follow the same rules as excerpts:
+  quotes verified verbatim against stored source text at both ends, licences as the institution
+  states them. A kept connection's published note is the editor's own words.
 - Machine prose is audited with `checkStyle`; editor text is never sent to a model for rewriting.
 - Never render stored or model text as HTML in the UI (no `dangerouslySetInnerHTML`); links go
   through `safeHref`.
-- Local: `workers/api/.dev.vars` with `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`; see
+- Local: `workers/api/.dev.vars` with `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`, then
+  `scripts/local-dev-config.ts` (local Worker names, because Access refuses wrangler's remote session); see
   `docs/ARCHITECTURE.md` (Running the Desk). What is deployed and what the editor must set up:
   `docs/STATUS.md`.
 

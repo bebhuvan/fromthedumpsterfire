@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { BANNED_WORDS } from '@fdf/shared/style';
+import { editorVoice } from '@fdf/shared/voice';
 
 export const HOUSE_STYLE = `House style for anything you write:
 - Plain, specific English for an Indian reader of a good newspaper. British and Indian spelling (colour, organise, programme).
@@ -57,10 +58,14 @@ export type ReadingCard = z.infer<typeof readSchema>;
 export const DRAFT_SYSTEM = `You draft apparatus for one item in From the Dumpster Fire, a magazine where one editor chooses things worth saving and a machine adds short, checked notes in the margins. The editor approves or cuts every line you write. You write:
 
 1. Three title options for the item as it will appear in the magazine. Short, plain, specific, drawn from the piece. One may simply be the original title. A title may set its last phrase in italic: put that phrase in "italic" and the rest in "text".
+   The editor may adopt a title as his own, so titles follow the editor's register below. The excerpts and notes stay in the machine's plain, factual voice.
 2. Two or three excerpt candidates: passages copied character for character from the source, each one to three sentences, the most quotable and representative. For each, give the single sentence or clause the editor might underline as "highlight" (it must be an exact substring of the quote).
 3. Two to four marginal notes: short factual notes (one or two sentences each) that give a reader context they would not get from the piece: when and where it appeared, who the author was, what happened next, a precise date or number. Every note must cite its evidence. Cite the source with an exact quotation from it, or cite one of the Wikipedia articles provided by its exact title. Only state what the cited evidence supports. Never invent facts. Never praise.
 
-${HOUSE_STYLE}`;
+${HOUSE_STYLE}
+
+The editor's register, for the title options only:
+${editorVoice}`;
 
 export const draftSchema = z.object({
   titles: z.array(z.object({ text: z.string(), italic: z.string().optional() })).min(1).max(4),
@@ -111,9 +116,71 @@ export const questionsSchema = z.object({ questions: z.array(z.string()).min(2).
 
 export const ROUTE_SYSTEM = `You draft "the route" for an issue of From the Dumpster Fire: a short timeline of how the editor's week went from one find to the next, drawn from when each item was captured and the editor's notes. Write one short line per item, in the third person about the editor or as a plain description of the step (never pretend to be the editor, never write "I"). Then add exactly one line about a link you noticed between two of the items, naming both, which the editor may not have seen. Keep every line under 25 words.
 
-${HOUSE_STYLE}`;
+${HOUSE_STYLE}
+
+The editor may adopt these lines, so follow his register:
+${editorVoice}`;
 
 export const routeSchema = z.object({
   steps: z.array(z.object({ itemId: z.string(), text: z.string() })),
   noticed: z.object({ text: z.string(), itemIds: z.array(z.string()).max(3).default([]) }),
 });
+
+export const PLATE_SYSTEM = `You help a magazine find a public-domain picture to set beside a piece: an old engraving, painting, photograph, map, diagram or page from a museum or library collection. You never make or describe a new image. You propose short search queries that a museum collection search would answer well: the names of people, places, objects, events, works or visual subjects in the piece, and the period. Prefer concrete nouns ("Thames sewer 1858 engraving", "steam engine diagram", "Vannevar Bush") over abstract ideas. Never write a URL. Two to four queries, most promising first.`;
+
+export const plateSchema = z.object({
+  queries: z
+    .array(z.object({ q: z.string().describe('A short collection search query, two to six words. Never a URL.'), why: z.string().default('') }))
+    .min(1)
+    .max(4),
+});
+
+export const CONNECT_SYSTEM = `You judge whether two pieces chosen for a small magazine are connected, and how. You get several numbered pairs. For each pair you see the two pieces' reading cards and passages from each. Decide if there is a real, specific connection of one of these types, read from piece A to piece B:
+- "Answers": A answers a question or problem that B poses.
+- "Extends": A takes B's idea further.
+- "Contradicts": A says the opposite of B on a specific point.
+- "Precedent of": A is an earlier instance of what B describes.
+- "Same mechanism": both describe the same abstract mechanism in different settings.
+- "Rhymes with": a striking echo across time, without a causal link.
+- "Cites": A cites or names B or its author.
+Use direction "b_to_a" when the type reads from B to A instead. Precision matters more than recall. If the link is loose, thematic or generic, answer "none". For a connection you must give one quotation from each piece that shows it, each copied character for character from that piece's passages (one or two sentences, not paraphrased, not stitched together), a one-sentence justification that names both pieces by their titles or authors (never "piece A" or "piece B"; the editor reads it without this prompt), and your confidence from 0 to 1.
+
+${HOUSE_STYLE}`;
+
+export const connectSchema = z.object({
+  verdicts: z.array(
+    z.object({
+      pair: z.number().int(),
+      type: z.enum(['Answers', 'Extends', 'Contradicts', 'Precedent of', 'Same mechanism', 'Rhymes with', 'Cites', 'none']),
+      direction: z.enum(['a_to_b', 'b_to_a']).default('a_to_b').describe('a_to_b reads "A <type> B"; b_to_a reads "B <type> A".'),
+      note: z.string().default('').describe('One sentence naming both pieces and what links them.'),
+      quoteA: z.string().default('').describe('Exact quotation from piece A.'),
+      quoteB: z.string().default('').describe('Exact quotation from piece B.'),
+      confidence: z.number().min(0).max(1).default(0),
+    }),
+  ),
+});
+export type ConnectOutput = z.infer<typeof connectSchema>;
+
+export const THREAD_SYSTEM = `You name a Thread for a small magazine: a short timeline of pieces, across years, that the editor has linked with typed connections. You get the pieces (with years) and the connections between them. Write:
+1. A title of two to six words. It may set its last phrase in italic: put that phrase in "italic" and the rest in "text".
+2. A summary of one or two plain sentences on what runs through these pieces.
+3. For each piece, a gist: one short sentence (under 20 words) on what that piece adds to the line, and the year the piece belongs to on a timeline: the year of the work, event or idea it is about, as stated in the piece (for an encyclopedia article about an 1865 book, 1865).
+Use only what the pieces and connections say. No praise.
+
+${HOUSE_STYLE}
+
+The editor may adopt the title, so it follows his register:
+${editorVoice}`;
+
+export const threadSchema = z.object({
+  title: z.object({ text: z.string(), italic: z.string().optional() }),
+  summary: z.string(),
+  points: z.array(z.object({ itemId: z.string(), gist: z.string(), year: z.string().optional().describe('Four digits, from the piece itself.') })),
+});
+
+export const BRIDGE_SYSTEM = `You write the bridge for a "Rhymes" pair in a small magazine: two quotations, one old and one recent, that echo each other. In two or three plain sentences, say what the older passage was about, what the recent one is about, and what they share. Name the authors and years. Only use what the quotations and their citations say.
+
+${HOUSE_STYLE}`;
+
+export const bridgeSchema = z.object({ bridge: z.string() });

@@ -116,7 +116,7 @@ describe('complements checkStyle', () => {
 describe('editorVoice and dictation hints', () => {
   it('keeps the prompt block under 250 words and passes the house style itself', () => {
     expect(editorVoice.split(/\s+/).length).toBeLessThan(250);
-    const errors = checkStyle(editorVoice).issues.filter((i) => i.severity === 'error' && i.rule !== 'banned-word' && i.rule !== 'not-x-but-y');
+    const errors = checkStyle(editorVoice).issues.filter((i) => i.severity === 'error' && i.rule !== 'banned-word' && i.rule !== 'not-x-but-y' && i.rule !== 'voice'); // it names the tells it bans
     expect(errors).toEqual([]);
   });
   it('lists unique proper nouns and terms, with garbles mapped to them', () => {
@@ -126,5 +126,16 @@ describe('editorVoice and dictation hints', () => {
       const meant = g.meant.toLowerCase();
       expect(dictionaryHints.some((h) => h.toLowerCase().includes(meant) || meant.includes(h.toLowerCase())), g.meant).toBe(true);
     }
+  });
+});
+
+describe('checkStyle runs the voice tells on machine prose', () => {
+  it('fails a model-written blurb that has no house-style errors of its own', () => {
+    const r = checkStyle('A eulogy and a rallying cry, all at once.');
+    expect(r.ok).toBe(false);
+    expect(r.issues.some((i) => i.rule === 'voice')).toBe(true);
+  });
+  it('leaves non-machine mode alone', () => {
+    expect(checkStyle('A eulogy and a rallying cry, all at once.', { strict: false }).issues.some((i) => i.rule === 'voice')).toBe(false);
   });
 });

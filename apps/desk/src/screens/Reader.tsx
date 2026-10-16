@@ -80,7 +80,7 @@ export interface Selection {
   text: string;
 }
 
-export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, busy }: { source: Source; chosen: Excerpt | null; candidates: Excerpt[]; onExcerpt: (s: Selection) => void; onHighlight: (s: Selection) => void; busy?: boolean }) {
+export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, busy, actionLabel = 'Make excerpt', allowHighlight = true, sticky = true }: { source: Source; chosen: Excerpt | null; candidates: Excerpt[]; onExcerpt: (s: Selection) => void; onHighlight: (s: Selection) => void; busy?: boolean; actionLabel?: string; allowHighlight?: boolean; sticky?: boolean }) {
   const body = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<(Selection & { x: number; y: number; inside: boolean }) | null>(null);
   const bl = useMemo(() => blocks(source.text), [source.text]);
@@ -120,13 +120,15 @@ export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, bus
   useEffect(() => {
     if (!chosen || !body.current) return;
     const m = body.current.querySelector('mark.ex');
-    m?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // Scroll the reader's own box, never the page (two readers sit side by side on a Rhyme).
+    const box = body.current;
+    if (m instanceof HTMLElement) box.scrollTo({ top: Math.max(0, m.offsetTop - box.offsetTop - box.clientHeight / 3), behavior: 'smooth' });
   }, [chosen?.id]);
 
   const meta = source.meta ?? {};
   const words = source.word_count.toLocaleString('en-IN');
   return (
-    <section className="reader" aria-label="Source text" style={{ position: 'sticky' }}>
+    <section className="reader" aria-label="Source text" style={sticky ? { position: 'sticky' } : { position: 'relative', top: 'auto' }}>
       <div className="reader-head">
         <span className="label ink">The source</span>
         <span className="small muted">
@@ -158,9 +160,9 @@ export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, bus
       {sel && (
         <div className="sel-bar" style={{ left: sel.x, top: sel.y }} role="toolbar" aria-label="Selection">
           <button type="button" className="btn small" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => (onExcerpt(sel), setSel(null), window.getSelection()?.removeAllRanges())}>
-            Make excerpt
+            {actionLabel}
           </button>
-          {sel.inside && (
+          {sel.inside && allowHighlight && (
             <button type="button" className="btn small" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => (onHighlight(sel), setSel(null), window.getSelection()?.removeAllRanges())}>
               Mark highlight
             </button>
@@ -186,6 +188,7 @@ export function extractorLabel(x: string): string {
     pasted: 'as you pasted it',
     oembed: 'the post',
     description: 'video description',
+    browser: 'rendered in a browser, then extracted',
   };
   return m[x] ?? x;
 }

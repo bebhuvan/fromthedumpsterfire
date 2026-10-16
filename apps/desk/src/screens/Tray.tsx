@@ -21,6 +21,9 @@ export function Tray() {
           </h1>
         </div>
         <Capture onCaptured={() => setRefresh((n) => n + 1)} />
+        <div className="row">
+          <NewRhyme />
+        </div>
         <p className="kbd-help">
           Paste a link anywhere on the Desk to capture it. <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> saves. <kbd>J</kbd> <kbd>K</kbd> move through the tray, <kbd>Enter</kbd> opens.
         </p>
@@ -39,6 +42,30 @@ export function Tray() {
         <TrayList view={view} refresh={refresh} keyboard />
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- rhymes
+
+function NewRhyme() {
+  const toast = useToast();
+  return (
+    <button
+      type="button"
+      className="btn small"
+      data-type="rhymes"
+      style={{ background: 'var(--type)', borderColor: 'transparent' }}
+      onClick={async () => {
+        try {
+          const r = await api.post<{ item: { id: string } }>('/api/rhymes', {});
+          navigate(`/item/${r.item.id}`);
+        } catch (e) {
+          toast(e instanceof Error ? e.message : String(e), true);
+        }
+      }}
+    >
+      New rhyme: then and now
+    </button>
   );
 }
 

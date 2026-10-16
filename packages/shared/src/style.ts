@@ -1,6 +1,10 @@
 // The house style check for machine prose. Every model-written sentence passes through this before
 // the editor sees it; drafts with errors are regenerated, and the Desk shows warnings beside the text.
 // The editor's own words are never run through it (they are never rewritten either).
+// In machine mode (the default) it also runs the voice tells from voice.ts, so every caller that
+// gates machine prose gets both checks.
+
+import { voiceCheck } from './voice';
 
 export type StyleSeverity = 'error' | 'warn';
 
@@ -22,6 +26,7 @@ export type StyleRule =
   | 'url'
   | 'exclamation'
   | 'connective-opener'
+  | 'voice'
   | 'empty';
 
 export interface StyleResult {
@@ -32,7 +37,8 @@ export interface StyleResult {
 export interface StyleOptions {
   /**
    * Machine mode (the default) treats a single em dash as an error. Without it, only a chain of two
-   * or more in one paragraph is an error and a single dash is a warning.
+   * or more in one paragraph is an error and a single dash is a warning. Machine mode also runs the
+   * voice tells (docs/VOICE.md).
    */
   strict?: boolean;
 }
@@ -186,6 +192,10 @@ export function checkStyle(text: string, options: StyleOptions = {}): StyleResul
   for (const m of text.matchAll(/!/g)) push('exclamation', 'warn', '!', m.index ?? 0, 'Exclamation mark.');
 
   for (const m of text.matchAll(CONNECTIVE_OPENER_RE)) push('connective-opener', 'warn', m[1]!, m.index ?? 0, `"${m[1]}," as an opener reads as padding.`);
+
+  if (strict) {
+    for (const f of voiceCheck(text)) push('voice', f.severity, f.match, f.index, f.message);
+  }
 
   // One issue per rule per position is enough.
   const seen = new Set<string>();

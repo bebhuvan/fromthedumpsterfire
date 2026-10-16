@@ -38,7 +38,11 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "fdf-desk-preview", "database_id": "8da223f8-d555-450b-8e44-62bbae0015e7", "migrations_dir": "../../migrations" }
       ],
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files-preview" }],
+      // MEDIA is private Desk material; FILES holds only published bundles (hauls/), written by publish.
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "fdf-files-preview" },
+        { "binding": "FILES", "bucket_name": "fdf-public-preview" }
+      ],
       "ai": { "binding": "AI" },
       "queues": { "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest-preview" }] },
       // POST /v1/devices is public; 20 registrations per IP per minute is ample for the app.
@@ -63,12 +67,20 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "fdf-desk", "database_id": "73a6d440-5bc9-4583-9a67-e8be10f23c7a", "migrations_dir": "../../migrations" }
       ],
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files" }],
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "fdf-media" },
+        { "binding": "FILES", "bucket_name": "fdf-files" }
+      ],
       "ai": { "binding": "AI" },
       "queues": { "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest" }] },
       "ratelimits": [{ "name": "DEVICE_LIMITER", "namespace_id": "4102", "simple": { "limit": 20, "period": 60 } }],
-      // Production routes (add when the zone is ready): desk.fromthedumpsterfire.com/* behind an
-      // Access application, and api.fromthedumpsterfire.com/v1/* public for the reader app.
+      // desk.fromthedumpsterfire.com sits behind the "FDF Desk" Access application (owner only);
+      // api.fromthedumpsterfire.com is public at the edge, and the Worker answers only the exact
+      // public routes there (POST /v1/devices, GET /v1/health); everything else needs Access.
+      "routes": [
+        { "pattern": "desk.fromthedumpsterfire.com", "custom_domain": true },
+        { "pattern": "api.fromthedumpsterfire.com", "custom_domain": true }
+      ],
       "workers_dev": false,
       "preview_urls": false
     }

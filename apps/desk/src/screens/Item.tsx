@@ -9,10 +9,19 @@ import { Link, navigate, safeHref, SaveNote, useAutosave, useKeys, useLoad, useP
 import { ChecksPanel, NoteCompare, Spinner, TextArea, TypeSelect, VoiceNote } from '../ui/parts';
 import { Reader, type Selection } from './Reader';
 import { TrayList } from './Tray';
+import { PlatesSection } from './Plates';
+import { ItemSuggestions } from './Links';
+import { RhymeEditor } from './Rhyme';
 
 const IN_FLIGHT = /queued|fetching|reading|drafting|checking/;
 
 export function ItemReview({ id }: { id: string }) {
+  const { data } = useLoad(() => api.get<ItemDetail>(`/api/items/${id}`), [id]);
+  if (data?.item.kind === 'rhyme') return <RhymeEditor id={id} />;
+  return <ItemReviewInner id={id} />;
+}
+
+function ItemReviewInner({ id }: { id: string }) {
   const toast = useToast();
   const { data, error, reload, setData } = useLoad(() => api.get<ItemDetail>(`/api/items/${id}`), [id]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -115,6 +124,8 @@ export function ItemReview({ id }: { id: string }) {
             <ExcerptSection detail={data} chosen={chosen} act={act} />
             <MarginaliaSection drafts={data.drafts.filter((d) => d.kind === 'marginal') as Draft<MarginalBody>[]} act={act} />
             <WikiSection itemId={id} cards={data.wiki} act={act} />
+            <PlatesSection target={{ kind: 'item', id }} plates={data.plates} decision={data.item.plate} onChange={reload} />
+            <ItemSuggestions itemId={id} suggestions={data.suggestions} onChange={reload} />
             <DetailsSection detail={data} onPatch={patch} />
             <ConnectionsSection detail={data} act={act} />
             <div className="section">

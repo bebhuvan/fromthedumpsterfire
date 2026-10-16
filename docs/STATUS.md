@@ -31,7 +31,9 @@
   model-written contrast sets. Exports `editorVoice` (prompt block for title and route drafts),
   `aiTells` and `voiceCheck` (17 machine-prose tells that checkStyle does not cover; the editor's
   notes trip them 2.3 times per 10k words, model-written notes 85 times), `dictionaryHints` and
-  `dictationGarbles` for transcription. Not yet wired into `packages/server` prompts.
+  `dictationGarbles` for transcription. Wired in: `checkStyle` (machine mode) runs the voice tells,
+  so every machine-prose gate catches them; title options, the route draft and thread titles get
+  `editorVoice`; editor voice notes send `dictionaryHints` to Whisper as `initial_prompt`.
 
 ### Desk: what was verified (2026-10-16)
 
@@ -54,46 +56,109 @@
 - `npm test`: 104 tests (shared rules and bundle validator, SSRF guard, Access/CSRF/bypass attempts,
   pipeline pure functions, FCM JWT signing).
 
-### Desk: what the editor must do
+### Production (live, 2026-10-16)
 
-1. **Turn on Cloudflare Access for the preview** (Wrangler's login cannot create Access apps):
-   Workers & Pages → `fdf-desk-preview` → Settings → Domains & Routes → workers.dev → enable
-   Cloudflare Access, with a policy that allows only owner@example.com (and no App Launcher).
-   Copy the application's AUD tag and your team domain (`<team>.cloudflareaccess.com`) into
-   `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` under `env.preview.vars` in `workers/api/wrangler.jsonc`,
-   then `npm run deploy:preview`. Until both are set, the Worker refuses every request.
-2. **Create the AI Gateway** `fdf-preview` (AI → AI Gateway). Until then Workers AI calls go direct
-   (marked `workers-ai-direct` in Settings) and external providers are unreachable.
-3. **Optional provider keys** (Wrangler secrets on both Workers, preview env), never in config:
-   `GOOGLE_AI_STUDIO_API_KEY`, `DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`; or store
-   them in the gateway (BYOK), set `"byok": true` via `MODEL_ROUTES` and add `CF_AIG_TOKEN`.
-   Set with `npx wrangler secret put NAME -c workers/pipeline/wrangler.jsonc --env preview` (and the
-   same with `workers/api/wrangler.jsonc`, which runs voice cleanup and field-note help).
-4. **Push:** `FCM_SERVICE_ACCOUNT` (the Firebase service-account JSON) as a secret on
-   `workers/pipeline`. iOS tokens from Expo are APNs tokens, which FCM HTTP v1 cannot address; iOS
-   push needs the app to register FCM tokens (Firebase iOS SDK) or a separate APNs sender.
-5. **Production** (nothing created yet): D1 `fdf-desk` (id into both configs), R2 `fdf-files` with
-   the custom domain `files.fromthedumpsterfire.com` (public read, CORS GET for the site), queues
-   `fdf-ingest` and `fdf-ingest-dlq`, AI Gateway `fdf`, an Access app for
-   `desk.fromthedumpsterfire.com`, routes for `desk.` and `api.fromthedumpsterfire.com/v1/*`, the
-   secrets above, a real `SPEND_CEILING_USD` (it ships at 0, meaning no model calls), an R2
-   lifecycle rule to abort incomplete multipart uploads, then
-   `npx wrangler d1 migrations apply DB --remote -c workers/api/wrangler.jsonc --env production`.
+| | |
+|---|---|
+| Website | `fdf-web` on fromthedumpsterfire.com and www (waiting page until Haul 001). The old static Issue 017 Worker `from-the-dumpster-fire` was deleted at the editor's request; its source is in `~/Ideas/Dumpster main site`. |
+| Desk | `fdf-desk` on desk.fromthedumpsterfire.com behind Access app "FDF Desk" (owner email only) |
+| Public API | api.fromthedumpsterfire.com: only `POST /v1/devices` and `GET /v1/health` answer; device registration checked end to end |
+| Pipeline | `fdf-pipeline`, Workflow `fdf-item`, queues `fdf-ingest` / `fdf-ingest-dlq` |
+| Data | D1 `fdf-desk` (migrations 0001–0002), R2 `fdf-media` (private), R2 `fdf-files` (public on files.fromthedumpsterfire.com: only `hauls/` and `seed/`), Vectorize `fdf-chunks` |
+| Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars) |
+| Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)"; site `fdf-web-preview` |
+
+Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run deploy:production`
+(Desk + pipeline), `npm run deploy:web`; migrations: `npm run db:migrate:production`.
+
+### What the editor must do
+
+1. **Provider keys (optional)** as Wrangler secrets on both Workers, never in config:
+   `GOOGLE_AI_STUDIO_API_KEY`, `DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, e.g.
+   `npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY -c workers/pipeline/wrangler.jsonc --env production`
+   (and `-c workers/api/wrangler.jsonc`). Without keys the routes fall back to Workers AI.
+2. **Push:** `FCM_SERVICE_ACCOUNT` (Firebase service-account JSON) as a secret on the pipeline, and
+   `apps/mobile/google-services.json` for the app. iOS push needs FCM tokens on iOS or an APNs sender.
+3. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in
+   Proton. Cloudflare Email Routing would replace the Proton MX records.
+4. Optional: `SMITHSONIAN_API_KEY`, `RIJKSMUSEUM_API_KEY`, `BROWSER_FALLBACK=on`, an `IMAGES` binding.
+5. Optional: an R2 lifecycle rule on `fdf-media` to abort incomplete multipart uploads.
+
+- 2026-10-16: **the Desk, milestone 6** (`migrations/0002_plates_connections_rhymes.sql`;
+  `packages/server/src/{plates,connect,rhymes}.ts`, `extract/{browser,stream}.ts`; Desk screens
+  Plates, Links, Rhyme). Public-domain plates for items and Haul covers; machine-suggested
+  connections with a verified quote from both ends; Threads from kept links; Rhymes authoring;
+  Browser Rendering fallback for JS-only pages (opt-in); long audio in overlapping chunks with
+  timestamps; voice-note formats; two R2 buckets (MEDIA private, FILES public, only publish writes
+  it); Workers AI prices checked. Preview migrated and deployed.
+
+### Desk milestone 6: what was verified (2026-10-16)
+
+- Local end to end (`wrangler dev`, both Workers, real Workers AI, Vectorize `fdf-chunks-preview`,
+  Browser Rendering): captured Wikipedia's The Coal Question, Jevons paradox and Rebound effect.
+  - **Plates:** the `plate` step proposed searches such as "William Stanley Jevons portrait", "The
+    Coal Question 1865 book", "James Watt steam engine engraving" and stored 4 to 7 fetch-checked
+    public-domain candidates per item (Commons and The Met; AIC's IIIF host answered 403 to a bot
+    challenge, so its candidates failed the check, as designed). Choosing the 1858 Jevons portrait
+    copied 1,525,368 bytes (1276 x 1536, measured from the JPEG) into MEDIA `plates/`; the editor's
+    caption replaced the metadata one. The Haul cover reused the items' candidates (Watt's double
+    engine, 1280 x 1614).
+  - **Connections:** after embedding, each item found the others by vectors (cosine 0.85), shared
+    Wikipedia cards and mechanisms. The judge proposed three "Cites"/"Extends" edges at 0.95, each
+    with a quote from both ends found word for word (Jevons's "It is wholly a confusion of ideas…"
+    in The Coal Question; the paradox article's own rendering of it). Approving without a note was
+    refused; two were kept with notes in the editor's words, one rejected.
+  - **Thread:** "Suggest threads" found one cluster and drafted it; the first title (eight words) was
+    redrafted; years came out 1865, 1865, 2007 (the model's 1865 for the paradox article is in that
+    article's text; the article date 2004 was not used); the editor renamed it "The price / of
+    efficiency", set 1980 for the rebound article and approved.
+  - **Rhyme:** then = The Coal Question (selected in the reader), now = the Rebound effect article
+    (pasted, found verbatim); a paraphrase was refused; the machine's bridge passed the style check;
+    checks: quotes 3 of 3, links pass.
+  - **Publish:** Haul 001 (three items and the Rhyme) published; `npx tsx scripts/verify-bundle.ts
+    http://localhost:8787/files hauls/001/v1/haul.json https://fdf-desk-preview.r-bhuvanesh2007.workers.dev/files`
+    printed `plates: 2 + cover, rhymes: 1, threads: 1, connections: 2`, fetched all three plate files
+    (200) and ended `VALID`. The thread's provenance reads "The machine proposed 3 links among these
+    pieces. The editor kept 2, each with a passage quoted from both ends."
+  - **JS-only page:** https://hn.algolia.com/?q=jevons%20paradox gave 0 characters to Readability;
+    the browser pass rendered it (37 KB of HTML, 4,393 characters of text, 0 requests blocked) and
+    the item went through as extractor `browser`.
+  - **Voice notes:** three 2-second files all uploaded as `audio/mp4` were stored as m4a (AAC),
+    webm and mp4 (Opus in MP4) from their bytes.
+- The run found and fixed: duplicate suggestions when two items judged the same pair at once (pairs
+  are now claimed first), Wikipedia footnote markers breaking verbatim quotes (now dropped at
+  extraction), an embedding batch of 50 that hung (batches of 20, and a 150 s timeout on every
+  Workers AI call), notes that said "piece A", irrelevant Met results, Commons catalogue ids in titles.
+- Deployed preview: migration 0002 applied to `fdf-desk-preview`; both Workers deployed with
+  VECTORS, BROWSER, MEDIA and FILES. A redraft of the probe item queued through the Queues API ran
+  `read`, `plate` (4 candidates) and `embed` (21 vectors into `fdf-chunks-preview`) on the deployed
+  pipeline, then draft, judge and check, and reached `ready` ($0.014). The Desk answers 302 to
+  Cloudflare Access for every path, including `/v1/health`.
+- `npm run verify`: all workspaces typecheck; 214 tests. New: publish end to end on SQLite with the
+  real migrations (bucket separation, plates, cover, audio formats, Rhyme, kept connection, Thread,
+  `filesBase` refusing hotlinks, reserved item ids), plates (licence gate, image measurement,
+  fetch-check, caps), connections (chunking, verbatim at both ends, retry, no double payment under
+  concurrency, clustering), a synthetic 2 h 50 min MP3 through mocked Whisper (every second once,
+  timestamps), the three-hour cap and spend estimate, DASH segment chunking, format sniffing, and the
+  byte caps and Browser Rendering request checks from the security review.
+- Spend: about $0.21 of Workers AI locally (ledger) plus a few seconds of Browser Rendering; the
+  deployed probe $0.014.
 
 ### Desk: known gaps
 
-- Edge Access is not yet on for the preview (step 1 above); the in-Worker lock is what refuses
-  requests today.
-- No plates (public-domain image matching), no machine connections/Threads, no Rhymes authoring,
-  no Vectorize yet (milestones 6 and later). Editor-made connections are supported.
-- Long non-MP3 audio (m4a/webm over 20 MB) cannot be split for Whisper; YouTube videos without
-  captions rely on a small audio stream. JS-only pages need Browser Rendering (not wired).
-- Voice notes recorded in Chrome are WebM/Opus, which iOS cannot play if published as audio.
-- `apps/mobile` typecheck fails on `p.swatch.peach` (pre-existing; the swatch was renamed in shared).
-- Model prices in `routes.json` for Workers AI are estimates; check them against the dashboard.
+- Long plain m4a, webm or ogg files over 20 MB (not MP3, not YouTube's DASH MP4) still cannot be
+  split; the item fails with a message asking for an MP3 or a transcript. MP3 times are estimated
+  from the bitrate (exact for CBR and Xing-tagged VBR).
+- The reader app hides webm and ogg voice notes on iOS. mp4 notes with Opus inside are recorded as
+  `mp4`; check one on an iPhone before relying on it.
+- The Met's web-large renditions are about 600 px wide; Commons and AIC renditions are larger. With
+  an `IMAGES` binding the Desk could take originals and resize them.
+- Wikipedia extractions still include the reference list, which adds noise to embeddings.
+- Thread years for reference articles need the editor's eye (the model's year is kept only if it
+  appears in the item's text). The thread slug is fixed when drafted, even if the editor renames it.
+- Plate captions copied as cover candidates before the Commons clean-up keep their catalogue ids
+  until the editor edits them.
 - The preview D1 holds one probe item ("How to Work Hard") from the deployed pipeline test.
-- `@fdf/shared/voice` is not wired yet: `editorVoice` into the title/route prompts, `voiceCheck`
-  beside `checkStyle` in the regeneration loop, `dictionaryHints` into the transcription prompt.
 
 - 2026-10-16: **the website** (`apps/web`): every published Haul, served by the `fdf-web` Worker.
   Pages for the latest Haul, each Haul (cover, field note with the route, contents, colophon,
@@ -189,12 +254,13 @@
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress
-2. **Publish path**: bundle writer with the invariant checks: built; production bucket to create.
+2. **Publish path**: bundle writer with the invariant checks: built; production live.
 3. **Pipeline v1**: item Workflow: fetch, transcribe, clean (deletion-only), reading card, draft, checks: built.
 4. **Desk v1**: tray, item review, voice capture, Android share target, quote extraction: built,
-   preview deployed; edge Access to switch on.
+   production live behind Access.
 5. **Web**: built and live; renders from R2 at request time, so publishes need no deploy.
-6. **Connections**: Vectorize, entity linking, edge judging, Threads.
+6. **Connections**: Vectorize, entity linking, edge judging, Threads: built on the Desk; plates and
+   Rhymes authoring too.
 7. **Backfill**: import old site archive and reading history.
 8. **Push**: client done; needs google-services.json, the Worker endpoint and FCM credentials.
 
@@ -202,13 +268,18 @@
 
 - The sample Haul ships inside the app until the first real Haul is published. Build launch binaries
   with `EXPO_PUBLIC_USE_SEED=0`.
-- No plates in the sample Haul yet; the layout supports them.
+- Design: the editor finds the web and app too bare. `docs/DESIGN-BRIEF.md` is being worked on in a
+  separate session ("FDF design", branch `fdf-design`).
+- Podcast: proposed as one episode per Haul at `/haul/<n>/listen` (player from an external host,
+  chapters linked to items, show notes, full transcript collapsed, also in the app). Not built; waiting
+  on the editor.
 - No drop caps in the app (React Native text can't wrap around a float); the web edition keeps them.
 
 ## Open questions for the editor
 
 - Model choice and budget ceiling for the judge model.
-- Where the old site's archive and reading history live, for backfill.
+- Backfill: the old Substack (62 posts, `~/AA/Bhuvan-backups/dumpsterfire`) and the 2026 static site are
+  candidates; the 2026 site's notes were model-written, so they should not be imported as the editor's.
 - Final pick of the app icon (current: ember flame on ink).
 - Whether `checkStyle` should allow "leverage"/"leveraged" in finance contexts (your own notes use it
   20 times as a finance term; see `docs/VOICE.md`).

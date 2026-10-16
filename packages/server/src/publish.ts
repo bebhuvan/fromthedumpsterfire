@@ -1,16 +1,36 @@
 // Publish: assemble a Haul bundle from D1, gate it on every item's checks and the bundle
 // invariants (packages/shared/src/validate.ts), then write hauls/NNN/vN/haul.json and the index to
 // R2. A correction is a new version with a corrections entry; versions are never overwritten.
+//
+// Two buckets: MEDIA is private (uploads, voice notes, snapshots, chosen plates); FILES is public and
+// holds only published bundles under hauls/. This module is the only writer to FILES: it copies the
+// voice notes and plates a bundle needs from MEDIA into FILES next to the bundle, then writes the
+// bundle and the index. It never writes hauls/ to MEDIA.
 
-import type { Haul, HaulIndex, HaulSummary, Item, RouteStep, Title } from '@fdf/shared/haul';
+import type { Audio, AudioFormat, Haul, HaulIndex, HaulSummary, Item, Plate, Rhyme, RouteStep, Thread, Title } from '@fdf/shared/haul';
+import { PLAYS_ON_IOS } from '@fdf/shared/haul';
+import { checkStyle } from '@fdf/shared/style';
+import { isVerbatimAt } from '@fdf/shared/verbatim';
 import { BUNDLE_VERSION, haulSlug } from '@fdf/shared/haul';
 import type { ContentType, Swatch } from '@fdf/shared/tokens';
 import { validateHaul, type BundleIssue } from '@fdf/shared/validate';
 import type { Env } from './env';
 import type { CheckRow, DraftRow, ExcerptRow, HaulRow, ItemRow, MarginalBody, NoteRow, WikiRow } from './db';
 import { dateIst, nowIso, parseJson, sha256Hex, slugify } from './util';
+import { plateForBundle, type PlateRow } from './plates';
+import { formatOfNote } from './voice';
+import { threadsForHaul } from './connect';
 
 export const INDEX_PATH = 'hauls/index.json';
+
+/** Item ids the website reserves for its own routes (/haul/1/note, /haul/1/thread/...). */
+export const RESERVED_ITEM_IDS = new Set(['note', 'thread']);
+
+/** A bundle item id from a title, never one of the reserved route words. */
+export function itemSlug(title: string): string {
+  const s = slugify(title);
+  return RESERVED_ITEM_IDS.has(s) ? `${s}-item` : s;
+}
 
 export interface PublishProblem {
   itemId?: string;
@@ -24,8 +44,8 @@ export interface Assembled {
   problems: PublishProblem[];
   bundleErrors: BundleIssue[];
   warnings: BundleIssue[];
-  /** Voice-note audio to copy next to the bundle: [from R2 key, to R2 key]. */
-  audioCopies: Array<[string, string]>;
+  /** Files to copy next to the bundle: [private MEDIA key, public FILES key under hauls/]. */
+  copies: Array<[string, string]>;
 }
 
 const DEFAULT_COLOPHON =
@@ -33,7 +53,10 @@ const DEFAULT_COLOPHON =
 
 export const defaultColophon = () => DEFAULT_COLOPHON;
 
-const ext = (mime: string) => (mime.includes('mp4') || mime.includes('m4a') ? 'm4a' : mime.includes('mpeg') ? 'mp3' : mime.includes('ogg') ? 'ogg' : mime.includes('wav') ? 'wav' : 'webm');
+const IMAGE_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+
+/** A path in the public bucket. Only hauls/ is ever written there. */
+export const isPublicPath = (key: string) => key.startsWith('hauls/') && !key.includes('..');
 
 function citeLabel(b: MarginalBody, item: ItemRow): string {
   if (b.cite.kind === 'wiki') return `Wikipedia: ${b.cite.title}`;
@@ -41,7 +64,7 @@ function citeLabel(b: MarginalBody, item: ItemRow): string {
 }
 
 export async function readIndex(env: Env): Promise<HaulIndex> {
-  const obj = await env.MEDIA.get(INDEX_PATH);
+  const obj = await env.FILES.get(INDEX_PATH);
   if (!obj) return { bundleVersion: BUNDLE_VERSION, updatedAt: nowIso(), hauls: [] };
   return (await obj.json()) as HaulIndex;
 }
@@ -50,7 +73,8 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
   const h = await env.DB.prepare('SELECT * FROM hauls WHERE id = ?').bind(haulId).first<HaulRow>();
   if (!h) throw new Error('No such Haul');
   const problems: PublishProblem[] = [];
-  const audioCopies: Array<[string, string]> = [];
+  const copies: Array<[string, string]> = [];
+  const warnings: BundleIssue[] = [];
   const version = h.status === 'published' ? h.version + 1 : 1;
   const slug = haulSlug(h.number);
   const filesBase = env.FILES_BASE.replace(/\/$/, '');
@@ -62,13 +86,35 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
   const used = new Set<string>();
   for (const it of items) {
     const t = parseJson<Title | null>(it.title_choice, null)?.text ?? it.title ?? 'item';
-    let s = slugify(t);
+    let s = itemSlug(t);
     for (let k = 2; used.has(s); k++) s = `${slugify(t, 44)}-${k}`;
     used.add(s);
     idFor.set(it.id, s);
   }
 
   const noteById = async (id: string | null) => (id ? env.DB.prepare('SELECT * FROM notes WHERE id = ?').bind(id).first<NoteRow>() : null);
+
+  /** A voice note as published audio, with its real format. Android-only formats publish with a warning. */
+  const audioFor = (note: NoteRow, to: string, path: string, label: string): Audio => {
+    const format: AudioFormat = formatOfNote(note);
+    const key = `${to}.${format}`;
+    copies.push([note.audio_key, key]);
+    if (!PLAYS_ON_IOS.has(format)) warnings.push({ path, rule: 'audio-format', message: `${label} is ${format}, which plays on Android only. Re-record it in Safari or upload an m4a or mp3 for iOS readers.` });
+    return { url: `${filesBase}/${key}`, seconds: Math.round(note.seconds ?? 0), format };
+  };
+
+  /** The chosen plate, copied next to the bundle. */
+  const plateFor = async (decision: string | null, to: string, label: string, itemId?: string): Promise<Plate | undefined> => {
+    if (!decision || decision === 'none') return undefined;
+    const p = await env.DB.prepare(`SELECT * FROM plates WHERE id = ? AND status = 'chosen'`).bind(decision).first<PlateRow>();
+    if (!p || !p.r2_key || !p.width || !p.height) {
+      problems.push({ itemId, itemTitle: label, message: 'the chosen plate is missing; pick it again or choose no plate' });
+      return undefined;
+    }
+    const key = `${to}.${IMAGE_EXT[p.mime ?? ''] ?? 'jpg'}`;
+    copies.push([p.r2_key, key]);
+    return plateForBundle(p, `${filesBase}/${key}`);
+  };
 
   const bundleItems: Item[] = [];
   for (const it of items) {
@@ -100,12 +146,9 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     ).results.filter((c) => idFor.has(c.to_item_id));
 
     const whyNote = it.why_audio ? await noteById(it.why_note_id) : null;
-    let whyAudio: Item['why']['audio'];
-    if (whyNote) {
-      const to = `hauls/${slug}/audio/${idFor.get(it.id)}-why.${ext(whyNote.mime)}`;
-      audioCopies.push([whyNote.audio_key, to]);
-      whyAudio = { url: `${filesBase}/${to}`, seconds: Math.round(whyNote.seconds ?? 0) };
-    }
+    const whyAudio = whyNote ? audioFor(whyNote, `hauls/${slug}/audio/${idFor.get(it.id)}-why`, `items[${bundleItems.length}].why.audio`, `The voice note on "${label}"`) : undefined;
+    const plate = await plateFor(it.plate, `hauls/${slug}/plates/${idFor.get(it.id)}`, label, it.id);
+    const rhyme = it.kind === 'rhyme' ? await rhymeFor(env, it, label, problems) : undefined;
 
     const title = parseJson<Title | null>(it.title_choice, null) ?? { text: it.title ?? '' };
     const item: Item = {
@@ -126,7 +169,8 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
           }
         : {}),
       ...(it.media ? { media: JSON.parse(it.media) } : {}),
-      ...(it.plate ? { plate: JSON.parse(it.plate) } : {}),
+      ...(rhyme ? { rhyme } : {}),
+      ...(plate ? { plate } : {}),
       marginalia: notes.map((n) => ({ text: n.text, cite: citeLabel(n, it) })),
       wiki: cards.map((c) => ({ title: c.title, summary: c.summary, url: c.url })),
       connections: conns.map((c) => ({
@@ -147,12 +191,9 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
   });
 
   const fnNote = await noteById(h.fn_note_id);
-  let fnAudio: Haul['fieldNote']['audio'];
-  if (fnNote) {
-    const to = `hauls/${slug}/audio/field-note.${ext(fnNote.mime)}`;
-    audioCopies.push([fnNote.audio_key, to]);
-    fnAudio = { url: `${filesBase}/${to}`, seconds: Math.round(fnNote.seconds ?? 0) };
-  }
+  const fnAudio = fnNote ? audioFor(fnNote, `hauls/${slug}/audio/field-note`, 'fieldNote.audio', 'The field-note recording') : undefined;
+  const cover = await plateFor(h.cover_plate, `hauls/${slug}/plates/cover`, 'The cover');
+  const threads: Thread[] = await threadsForHaul(env, items.map((i) => i.id), idFor);
 
   const previous = (
     await env.DB.prepare('SELECT * FROM haul_versions WHERE haul_id = ? ORDER BY version').bind(haulId).all<{ correction: string | null; published_at: string; version: number }>()
@@ -173,6 +214,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     deck: h.deck,
     publishedAt,
     swatch: h.swatch as Swatch,
+    ...(cover ? { cover } : {}),
     fieldNote: {
       title: h.fn_title_italic ? { text: h.fn_title_text, italic: h.fn_title_italic } : { text: h.fn_title_text },
       ...(fnAudio ? { audio: fnAudio } : {}),
@@ -181,7 +223,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       route,
     },
     items: bundleItems,
-    threads: [],
+    threads,
     colophon: h.colophon.trim() || DEFAULT_COLOPHON,
     ...(corrections.length ? { corrections } : {}),
   };
@@ -202,8 +244,8 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     hauls: [...current.hauls.filter((x) => x.number !== h.number), entry].sort((a, b) => b.number - a.number),
   };
 
-  const report = validateHaul(haul, index);
-  return { haul, index, problems, bundleErrors: report.errors, warnings: report.warnings, audioCopies };
+  const report = validateHaul(haul, index, { filesBase });
+  return { haul, index, problems, bundleErrors: report.errors, warnings: [...warnings, ...report.warnings], copies };
 }
 
 export interface PublishResult {
@@ -223,15 +265,18 @@ export async function publishHaul(env: Env, haulId: string, opts: { correction?:
 
   const path = `hauls/${haulSlug(a.haul.number)}/v${a.haul.version}/haul.json`;
   // Versions are immutable: refuse to overwrite one that exists.
-  if (await env.MEDIA.head(path)) return { ok: false, ...base, problems: [{ message: `${path} already exists; publish a correction instead` }] };
+  if (await env.FILES.head(path)) return { ok: false, ...base, problems: [{ message: `${path} already exists; publish a correction instead` }] };
 
-  for (const [from, to] of a.audioCopies) {
+  // Copy every asset first; a missing one stops the publish before the bundle points at it.
+  for (const [from, to] of a.copies) {
+    if (!isPublicPath(to)) throw new Error(`Refusing to publish outside hauls/: ${to}`);
     const obj = await env.MEDIA.get(from);
-    if (obj) await env.MEDIA.put(to, obj.body, { httpMetadata: { contentType: obj.httpMetadata?.contentType, cacheControl: 'public, max-age=31536000, immutable' } });
+    if (!obj) return { ok: false, ...base, problems: [{ message: `A file the bundle needs is missing from storage (${from})` }] };
+    await env.FILES.put(to, obj.body, { httpMetadata: { contentType: obj.httpMetadata?.contentType, cacheControl: 'public, max-age=31536000, immutable' } });
   }
   const body = JSON.stringify(a.haul, null, 2);
-  await env.MEDIA.put(path, body, { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=31536000, immutable' } });
-  await env.MEDIA.put(INDEX_PATH, JSON.stringify(a.index, null, 2), { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=60' } });
+  await env.FILES.put(path, body, { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=31536000, immutable' } });
+  await env.FILES.put(INDEX_PATH, JSON.stringify(a.index, null, 2), { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=60' } });
 
   const now = nowIso();
   await env.DB.batch([
@@ -248,4 +293,49 @@ export async function publishHaul(env: Env, haulId: string, opts: { correction?:
   // One notification per Haul: only the first version is announced.
   if (a.haul.version === 1) await env.INGEST_QUEUE.send({ kind: 'notify', haulId, version: 1 });
   return { ok: true, version: a.haul.version, path, url: `${env.FILES_BASE.replace(/\/$/, '')}/${path}`, ...base };
+}
+
+interface RhymeRow {
+  item_id: string;
+  then_item_id: string | null;
+  then_year: string;
+  then_quote: string | null;
+  then_start: number | null;
+  then_end: number | null;
+  then_cite: string;
+  now_item_id: string | null;
+  now_year: string;
+  now_quote: string | null;
+  now_start: number | null;
+  now_end: number | null;
+  now_cite: string;
+  bridge: string;
+}
+
+/** A Rhymes item's pair, re-verified word for word against both stored sources at publish time. */
+async function rhymeFor(env: Env, it: ItemRow, label: string, problems: PublishProblem[]): Promise<Rhyme | undefined> {
+  const r = await env.DB.prepare('SELECT * FROM rhymes WHERE item_id = ?').bind(it.id).first<RhymeRow>();
+  if (!r) {
+    problems.push({ itemId: it.id, itemTitle: label, message: 'this Rhyme has no then/now pair yet' });
+    return undefined;
+  }
+  const ends = { then: 'then', now: 'now' } as const;
+  const out: Partial<Rhyme> = {};
+  for (const end of Object.values(ends)) {
+    const srcId = r[`${end}_item_id`];
+    const quote = r[`${end}_quote`];
+    const start = r[`${end}_start`];
+    const stop = r[`${end}_end`];
+    const src = srcId ? await env.DB.prepare('SELECT text FROM sources WHERE item_id = ?').bind(srcId).first<{ text: string }>() : null;
+    if (!src || !quote || start == null || stop == null || !isVerbatimAt(src.text, { start, end: stop }, quote)) {
+      problems.push({ itemId: it.id, itemTitle: label, message: `the "${end}" quote is not matched word for word against its fetched source` });
+      continue;
+    }
+    if (!r[`${end}_year`].trim() || !r[`${end}_cite`].trim()) problems.push({ itemId: it.id, itemTitle: label, message: `the "${end}" end needs a year and a citation` });
+    out[end] = { year: r[`${end}_year`].trim(), quote, cite: r[`${end}_cite`].trim() };
+  }
+  const bridge = r.bridge.trim();
+  if (!bridge) problems.push({ itemId: it.id, itemTitle: label, message: 'this Rhyme needs a bridge' });
+  else if (!checkStyle(bridge).ok) problems.push({ itemId: it.id, itemTitle: label, message: 'the bridge fails the house style check' });
+  return out.then && out.now ? { then: out.then, now: out.now, bridge } : undefined;
 }

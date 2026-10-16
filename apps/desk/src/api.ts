@@ -92,6 +92,7 @@ export interface Item {
   why_note_id: string | null;
   why_audio: number;
   media: string | null;
+  plate: string | null;
   locator: string | null;
   archived: number;
   captured_at: string;
@@ -186,6 +187,7 @@ export interface Note {
   transcript_clean: string | null;
   deleted_words: string | null;
   clean_method: string | null;
+  format?: string | null;
   created_at: string;
 }
 
@@ -199,7 +201,102 @@ export interface ItemDetail {
   notes: Note[];
   run: { status: string; step: string | null; error: string | null; started_at: string } | null;
   haul: { id: string; number: number; status: string } | null;
-  connections: Array<{ id: string; to_item_id: string; to_title: string | null; type: string; note: string }>;
+  connections: Array<{ id: string; to_item_id: string; to_title: string | null; type: string; note: string; suggestion_id?: string | null }>;
+  plates: PlateCandidate[];
+  suggestions: Suggestion[];
+}
+
+export interface PlateCandidate {
+  id: string;
+  item_id: string | null;
+  haul_id: string | null;
+  provider: 'commons' | 'aic' | 'met' | 'smithsonian' | 'rijksmuseum';
+  query: string;
+  query_by: 'machine' | 'editor';
+  title: string;
+  creator: string | null;
+  date: string | null;
+  institution: string;
+  licence: string;
+  licence_url: string | null;
+  source_url: string;
+  width: number | null;
+  height: number | null;
+  caption: string | null;
+  status: 'candidate' | 'chosen' | 'rejected';
+}
+
+export interface Suggestion {
+  id: string;
+  from_item_id: string;
+  to_item_id: string;
+  from_title: string | null;
+  from_choice: string | null;
+  to_title: string | null;
+  to_choice: string | null;
+  from_type?: ContentType;
+  to_type?: ContentType;
+  from_date?: string | null;
+  to_date?: string | null;
+  type: string;
+  note: string;
+  editor_note: string | null;
+  from_quote: string;
+  to_quote: string;
+  confidence: number;
+  routes: { vector?: number; entities?: string[]; mechanisms?: string[] } | string;
+  status: 'proposed' | 'approved' | 'rejected';
+  model: string | null;
+}
+
+export interface ThreadPointUi {
+  itemId: string;
+  year: string;
+  gist: string;
+  edge: string;
+  item: { id: string; title: string | null; title_choice: string | null; type: ContentType; creator: string | null } | null;
+}
+
+export interface ThreadUi {
+  id: string;
+  slug: string;
+  title_text: string;
+  title_italic: string | null;
+  summary: string;
+  points: ThreadPointUi[];
+  status: 'proposed' | 'approved' | 'rejected';
+  edited: number;
+  model: string | null;
+}
+
+export interface RhymeRecord {
+  item_id: string;
+  then_item_id: string | null;
+  then_year: string;
+  then_quote: string | null;
+  then_start: number | null;
+  then_end: number | null;
+  then_cite: string;
+  now_item_id: string | null;
+  now_year: string;
+  now_quote: string | null;
+  now_start: number | null;
+  now_end: number | null;
+  now_cite: string;
+  bridge: string;
+}
+
+export interface RhymeEnd {
+  item: { id: string; title: string | null; title_choice: string | null; creator: string | null; source_name: string | null; source_date: string | null; url: string | null; status: string; status_detail: string | null; type: ContentType };
+  source: Source | null;
+}
+
+export interface RhymeDetail {
+  item: Item;
+  rhyme: RhymeRecord;
+  then: RhymeEnd | null;
+  now: RhymeEnd | null;
+  checks: Check[];
 }
 
 export interface Captured {
@@ -236,6 +333,7 @@ export interface HaulRecord {
   fn_body: string;
   fn_highlight: string | null;
   fn_note_id: string | null;
+  cover_plate: string | null;
   route: Array<RouteStep & { drafted?: boolean }>;
   questions: Array<{ q: string; answer: string }>;
   colophon: string;
@@ -248,6 +346,8 @@ export interface HaulDetail {
   haul: HaulRecord;
   items: Array<{ id: string; type: ContentType; status: string; title: string | null; title_choice: string | null; creator: string | null; source_name: string | null; source_date: string | null; captured_at: string; why_text: string | null; checks: string | null }>;
   versions: Array<{ version: number; path: string; correction: string | null; published_at: string; notified: number }>;
+  plates: PlateCandidate[];
+  fieldNoteAudio: { id: string; format: string | null; mime: string } | null;
 }
 
 export interface PreviewResult {

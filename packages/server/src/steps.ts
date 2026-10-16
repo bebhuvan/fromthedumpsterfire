@@ -16,6 +16,7 @@ import { loadRoutes } from './models/router';
 import { newId, nowIso, parseJson, truncate, wordCount } from './util';
 import { pageAt } from './extract/pdf';
 import { msToClock } from './extract/youtube';
+import { rhymeQuoteRows } from './rhymes';
 
 const D1_TEXT_LIMIT = 1_500_000;
 
@@ -389,8 +390,13 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
     results.links = { status: worst(rows), summary: `${ok} of ${rows.length} links resolve`, rows };
   }
 
-  // Quotes: the chosen excerpt is the source, character for character, at its offsets.
-  {
+  // Quotes: the chosen excerpt is the source, character for character, at its offsets. A Rhyme's
+  // two quotes are each checked against their own fetched source instead.
+  if (item.kind === 'rhyme') {
+    const rows = await rhymeQuoteRows(env, itemId);
+    const ok = rows.filter((r) => r.status === 'pass').length;
+    results.quotes = { status: worst(rows), summary: `${ok} of ${rows.length} rhyme checks pass`, rows };
+  } else {
     const ex = await env.DB.prepare('SELECT * FROM excerpts WHERE item_id = ? AND chosen = 1').bind(itemId).first<ExcerptRow>();
     const rows: CheckSummary['rows'] = [];
     if (!ex) rows.push({ label: 'Excerpt', status: 'warn', detail: 'No excerpt chosen yet (optional for some items)' });

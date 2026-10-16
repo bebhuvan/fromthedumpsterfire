@@ -6,6 +6,10 @@ import type { SourceKind } from '@fdf/shared/detect';
 import type { Env } from './env';
 import { fetchBytes, decode } from './extract/http';
 import { extractArticle } from './extract/html';
+import { browserAvailable, renderPage } from './extract/browser';
+
+/** Below this many characters of extracted text, a page is tried in a real browser (when bound). */
+export const MIN_STATIC_TEXT = 600;
 import { extractPdf } from './extract/pdf';
 import { fetchYouTube, msToClock } from './extract/youtube';
 import { fetchArxiv, fetchDoi, fetchXPost, resolvePodcast } from './extract/sources';
@@ -93,7 +97,25 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
       }
     }
   }
-  if (ex.text.length < 80) throw new FatalError('Could not find readable text on this page (it may need JavaScript or a login)');
+  let extractor = 'readability';
+  if (ex.text.length < MIN_STATIC_TEXT && browserAvailable(env)) {
+    // The page may build its text with JavaScript: render it (guarded; see extract/browser.ts).
+    const rendered = await renderPage(env, page.url).catch((e) => {
+      console.warn(JSON.stringify({ event: 'browser-render-failed', error: String(e).slice(0, 200) }));
+      return null;
+    });
+    if (rendered) {
+      const rEx = extractArticle(rendered.html, rendered.url);
+      console.log(JSON.stringify({ event: 'browser-rendered', url: rendered.url, html: rendered.html.length, text: rEx.text.length, before: ex.text.length, blocked: rendered.blocked.slice(0, 5), blockedCount: rendered.blocked.length }));
+      if (rEx.text.length > ex.text.length) {
+        ex = rEx;
+        html = rendered.html;
+        page = { ...page, url: rendered.url, contentType: 'text/html; charset=utf-8' };
+        extractor = 'browser';
+      }
+    }
+  }
+  if (ex.text.length < 80) throw new FatalError(`Could not find readable text on this page (it may need ${browserAvailable(env) ? 'a login' : 'JavaScript or a login'})`);
   const words = wordCount(ex.text);
   const media: Media | undefined = ex.meta.audio
     ? { kind: 'audio', url: ex.meta.audio, label: 'Listen' }
@@ -101,7 +123,7 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
   return {
     kind: 'text',
     text: ex.text,
-    extractor: 'readability',
+    extractor,
     meta: { headings: ex.headings, lang: ex.meta.lang, description: ex.meta.description, image: ex.meta.image },
     fields: {
       title: ex.meta.title,
@@ -294,7 +316,7 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
         };
       }
       if (yt.audio) {
-        const plan = await planAudio(yt.audio.url, yt.audio.mime, yt.audio.bytes);
+        const plan = await planAudio(yt.audio.url, yt.audio.mime, yt.audio.bytes, { dash: yt.audio.dash, seconds: yt.seconds || undefined });
         return { kind: 'audio', plan, extractor: 'whisper', meta: { description: yt.description.slice(0, 2000) }, fields };
       }
       if (yt.description.trim().length > 200) {
@@ -307,8 +329,8 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
     case 'audio': {
       const ep = item.kind === 'podcast' ? await resolvePodcast(url) : { title: decodeURIComponent(new URL(url).pathname.split('/').pop() ?? 'Audio'), show: host(url), audioUrl: url, pageUrl: url } as const;
       if (!ep) throw new FatalError('Could not find the episode audio. Try the show page or a direct MP3 link.');
-      const plan = await planAudio(ep.audioUrl);
       const seconds = 'seconds' in ep ? ep.seconds : undefined;
+      const plan = await planAudio(ep.audioUrl, undefined, undefined, { seconds: seconds || undefined });
       return {
         kind: 'audio',
         plan,

@@ -3,7 +3,7 @@
 // and the invariants in test/fixtures.test.ts, plus the house rules that apply to published copy.
 
 import type { Haul, HaulIndex, Item, Title } from './haul';
-import { BUNDLE_VERSION, haulSlug } from './haul';
+import { AUDIO_FORMATS, BUNDLE_VERSION, haulSlug } from './haul';
 import { typeSwatch } from './tokens';
 import { checkStyle } from './style';
 
@@ -23,7 +23,25 @@ export interface BundleReport {
 const SWATCHES = new Set(['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio']);
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:?\d{2})?)?$/;
 
+export interface ValidateOptions {
+  /**
+   * The public files base (e.g. https://files.fromthedumpsterfire.com). When given, every plate and
+   * audio URL must live under it: published media is copied next to the bundle, never hotlinked from
+   * an archive (Wikimedia and others refuse app image loaders).
+   */
+  filesBase?: string;
+}
+
 class Collector {
+  // A plain field, not a parameter property: scripts run this file with Node's type stripping.
+  readonly opts: ValidateOptions;
+  constructor(opts: ValidateOptions = {}) {
+    this.opts = opts;
+  }
+  hosted(v: unknown, path: string) {
+    const base = this.opts.filesBase?.replace(/\/$/, '');
+    if (base && typeof v === 'string' && !v.startsWith(`${base}/`)) this.err(path, 'hosted', `must be published under ${base}/ (copy it next to the bundle; never hotlink)`);
+  }
   errors: BundleIssue[] = [];
   warnings: BundleIssue[] = [];
   err(path: string, rule: string, message: string) {
@@ -76,6 +94,26 @@ class Collector {
     if (!this.str(v, path)) return;
     if (!/^https:\/\/[^\s]+$/.test(v)) this.err(path, 'https', 'links must be https URLs');
   }
+  audio(v: unknown, path: string) {
+    if (!this.obj(v, path, true)) return;
+    this.https(v.url, `${path}.url`);
+    this.hosted(v.url, `${path}.url`);
+    this.num(v.seconds, `${path}.seconds`);
+    if (v.format !== undefined && !AUDIO_FORMATS.includes(v.format as never)) this.err(`${path}.format`, 'shape', `one of ${AUDIO_FORMATS.join(', ')}`);
+  }
+  plate(v: unknown, path: string) {
+    if (!this.obj(v, path, true)) return;
+    this.https(v.url, `${path}.url`);
+    this.hosted(v.url, `${path}.url`);
+    this.num(v.width, `${path}.width`);
+    this.num(v.height, `${path}.height`);
+    this.str(v.caption, `${path}.caption`, { nonEmpty: false });
+    this.str(v.credit, `${path}.credit`);
+    this.str(v.licence, `${path}.licence`);
+    if (v.sourceUrl !== undefined) this.https(v.sourceUrl, `${path}.sourceUrl`);
+    this.str(v.creator, `${path}.creator`, { optional: true, nonEmpty: false });
+    this.str(v.date, `${path}.date`, { optional: true, nonEmpty: false });
+  }
   machineProse(v: unknown, path: string) {
     if (typeof v !== 'string' || !v.trim()) return;
     const r = checkStyle(v);
@@ -101,10 +139,7 @@ function checkItem(c: Collector, item: Item, p: string) {
   c.num(item.minutes, `${p}.minutes`, true);
   if (c.obj(item.why, `${p}.why`)) {
     c.str(item.why.text, `${p}.why.text`);
-    if (c.obj(item.why.audio, `${p}.why.audio`, true)) {
-      c.https(item.why.audio.url, `${p}.why.audio.url`);
-      c.num(item.why.audio.seconds, `${p}.why.audio.seconds`);
-    }
+    c.audio(item.why.audio, `${p}.why.audio`);
   }
   if (c.obj(item.excerpt, `${p}.excerpt`, true)) {
     const ex = item.excerpt;
@@ -119,14 +154,7 @@ function checkItem(c: Collector, item: Item, p: string) {
     c.https(item.media.url, `${p}.media.url`);
     c.str(item.media.label, `${p}.media.label`);
   }
-  if (c.obj(item.plate, `${p}.plate`, true)) {
-    c.https(item.plate.url, `${p}.plate.url`);
-    c.num(item.plate.width, `${p}.plate.width`);
-    c.num(item.plate.height, `${p}.plate.height`);
-    c.str(item.plate.caption, `${p}.plate.caption`, { nonEmpty: false });
-    c.str(item.plate.credit, `${p}.plate.credit`);
-    c.str(item.plate.licence, `${p}.plate.licence`);
-  }
+  c.plate(item.plate, `${p}.plate`);
   if (c.obj(item.rhyme, `${p}.rhyme`, true)) {
     for (const end of ['then', 'now'] as const) {
       const e = item.rhyme[end];
@@ -163,8 +191,8 @@ function checkItem(c: Collector, item: Item, p: string) {
 }
 
 /** Validate a bundle (and, if given, the index that will point to it). */
-export function validateHaul(haul: Haul, index?: HaulIndex): BundleReport {
-  const c = new Collector();
+export function validateHaul(haul: Haul, index?: HaulIndex, opts: ValidateOptions = {}): BundleReport {
+  const c = new Collector(opts);
   if (!c.obj(haul, 'haul')) return { ok: false, errors: c.errors, warnings: c.warnings };
 
   if (haul.bundleVersion !== BUNDLE_VERSION) c.err('bundleVersion', 'version', `must be ${BUNDLE_VERSION}`);
@@ -175,6 +203,7 @@ export function validateHaul(haul: Haul, index?: HaulIndex): BundleReport {
   if (c.str(haul.publishedAt, 'publishedAt') && !ISO_DATE.test(haul.publishedAt)) c.err('publishedAt', 'shape', 'an ISO date');
   if (!SWATCHES.has(haul.swatch)) c.err('swatch', 'shape', 'a known swatch');
   c.str(haul.colophon, 'colophon');
+  c.plate(haul.cover, 'cover');
 
   // Field note.
   const fn = haul.fieldNote;
@@ -187,10 +216,7 @@ export function validateHaul(haul: Haul, index?: HaulIndex): BundleReport {
         c.err('fieldNote.highlight', 'highlight', 'the highlight is not in the field note text');
       }
     }
-    if (c.obj(fn.audio, 'fieldNote.audio', true)) {
-      c.https(fn.audio.url, 'fieldNote.audio.url');
-      c.num(fn.audio.seconds, 'fieldNote.audio.seconds');
-    }
+    c.audio(fn.audio, 'fieldNote.audio');
     if (c.arr(fn.route, 'fieldNote.route')) {
       fn.route.forEach((r, k) => {
         const rp = `fieldNote.route[${k}]`;

@@ -77,11 +77,14 @@ rules the app may also use (style check, verbatim matching, deletion-only cleanu
 detection, bundle validator) are in `packages/shared`.
 
 ```
-browser (Access) ─► fdf-desk ── D1 (items, sources, excerpts, drafts, wiki_cards, checks, notes,
-   │                 │           hauls, haul_items, haul_versions, connections, model_calls, runs, devices)
-   │                 ├─ R2 (uploads/, notes/, snapshots/, hauls/NNN/vN/haul.json, hauls/index.json)
+browser (Access) ─► fdf-desk ── D1 (items, sources, excerpts, drafts, wiki_cards, checks, notes, plates,
+   │                 │           chunks, suggestions, judged_pairs, threads, rhymes, hauls, haul_items,
+   │                 │           haul_versions, connections, model_calls, runs, devices)
+   │                 ├─ R2 MEDIA, private (uploads/, notes/, snapshots/, plates/)
+   │                 ├─ R2 FILES, public (hauls/NNN/vN/haul.json, hauls/NNN/audio|plates/, hauls/index.json)
    │                 └─ Queue fdf-ingest ─► fdf-pipeline ─► ItemWorkflow (one per item)
-reader app ─► POST /v1/devices (public)              └─ notify (FCM HTTP v1) after a publish
+reader app ─► POST /v1/devices (public)              ├─ Vectorize VECTORS (fdf-chunks-*), Browser Rendering BROWSER
+                                                     └─ notify (FCM HTTP v1) after a publish
 ```
 
 **Requests.** Every request reaches the Worker first (`run_worker_first`), so the in-Worker lock
@@ -105,14 +108,81 @@ message; the consumer starts one `ItemWorkflow` per item.
 page offsets, Workers AI `toMarkdown` as fallback; YouTube captions through the InnerTube Android
 client, else Whisper on the audio stream; Apple Podcasts / RSS / og:audio with chunked Whisper on
 MP3 in 3 MB byte ranges, one step per chunk; X via oEmbed; arXiv API + PDF; Crossref for DOIs; OCR
-of page photos by a vision model) → snapshot raw bytes and text to R2, text to D1 → `read`
+of page photos by a vision model; when Readability finds under 600 characters, a Browser Rendering
+pass if enabled, see below) → snapshot raw bytes and text to R2, text to D1 → `read`
 (reading card; quotables kept only if found verbatim) → `wiki` (model-proposed queries resolved
-with the Wikipedia REST API; hits that share no word with the query are rejected) → `draft`
+with the Wikipedia REST API; hits that share no word with the query are rejected) → `plate`
+(public-domain image candidates, below) → `embed` (chunks and card into Vectorize, then candidate
+pairs) → `connect` (judged edges with quotes from both ends, below) → `draft`
 (titles, excerpt candidates, cited marginalia; audited for house style, verbatim quotes and real
 citations, regenerated up to three times with the failures listed, then anything still failing is
 dropped) → `judge` (each note against its cited evidence: supported, partly with a narrower
 correction, or unsupported) → `check` (links, quotes, style, citations, the editor's note) →
-`ready`. Errors set the item `failed`; the spend ceiling sets it `paused`.
+`ready`. Errors set the item `failed`; the spend ceiling sets it `paused`. `plate`, `embed` and
+`connect` are helpers: their failures are logged and never fail the item (the spend ceiling still
+pauses it).
+
+**Long audio.** `extract/audio.ts` plans chunks before any transcription. MP3 is cut into 3 MB byte
+ranges overlapping by 128 KB (about 8 s at 128 kbps); each chunk's start time comes from the frame
+header's bitrate (exact for CBR and for VBR files with a Xing/Info frame count). YouTube's DASH MP4
+audio is cut on its own segment boundaries from the `sidx` index, each chunk led by the init segment,
+so its times are exact. Other containers (plain m4a, webm, ogg) go whole if under 20 MB, else the
+item fails with a clear message. One workflow step per chunk returns Whisper's text and timed
+segments; `stitchTranscript` drops segments inside each overlap, removes words that repeat the
+previous chunk, and writes paragraphs with `times` so excerpt locators read "at 1:02:14". Caps: three
+hours (estimated before, and on what Whisper actually heard during), 450 MB, at most 160 chunks, and
+the whole job's estimated cost must fit under the month's ceiling before the first chunk
+(`assertAffordable`). Every range read stops at the range's length, whatever the server's headers say.
+
+**Plates.** The `plate` step asks a cheap model for two to four collection searches (concrete nouns,
+never URLs) and queries Wikimedia Commons (structured-data public domain or CC0, then the file
+page's own licence fields), the Art Institute of Chicago (`is_public_domain`, IIIF 843 px), The Met
+(`isPublicDomain`, v1.1 search, results must share a word with the query), and Smithsonian Open
+Access or the Rijksmuseum only if `SMITHSONIAN_API_KEY` / `RIJKSMUSEUM_API_KEY` exist. Each candidate
+keeps the institution's title, creator, date, licence and work page; its image is fetch-checked
+through `guardedFetch` and measured from its bytes. Candidates are capped (12 per search, 60 per item
+or cover). The editor may also search by their own query (no model), or choose no plate. Choosing
+copies the rendition into MEDIA `plates/` (resized with the `IMAGES` binding only if bound and wider
+than 1600 px). Thumbnails reach the Desk through `/api/plates/:id/thumb` (guarded, image types only),
+since the Desk's CSP allows only its own images. Haul covers work the same way, or reuse the items'
+candidates. AIC's IIIF host sits behind a bot challenge from some networks; those candidates simply
+fail the fetch-check.
+
+**Connections and Threads.** `embed` chunks the source (about 1,200 characters, 150 overlap, at most
+120 chunks, sampled evenly for books) plus one reading-card text, embeds them with
+`@cf/baai/bge-m3` (1024 dims) and upserts them into Vectorize (`itemId` metadata index); offsets live
+in D1 `chunks`, so text is always read back from the stored source. Candidates for an item: its card
+and eight sampled chunks queried against the index (other items only), shared Wikipedia cards, and
+shared mechanisms from reading cards, over every item with a source, archived items included when
+they are in a published Haul. A vector neighbour must reach cosine 0.6 unless an entity or mechanism
+is shared; the top four go to the judge. Each pair is claimed in `judged_pairs` before the call, so
+no pair is paid for twice. The judge (`connect` task) types the edge (Answers, Extends, Contradicts,
+Precedent of, Same mechanism, Rhymes with, Cites) and must quote both pieces; each quote is located
+with `findVerbatim` in that item's full stored text and re-anchored to its characters, the
+justification must pass `checkStyle` and name both pieces, confidence must reach 0.5. Failures get
+one retry with the problems listed, then are dropped. The five latest rejections are given to the
+judge as negative examples. The editor keeps a suggestion only with a note in their own words (or by
+explicitly adopting the machine's sentence), which becomes the `connections` row and the published
+note (serif). Threads: connected components of all kept connections; components over twelve pieces
+are split at their weakest edges (fewest shared neighbours); three or more pieces make a cluster.
+The `thread` task drafts a title, summary and one-line gists (style-checked, regenerated twice);
+years come from the items' dates, edges from the kept connection types. The editor edits and approves;
+publish includes every approved thread that touches the Haul, with points outside the Haul marked
+`inHaul: false` and a machine provenance line counting proposed and kept links.
+
+**Rhymes.** An item of kind `rhyme` (type `rhymes`) with a `rhymes` row: each end points at a
+captured item with a fetched source, and its quote is a selection in that source or a pasted
+quotation found verbatim there (offsets stored). The bridge renders in the machine's voice, so it
+must pass `checkStyle` whoever writes it; the `haul` task can draft it from the two quotes. The item's
+own source fields follow the "then" end. Checks and publish re-verify both quotes at their offsets.
+
+**Browser Rendering.** Off unless the `BROWSER` binding exists and `BROWSER_FALLBACK=on`. Every
+request the rendered page makes (the navigation, each redirect hop, frames, subresources) is
+intercepted and must pass the guardedFetch rules plus DNS-over-HTTPS resolution to public
+addresses, or it is aborted; media, fonts and websockets are refused; the final URL is re-checked.
+Subresources are fetched by the browser on Cloudflare's network, not by `guardedFetch`. Interception
+cannot see WebSocket traffic, and the browser resolves DNS again after our check (a rebinding host
+could differ between the two), which is why the fallback is opt-in.
 
 **SSRF guard.** Every fetch of an editor- or source-supplied URL goes through `guardedFetch`
 (`packages/server/src/extract/guard.ts`): http/https on default ports, no credentials, no internal
@@ -120,22 +190,36 @@ hostnames, no private, loopback, link-local, CGNAT or metadata addresses (IPv4, 
 forms), DNS-over-HTTPS resolution checked, redirects followed by hand and re-checked (5 hops).
 
 **Models.** `packages/server/src/models/routes.json` maps tasks (`read`, `draft`, `judge`, `clean`,
-`ocr`, `haul`) to a chain of models; the router skips models whose key is missing and falls back on
+`ocr`, `haul`, `plate`, `connect`, `thread`) to a chain of models, plus `transcribe` (Whisper) and
+`embed` (bge-m3); `generateJson`, `transcribeAudio` and `embedTexts` in `router.ts` are the only
+ways to call a model; the router skips models whose key is missing and falls back on
 errors. External providers go through the AI Gateway OpenAI-compatible endpoint
 (`/compat/chat/completions`, model `provider/model`); Workers AI goes through the AI binding's
 gateway option (if the named gateway does not exist yet, calls go direct and are logged as
 `workers-ai-direct`). Outputs are JSON validated with zod, with one repair attempt. Every call is
 recorded in `model_calls` with tokens and cost; `assertBudget` refuses calls once the month's total
 reaches `SPEND_CEILING_USD` (zero means no calls). Override routes per deploy with `MODEL_ROUTES`.
+Workers AI prices in `routes.json` were checked on 2026-10-16 against
+https://developers.cloudflare.com/workers-ai/platform/pricing/ (the dated table is also in `spend.ts`).
 
 **Voice notes.** Whisper (`@cf/openai/whisper-large-v3-turbo`), then a model cleanup that is only
 accepted if `checkDeletionOnly` proves it removed fillers or stutters and changed punctuation or
-capitalisation, nothing else; otherwise the code-only cleanup is used.
+capitalisation, nothing else; otherwise the code-only cleanup is used. The Desk recorder asks
+MediaRecorder for AAC in MP4 first (`audio/mp4;codecs=mp4a.40.2`, Safari and recent Chrome), falling
+back to WebM/Ogg Opus. The server sniffs the real container and codec from the bytes and stores
+`notes.format`: m4a, mp3 and wav play on iOS and Android; mp4 (Opus in MP4), webm and ogg play on
+Android only. Such notes still publish, with a warning and an "Android only" badge on the Desk, and
+the bundle's `Audio.format` lets the reader app skip them on iOS.
 
-**Publish.** `assembleHaul` builds the bundle from D1, maps internal ids to slugs, copies chosen
-voice notes next to the bundle, and refuses on any failing item check, any kept note not confirmed
-by its source, any note still waiting on the editor, or any `validateHaul` error. `publishHaul`
-writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never overwritten) and
+**Publish.** `assembleHaul` builds the bundle from D1, maps internal ids to slugs (never `note` or
+`thread`, which the website routes use), and lists the voice notes and chosen plates to copy next to
+the bundle. It refuses on any failing item check, any kept note not confirmed by its source, any note
+still waiting on the editor, a Rhyme whose quotes no longer match, a missing chosen plate, or any
+`validateHaul` error; `validateHaul(haul, index, { filesBase })` also refuses any plate or audio URL
+not under `FILES_BASE`, so nothing hotlinks an archive (Wikimedia refuses app image loaders).
+There are two buckets: MEDIA (private) and FILES (public, only `hauls/`). `publishHaul` is the only
+writer to FILES: it copies the assets from MEDIA into `hauls/NNN/audio/` and `hauls/NNN/plates/`,
+then writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never overwritten) and
 `hauls/index.json`, records `haul_versions`, and for v1 only queues one push. A correction is a new
 version with a `corrections` entry. Push uses FCM HTTP v1 with an OAuth assertion signed by
 WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
@@ -148,7 +232,10 @@ WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 | Desk Worker | `fdf-desk-preview`, https://fdf-desk-preview.r-bhuvanesh2007.workers.dev | `fdf-desk` on `desk.fromthedumpsterfire.com` (Access) and `api.fromthedumpsterfire.com/v1/*` (public) |
 | Pipeline Worker | `fdf-pipeline-preview` | `fdf-pipeline` |
 | D1 | `fdf-desk-preview` | `fdf-desk` (put its id in both `wrangler.jsonc`) |
-| R2 | `fdf-files-preview` (private) | `fdf-files`, custom domain `files.fromthedumpsterfire.com`, public read |
+| R2 MEDIA (private) | `fdf-files-preview` | `fdf-media` |
+| R2 FILES (published) | `fdf-public-preview` (private, served by the Desk's `/files/*`) | `fdf-files`, public on `files.fromthedumpsterfire.com` |
+| Vectorize | `fdf-chunks-preview` (1024 dims, cosine, metadata index `itemId`) | `fdf-chunks` (create the same way) |
+| Browser Rendering | `BROWSER` binding (fallback off unless `BROWSER_FALLBACK=on`) | same |
 | Queues | `fdf-ingest-preview`, `fdf-ingest-preview-dlq` | `fdf-ingest`, `fdf-ingest-dlq` |
 | Workflow | `fdf-item-preview` | `fdf-item` |
 | AI Gateway | `fdf-preview` (create in the dashboard) | `fdf` |
@@ -156,13 +243,21 @@ WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 
 ### Running the Desk
 
-- Local: `npm run desk:build`, then `npx wrangler d1 migrations apply DB --local --persist-to .wrangler/state -c workers/api/wrangler.jsonc --env preview`, then
-  `npx wrangler dev -c workers/api/wrangler.jsonc -c workers/pipeline/wrangler.jsonc --env preview --persist-to .wrangler/state`
-  (local D1, R2, Queues and Workflows; Workers AI is remote and billed). `workers/api/.dev.vars`
-  must contain `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`. For UI work, `npm run dev -w @fdf/desk`
-  proxies the API to port 8787.
+- Local: `npm run desk:build`, `npm run db:migrate:local`, then
+  `node --experimental-strip-types scripts/local-dev-config.ts` and
+  `npx wrangler dev -c .wrangler/dev/api.jsonc -c .wrangler/dev/pipeline.jsonc --env preview --persist-to .wrangler/state`
+  (local D1, R2, Queues and Workflows; Workers AI, Vectorize and Browser Rendering are remote and
+  billed). The script writes copies of the preview configs under local-only Worker names
+  (`fdf-desk-local`, `fdf-pipeline-local`): wrangler's remote-bindings session runs under the
+  Worker's name, and Access on the preview hostname refuses it. `workers/api/.dev.vars` must contain
+  `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1` (add a small `SPEND_CEILING_USD`, and
+  `BROWSER_FALLBACK=on` in `workers/pipeline/.dev.vars` to try rendering); rerun the script after
+  changing them. Editing server code while a workflow runs reloads the Worker and strands that run;
+  use Redraft. For UI work, `npm run dev -w @fdf/desk` proxies the API to port 8787.
 - Preview: `npm run db:migrate:preview`, `npm run deploy:preview`.
-- `npx tsx scripts/verify-bundle.ts <filesBase> hauls/001/v1/haul.json` validates a published bundle.
+- `npx tsx scripts/verify-bundle.ts <filesBase> hauls/001/v1/haul.json [publishedFilesBase]` validates a
+  published bundle; with the third argument it also checks every plate and audio URL is under it and
+  fetches each one. `npx tsx scripts/probe-plates.ts "query"` shows what each collection returns.
 
 ## The website (built)
 

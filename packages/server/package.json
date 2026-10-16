@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cloudflare/puppeteer": "^1.4.0",
     "@fdf/shared": "*",
     "@mozilla/readability": "^0.6.0",
     "linkedom": "^0.18.12",

@@ -27,6 +27,10 @@
       ],
       "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files-preview" }],
       "ai": { "binding": "AI" },
+      // Source chunks and reading cards, bge-m3 (1024 dims, cosine), metadata index on itemId.
+      "vectorize": [{ "binding": "VECTORS", "index_name": "fdf-chunks-preview", "remote": true }],
+      // Rendered HTML for pages that need JavaScript (the fetch step falls back to it).
+      "browser": { "binding": "BROWSER", "remote": true },
       "queues": {
         "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest-preview" }],
         "consumers": [
@@ -51,8 +55,10 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "fdf-desk", "database_id": "73a6d440-5bc9-4583-9a67-e8be10f23c7a", "migrations_dir": "../../migrations" }
       ],
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-files" }],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "fdf-media" }],
       "ai": { "binding": "AI" },
+      "vectorize": [{ "binding": "VECTORS", "index_name": "fdf-chunks" }],
+      "browser": { "binding": "BROWSER" },
       "queues": {
         "producers": [{ "binding": "INGEST_QUEUE", "queue": "fdf-ingest" }],
         "consumers": [{ "queue": "fdf-ingest", "max_batch_size": 10, "max_batch_timeout": 2, "max_retries": 5, "dead_letter_queue": "fdf-ingest-dlq" }]
