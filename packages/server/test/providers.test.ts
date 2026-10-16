@@ -382,6 +382,12 @@ describe('generateJson across providers', () => {
     expect(seen.map((s) => new URL(s.url).host)).toEqual(['generativelanguage.googleapis.com', 'api.anthropic.com']);
   });
 
+  it('keeps Workers AI reasoning models from thinking even when the task asks for it', async () => {
+    const env = makeEnv(() => answer({ answer: 'wai' }));
+    await generateJson(env, { task: 'draft', system: 's', prompt: 'p', schema: out });
+    expect(env.aiCalls[0]!.input.chat_template_kwargs).toEqual({ thinking: false, enable_thinking: false });
+  });
+
   it('drops a PDF longer than a model takes, rather than skipping the model', async () => {
     const seen = stubFetch(() => claudeOk('{"answer":"text only"}'));
     const env = makeEnv(undefined, { ANTHROPIC_API_KEY: keys.ANTHROPIC_API_KEY });

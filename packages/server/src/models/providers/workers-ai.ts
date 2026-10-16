@@ -45,7 +45,9 @@ export async function callWorkersAi(env: Env, req: ProviderRequest): Promise<Pro
   const { cfg } = req;
   // The schema is always stated in the prompt too: some models accept response_format and ignore it.
   const input: Record<string, unknown> = { messages: chatMessages(req, { schemaInPrompt: true }), max_tokens: req.maxTokens, temperature: req.temperature };
-  if (cfg.thinking !== 'none' && req.thinking === 'off') input.chat_template_kwargs = { thinking: false, enable_thinking: false };
+  // Always off, whatever the task asks: these models have no separate thinking budget, and with
+  // thinking on, long drafts spent the whole output on reasoning (DECISIONS.md).
+  if (cfg.thinking !== 'none') input.chat_template_kwargs = { thinking: false, enable_thinking: false };
   if (cfg.json === 'schema') input.response_format = { type: 'json_schema', json_schema: req.schema };
   else if (cfg.json === 'object') input.response_format = { type: 'json_object' };
   const out = (await runWorkersAi(env, cfg.model, input, { skipCache: false })) as Record<string, unknown>;
