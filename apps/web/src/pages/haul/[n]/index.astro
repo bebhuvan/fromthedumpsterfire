@@ -1,14 +1,11 @@
 ---
-import type { GetStaticPaths } from 'astro';
-import type { Haul } from '@fdf/shared/haul';
 import HaulPage from '../../../components/HaulPage.astro';
-import { archive } from '../../../lib/data';
+import Unavailable from '../../../components/Unavailable.astro';
+import { archive } from '../../../lib/runtime';
+import { findHaul } from '../../../lib/site';
 
-export const getStaticPaths = (async () => {
-  const { hauls } = await archive();
-  return hauls.map((haul) => ({ params: { n: String(haul.number) }, props: { haul } }));
-}) satisfies GetStaticPaths;
-
-const { haul } = Astro.props as { haul: Haul };
+const found = findHaul(await archive(), Astro.params.n);
+if (found.kind === 'missing') return new Response(null, { status: 404 });
+if (found.kind === 'failed') Astro.response.status = 503;
 ---
-<HaulPage haul={haul} />
+{found.kind === 'ok' ? <HaulPage haul={found.haul} /> : <Unavailable what={`Haul ${Astro.params.n}`} />}

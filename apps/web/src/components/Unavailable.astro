@@ -1,0 +1,22 @@
+---
+// Shown with status 503 when a Haul's bundle fails validation and no earlier version is good, or
+// when the index cannot be read. Bad data is never rendered.
+import Base from '../layouts/Base.astro';
+import Title from './Title.astro';
+import { paths } from '../lib/site';
+
+interface Props {
+  what?: string;
+}
+const { what = 'This page' } = Astro.props;
+---
+<Base title="Back shortly" path={Astro.url.pathname} noindex>
+  <div class="wrap">
+    <div class="read page-head">
+      <p class="label muted">503</p>
+      <Title title={{ text: 'Back', italic: 'shortly' }} as="h1" class="title-m" />
+      <p class="lede">{what} is being checked and will be back in a few minutes. Nothing is lost.</p>
+      <p class="actions-404"><a href={paths.archive}>Every Haul</a> · <a href={paths.about}>How it's made</a></p>
+    </div>
+  </div>
+</Base>

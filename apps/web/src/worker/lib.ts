@@ -5,6 +5,8 @@ export interface Env {
   ASSETS: { fetch(input: Request | string): Promise<Response> };
   /** "production" serves the canonical site; anything else is marked noindex. */
   ENVIRONMENT?: string;
+  /** Changes on every deploy, so a new build never serves pages cached by the old one. */
+  CF_VERSION_METADATA?: { id: string };
 }
 
 export const APEX = 'fromthedumpsterfire.com';
@@ -41,12 +43,28 @@ export function aliasFor(pathname: string): string | null {
   if (padded) return `/haul/${padded[1]}${padded[2] ?? ''}`;
   if (pathname === '/hauls' || pathname === '/hauls/') return '/archive';
   if (pathname === '/index.html') return '/';
+  if (pathname.length > 1 && pathname.endsWith('/')) return pathname.replace(/\/+$/, '') || '/';
   return null;
 }
 
+/** Files that never change under a given name; everything else is a page or a generated file. */
+export const isImmutable = (pathname: string) => pathname.startsWith('/_astro/') || pathname.startsWith('/fonts/');
+
+/** What the browser may keep. Pages and generated files are short so a publish shows within a minute. */
 export function cacheControl(pathname: string, status: number): string {
+  if (status >= 500) return 'no-store';
   if (status >= 400) return 'public, max-age=60';
-  if (pathname.startsWith('/_astro/') || pathname.startsWith('/fonts/')) return 'public, max-age=31536000, immutable';
-  // Pages and the index change when a Haul is published or corrected.
-  return 'public, max-age=300, must-revalidate';
+  if (isImmutable(pathname)) return 'public, max-age=31536000, immutable';
+  return 'public, max-age=30, must-revalidate';
+}
+
+/** How long the edge keeps a rendered page. Safe to be long: the key changes on every publish. */
+export const EDGE_TTL = 'public, max-age=86400';
+
+/**
+ * The edge cache key for a rendered page: deploy version + the index's updatedAt + path. The query
+ * string is ignored (no page reads it on the server), so it can't be used to bust the cache.
+ */
+export function pageCacheKey(origin: string, version: string, updatedAt: string, pathname: string): string {
+  return `${origin}/__page/${encodeURIComponent(version)}/${encodeURIComponent(updatedAt)}${pathname}`;
 }

@@ -5,11 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "CLOUDFLARE_ENV=preview astro build",
+    "build:production": "CLOUDFLARE_ENV=production astro build",
+    "preview": "CLOUDFLARE_ENV=preview astro build && wrangler dev",
+    "deploy:preview": "CLOUDFLARE_ENV=preview astro build && wrangler deploy",
+    "deploy:production": "CLOUDFLARE_ENV=production astro build && wrangler deploy",
+    "size": "CLOUDFLARE_ENV=production astro build && wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "typecheck": "astro check",
     "fonts": "sh scripts/fonts.sh"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "14.3.4",
     "@fdf/shared": "*",
     "astro": "7.3.8"
   },

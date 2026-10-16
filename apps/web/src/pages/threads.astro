@@ -1,7 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
-import { archive, collectThreads } from '../lib/data';
+import { archive } from '../lib/runtime';
+import { collectThreads } from '../lib/store';
 import { paths } from '../lib/site';
 
 const { hauls } = await archive();

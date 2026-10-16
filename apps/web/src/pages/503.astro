@@ -1,0 +1,6 @@
+---
+// A static copy of the 503 page, served by the Worker when the index itself can't be read.
+import Unavailable from '../components/Unavailable.astro';
+export const prerender = true;
+---
+<Unavailable what="The magazine" />

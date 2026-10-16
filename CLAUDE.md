@@ -32,7 +32,7 @@ Read these before working:
 ## Layout
 
 ```
-apps/web          public website: Astro static build + a tiny Worker (fdf-web) for headers and redirects
+apps/web          public website: Astro on the fdf-web Worker, rendering published bundles from R2 per request
 apps/desk         the Desk UI: Vite + React SPA, served by workers/api (private, behind Access)
 apps/mobile       Expo reader app
 workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
@@ -61,17 +61,21 @@ scripts/          verify-bundle.ts
 
 ## The website (apps/web)
 
-- Static Astro build from the published bundles (`FILES_BASE`, default files.fromthedumpsterfire.com);
-  `FDF_USE_SEED=1` uses the sample Haul. Every bundle goes through `validateHaul` and the build fails
-  on any error. Data loading is in `src/lib/data.ts`; URL shapes in `src/lib/site.ts` match the app's
-  deep links (`/haul/<n>`, `/haul/<n>/<item>`, `/haul/<n>/thread/<id>`).
+- Astro server output on the `fdf-web` Worker. Pages render per request from the R2 binding `FILES`
+  (`fdf-files` / `fdf-public-preview`, read only), so a Desk publish needs no deploy. The wrapper in
+  `src/worker/index.ts` does redirects, the 405 rule, the edge cache (key: deploy version + index
+  `updatedAt` + path) and all security headers; the data layer is `src/lib/store.ts`.
+- Every bundle passes `validateHaul` before it renders; a failing bundle falls back to an earlier
+  version or a 503, never a crash. URL shapes in `src/lib/site.ts` match the app's deep links
+  (`/haul/<n>`, `/haul/<n>/<item>`, `/haul/<n>/thread/<id>`).
 - Never `set:html`; bundle text is always escaped, italic title tails render as `<em>`, external
   links go through `safeHref` (http/https only). No inline scripts or styles: the CSP in
   `src/worker/lib.ts` is `script-src 'self'; style-src 'self'`.
 - Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
   sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.
-- Client JS is only the theme toggle and search. `npm run web:dev`, `npm run web:build`,
-  `npm run deploy:web:preview`. Production deploy (`npm run deploy:web`) is the editor's call.
+- Client JS is only the theme toggle and search. `npm run web:dev` (put `FDF_USE_SEED=1` in
+  `apps/web/.dev.vars` for sample data), `npm run deploy:web:preview`, `npm run deploy:web`.
+  `npm run size -w @fdf/web` measures the Worker bundle.
 
 ## The reader app (apps/mobile)
 
