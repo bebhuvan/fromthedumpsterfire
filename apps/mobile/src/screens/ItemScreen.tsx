@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import type { Haul, Item } from '@fdf/shared/haul';
@@ -190,10 +190,17 @@ const Era = memo(function Era({ year, quote, cite, bg }: { year: string; quote: 
 function PlateView({ item }: { item: Item }) {
   const p = usePalette();
   const plate = item.plate!;
+  const [failed, setFailed] = useState(false);
+  // A plate that cannot load (offline, gone, refused) leaves no empty frame behind.
+  if (failed) return null;
   return (
     <View style={{ marginTop: 24 }}>
       <Image
         source={{ uri: plate.url }}
+        onError={(e) => {
+          console.warn(`plate failed: ${plate.url} ${e.nativeEvent.error}`);
+          setFailed(true);
+        }}
         accessibilityLabel={plate.caption}
         resizeMode="cover"
         style={{ width: '100%', aspectRatio: plate.width / plate.height, borderRadius: 14, backgroundColor: p.plate }}

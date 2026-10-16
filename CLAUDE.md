@@ -68,8 +68,12 @@ scripts/          verify-bundle.ts
 - `src/App.tsx` (navigator + deep links in `src/nav.ts`), `src/routes.tsx` (params to data),
   `src/screens/*`, `src/ui/*` (type roles in `type.tsx`), `src/lib/data.ts` (offline-first bundles).
 - Fonts are embedded static cuts; use the names in `src/theme.ts` and never set fontWeight/fontStyle.
-- Build a release APK: `cd apps/mobile && npx expo prebuild -p android --clean && cd android &&
-  ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a` (ANDROID_HOME=~/android-sdk).
+- Build a release APK: `cd apps/mobile && npm run prebuild:android && npm run build:android`
+  (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS
+  bundle to rebuild: Gradle's up-to-date check only watches apps/mobile, so edits in
+  packages/shared would otherwise ship a stale bundle.
+- Plates and voice notes must be served from our files host. Archives such as Wikimedia refuse the
+  app's image requests (403 even with a descriptive User-Agent), so never hotlink them.
 
 ## Conventions
 
