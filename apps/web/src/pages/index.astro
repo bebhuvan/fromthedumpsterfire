@@ -1,0 +1,8 @@
+---
+import HaulPage from '../components/HaulPage.astro';
+import { archive } from '../lib/data';
+
+const { hauls } = await archive();
+const latest = hauls[0]!;
+---
+<HaulPage haul={latest} home />

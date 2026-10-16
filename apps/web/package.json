@@ -1,0 +1,19 @@
+{
+  "name": "@fdf/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "typecheck": "astro check",
+    "fonts": "sh scripts/fonts.sh"
+  },
+  "dependencies": {
+    "@fdf/shared": "*",
+    "astro": "7.3.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10"
+  }
+}

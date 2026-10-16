@@ -1,0 +1,14 @@
+---
+import type { GetStaticPaths } from 'astro';
+import type { Haul } from '@fdf/shared/haul';
+import HaulPage from '../../../components/HaulPage.astro';
+import { archive } from '../../../lib/data';
+
+export const getStaticPaths = (async () => {
+  const { hauls } = await archive();
+  return hauls.map((haul) => ({ params: { n: String(haul.number) }, props: { haul } }));
+}) satisfies GetStaticPaths;
+
+const { haul } = Astro.props as { haul: Haul };
+---
+<HaulPage haul={haul} />

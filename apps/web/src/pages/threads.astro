@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import { archive, collectThreads } from '../lib/data';
+import { paths } from '../lib/site';
+
+const { hauls } = await archive();
+const threads = collectThreads(hauls);
+---
+<Base title="Threads" description="Lines that run through the archive, across years and Hauls." path={paths.threads} section="threads">
+  <div class="wrap">
+    <div class="page-head">
+      <Title title={{ text: 'Threads' }} as="h1" class="title-m" />
+      <p class="lede">Lines that run through the archive, across years and Hauls. Each link between pieces cites a passage at both ends.</p>
+    </div>
+    {threads.length ? (
+      <ul class="shelf">
+        {threads.map(({ thread, n }) => {
+          const first = thread.points[0]?.year;
+          const last = thread.points[thread.points.length - 1]?.year;
+          return (
+            <li>
+              <a class="thread-card" href={paths.thread(n, thread.id)}>
+                <span class="label muted">{thread.points.length} points{first && last ? ` · ${first} to ${last}` : ''}</span>
+                <Title title={thread.title} as="h2" class="title-s" />
+                <span class="years" aria-hidden="true">{thread.points.map((pt) => <span class:list={{ out: !pt.inHaul }}>{pt.year}</span>)}</span>
+                <p>{thread.summary}</p>
+                <span class="meta">Latest in Haul {n}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    ) : (
+      <p class="lede">Threads appear as Hauls arrive.</p>
+    )}
+  </div>
+</Base>
