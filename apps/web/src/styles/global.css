@@ -75,17 +75,18 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 @media (min-width: 1000px) { .row { padding-block: 48px; } }
 
 /* Header, the struck masthead, the flame. */
-.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 18px; font: 500 14px/1 var(--sans); color: var(--ink2); }
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; padding-block: 18px; font: 500 14px/1 var(--sans); color: var(--ink2); }
 .top a { text-decoration: none; }
-.top-home { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); min-height: 28px; }
+.top-home { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); min-height: 28px; margin-right: auto; }
 .mast-line > span[aria-hidden] { white-space: nowrap; }
 .mast-s { font: 400 18px/1 var(--display); letter-spacing: -0.005em; }
 .mast-line s { color: var(--ink2); text-decoration-thickness: 0.1em; text-decoration-color: var(--ember); text-decoration-skip-ink: none; }
-.top-nav { display: flex; align-items: center; gap: 22px; }
+.top-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
 .top-nav a:hover, .top-nav a[aria-current] { color: var(--ink); }
 .top-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--ember); text-decoration-thickness: 1.5px; text-underline-offset: 0.5em; }
-@media (max-width: 760px) { .top-nav a:not([aria-current]):not([href="/archive"]) { display: none; } .top-nav { gap: 16px; } }
+/* Phones: the sections drop to their own quiet row under the masthead. */
 @media (max-width: 400px) { .mast-s { font-size: 16px; } .top-home { gap: 8px; } }
+@media (max-width: 760px) { .top-nav { order: 3; width: 100%; gap: 8px 18px; font-size: 13px; padding-top: 4px; } }
 .flame { width: 9px; height: 9px; background: var(--ember); border-radius: 0 50% 50% 50%; transform: rotate(45deg); display: inline-block; flex: none; }
 .tog { width: 28px; height: 28px; border: 0; background: none; padding: 0; display: grid; place-items: center; cursor: pointer; }
 .tog span { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--ink); overflow: hidden; position: relative; }

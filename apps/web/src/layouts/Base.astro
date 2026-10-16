@@ -75,8 +75,8 @@ const nav = [
       </a>
       <nav class="top-nav" aria-label="Sections">
         {nav.map((n) => <a href={n.href} aria-current={section === n.key ? 'page' : undefined}>{n.label}</a>)}
-        <button class="tog" type="button" hidden aria-label="Switch to dark theme" data-theme-toggle><span aria-hidden="true"></span></button>
       </nav>
+      <button class="tog" type="button" hidden aria-label="Switch to dark theme" data-theme-toggle><span aria-hidden="true"></span></button>
     </header>
     {runhead ? (
       <div class="wrap"><p class="runhead"><a href={runhead.href}>{runhead.left}</a>{runhead.right ? <span>{runhead.right}</span> : null}</p></div>
