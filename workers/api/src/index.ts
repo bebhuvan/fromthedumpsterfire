@@ -181,7 +181,7 @@ app.get('/api/settings', async (c) => {
     recentCalls: calls.results,
     spendByTask: byTask.results,
     filesBase: c.env.FILES_BASE,
-    bindings: { vectors: Boolean(c.env.VECTORS), browser: Boolean(c.env.BROWSER), images: Boolean(c.env.IMAGES), files: Boolean(c.env.FILES) },
+    bindings: { vectors: Boolean(c.env.VECTORS), browser: Boolean(c.env.BROWSER) && c.env.BROWSER_FALLBACK === 'on', images: Boolean(c.env.IMAGES), files: Boolean(c.env.FILES) },
   });
 });
 

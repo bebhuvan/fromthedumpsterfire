@@ -6,7 +6,7 @@ import type { SourceKind } from '@fdf/shared/detect';
 import type { Env } from './env';
 import { fetchBytes, decode } from './extract/http';
 import { extractArticle } from './extract/html';
-import { renderPage } from './extract/browser';
+import { browserAvailable, renderPage } from './extract/browser';
 
 /** Below this many characters of extracted text, a page is tried in a real browser (when bound). */
 export const MIN_STATIC_TEXT = 600;
@@ -98,7 +98,7 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
     }
   }
   let extractor = 'readability';
-  if (ex.text.length < MIN_STATIC_TEXT && env.BROWSER) {
+  if (ex.text.length < MIN_STATIC_TEXT && browserAvailable(env)) {
     // The page may build its text with JavaScript: render it (guarded; see extract/browser.ts).
     const rendered = await renderPage(env, page.url).catch((e) => {
       console.warn(JSON.stringify({ event: 'browser-render-failed', error: String(e).slice(0, 200) }));
@@ -114,7 +114,7 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
       }
     }
   }
-  if (ex.text.length < 80) throw new FatalError(`Could not find readable text on this page (it may need ${env.BROWSER ? 'a login' : 'JavaScript or a login'})`);
+  if (ex.text.length < 80) throw new FatalError(`Could not find readable text on this page (it may need ${browserAvailable(env) ? 'a login' : 'JavaScript or a login'})`);
   const words = wordCount(ex.text);
   const media: Media | undefined = ex.meta.audio
     ? { kind: 'audio', url: ex.meta.audio, label: 'Listen' }

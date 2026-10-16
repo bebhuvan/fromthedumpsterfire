@@ -12,6 +12,7 @@ import {
   findPlates,
   judgeCandidates,
   loadRoutes,
+  MAX_SECONDS,
   stitchTranscript,
   draftQuestions,
   draftRoute,
@@ -100,6 +101,9 @@ export class ItemWorkflow extends WorkflowEntrypoint<Env, ItemWorkflowParams> {
               }),
             );
             parts.push(part);
+            // Caps hold on what Whisper actually heard, not only on the server's headers.
+            const heard = parts.reduce((n, x) => n + Math.max(0, x.seconds - x.overlap), 0);
+            if (heard > MAX_SECONDS + 600) throw new NonRetryableError(`The audio ran past ${MAX_SECONDS / 3600} hours; stopped transcribing`);
           }
           await step.do('store-transcript', ONCE, () =>
             guard(async () => {

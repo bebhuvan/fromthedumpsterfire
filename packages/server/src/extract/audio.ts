@@ -13,6 +13,7 @@
 import { USER_AGENT } from './http';
 import { finalUrlOf, guardedFetch } from './guard';
 import { FatalError } from '../util';
+import { readSlice } from './stream';
 import type { TranscriptSegment } from '../models/router';
 
 export const CHUNK_BYTES = 3 * 1024 * 1024;
@@ -20,6 +21,10 @@ export const OVERLAP_BYTES = 128 * 1024;
 export const MAX_WHOLE_BYTES = 20 * 1024 * 1024;
 export const MAX_TOTAL_BYTES = 450 * 1024 * 1024;
 export const MAX_SECONDS = 3 * 60 * 60;
+/** Upper bound on chunks (and so on workflow steps and Whisper calls) for any one recording. */
+export const MAX_CHUNKS = Math.ceil(MAX_TOTAL_BYTES / (CHUNK_BYTES - OVERLAP_BYTES)) + 1;
+/** An fMP4 init segment or sidx index is small; anything bigger is refused. */
+export const MAX_HEADER_BYTES = 2 * 1024 * 1024;
 
 export interface ByteRange {
   start: number;
@@ -106,6 +111,8 @@ export function mp3Info(b: Uint8Array): Mp3Info | null {
 
 /** Overlapping byte ranges over an MP3, with each chunk's estimated start time. */
 export function mp3Chunks(totalBytes: number, dataStart: number, byteRate: number, chunk = CHUNK_BYTES, overlap = OVERLAP_BYTES): AudioChunk[] {
+  // Each step advances by chunk - overlap bytes, so the loop always ends.
+  if (!(chunk > overlap && overlap >= 0 && byteRate > 0)) throw new FatalError('Bad chunk settings');
   const out: AudioChunk[] = [];
   for (let s = 0; s < totalBytes; ) {
     const end = Math.min(totalBytes, s + chunk) - 1;
@@ -176,6 +183,7 @@ export function fmp4Chunks(segs: SidxSegment[], init: ByteRange, chunk = CHUNK_B
   let cur: { start: number; end: number; at: number } | null = null;
   let t = 0;
   for (const s of segs) {
+    if (!(s.size > 0) || s.size > MAX_WHOLE_BYTES) throw new FatalError('The audio index lists a segment we cannot transcribe');
     if (cur && s.offset + s.size - 1 - cur.start + 1 > chunk) {
       out.push({ start: cur.start, end: cur.end, prefix: init, at: cur.at, overlap: 0 });
       cur = null;
@@ -227,8 +235,13 @@ export async function planAudio(url: string, knownMime?: string, knownBytes?: nu
   }
 
   if (opts.dash && mime === 'audio/mp4') {
-    const idx = await fetchRange(finalUrl, opts.dash.indexRange.start, opts.dash.indexRange.end);
-    const segs = parseSidx(idx, opts.dash.indexRange.end);
+    const { initRange, indexRange } = opts.dash;
+    const small = (r: ByteRange) => r.start >= 0 && r.end >= r.start && r.end - r.start + 1 <= MAX_HEADER_BYTES && r.end < bytes;
+    if (!small(initRange) || !small(indexRange)) throw new FatalError('The audio stream reports an implausible index');
+    const idx = await fetchRange(finalUrl, indexRange.start, indexRange.end);
+    const segs = parseSidx(idx, indexRange.end);
+    const last = segs.at(-1);
+    if (last && last.offset + last.size > bytes) throw new FatalError('The audio index points past the end of the file');
     if (segs.length) {
       const seconds = segs.reduce((s, x) => s + x.seconds, 0);
       return capped({ url: finalUrl, mime, bytes, kind: 'fmp4', seconds, exactTimes: true, chunks: fmp4Chunks(segs, opts.dash.initRange) });
@@ -244,20 +257,28 @@ export async function planAudio(url: string, knownMime?: string, knownBytes?: nu
 }
 
 function capped(plan: AudioPlan): AudioPlan {
+  if (plan.chunks.length > MAX_CHUNKS) throw new FatalError(`This recording would need ${plan.chunks.length} pieces; the limit is ${MAX_CHUNKS}`);
   if (plan.seconds > MAX_SECONDS) {
     throw new FatalError(`This recording is about ${Math.round(plan.seconds / 60)} minutes; the Desk transcribes up to ${MAX_SECONDS / 3600} hours. Paste a transcript instead.`);
   }
   return plan;
 }
 
+/**
+ * Bytes [start, end] of a URL, never more: the read stops at the range's length whatever the
+ * server's headers say. A server that ignores Range (200 with the whole file) is streamed only up to
+ * the end of our range, then cancelled.
+ */
 export async function fetchRange(url: string, start: number, end: number): Promise<Uint8Array> {
+  const want = end - start + 1;
+  if (!(start >= 0 && want > 0 && want <= MAX_WHOLE_BYTES + MAX_HEADER_BYTES)) throw new FatalError('Refusing an audio range of that size');
   const res = await guardedFetch(url, { headers: { 'user-agent': USER_AGENT, range: `bytes=${start}-${end}` }, timeoutMs: 60_000 });
-  if (!res.ok) throw new Error(`Audio fetch returned ${res.status}`);
-  const declared = Number(res.headers.get('content-length') ?? 0);
-  if (declared > MAX_TOTAL_BYTES) throw new Error('Audio response is too large');
-  const buf = new Uint8Array(await res.arrayBuffer());
-  // A server that ignores Range sends the whole file; take our slice of it.
-  return res.status === 200 && buf.byteLength > end - start + 1 ? buf.subarray(start, end + 1) : buf;
+  if (!res.ok) {
+    await res.body?.cancel();
+    throw new Error(`Audio fetch returned ${res.status}`);
+  }
+  const ranged = res.status === 206;
+  return readSlice(res.body, ranged ? 0 : start, want);
 }
 
 /** The bytes Whisper gets for one chunk: the init segment (fMP4) followed by the range. */

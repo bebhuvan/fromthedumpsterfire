@@ -13,6 +13,7 @@ import { PLATE_SYSTEM, plateSchema, type ReadingCard } from './prompts';
 import { guardedFetch, finalUrlOf } from './extract/guard';
 import { checkLink, USER_AGENT } from './extract/http';
 import { FatalError, newId, nowIso, parseJson, truncate } from './util';
+import { readCapped, readJsonCapped, readSlice } from './extract/stream';
 
 export type PlateProvider = 'commons' | 'aic' | 'met' | 'smithsonian' | 'rijksmuseum';
 
@@ -65,7 +66,12 @@ export interface PlateRow {
 const CC0 = 'https://creativecommons.org/publicdomain/zero/1.0/';
 /** Renditions are about this wide: big enough for a phone at 3x in a column, small enough to ship. */
 export const RENDITION_WIDTH = 1200;
-const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+/** Collection API answers are small JSON; anything bigger is refused. */
+export const MAX_API_BYTES = 4 * 1024 * 1024;
+/** Candidates kept per item or Haul cover, and per search. */
+export const MAX_PLATES_PER_TARGET = 60;
+export const MAX_PER_SEARCH = 12;
 export const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 // ---------------------------------------------------------------- small pure helpers
@@ -163,7 +169,7 @@ async function getJson<T>(url: string, headers: Record<string, string> = {}): Pr
     await res.body?.cancel();
     throw new Error(`${new URL(url).hostname} returned ${res.status}`);
   }
-  return (await res.json()) as T;
+  return readJsonCapped<T>(res.body, MAX_API_BYTES, `${new URL(url).hostname} answer`);
 }
 
 // ---------------------------------------------------------------- providers
@@ -360,22 +366,8 @@ export async function probeImage(url: string): Promise<ProbeResult> {
       await res.body?.cancel();
       return { ok: false, status: res.status };
     }
-    const reader = res.body?.getReader();
-    const parts: Uint8Array[] = [];
-    let n = 0;
-    while (reader && n < 131072) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      parts.push(value);
-      n += value.byteLength;
-    }
-    await reader?.cancel().catch(() => {});
-    const head = new Uint8Array(n);
-    let off = 0;
-    for (const p of parts) {
-      head.set(p, off);
-      off += p.byteLength;
-    }
+    // At most 128 KB is read, whatever the server sends.
+    const head = await readSlice(res.body, 0, 131072);
     const size = imageSize(head);
     const okType = IMAGE_TYPES.has(mime) || Boolean(size);
     return { ok: okType && Boolean(size), status: res.status, mime: size?.mime ?? mime, width: size?.width, height: size?.height };
@@ -412,7 +404,8 @@ async function existingKeys(env: Env, t: PlateTarget): Promise<{ keys: Set<strin
 /** Fetch-check candidates and store the ones whose image is really there. Returns how many were added. */
 export async function storeCandidates(env: Env, t: PlateTarget, query: string, by: 'machine' | 'editor', candidates: PlateCandidate[]): Promise<number> {
   const { keys, count } = await existingKeys(env, t);
-  const fresh = candidates.filter((c) => !keys.has(`${c.provider}:${c.providerId}`));
+  const room = Math.max(0, Math.min(MAX_PER_SEARCH, MAX_PLATES_PER_TARGET - count));
+  const fresh = candidates.filter((c) => !keys.has(`${c.provider}:${c.providerId}`)).slice(0, room);
   const probes = await Promise.all(fresh.map((c) => probeImage(c.imageUrl)));
   let position = count;
   let added = 0;
@@ -536,13 +529,10 @@ export async function choosePlate(env: Env, plateId: string): Promise<PlateRow> 
     await res.body?.cancel();
     throw Object.assign(new Error(`The image no longer loads (${res.status}); pick another`), { status: 409 });
   }
-  const declared = Number(res.headers.get('content-length') ?? 0);
-  if (declared > MAX_IMAGE_BYTES) {
-    await res.body?.cancel();
-    throw Object.assign(new Error('The image is too large'), { status: 409 });
-  }
-  let bytes: Uint8Array = new Uint8Array(await res.arrayBuffer());
-  if (bytes.byteLength > MAX_IMAGE_BYTES) throw Object.assign(new Error('The image is too large'), { status: 409 });
+  // The cap holds on bytes actually streamed; Content-Length is not trusted.
+  let bytes: Uint8Array = await readCapped(res.body, MAX_IMAGE_BYTES, 'image').catch((e) => {
+    throw Object.assign(new Error(e instanceof Error ? e.message : 'The image is too large'), { status: 409 });
+  });
   let size = imageSize(bytes);
   if (!size) throw Object.assign(new Error('That link did not return an image we can read'), { status: 409 });
   const resized = await maybeResize(env, bytes, size.width);

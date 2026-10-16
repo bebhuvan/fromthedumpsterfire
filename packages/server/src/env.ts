@@ -25,6 +25,8 @@ export interface Env {
   VECTORS?: Vectorize;
   /** Browser Rendering, for pages that need JavaScript. Optional: the fallback is off without it. */
   BROWSER?: Fetcher;
+  /** "on" turns on the Browser Rendering fallback (default off; see extract/browser.ts for why). */
+  BROWSER_FALLBACK?: string;
   /** Cloudflare Images, to resize a chosen plate. Optional: the provider's own rendition is kept without it. */
   IMAGES?: ImagesBinding;
   AI: Ai;

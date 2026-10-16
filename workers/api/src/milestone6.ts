@@ -18,6 +18,7 @@ import {
   nowIso,
   parseJson,
   patchRhyme,
+  readCapped,
   runChecks,
   searchPlates,
   setEndQuote,
@@ -131,12 +132,14 @@ m6.get('/api/plates/:id/thumb', async (c) => {
   }
   const res = await guardedFetch(p.thumb_url || p.image_url, { headers: { 'user-agent': USER_AGENT, accept: 'image/*' }, timeoutMs: 15_000 });
   const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
-  const len = Number(res.headers.get('content-length') ?? 0);
-  if (!res.ok || !IMAGE_TYPES.has(type) || len > 8 * 1024 * 1024) {
+  if (!res.ok || !IMAGE_TYPES.has(type)) {
     await res.body?.cancel();
     return c.json({ error: 'Thumbnail unavailable' }, 502);
   }
-  return new Response(res.body, { headers: fileHeaders(type, 'thumb') });
+  // Capped on the bytes actually read, whatever Content-Length says.
+  const bytes = await readCapped(res.body, 8 * 1024 * 1024, 'thumbnail').catch(() => null);
+  if (!bytes) return c.json({ error: 'Thumbnail too large' }, 502);
+  return new Response(bytes, { headers: { ...fileHeaders(type, 'thumb'), 'cache-control': 'private, max-age=86400' } });
 });
 
 // ------------------------------------------------------------------ suggested connections
