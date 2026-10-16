@@ -66,7 +66,7 @@
 | Pipeline | `fdf-pipeline`, Workflow `fdf-item`, queues `fdf-ingest` / `fdf-ingest-dlq` |
 | Data | D1 `fdf-desk` (migrations 0001–0002), R2 `fdf-media` (private), R2 `fdf-files` (public on files.fromthedumpsterfire.com: only `hauls/` and `seed/`), Vectorize `fdf-chunks` |
 | Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars) |
-| Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)"; site `fdf-web-preview` |
+| Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)". The site's preview Worker `fdf-web-preview` was deleted on 2026-10-16 at the editor's request; `npm run deploy:web:preview` recreates it |
 
 Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run deploy:production`
 (Desk + pipeline), `npm run deploy:web`; migrations: `npm run db:migrate:production`.
@@ -172,7 +172,7 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   Desk publish or correction shows within a minute with no rebuild or deploy. Rendered pages are kept
   in the edge cache under a key made of the deploy version, the index's `updatedAt` and the path.
   Production is live at https://fromthedumpsterfire.com (waiting page until Haul 001); preview at
-  https://fdf-web-preview.r-bhuvanesh2007.workers.dev.
+  https://fdf-web-preview.r-bhuvanesh2007.workers.dev (since deleted).
 - 2026-10-16: **the Salvage design on the web** (`docs/DESIGN.md`). Struck masthead in every header,
   the big one on the waiting page; ghost number and the contents as specimens of each form on the Haul
   cover; every
@@ -191,8 +191,8 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 - 2026-10-16: **See also and About.** See also entries are catalogue guide cards (a ruled edge with a
   staggered tab in the colour of what each points to) instead of grey slips. About is rebuilt from the
   magazine's forms: a big title, the two voices as a transcript, five house rules each with the check
-  behind it, and a key to the forms (`formGuide` in `apps/web/src/lib/forms.ts`). On the web preview
-  only; the reader app does not have this pass or the landing pass yet.
+  behind it, and a key to the forms (`formGuide` in `apps/web/src/lib/forms.ts`). Deployed to production
+  (version 9e99b1dd) after merging main; the preview Worker was then deleted. The reader app does not have this pass or the landing pass yet.
 
 ### Web: what was verified (2026-10-16)
 

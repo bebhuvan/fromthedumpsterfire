@@ -262,7 +262,7 @@ WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 ## The website (built)
 
 `apps/web` is an Astro site with server output on one Worker, `fdf-web` (`fdf-web-preview` on
-workers.dev for the preview env). Pages render at request time from the published bundles in R2, so
+workers.dev for the preview env, deleted 2026-10-16 and recreated by `npm run deploy:web:preview` when needed). Pages render at request time from the published bundles in R2, so
 the Desk's publish is the only step: no rebuild, no deploy.
 
 ```
