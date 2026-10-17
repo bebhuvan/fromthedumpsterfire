@@ -126,8 +126,10 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 
 ### What the editor must do
 
-1. **Push:** `FCM_SERVICE_ACCOUNT` (Firebase service-account JSON) as a secret on the pipeline, and
-   `apps/mobile/google-services.json` for the app. iOS push needs FCM tokens on iOS or an APNs sender.
+1. **Push:** done for Android (2026-10-17): Firebase project `from-the-dumpster-fire`,
+   `FCM_SERVICE_ACCOUNT` set on production `fdf-pipeline`, `apps/mobile/google-services.json` in place
+   (gitignored). Install the 0.3.0 push APK and allow notifications so the phone registers
+   (`devices` was empty when set). Not yet on preview. iOS needs FCM tokens on iOS or an APNs sender.
 2. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in
    Proton. Cloudflare Email Routing would replace the Proton MX records.
 3. Optional: `SMITHSONIAN_API_KEY`, `RIJKSMUSEUM_API_KEY`, `BROWSER_FALLBACK=on`, an `IMAGES` binding.
@@ -399,8 +401,8 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   signed with the laptop's debug key (sideloading only; the Play Store needs an upload key and an
   .aab). Checked in the file: the seed switch is inlined (the variable name is absent from the Hermes
   bundle; the sample JSON is still packed but unreachable), and it reads files.fromthedumpsterfire.com.
-  Not run on a device here (the emulator is x86_64). Push stays off until google-services.json and
-  FCM_SERVICE_ACCOUNT exist.
+  Not run on a device here (the emulator is x86_64). Rebuilt with google-services.json (sender
+  573328278264) as from-the-dumpster-fire-0.3.0-push.apk; FCM_SERVICE_ACCOUNT is set on production.
 
 ## Milestones
 
@@ -413,7 +415,7 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 6. **Connections**: Vectorize, entity linking, edge judging, Threads: built on the Desk; plates and
    Rhymes authoring too.
 7. **Backfill**: import old site archive and reading history.
-8. **Push**: client done; needs google-services.json, the Worker endpoint and FCM credentials.
+8. **Push**: Android wired end to end in production; first real send is Haul 001's v1 publish.
 
 ## Known gaps
 
