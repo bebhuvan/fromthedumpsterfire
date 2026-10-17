@@ -403,6 +403,18 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   bundle; the sample JSON is still packed but unreachable), and it reads files.fromthedumpsterfire.com.
   Not run on a device here (the emulator is x86_64). Rebuilt with google-services.json (sender
   573328278264) as from-the-dumpster-fire-0.3.0-push.apk; FCM_SERVICE_ACCOUNT is set on production.
+- **Settings and push before the first Haul; over-the-air updates** (2026-10-17): Settings was
+  linked only from a Haul cover's footer, so with no Haul it was unreachable and push could not be
+  turned on. Now a word in the top row of the cover and the waiting page, which also offers "Tell me
+  when it lands". On the emulator: the button got an FCM token, the production `devices` row
+  appeared, and the Settings switch set it to disabled. OTA (`expo-updates`, self-hosted, signed;
+  ARCHITECTURE "Over-the-air app updates"): fdf-desk production 09818722 serves `/v1/updates`; on
+  the emulator a published update downloaded on one launch and ran on the next, a manifest with a
+  stale signature was refused, and `--rollback` restored the embedded JS. Production now holds that
+  roll-back directive (safe: phones on their embedded JS get "no update"). APK
+  from-the-dumpster-fire-0.3.0-ota.apk (arm64 + x86_64, runtime fd374857…) replaces the push APK;
+  older APKs have no updater, so each reader needs this one install. Signing key:
+  `~/.config/fdf/app-updates/private-key.pem` (back it up). Publish: `npm run app:update`.
 
 ## Milestones
 

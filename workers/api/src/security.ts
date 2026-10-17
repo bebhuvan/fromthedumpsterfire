@@ -66,7 +66,7 @@ export function checkCsrf(req: Request): CsrfVerdict {
 }
 
 /** The only unauthenticated routes, by exact method and path. */
-const PUBLIC_ROUTES = new Set(['POST /v1/devices', 'GET /v1/health']);
+const PUBLIC_ROUTES = new Set(['POST /v1/devices', 'GET /v1/health', 'GET /v1/updates', 'GET /v1/updates/asset']);
 export const isPublicRoute = (method: string, pathname: string) => PUBLIC_ROUTES.has(`${method} ${pathname}`);
 
 export function withHeaders(res: Response, headers: Record<string, string>): Response {

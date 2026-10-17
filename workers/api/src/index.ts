@@ -1,4 +1,5 @@
-// The Desk API and UI host. Public: POST /v1/devices (the reader app) and GET /v1/health.
+// The Desk API and UI host. Public: POST /v1/devices and GET /v1/updates(/asset) (the reader app)
+// and GET /v1/health.
 // Everything else, including the UI's static assets, requires the owner's Access assertion.
 
 import { Hono, type Context } from 'hono';
@@ -44,6 +45,7 @@ import { AccessDenied, devBypassAllowed, KNOWN_ENVIRONMENTS, readAssertion, veri
 import { captureEntries, captureFile, entriesFromPaste, type CaptureEntry } from './capture';
 import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY_HEADERS, withHeaders } from './security';
 import { m6, platesFor } from './milestone6';
+import { assetResponse, manifestResponse } from './updates';
 
 type App = { Bindings: Env; Variables: { owner: string } };
 const app = new Hono<App>();
@@ -131,6 +133,10 @@ app.post('/v1/devices', async (c) => {
     .run();
   return c.json({ ok: true });
 });
+
+// Over-the-air JS updates for the reader app: read only, signed on the editor's laptop (updates.ts).
+app.get('/v1/updates', (c) => manifestResponse(c.req.raw, c.env.MEDIA));
+app.get('/v1/updates/asset', (c) => assetResponse(c.req.raw, c.env.MEDIA));
 
 // Anything else under /v1 is not a Desk page: never fall through to the UI.
 app.all('/v1/*', (c) => c.json({ error: 'Not found' }, 404));

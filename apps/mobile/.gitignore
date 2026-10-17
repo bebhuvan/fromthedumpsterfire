@@ -43,3 +43,6 @@ yarn-error.*
 # Firebase (not secret, kept out of git by choice)
 google-services.json
 GoogleService-Info.plist
+
+# The update-signing certificate is public and every build embeds it; its private key is not here.
+!certs/certificate.pem

@@ -37,7 +37,8 @@ Read these before working:
 apps/web          public website: Astro on the fdf-web Worker, rendering published bundles from R2 per request
 apps/desk         the Desk UI: Vite + React SPA, served by workers/api (private, behind Access)
 apps/mobile       Expo reader app
-workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
+workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices and
+                  GET /v1/updates(/asset)
 workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate, embed, connect, draft,
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
@@ -45,13 +46,14 @@ packages/server   Worker-side code shared by both: D1, model router, extraction,
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator, quoting (excerpt length guide, when to draw out big ideas)
 migrations/       D1 migrations
-scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts
+scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts,
+                  publish-app-update.ts (signed over-the-air app updates)
 ```
 
 ## The Desk (apps/desk, workers/*, packages/server)
 
 - Every request runs the Worker first; the in-Worker Access check is fail-closed. Public routes are
-  exact method + path (`POST /v1/devices`, `GET /v1/health`). Never add a route that skips the lock
+  exact method + path (`POST /v1/devices`, `GET /v1/health`, `GET /v1/updates`, `GET /v1/updates/asset`). Never add a route that skips the lock
   without adding it to `isPublicRoute` and a test. UI writes send `x-desk: 1` and JSON.
 - Every fetch of a URL that came from the editor or a source goes through `guardedFetch` (SSRF),
   and every untrusted body is read with a byte cap on what is actually streamed
@@ -113,6 +115,9 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS
   bundle to rebuild: Gradle's up-to-date check only watches apps/mobile, so edits in
   packages/shared would otherwise ship a stale bundle.
+- JS-only changes ship over the air: `npm run app:update` (signed with the key in
+  `~/.config/fdf/app-updates/`, served by `/v1/updates` on the Desk Worker; `-- --rollback` undoes).
+  Native changes (new modules, `app.json` plugins, Firebase) change the fingerprint and need a new APK.
 - Plates and voice notes must be served from our files host. Archives such as Wikimedia refuse the
   app's image requests (403 even with a descriptive User-Agent), so never hotlink them.
 

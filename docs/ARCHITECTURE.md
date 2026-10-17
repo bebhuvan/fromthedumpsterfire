@@ -1,7 +1,8 @@
 # Architecture
 
-Everything runs on Cloudflare except push delivery (APNs/FCM via Expo push), app builds (EAS) and
-external model APIs (reached through AI Gateway).
+Everything runs on Cloudflare except push delivery (FCM HTTP v1), app builds (local Gradle; EAS
+only if iOS needs it) and external model APIs (reached through AI Gateway). Over-the-air app updates
+are self-hosted on the Desk Worker (below).
 
 ```
 Desk PWA (phone + laptop) ─┐
@@ -83,13 +84,15 @@ browser (Access) ─► fdf-desk ── D1 (items, sources, excerpts, drafts, wi
    │                 ├─ R2 MEDIA, private (uploads/, notes/, snapshots/, plates/)
    │                 ├─ R2 FILES, public (hauls/NNN/vN/haul.json, hauls/NNN/audio|plates/, hauls/index.json)
    │                 └─ Queue fdf-ingest ─► fdf-pipeline ─► ItemWorkflow (one per item)
-reader app ─► POST /v1/devices (public)              ├─ Vectorize VECTORS (fdf-chunks-*), Browser Rendering BROWSER
+reader app ─► POST /v1/devices, GET /v1/updates(/asset) (public)
+                                                     ├─ Vectorize VECTORS (fdf-chunks-*), Browser Rendering BROWSER
                                                      └─ notify (FCM HTTP v1) after a publish
 ```
 
 **Requests.** Every request reaches the Worker first (`run_worker_first`), so the in-Worker lock
 guards the UI's assets too. Public routes are exact method + path: `POST /v1/devices` (JSON only,
-shape-checked, rate limited) and `GET /v1/health`. Everything else needs a Cloudflare Access JWT
+shape-checked, rate limited), `GET /v1/health`, and the read-only update routes `GET /v1/updates`
+and `GET /v1/updates/asset`. Everything else needs a Cloudflare Access JWT
 verified against the team's certs (RS256 only; issuer, AUD, `exp`/`iat`/`email` required; email must
 be `OWNER_EMAIL`). With `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` empty, or `ENVIRONMENT` unknown, the
 Desk refuses every request. Writes also need an exact same-origin `Origin`, the `x-desk: 1` header
@@ -246,6 +249,25 @@ then writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never ov
 version with a `corrections` entry. Push uses FCM HTTP v1 with an OAuth assertion signed by
 WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 `url: https://fromthedumpsterfire.com/haul/<n>`; unregistered tokens are disabled.
+
+### Over-the-air app updates
+
+The reader app runs `expo-updates` against our own server, speaking the open expo-updates protocol 1
+(no Expo account). `scripts/publish-app-update.ts`, run on the laptop, exports the Android JS bundle
+and assets (`EXPO_PUBLIC_USE_SEED=0`), uploads each to MEDIA as `app-updates/assets/<sha256>`, signs
+the manifest with the RSA key in `~/.config/fdf/app-updates/` (never on Cloudflare), and stores it
+last as `app-updates/android/<runtime>.json`; it then fetches the live route, verifies the signature
+against `apps/mobile/certs/certificate.pem` and every asset's hash. `workers/api/src/updates.ts`
+relays the stored body and signature byte for byte, answers a phone already on the update with a
+signed `noUpdateAvailable`, and serves assets as immutable downloads by hash only. The app refuses
+any manifest its embedded certificate does not verify (checked: a manifest with a stale signature
+was rejected on the emulator). The runtime version is the native fingerprint (`runtimeVersion:
+{ policy: "fingerprint" }`, embedded in the APK as `assets/fingerprint`), so an update reaches only
+the builds whose native code it fits; a native change (a new module, `app.json` plugin settings,
+Firebase) needs a new APK. Phones check on launch and run a downloaded update from the next cold
+start. `--rollback` stores a signed `rollBackToEmbedded` directive, which sends phones back to the
+JS they were installed with. Losing the private key means no further updates for installed builds
+until they install an APK carrying a new certificate, so keep a copy of it somewhere safe.
 
 ### Desk resources
 

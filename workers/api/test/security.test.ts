@@ -109,7 +109,7 @@ describe('Access lock', () => {
   it('keeps the public allowlist to exact method and path', async () => {
     const { env: e } = env();
     // GET on the device path used to skip the lock and fall through to the UI.
-    for (const path of ['/v1/devices', '/v1/devices/', '/v1/devices/../api/items', '/v1/%64evices', '/V1/devices', '/v1/health/x']) {
+    for (const path of ['/v1/devices', '/v1/devices/', '/v1/devices/../api/items', '/v1/%64evices', '/V1/devices', '/v1/health/x', '/v1/updates/', '/v1/updates/asset/x', '/v1/updates/../api/items']) {
       const r = await app.request(`${BASE}${path}`, {}, e);
       expect([403, 404]).toContain(r.status);
       expect(await r.text()).not.toMatch(/<div id="root"|<script/);
@@ -117,6 +117,8 @@ describe('Access lock', () => {
     expect((await app.request(`${BASE}/v1/health`, {}, e)).status).toBe(200);
     const put = await app.request(`${BASE}/v1/devices`, { ...json({ token: 'a'.repeat(40), platform: 'ios', enabled: true }), method: 'PUT' }, e);
     expect(put.status).toBe(403);
+    const postUpdate = await app.request(`${BASE}/v1/updates`, json({}), e);
+    expect(postUpdate.status).toBe(403);
   });
 });
 

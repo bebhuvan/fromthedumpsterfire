@@ -185,3 +185,9 @@ Dated, newest last. Don't reopen these without a new reason.
 - **The Desk is phone-first** (the editor reads and writes there most): a bottom bar for sections,
   and on an item the work and the piece take turns full screen instead of a scroll box beside the
   steps. A wide screen keeps both columns.
+- **Over-the-air updates are self-hosted, signed on the laptop** (2026-10-17): `expo-updates` with
+  the open protocol served by the Desk Worker from MEDIA, rather than EAS Update, to keep the app on
+  Cloudflare with no Expo account. Code signing is on, with the private key only on the laptop, so
+  control of the Cloudflare account alone cannot ship code to readers' phones. Runtime version is
+  the native fingerprint, not the app version, so a forgotten version bump cannot send JS to a build
+  it does not fit.
