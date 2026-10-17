@@ -8,7 +8,7 @@ import { fonts, GUTTER, typeColor, usePalette } from '@/theme';
 import { longDate } from '@/lib/format';
 import { useReader } from '@/lib/store';
 import { Body, Highlighted, Machine, Meta, Title } from '@/ui/type';
-import { Action, Apparatus, Divider, Masthead, Sign, VoiceNote } from '@/ui/parts';
+import { Action, Apparatus, Divider, Masthead, SettingsLink, Sign, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Specimen } from '@/ui/Specimen';
 
@@ -27,7 +27,10 @@ export function Cover({ haul }: { haul: Haul }) {
   const header = (
     <View style={{ paddingTop: insets.top + 12, overflow: 'hidden' }}>
       <View style={styles.topRow}>
-        <Masthead size={16} />
+        <View style={{ flex: 1 }}>
+          <Masthead size={16} />
+        </View>
+        <SettingsLink />
       </View>
       <View style={{ height: N * 0.84, marginTop: 4 }} accessible accessibilityLabel={`Haul number ${haul.number}`}>
         <Text numberOfLines={1} style={[styles.numeral, { color: p.swatch[haul.swatch], fontSize: N, lineHeight: N * 0.86, width: N * 2.2, right: -N * 0.16 }]}>
@@ -126,7 +129,7 @@ export function Cover({ haul }: { haul: Haul }) {
 }
 
 const styles = StyleSheet.create({
-  topRow: { paddingHorizontal: GUTTER, minHeight: 36, justifyContent: 'center' },
+  topRow: { paddingHorizontal: GUTTER, minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 12 },
   numeral: { position: 'absolute', top: 0, fontFamily: fonts.display, textAlign: 'right', letterSpacing: -8, includeFontPadding: false, fontVariant: ['lining-nums'] },
   resume: { marginTop: 26, paddingVertical: 12, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, gap: 4 },
   resumeTitle: { fontFamily: fonts.displayItalic, fontSize: 19 },

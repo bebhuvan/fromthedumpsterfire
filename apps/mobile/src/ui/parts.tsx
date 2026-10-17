@@ -113,6 +113,16 @@ export function TopBar({ label, right, tint }: { label: string; right?: string; 
   );
 }
 
+/** A plain word link to Settings, for the top of the cover and the waiting page. */
+export function SettingsLink() {
+  const p = usePalette();
+  return (
+    <Pressable accessibilityRole="link" onPress={go.settings} hitSlop={10} style={({ pressed }) => [st.back, { opacity: pressed ? 0.6 : 1 }]}>
+      <Text style={[st.backText, { color: p.ink2 }]}>Settings</Text>
+    </Pressable>
+  );
+}
+
 /** The running head, as in a book: where you are on the left, what you are holding on the right. */
 export function RunHead({ left, right }: { left: string; right?: string }) {
   const p = usePalette();
