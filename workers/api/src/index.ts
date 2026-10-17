@@ -5,6 +5,7 @@ import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { checkStyle } from '@fdf/shared/style';
 import { isVerbatimAt } from '@fdf/shared/verbatim';
+import { START_AT } from '@fdf/shared/quoting';
 import { typeSwatch } from '@fdf/shared/tokens';
 import {
   assembleHaul,
@@ -26,6 +27,8 @@ import {
   SECRET_NAMES,
   sniffAudioFormat,
   spendStatus,
+  storeSource,
+  parseTranscript,
   type CheckRow,
   type DraftRow,
   type Env,
@@ -260,7 +263,8 @@ app.get('/api/items', async (c) => {
       `SELECT i.id, i.kind, i.type, i.status, i.status_detail, i.url, i.title, i.title_choice, i.creator, i.source_name, i.source_date, i.minutes,
               i.why_text IS NOT NULL AND i.why_text != '' AS has_why, i.captured_at, i.updated_at, i.archived, i.capture_text,
               (SELECT h.number FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = i.id LIMIT 1) AS haul_number,
-              (SELECT COUNT(*) FROM drafts d WHERE d.item_id = i.id AND d.kind = 'marginal' AND d.status = 'proposed') AS pending,
+              (SELECT COUNT(*) FROM excerpts e WHERE e.item_id = i.id AND e.chosen = 1) AS has_excerpt,
+              (SELECT COUNT(*) FROM drafts d WHERE d.item_id = i.id AND d.kind = 'idea' AND d.status IN ('kept', 'edited')) AS kept_ideas,
               (SELECT group_concat(name || ':' || status) FROM checks k WHERE k.item_id = i.id) AS checks
        FROM items i WHERE ${where} ORDER BY i.captured_at DESC LIMIT 300`,
     ).all()
@@ -317,6 +321,8 @@ const itemPatch = z.object({
   locator: z.string().max(200).optional(),
   minutes: z.number().int().min(1).max(10_000).nullable().optional(),
   archived: z.boolean().optional(),
+  start_at: z.string().trim().regex(START_AT, 'a time like 42:06 or 1:02:14, or a page like p. 12').or(z.literal('')).optional(),
+  start_note: z.string().max(300).optional(),
 });
 
 app.patch('/api/items/:id', async (c) => {
@@ -377,6 +383,54 @@ app.put('/api/items/:id/source', async (c) => {
   const exs = (await c.env.DB.prepare('SELECT * FROM excerpts WHERE item_id = ?').bind(id).all<ExcerptRow>()).results;
   for (const ex of exs) if (!isVerbatimAt(text, ex, ex.text)) await c.env.DB.prepare('DELETE FROM excerpts WHERE id = ?').bind(ex.id).run();
   await runChecks(c.env, id, { links: false });
+  return c.json({ ok: true });
+});
+
+// The editor's own transcript of a talk, video or podcast (made on the laptop with yt-dlp or
+// Whisper, or the show's own), pasted or read from a .txt, .md, .vtt or .srt file in the browser.
+// It replaces the fetched text; excerpts that no longer match go, and the item is read and drafted
+// again from it. Times in VTT/SRT become locators.
+app.post('/api/items/:id/transcript', async (c) => {
+  const id = c.req.param('id');
+  const item = await itemOr404(c.env, id);
+  if (item.kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own' }, 409);
+  const b = await body(c, z.object({ text: z.string().min(1).max(1_500_000), name: z.string().max(200).optional() }));
+  const parsed = parseTranscript(b.text, b.name ?? '');
+  if (parsed.text.split(/\s+/).length < 50) return c.json({ error: 'That transcript is too short to read (under 50 words)' }, 400);
+  await storeSource(c.env, id, {
+    kind: 'text',
+    text: parsed.text,
+    extractor: 'transcript',
+    meta: {
+      ...(parsed.times.length ? { times: parsed.times } : {}),
+      note: `Your transcript${b.name ? ` (${b.name})` : ''}${parsed.times.length ? '' : '; no times, so locators come from the item'}.`,
+    },
+    fields: {},
+  });
+  const exs = (await c.env.DB.prepare('SELECT * FROM excerpts WHERE item_id = ?').bind(id).all<ExcerptRow>()).results;
+  for (const ex of exs) if (!isVerbatimAt(parsed.text, ex, ex.text)) await c.env.DB.prepare('DELETE FROM excerpts WHERE id = ?').bind(ex.id).run();
+  await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = 'Reading your transcript' WHERE id = ?`).bind(id).run();
+  await c.env.INGEST_QUEUE.send({ kind: 'redraft', itemId: id });
+  return c.json({ ok: true, words: parsed.text.split(/\s+/).length, timed: parsed.times.length > 0, format: parsed.format });
+});
+
+// The editor's own copy of a PDF for an item captured by link (a paper whose download is blocked).
+// Stored privately in MEDIA; the item is fetched again from it, keeping its link and details.
+app.post('/api/items/:id/file', async (c) => {
+  const id = c.req.param('id');
+  const item = await itemOr404(c.env, id);
+  if (item.kind === 'rhyme' || item.kind === 'image') return c.json({ error: 'This item does not take a PDF' }, 409);
+  const form = await c.req.formData();
+  const f = form.get('file');
+  if (!f || typeof f === 'string') return c.json({ error: 'Choose a PDF' }, 400);
+  if (f.size > 60 * 1024 * 1024) return c.json({ error: 'Files over 60 MB are not supported' }, 413);
+  const head = new Uint8Array(await f.slice(0, 5).arrayBuffer());
+  if (String.fromCharCode(...head) !== '%PDF-') return c.json({ error: 'That file is not a PDF' }, 415);
+  const safe = f.name.replace(/[^\w.\-]+/g, '_').slice(-80) || 'upload.pdf';
+  const key = `uploads/${id}/${safe}`;
+  await c.env.MEDIA.put(key, f.stream(), { httpMetadata: { contentType: 'application/pdf' }, customMetadata: { name: f.name } });
+  await c.env.DB.prepare(`UPDATE items SET file_key = ?, status = 'queued', status_detail = 'Reading your PDF', updated_at = ? WHERE id = ?`).bind(key, nowIso(), id).run();
+  await c.env.INGEST_QUEUE.send({ kind: 'ingest', itemId: id });
   return c.json({ ok: true });
 });
 
@@ -469,25 +523,34 @@ app.delete('/api/excerpts/:id', async (c) => {
 app.patch('/api/drafts/:id', async (c) => {
   const d = await c.env.DB.prepare('SELECT * FROM drafts WHERE id = ?').bind(c.req.param('id')).first<DraftRow>();
   if (!d) throw notFound();
-  const b = await body(c, z.object({ status: z.enum(['proposed', 'kept', 'cut']).optional(), text: z.string().min(1).max(2000).optional(), useCorrected: z.boolean().optional() }));
+  const b = await body(c, z.object({ status: z.enum(['proposed', 'kept', 'cut']).optional(), text: z.string().min(1).max(2000).optional(), reaction: z.string().max(2000).optional() }));
+  // The checker's rejections stay set aside; the editor never sees them.
+  if (d.status === 'rejected') return c.json({ error: 'The checker set this line aside' }, 409);
   let bodyJson = parseJson<Record<string, unknown>>(d.body, {});
   let status = b.status ?? d.status;
   let style = null as ReturnType<typeof checkStyle> | null;
-  if (d.kind === 'marginal') {
+  const checked = d.kind === 'marginal' || d.kind === 'idea';
+  if (checked) {
     const m = bodyJson as unknown as MarginalBody;
-    const newText = b.useCorrected && m.corrected ? m.corrected : b.text;
-    if (newText !== undefined && newText !== m.text) {
-      style = checkStyle(newText);
-      bodyJson = { ...m, text: newText.trim(), edited: true, verdict: 'unchecked', reason: 'Changed; checking again', corrected: undefined };
+    if (b.text !== undefined && b.text.trim() !== m.text) {
+      style = checkStyle(b.text);
+      bodyJson = { ...m, text: b.text.trim(), edited: true, verdict: 'unchecked', reason: 'Changed; checking again' };
       status = 'edited';
     }
-  } else if (d.kind === 'title' && b.text !== undefined) {
+  }
+  // The editor's own line on an idea: stored verbatim, never checked by a model, and it keeps the
+  // idea (an idea worth reacting to is one to print).
+  if (d.kind === 'idea' && b.reaction !== undefined) {
+    bodyJson = { ...bodyJson, reaction: b.reaction.trim() || undefined };
+    if (b.reaction.trim() && status === 'proposed') status = 'kept';
+  }
+  if (d.kind === 'title' && b.text !== undefined) {
     style = checkStyle(b.text);
     bodyJson = { ...bodyJson, text: b.text.trim() };
   }
   await c.env.DB.prepare('UPDATE drafts SET body = ?, status = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify(bodyJson), status, nowIso(), d.id).run();
   // An edited note is checked against its evidence again before it can ship.
-  if (d.kind === 'marginal' && d.item_id && bodyJson.verdict === 'unchecked') {
+  if (checked && d.item_id && bodyJson.verdict === 'unchecked') {
     await judgeNotes(c.env, d.item_id, d.id).catch((e) => console.error(JSON.stringify({ event: 'rejudge-failed', error: errorMessage(e) })));
   }
   if (d.item_id) await runChecks(c.env, d.item_id, { links: false });

@@ -189,6 +189,7 @@ export function extractorLabel(x: string): string {
     oembed: 'the post',
     description: 'video description',
     browser: 'rendered in a browser, then extracted',
+    transcript: 'your transcript',
   };
   return m[x] ?? x;
 }

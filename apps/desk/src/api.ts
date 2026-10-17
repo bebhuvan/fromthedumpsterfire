@@ -67,7 +67,10 @@ export interface TrayItem {
   archived: number;
   capture_text: string | null;
   haul_number: number | null;
-  pending: number;
+  /** 1 when an excerpt is chosen. */
+  has_excerpt: number;
+  /** Big ideas the editor ticked. */
+  kept_ideas: number;
   checks: string | null;
 }
 
@@ -94,6 +97,8 @@ export interface Item {
   media: string | null;
   plate: string | null;
   locator: string | null;
+  start_at?: string | null;
+  start_note?: string | null;
   archived: number;
   captured_at: string;
   updated_at: string;
@@ -131,6 +136,8 @@ export interface Excerpt {
   origin: 'editor' | 'machine';
   chosen: number;
   verified: number;
+  /** The machine's one line on why it proposed this passage. */
+  why?: string | null;
 }
 
 export interface MarginalBody {
@@ -138,16 +145,25 @@ export interface MarginalBody {
   cite: { kind: 'source'; quote: string; start: number; end: number } | { kind: 'wiki'; title: string; cardId: string };
   verdict?: 'supported' | 'partly' | 'unsupported' | 'unchecked';
   reason?: string;
-  corrected?: string;
+  /** Ideas: where the quoted passage sits. */
+  locator?: string;
+  /** Ideas: the editor's own line on it. */
+  reaction?: string;
   edited?: boolean;
+}
+
+export interface TitleBody extends Title {
+  /** The angle a machine option was drafted from (turn, fact, question, lift, plain). */
+  angle?: string;
 }
 
 export interface Draft<B = unknown> {
   id: string;
   item_id: string;
-  kind: 'title' | 'marginal' | 'card';
+  kind: 'title' | 'marginal' | 'idea' | 'card';
   body: B;
-  status: 'proposed' | 'kept' | 'cut' | 'edited';
+  /** 'rejected': set aside by the checker; never shown. */
+  status: 'proposed' | 'kept' | 'cut' | 'edited' | 'rejected';
   model: string | null;
   position: number;
 }

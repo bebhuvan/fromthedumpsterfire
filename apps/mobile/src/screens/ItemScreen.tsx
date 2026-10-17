@@ -4,7 +4,7 @@
 import { memo, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
-import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
+import { haulSlug, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
 import { fonts, typeColor, usePalette } from '@/theme';
 import { joinMeta, minutes } from '@/lib/format';
@@ -68,6 +68,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
   return (
     <Screen header={header}>
       {body[form]}
+      <Ideas item={item} />
       {form === 'paper' ? null : <SeeAlso haul={haul} item={item} />}
       <Source item={item} />
       <Actions haul={haul} item={item} />
@@ -116,6 +117,52 @@ function Notes({ item, style }: { item: Item; style?: object }) {
           <Meta style={{ marginTop: 4, fontSize: 11.5 }}>{m.cite}</Meta>
         </View>
       ))}
+    </View>
+  );
+}
+
+/** The big ideas of a long item: numbered in ember, the machine's sentence, then the source's words. */
+function Ideas({ item }: { item: Item }) {
+  const p = usePalette();
+  if (!item.ideas?.length) return null;
+  return (
+    <View style={{ marginTop: 32 }}>
+      <Apparatus style={{ marginBottom: 10 }}>The big ideas</Apparatus>
+      {item.ideas.map((m, i) => (
+        <View key={i} style={[styles.idea, { borderTopColor: p.rule }, i === 0 && { borderTopWidth: 0, paddingTop: 0, marginTop: 0 }]}>
+          <Text style={[styles.ideaN, { color: p.ember }]}>{i + 1}</Text>
+          <View style={{ flex: 1 }}>
+            <Machine>{m.text}</Machine>
+            {m.quote ? <Text selectable style={[styles.ideaQ, { color: p.ink }]}>“{m.quote}”</Text> : null}
+            {m.locator ? <Meta style={{ marginTop: 4, fontSize: 11.5 }}>{m.locator}</Meta> : null}
+            {m.reaction ? (
+              <Note style={{ marginTop: 8, fontSize: 17, lineHeight: 25 }}>
+                {m.reaction} <Text style={{ color: p.ember }}>B.</Text>
+              </Note>
+            ) : null}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** The editor's "start here" for a long item: the moment (opens there when the platform allows) and their words. */
+function StartHereLine({ item }: { item: Item }) {
+  const p = usePalette();
+  const s = item.startHere;
+  if (!s) return null;
+  return (
+    <View style={{ marginTop: 22 }}>
+      <Apparatus style={{ marginBottom: 4 }}>Start here</Apparatus>
+      <Pressable accessibilityRole={s.url ? 'link' : undefined} disabled={!s.url} onPress={() => s.url && openSource(s.url, p)}>
+        <Text style={[styles.startAt, { color: p.ink, textDecorationLine: s.url ? 'underline' : 'none', textDecorationColor: p.ember }]}>{s.at}</Text>
+      </Pressable>
+      {s.note ? (
+        <Note style={{ marginTop: 4, fontSize: 17, lineHeight: 25 }}>
+          {s.note} <Text style={{ color: p.ember }}>B.</Text>
+        </Note>
+      ) : null}
     </View>
   );
 }
@@ -170,6 +217,7 @@ function Essay({ item, haul }: { item: Item; haul: Haul }) {
       <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 0.94, letterSpacing: -size * 0.03 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
       <Why item={item} heading={null} style={{ marginTop: 22 }} />
+      <StartHereLine item={item} />
       {item.plate ? <PlateView item={item} /> : null}
       {item.excerpt ? (
         <View style={{ marginTop: 30 }}>
@@ -200,6 +248,7 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
         <Title title={item.title} size={titleText(item).length > 30 ? 30 : 36} style={{ textAlign: 'center', marginTop: 14 }} />
         <Text style={[styles.byline, { color: p.ink, textAlign: 'center' }]}>{item.creator}</Text>
       </View>
+      <StartHereLine item={item} />
       {item.excerpt ? (
         <View style={{ marginTop: 26, paddingHorizontal: 8 }}>
           <Text accessibilityRole="header" style={[styles.abstractHead, { color: p.ink }]}>{item.excerpt.locator === 'Abstract' ? 'Abstract' : item.excerpt.locator}</Text>
@@ -229,6 +278,7 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
       <MetaLine item={item} extra={label} />
       <Title title={item.title} size={titleText(item).length > 26 ? 38 : 46} style={{ marginTop: 14 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}, {item.source.name}</Text>
+      <StartHereLine item={item} />
       <View style={{ marginTop: 26, gap: 20 }}>
         <View style={styles.tl}>
           <Text style={[styles.when, { color: p.ink2 }]}>{item.source.date}</Text>
@@ -375,6 +425,7 @@ function Page({ item, haul }: { item: Item; haul: Haul }) {
       <MetaLine item={item} />
       <Title title={item.title} size={36} style={{ marginTop: 14 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
+      <StartHereLine item={item} />
       {item.excerpt ? (
         <View style={[styles.bookPage, { borderColor: p.rule }]}>
           <Text style={[styles.bookHead, { color: p.ink2 }]}>{item.source.name.toUpperCase()}</Text>
@@ -442,7 +493,7 @@ function SeeAlso({ haul, item, bare }: { haul: Haul; item: Item; bare?: boolean 
 
 function Source({ item }: { item: Item }) {
   const p = usePalette();
-  const label = item.media ? item.media.label : item.type === 'rabbit-hole' ? 'Go down the hole' : 'Read the original';
+  const label = sourceAction(item);
   return <Action label={label} external onPress={() => openSource(item.media?.url ?? item.source.url, p)} style={{ marginTop: 34 }} />;
 }
 
@@ -504,6 +555,10 @@ const styles = StyleSheet.create({
   whyHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   pull: { fontFamily: fonts.displayRegular, fontSize: 25, lineHeight: 34, marginTop: 8 },
   note: { paddingTop: 12, marginTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
+  idea: { flexDirection: 'row', gap: 12, paddingTop: 16, marginTop: 16, borderTopWidth: StyleSheet.hairlineWidth },
+  ideaN: { fontFamily: fonts.sansMedium, fontSize: 14.5, lineHeight: 22.5, minWidth: 14 },
+  ideaQ: { fontFamily: fonts.text, fontSize: 16, lineHeight: 24, marginTop: 8 },
+  startAt: { fontFamily: fonts.sansMedium, fontSize: 22, lineHeight: 28, fontVariant: ['tabular-nums'] },
   textBtn: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
   textBtnText: { fontFamily: fonts.sansMedium, fontSize: 13, textDecorationLine: 'underline' },
   caption: { fontFamily: fonts.textItalic, fontSize: 15, lineHeight: 21, marginTop: 10 },

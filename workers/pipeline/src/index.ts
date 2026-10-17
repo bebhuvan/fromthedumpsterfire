@@ -120,7 +120,7 @@ export class ItemWorkflow extends WorkflowEntrypoint<Env, ItemWorkflowParams> {
       }
 
       const read = await step.do('read', RETRY, () => guard(async () => (await mark('read'), readItem(env, itemId))));
-      await step.do('wiki', RETRY, () => guard(async () => (await mark('wiki'), resolveWiki(env, itemId, read.queries))));
+      await step.do('wiki', RETRY, () => guard(async () => (await mark('wiki'), resolveWiki(env, itemId, read.queries, 4, read.why ?? {}))));
       // Plates and connections are helpers: a failure there never fails the item.
       await step.do('plate', RETRY, () =>
         guard(async () => {

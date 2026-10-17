@@ -1,0 +1,19 @@
+---
+// The editor's "start here" for a long item: the moment (linked when the platform allows) and a few
+// words of their own. One line, near the top, in the editor's serif.
+import type { StartHere } from '@fdf/shared/haul';
+import { safeHref } from '../lib/site';
+
+interface Props {
+  start: StartHere;
+}
+const { start } = Astro.props;
+const href = start.url ? safeHref(start.url) : undefined;
+---
+<section class="wrap g start" aria-labelledby="start-h">
+  <p class="m mh" id="start-h">Start here</p>
+  <p class="c start-l">
+    {href ? <a class="start-at" href={href} rel="noopener noreferrer" target="_blank">{start.at}<span class="sr"> (opens in a new tab)</span></a> : <span class="start-at">{start.at}</span>}
+    {start.note ? <span class="ed start-n">{start.note} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></span> : null}
+  </p>
+</section>

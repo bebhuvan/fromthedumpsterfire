@@ -508,3 +508,24 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .topics ul { display: grid; gap: 6px; padding: 0 0 14px 1.2em; font-size: 17px; }
 
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* The big ideas of a long item: a numbered list, machine sentence then the source's words. */
+.ideas-l { margin: 0; padding: 0; list-style: none; counter-reset: idea; }
+.ideas-l > li { counter-increment: idea; position: relative; padding-left: 2.2em; }
+.ideas-l > li + li { margin-top: 28px; }
+.ideas-l > li::before { content: counter(idea); position: absolute; left: 0; top: 0.05em; font: 500 15px/1.5 var(--sans); color: var(--ember); font-variant-numeric: tabular-nums; }
+.idea-t { margin: 0; font-size: 17px; }
+.idea-q { margin: 10px 0 0; font: 400 17px/1.55 var(--serif); color: var(--ink); }
+.idea-q p { margin: 0; }
+.idea-q p::before { content: '“'; }
+.idea-q p::after { content: '”'; }
+.idea-loc { margin-top: 4px; font: 400 13px/1.4 var(--sans); color: var(--ink2); }
+/* An excerpt of two paragraphs keeps its break. */
+blockquote > p + p { margin-top: 0.65em; }
+
+/* The editor's reaction to an idea, and their "start here". */
+.idea-r { margin: 10px 0 0; font-size: 17px; line-height: 1.5; }
+.start { padding-block: 18px 6px; }
+.start-l { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin: 0; }
+.start-at { font: 500 22px/1.2 var(--sans); font-variant-numeric: tabular-nums; color: var(--ink); text-decoration-color: var(--ember); text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; }
+.start-n { font-size: 19px; }

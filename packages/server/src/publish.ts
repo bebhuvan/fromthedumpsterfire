@@ -20,6 +20,10 @@ import { dateIst, nowIso, parseJson, sha256Hex, slugify } from './util';
 import { plateForBundle, type PlateRow } from './plates';
 import { formatOfNote } from './voice';
 import { threadsForHaul } from './connect';
+import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
+
+/** Sources that are transcripts of speech, where punctuation decides whether a quote is printable. */
+const TRANSCRIPTS = new Set(['captions-auto', 'captions', 'transcript', 'whisper']);
 
 export const INDEX_PATH = 'hauls/index.json';
 
@@ -132,8 +136,22 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind = 'marginal' AND status IN ('kept', 'edited') ORDER BY position`).bind(it.id).all<DraftRow>()
     ).results.map((d) => parseJson<MarginalBody | null>(d.body, null)).filter((b): b is MarginalBody => Boolean(b));
     for (const n of notes) if (n.verdict !== 'supported') problems.push({ itemId: it.id, itemTitle: label, message: `a kept note is not confirmed by its source ("${n.text.slice(0, 50)}…")` });
-    const waiting = await env.DB.prepare(`SELECT COUNT(*) AS n FROM drafts WHERE item_id = ? AND kind = 'marginal' AND status = 'proposed'`).bind(it.id).first<{ n: number }>();
-    if (waiting?.n) problems.push({ itemId: it.id, itemTitle: label, message: `${waiting.n} machine note${waiting.n === 1 ? '' : 's'} still waiting on you (keep or cut)` });
+    // Machine notes and ideas publish only when the editor ticked them; the rest are left out.
+    const src = await env.DB.prepare('SELECT text, extractor FROM sources WHERE item_id = ?').bind(it.id).first<{ text: string; extractor: string }>();
+    // Transcripts without punctuation (older auto-captions, fetched or uploaded) keep every "uh":
+    // ideas cite the moment instead of printing the words.
+    const roughText = Boolean(src && TRANSCRIPTS.has(src.extractor) && !isPunctuated(src.text));
+    const ideas = (
+      await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind = 'idea' AND status IN ('kept', 'edited') ORDER BY position`).bind(it.id).all<DraftRow>()
+    ).results
+      .map((d) => parseJson<MarginalBody | null>(d.body, null))
+      .filter((b): b is MarginalBody => Boolean(b))
+      // In the order the piece makes them, whenever each was drafted.
+      .sort((a, b) => (a.cite.kind === 'source' ? a.cite.start : 0) - (b.cite.kind === 'source' ? b.cite.start : 0));
+    for (const n of ideas) {
+      if (n.verdict !== 'supported') problems.push({ itemId: it.id, itemTitle: label, message: `a kept idea is not confirmed by its source ("${n.text.slice(0, 50)}…")` });
+      if (n.cite.kind !== 'source' || !src || !isVerbatimAt(src.text, n.cite, n.cite.quote)) problems.push({ itemId: it.id, itemTitle: label, message: `a kept idea's quotation no longer matches the source ("${n.text.slice(0, 50)}…")` });
+    }
     const cards = (await env.DB.prepare(`SELECT * FROM wiki_cards WHERE item_id = ? AND status = 'kept' ORDER BY position`).bind(it.id).all<WikiRow>()).results;
     const conns = (
       await env.DB.prepare('SELECT c.*, i.title AS to_title, i.title_choice AS to_choice FROM connections c JOIN items i ON i.id = c.to_item_id WHERE c.item_id = ?').bind(it.id).all<{
@@ -172,6 +190,17 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       ...(rhyme ? { rhyme } : {}),
       ...(plate ? { plate } : {}),
       marginalia: notes.map((n) => ({ text: n.text, cite: citeLabel(n, it) })),
+      ...(ideas.length
+        ? {
+            ideas: ideas.map((n) => ({
+              text: n.text,
+              quote: n.cite.kind === 'source' && !roughText ? n.cite.quote.replace(/\s*\n\s*/g, ' ') : '',
+              locator: n.locator ?? '',
+              ...(n.reaction?.trim() ? { reaction: n.reaction.trim() } : {}),
+            })),
+          }
+        : {}),
+      ...(it.start_at?.trim() ? { startHere: startHereFor(it) } : {}),
       wiki: cards.map((c) => ({ title: c.title, summary: c.summary, url: c.url })),
       connections: conns.map((c) => ({
         type: c.type,
@@ -338,4 +367,20 @@ async function rhymeFor(env: Env, it: ItemRow, label: string, problems: PublishP
   if (!bridge) problems.push({ itemId: it.id, itemTitle: label, message: 'this Rhyme needs a bridge' });
   else if (!checkStyle(bridge).ok) problems.push({ itemId: it.id, itemTitle: label, message: 'the bridge fails the house style check' });
   return out.then && out.now ? { then: out.then, now: out.now, bridge } : undefined;
+}
+
+/** The editor's "start here", with a link to that moment on YouTube (other hosts have no deep link). */
+export function startHereFor(it: Pick<ItemRow, 'start_at' | 'start_note' | 'media' | 'url' | 'canonical_url'>): { at: string; note?: string; url?: string } {
+  const at = it.start_at!.trim();
+  const note = it.start_note?.trim();
+  const secs = startSeconds(at);
+  const media = parseJson<{ url?: string } | null>(it.media, null);
+  const base = media?.url ?? it.canonical_url ?? it.url ?? '';
+  let url: string | undefined;
+  if (secs != null && /^https:\/\/(www\.)?youtube\.com\/watch\?/.test(base)) {
+    const u = new URL(base);
+    u.searchParams.set('t', `${secs}s`);
+    url = u.toString();
+  }
+  return { at, ...(note ? { note } : {}), ...(url ? { url } : {}) };
 }

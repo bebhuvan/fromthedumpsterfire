@@ -19,6 +19,7 @@ import { generateJson } from './models/router';
 import { ocrSchema } from './prompts';
 import { OCR_SYSTEM } from './prompts';
 import { FatalError, readingMinutes, toBase64, wordCount } from './util';
+import { isPunctuated } from '@fdf/shared/quoting';
 
 export interface SourceMeta {
   pages?: number[];
@@ -28,6 +29,8 @@ export interface SourceMeta {
   description?: string;
   image?: string;
   captionsAuto?: boolean;
+  /** Auto-captions without punctuation (older YouTube uploads). */
+  roughCaptions?: boolean;
   note?: string;
 }
 
@@ -159,6 +162,13 @@ async function fromPdfBytes(env: Env, bytes: Uint8Array, url: string | null, nam
 
 export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOutcome> {
   const url = item.url ?? '';
+  // A PDF the editor uploaded to an item captured by link (a paper behind a download block) is
+  // read in place of fetching the link; the link stays as the item's source.
+  if (item.file_key && item.kind !== 'image' && item.kind !== 'pdf') {
+    const obj = await env.MEDIA.get(item.file_key);
+    if (!obj) throw new FatalError('The uploaded PDF is missing from storage');
+    return fromPdfBytes(env, new Uint8Array(await obj.arrayBuffer()), item.url, obj.customMetadata?.name ?? 'upload.pdf');
+  }
   switch (item.kind) {
     case 'text': {
       const text = (item.capture_text ?? '').trim();
@@ -306,12 +316,24 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
         canonical_url: `https://www.youtube.com/watch?v=${yt.id}`,
         locator: 'Transcript',
       };
+      // Captions are instant and free, so they are always used when they exist. YouTube punctuates
+      // auto-captions on recent uploads; older ones have no punctuation and keep every "uh". Those
+      // are marked, and their quotes print as times only. (Whisper on the audio is not a fix here:
+      // YouTube's stream links refuse a Workflow step that runs from another address, 403, seen
+      // 2026-10-17.)
       if (yt.captions) {
+        const rough = yt.captions.auto && !isPunctuated(yt.captions.text);
         return {
           kind: 'text',
           text: yt.captions.text,
           extractor: yt.captions.auto ? 'captions-auto' : 'captions',
-          meta: { times: yt.captions.times, captionsAuto: yt.captions.auto, description: yt.description.slice(0, 2000) },
+          meta: {
+            times: yt.captions.times,
+            captionsAuto: yt.captions.auto,
+            roughCaptions: rough || undefined,
+            description: yt.description.slice(0, 2000),
+            ...(rough ? { note: 'Auto-captions without punctuation: excerpts read rough, and ideas print with their time instead of the caption text.' } : {}),
+          },
           fields,
         };
       }
@@ -360,3 +382,4 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
       return fromArticleUrl(env, url);
   }
 }
+

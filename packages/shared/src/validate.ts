@@ -175,6 +175,27 @@ function checkItem(c: Collector, item: Item, p: string) {
       c.machineProse(m.text, `${mp}.text`);
     });
   }
+  if (item.ideas !== undefined && c.arr(item.ideas, `${p}.ideas`)) {
+    item.ideas.forEach((m, k) => {
+      const mp = `${p}.ideas[${k}]`;
+      if (!c.obj(m, mp)) return;
+      c.str(m.text, `${mp}.text`);
+      // The quote is the source's evidence for the idea. Auto-generated captions are too rough to
+      // print, so there the idea cites its moment (the locator) instead; one of the two is required.
+      c.str(m.quote, `${mp}.quote`, { nonEmpty: false });
+      c.str(m.locator, `${mp}.locator`, { nonEmpty: false });
+      const quoted = typeof m.quote === 'string' && m.quote.trim();
+      const placed = typeof m.locator === 'string' && m.locator.trim();
+      if (!quoted && !placed) c.err(`${mp}.quote`, 'citation', 'every idea quotes the source or says where in it');
+      c.machineProse(m.text, `${mp}.text`);
+      c.str(m.reaction, `${mp}.reaction`, { optional: true });
+    });
+  }
+  if (item.startHere !== undefined && c.obj(item.startHere, `${p}.startHere`)) {
+    c.str(item.startHere.at, `${p}.startHere.at`);
+    c.str(item.startHere.note, `${p}.startHere.note`, { optional: true });
+    if (item.startHere.url !== undefined) c.https(item.startHere.url, `${p}.startHere.url`);
+  }
   if (c.arr(item.wiki, `${p}.wiki`)) {
     item.wiki.forEach((w, k) => {
       const wp = `${p}.wiki[${k}]`;

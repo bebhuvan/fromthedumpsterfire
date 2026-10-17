@@ -47,5 +47,9 @@ Not clustering into buckets. Typed, justified edges between ideas:
 
 ## Rights
 
-Short excerpts, always linked to the original. Podcasts timestamped, not clipped. Official embeds for
-posts. Never republish full text.
+Excerpts of up to two paragraphs, never more than about a seventh of the piece (250 words at most),
+always beside the editor's note and linked to the original; long talks, podcasts and papers may also
+carry their big ideas, each with a short verbatim passage and where it is said. Podcasts timestamped,
+not clipped. Official embeds for posts. Never republish full text. Every link names the person who
+made the work. The guide is in `packages/shared/src/quoting.ts`; it warns, it does not block, so a
+public-domain text can be quoted at length.

@@ -146,6 +146,14 @@ describe('cross-site requests', () => {
     expect(checkCsrf(req('/api/capture', { method: 'POST', headers: { ...good, 'content-type': 'application/x-www-form-urlencoded' }, body: 'a=1' })).status).toBe(415);
     expect(checkCsrf(req('/api/notes', { method: 'POST', headers: { ...good, 'content-type': 'text/plain' }, body: 'x' })).status).toBe(415);
   });
+  it('takes multipart on an item file upload, and only there', () => {
+    const mp = { ...good, 'content-type': 'multipart/form-data; boundary=x' };
+    expect(checkCsrf(req('/api/items/it_01abc/file', { method: 'POST', headers: mp, body: '' })).ok).toBe(true);
+    expect(checkCsrf(req('/api/items/it_01abc/file', { method: 'POST', headers: good, body: '{}' })).status).toBe(415);
+    expect(checkCsrf(req('/api/items/it_01abc/file', { method: 'POST', headers: { ...mp, origin: 'https://evil.example' }, body: '' })).status).toBe(403);
+    expect(checkCsrf(req('/api/items/it_01abc/file/x', { method: 'POST', headers: mp, body: '' })).status).toBe(415);
+    expect(checkCsrf(req('/api/items/it_01abc', { method: 'PATCH', headers: mp, body: '' })).status).toBe(415);
+  });
   it('lets the share target in only as a same-origin or user-initiated navigation', () => {
     const mp = { 'content-type': 'multipart/form-data; boundary=x' };
     expect(checkCsrf(req('/share', { method: 'POST', headers: { ...mp, 'sec-fetch-site': 'none' }, body: '' })).ok).toBe(true);

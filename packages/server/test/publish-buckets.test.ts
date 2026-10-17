@@ -156,3 +156,89 @@ describe('item ids', () => {
     expect([itemSlug('Note'), itemSlug('Thread'), itemSlug('A note on threads')]).toEqual(['note-item', 'thread-item', 'a-note-on-threads']);
   });
 });
+
+describe('machine notes and ideas', () => {
+  async function line(env: TestEnv, id: string, item: string, kind: 'marginal' | 'idea', status: string, text: string, quote: string, verdict = 'supported', source = JEVONS) {
+    const start = source.indexOf(quote);
+    const body = { text, cite: { kind: 'source', quote, start, end: start + quote.length }, verdict, ...(kind === 'idea' ? { locator: 'at 4:53' } : {}) };
+    await env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?)`)
+      .bind(id, item, kind, JSON.stringify(body), status, NOW, NOW)
+      .run();
+  }
+
+  it('publishes only what the editor ticked; unticked lines neither block nor print', async () => {
+    const env = await seedHaul(makeEnv());
+    const q = 'The very contrary is the truth.';
+    await line(env, 'dr_note_unticked', 'it_jevons', 'marginal', 'proposed', 'Jevons wrote this in 1865.', q);
+    await line(env, 'dr_idea_kept', 'it_jevons', 'idea', 'kept', 'Jevons argues that cheaper coal power raises coal use.', q);
+    await line(env, 'dr_idea_unticked', 'it_jevons', 'idea', 'proposed', 'Jevons argues something else.', q);
+    await line(env, 'dr_idea_rejected', 'it_jevons', 'idea', 'rejected', 'Jevons says coal is infinite.', q, 'unsupported');
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+
+    const r = await publishHaul(env, 'hl_1');
+    expect(r.problems).toEqual([]);
+    expect(r.bundleErrors).toEqual([]);
+    const haul = (await (await env.FILES.get('hauls/001/v1/haul.json'))!.json()) as Haul;
+    const jev = haul.items[0]!;
+    expect(jev.marginalia).toEqual([]);
+    expect(jev.ideas).toEqual([{ text: 'Jevons argues that cheaper coal power raises coal use.', quote: q, locator: 'at 4:53' }]);
+  });
+
+  it('cites the moment, not the caption text, for unpunctuated auto-captions; refuses an unconfirmed kept idea', async () => {
+    const env = await seedHaul(makeEnv());
+    // Older auto-captions: no punctuation anywhere.
+    const captions = 'so it is wholly a confusion of ideas to suppose that the economical use of fuel is equivalent to a diminished consumption uh the very contrary is the truth and you know this is the thing people miss '.repeat(4);
+    const q = 'the very contrary is the truth';
+    // An uploaded transcript of old auto-captions is just as rough as fetched ones.
+    await env.DB.prepare(`UPDATE sources SET extractor = 'transcript', text = ? WHERE item_id = 'it_jevons'`).bind(captions).run();
+    await line(env, 'dr_idea_kept', 'it_jevons', 'idea', 'kept', 'Jevons argues that cheaper coal power raises coal use.', q, 'supported', captions);
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const a = await assembleHaul(env, 'hl_1');
+    expect(a.problems).toEqual([]);
+    expect(a.bundleErrors).toEqual([]);
+    expect(a.haul.items[0]!.ideas).toEqual([{ text: 'Jevons argues that cheaper coal power raises coal use.', quote: '', locator: 'at 4:53' }]);
+
+    await line(env, 'dr_idea_partly', 'it_jevons', 'idea', 'edited', 'Jevons argues that coal will last forever.', q, 'partly', captions);
+    const b = await assembleHaul(env, 'hl_1');
+    expect(b.problems.map((p) => p.message)).toEqual([expect.stringMatching(/kept idea is not confirmed/)]);
+  });
+});
+
+describe('the editor on a long item', () => {
+  it('publishes the editor’s take on an idea and a start-here that links to the moment', async () => {
+    const env = await seedHaul(makeEnv());
+    const q = 'The very contrary is the truth.';
+    const start = JEVONS.indexOf(q);
+    const body = { text: 'Jevons argues that cheaper coal power raises coal use.', cite: { kind: 'source', quote: q, start, end: start + q.length }, verdict: 'supported', locator: 'at 1:02:14', reaction: '  The line I keep coming back to.  ' };
+    await env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, position, created_at, updated_at) VALUES ('dr_i', 'it_jevons', 'idea', ?, 'kept', 0, ?, ?)`).bind(JSON.stringify(body), NOW, NOW).run();
+    await env.DB.prepare(`UPDATE items SET type = 'video', start_at = '1:02:14', start_note = 'Where it turns.', media = ? WHERE id = 'it_jevons'`)
+      .bind(JSON.stringify({ kind: 'video', url: 'https://www.youtube.com/watch?v=abcdefghijk', label: 'Watch · 2:10:00' }))
+      .run();
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const a = await assembleHaul(env, 'hl_1');
+    expect(a.problems).toEqual([]);
+    expect(a.bundleErrors).toEqual([]);
+    const it0 = a.haul.items[0]!;
+    expect(it0.ideas?.[0]?.reaction).toBe('The line I keep coming back to.');
+    expect(it0.startHere).toEqual({ at: '1:02:14', note: 'Where it turns.', url: 'https://www.youtube.com/watch?v=abcdefghijk&t=3734s' });
+  });
+});
+
+describe('a new reading replaces unticked Wikipedia cards', () => {
+  it('keeps ticked cards and cards a kept note cites, and clears the rest', async () => {
+    const { resolveWiki } = await import('../src/steps');
+    const env = await seedHaul(makeEnv());
+    const card = (id: string, status: string) =>
+      env.DB.prepare(`INSERT INTO wiki_cards (id, item_id, query, title, summary, extract, url, status, position, created_at) VALUES (?, 'it_jevons', 'q', ?, 's', 'e', ?, ?, 0, ?)`)
+        .bind(id, id, `https://en.wikipedia.org/wiki/${id}`, status, NOW)
+        .run();
+    await card('wk_kept', 'kept');
+    await card('wk_cited', 'proposed');
+    await card('wk_stale', 'proposed');
+    const note = { text: 'A note.', cite: { kind: 'wiki', title: 'wk_cited', cardId: 'wk_cited' }, verdict: 'supported' };
+    await env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, position, created_at, updated_at) VALUES ('dr_n', 'it_jevons', 'marginal', ?, 'kept', 0, ?, ?)`).bind(JSON.stringify(note), NOW, NOW).run();
+    await resolveWiki(env, 'it_jevons', [], 4);
+    const left = (await env.DB.prepare(`SELECT id FROM wiki_cards WHERE item_id = 'it_jevons' ORDER BY id`).all<{ id: string }>()).results.map((r) => r.id);
+    expect(left).toEqual(['wk_cited', 'wk_kept']);
+  });
+});

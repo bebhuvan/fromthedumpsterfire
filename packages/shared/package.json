@@ -12,6 +12,7 @@
     "./verbatim": "./src/verbatim.ts",
     "./cleanup": "./src/cleanup.ts",
     "./detect": "./src/detect.ts",
+    "./quoting": "./src/quoting.ts",
     "./fixtures/haul-001.json": "./fixtures/haul-001.json",
     "./fixtures/index.json": "./fixtures/index.json"
   },

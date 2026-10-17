@@ -83,6 +83,26 @@ export interface Marginal {
   cite: string;
 }
 
+/**
+ * One of the big ideas of a long talk, podcast or paper, in the machine's voice, with the passage
+ * where the source states it (verbatim) and where to find it. Optional; older bundles have none.
+ */
+export interface Idea {
+  text: string;
+  quote: string;
+  locator: string;
+  /** The editor's own line on this idea, verbatim (added 2026-10-17). */
+  reaction?: string;
+}
+
+/** Where to start a long piece, chosen by the editor: a time or page, their few words, a deep link. */
+export interface StartHere {
+  at: string;
+  note?: string;
+  /** A link to that moment, when the platform has one (YouTube's t=). */
+  url?: string;
+}
+
 export interface WikiCard {
   title: string;
   summary: string;
@@ -127,6 +147,10 @@ export interface Item {
   media?: Media;
   plate?: Plate;
   marginalia: Marginal[];
+  /** Big ideas, for long items (added 2026-10-17). */
+  ideas?: Idea[];
+  /** The editor's "start here" for a long item (added 2026-10-17). */
+  startHere?: StartHere;
   wiki: WikiCard[];
   connections: Connection[];
 }
@@ -167,3 +191,23 @@ export interface Haul {
 }
 
 export const haulSlug = (n: number) => String(n).padStart(3, '0');
+
+/**
+ * The link to the original, naming the person who made it: "Read Amy Scarpignato in The
+ * Conversation", "Watch Andrej Karpathy on YouTube · 59:48". The house rule is to name people,
+ * never only link them. A rabbit hole is Wikipedia's, so it keeps its own invitation.
+ */
+export function sourceAction(item: Pick<Item, 'type' | 'creator' | 'source' | 'media' | 'title'>): string {
+  if (item.type === 'rabbit-hole') return 'Go down the hole';
+  const who = item.creator.trim();
+  const where = item.source.name.trim();
+  const titled = [item.title.text, item.title.italic].filter(Boolean).join(' ').trim();
+  const place = where && where !== titled && where !== who ? where : '';
+  // The media label carries a duration ("Watch · 59:48"); keep it after the name.
+  const dur = item.media?.label.match(/·\s*(.+)$/)?.[1];
+  const media = item.media?.kind;
+  const verb = media === 'video' || item.type === 'video' || item.type === 'talk' ? 'Watch' : media === 'audio' || item.type === 'podcast' ? 'Listen to' : 'Read';
+  const prep = verb === 'Read' ? 'in' : 'on';
+  const subject = who || (verb === 'Read' ? 'the original' : 'it');
+  return [`${verb} ${subject}${place ? ` ${prep} ${place}` : ''}`, dur].filter(Boolean).join(' · ');
+}

@@ -1,0 +1,33 @@
+---
+// The big ideas of a long talk, podcast or paper. Each idea is the machine's sentence (blue sans),
+// followed by the passage where the source says it, in the source's own words (serif), and where
+// to find it, then the editor's own line on it when there is one (italic serif, signed). Numbered,
+// never boxed.
+import type { Idea } from '@fdf/shared/haul';
+
+interface Props {
+  ideas: Idea[];
+}
+const { ideas } = Astro.props;
+---
+{ideas.length ? (
+  <section class="wrap g row ideas" aria-labelledby="ideas-h">
+    <p class="m mh" id="ideas-h">The big ideas</p>
+    <ol class="c ideas-l">
+      {ideas.map((idea) => (
+        <li>
+          <p class="machine idea-t"><span class="sr">The machine: </span>{idea.text}</p>
+          {idea.quote ? (
+            <blockquote class="idea-q">
+              <p>{idea.quote}</p>
+              {idea.locator ? <footer class="idea-loc">{idea.locator}</footer> : null}
+            </blockquote>
+          ) : idea.locator ? (
+            <p class="idea-loc">{idea.locator}</p>
+          ) : null}
+          {idea.reaction ? <p class="ed idea-r">{idea.reaction} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p> : null}
+        </li>
+      ))}
+    </ol>
+  </section>
+) : null}

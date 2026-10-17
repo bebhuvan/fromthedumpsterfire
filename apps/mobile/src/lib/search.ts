@@ -31,6 +31,7 @@ function fields(item: Item): Field[] {
     { text: item.excerpt?.text ?? '', weight: 1.5, snippet: true },
     { text: item.rhyme ? `${item.rhyme.then.quote} ${item.rhyme.now.quote}` : '', weight: 1.5, snippet: true },
     { text: item.marginalia.map((m) => m.text).join(' '), weight: 1, snippet: true },
+    { text: (item.ideas ?? []).map((m) => m.text).join(' '), weight: 1, snippet: true },
     { text: item.connections.map((c) => `${c.title} ${c.note}`).join(' '), weight: 1, snippet: true },
   ];
 }

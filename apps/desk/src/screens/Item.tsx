@@ -1,12 +1,15 @@
-// One item under review: the source on one side, the apparatus on the other. The editor's words
-// in serif, the machine's in blue sans, and the checks that gate publishing at the end.
+// One item under review. The source on the left; on the right, the work in the order the editor
+// does it: why it's here, the excerpt (and the big ideas of a long piece), the title, the notes and
+// further reading to include, a plate, and what is still missing. Everything else sits under More.
+// The editor's words in serif, the machine's in blue sans.
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { checkStyle } from '@fdf/shared/style';
-import { typeLabel, type ContentType } from '@fdf/shared/tokens';
-import { api, displayTitle, type Draft, type Excerpt, type ItemDetail, type MarginalBody, type Note, type Title, type TrayItem, type WikiCard } from '../api';
-import { Link, navigate, safeHref, SaveNote, useAutosave, useKeys, useLoad, usePoll, useToast } from '../lib/core';
-import { ChecksPanel, NoteCompare, Spinner, TextArea, TypeSelect, VoiceNote } from '../ui/parts';
+import { excerptAdvice, isPunctuated } from '@fdf/shared/quoting';
+import { type ContentType } from '@fdf/shared/tokens';
+import { api, displayTitle, type Check, type Draft, type Excerpt, type ItemDetail, type MarginalBody, type Note, type Title, type TitleBody, type TrayItem, type WikiCard } from '../api';
+import { navigate, safeHref, SaveNote, useAutosave, useKeys, useLoad, usePoll, useToast } from '../lib/core';
+import { ChecksPanel, deskTypeForm, deskTypeLabel, NoteCompare, Spinner, TextArea, TypeSelect, VoiceNote } from '../ui/parts';
 import { Reader, type Selection } from './Reader';
 import { TrayList } from './Tray';
 import { PlatesSection } from './Plates';
@@ -21,14 +24,18 @@ export function ItemReview({ id }: { id: string }) {
   return <ItemReviewInner id={id} />;
 }
 
+type Act = <T>(label: string, fn: () => Promise<T>, done?: string) => Promise<T | undefined>;
+
 function ItemReviewInner({ id }: { id: string }) {
   const toast = useToast();
   const { data, error, reload, setData } = useLoad(() => api.get<ItemDetail>(`/api/items/${id}`), [id]);
   const [busy, setBusy] = useState<string | null>(null);
+  // On a phone the work and the piece take turns on the screen; on a wide screen they sit side by side.
+  const [pane, setPane] = useState<'work' | 'piece'>('work');
   usePoll(reload, Boolean(data && IN_FLIGHT.test(data.item.status)), 3500);
   useKeys({ Escape: () => navigate('/') }, []);
 
-  async function act<T>(label: string, fn: () => Promise<T>, done?: string) {
+  const act: Act = async (label, fn, done) => {
     setBusy(label);
     try {
       const r = await fn();
@@ -40,7 +47,7 @@ function ItemReviewInner({ id }: { id: string }) {
     } finally {
       setBusy(null);
     }
-  }
+  };
 
   if (error) return <p className="tray-empty">Could not open this item: {error}</p>;
   if (!data) return <p className="tray-empty">Opening…</p>;
@@ -48,6 +55,13 @@ function ItemReviewInner({ id }: { id: string }) {
   const flight = IN_FLIGHT.test(item.status);
   const chosen = data.excerpts.find((e) => e.chosen) ?? null;
   const patch = (b: Record<string, unknown>) => api.patch<{ item: ItemDetail['item'] }>(`/api/items/${id}`, b).then((r) => setData({ ...data, item: r.item }));
+  const visible = (kind: string) => data.drafts.filter((d) => d.kind === kind && d.status !== 'rejected');
+  const at = (d: Draft<MarginalBody>) => (d.body.cite.kind === 'source' ? d.body.cite.start : 0);
+  const ideas = (visible('idea') as Draft<MarginalBody>[]).sort((a, b) => at(a) - at(b));
+  const notes = visible('marginal') as Draft<MarginalBody>[];
+  const setAside = data.drafts.filter((d) => (d.kind === 'idea' || d.kind === 'marginal') && d.status === 'rejected').length;
+  let n = 0;
+  const next = () => ++n;
 
   return (
     <div className="review" data-type={item.type}>
@@ -56,11 +70,9 @@ function ItemReviewInner({ id }: { id: string }) {
       </aside>
       <div>
         <header className="item-head">
-          <div className="row" style={{ gap: 10 }}>
-            <span className="label">
-              {[typeLabel[item.type], item.source_name, item.source_date, item.minutes ? `${item.minutes} min` : null].filter(Boolean).join(' · ')}
-            </span>
-          </div>
+          <span className="label">
+            {[deskTypeLabel[item.type], item.source_name, item.source_date, item.minutes ? `${item.minutes} min` : null].filter(Boolean).join(' · ')}
+          </span>
           <h1 className="display">{displayTitle(item)}</h1>
           {item.creator && <div className="serif" style={{ fontSize: 19, fontStyle: 'italic', marginTop: 6 }}>{item.creator}</div>}
           <div className="status-line">
@@ -84,22 +96,23 @@ function ItemReviewInner({ id }: { id: string }) {
                 Uploaded file ↗
               </a>
             )}
-            <button className="btn quiet small" disabled={!!busy || flight || !source} onClick={() => act('redraft', () => api.post(`/api/items/${id}/redraft`), 'Redrafting')}>
-              Redraft
-            </button>
-            <button className="btn quiet small" disabled={!!busy || flight} onClick={() => act('refetch', () => api.post(`/api/items/${id}/refetch`), 'Fetching again')}>
-              Fetch again
-            </button>
             <button className="btn quiet small" disabled={!!busy} onClick={() => act('archive', () => patch({ archived: !item.archived }), item.archived ? 'Back in the tray' : 'Archived')}>
               {item.archived ? 'Unarchive' : 'Archive'}
             </button>
           </div>
         </header>
 
-        <WhySection key={`why-${id}`} detail={data} onSaved={reload} />
+        <div className="pane-switch" role="tablist" aria-label="Show">
+          <button type="button" role="tab" aria-selected={pane === 'work'} onClick={() => setPane('work')}>
+            The work
+          </button>
+          <button type="button" role="tab" aria-selected={pane === 'piece'} onClick={() => (setPane('piece'), window.scrollTo({ top: 0 }))}>
+            The piece{source ? <span className="pane-n"> · {source.word_count.toLocaleString('en-IN')} words</span> : null}
+          </button>
+        </div>
 
-        <div className="cols">
-          <div>
+        <div className="cols" data-pane={pane}>
+          <div className="reader-col">
             {source ? (
               <Reader
                 source={source}
@@ -117,24 +130,102 @@ function ItemReviewInner({ id }: { id: string }) {
               </div>
             )}
             {source && (source.extractor === 'ocr' || source.extractor === 'pasted') && <SourceFix id={id} text={source.text} imageUrl={item.file_key ? `/api/items/${id}/file` : null} onSaved={reload} />}
+            {!flight && (
+              <div className="row" style={{ marginTop: 10, gap: 6 }}>
+                {(['talk', 'video', 'podcast'].includes(item.type) || item.status === 'failed') && <TranscriptBox id={id} hasSource={Boolean(source)} onSaved={reload} />}
+                {(['paper', 'essay', 'passage'].includes(item.type) || item.status === 'failed') && item.kind !== 'image' && <PdfUpload id={id} hasSource={Boolean(source)} onSaved={reload} />}
+              </div>
+            )}
           </div>
 
-          <div>
-            <TitleSection detail={data} onPatch={patch} />
-            <ExcerptSection detail={data} chosen={chosen} act={act} />
-            <MarginaliaSection drafts={data.drafts.filter((d) => d.kind === 'marginal') as Draft<MarginalBody>[]} act={act} />
-            <WikiSection itemId={id} cards={data.wiki} act={act} />
-            <PlatesSection target={{ kind: 'item', id }} plates={data.plates} decision={data.item.plate} onChange={reload} />
-            <ItemSuggestions itemId={id} suggestions={data.suggestions} onChange={reload} />
-            <DetailsSection detail={data} onPatch={patch} />
-            <ConnectionsSection detail={data} act={act} />
-            <div className="section">
-              <ChecksPanel checks={data.checks} busy={busy === 'check'} onRecheck={() => act('check', () => api.post(`/api/items/${id}/check`), 'Checked')} />
-            </div>
+          <div className="steps">
+            <Step n={next()} title="Why it's here" done={Boolean(item.why_text?.trim())} hint="Your words, typed or dictated. Never reworded.">
+              <WhySection key={`why-${id}`} detail={data} onSaved={reload} />
+            </Step>
+
+            <Step n={next()} title="The excerpt" done={Boolean(chosen)} hint={ideas.length ? 'Optional when you include big ideas below.' : 'The passage readers get. Up to two paragraphs.'}>
+              <ExcerptSection detail={data} chosen={chosen} act={act} />
+            </Step>
+
+            {ideas.length > 0 && (
+              <Step n={next()} title="The big ideas" done={ideas.some(isIn)} hint="For a long piece. Tick the ones to print, in the machine's voice, each with where it is said.">
+                <CheckedLines kind="idea" drafts={ideas} act={act} autoCaptions={Boolean(source && ['captions-auto', 'captions', 'transcript', 'whisper'].includes(source.extractor) && !isPunctuated(source.text))} />
+              </Step>
+            )}
+
+            {(ideas.length > 0 || ['talk', 'video', 'podcast', 'paper'].includes(item.type)) && (
+              <Step n={next()} title="Start here" optional done={Boolean(item.start_at)} hint="For a long piece: the moment a reader should begin, and a few words on why. Printed near the top.">
+                <StartHereSection detail={data} ideas={ideas} onPatch={patch} />
+              </Step>
+            )}
+
+            <Step n={next()} title="Title" done={Boolean(item.title_choice)} hint={item.title_choice ? undefined : 'The original title is used unless you pick another.'}>
+              <TitleSection detail={data} onPatch={patch} />
+            </Step>
+
+            <Step n={next()} title="Notes and further reading" optional hint="Only what you tick is printed. Each line was checked against its source.">
+              {notes.length > 0 ? <CheckedLines kind="marginal" drafts={notes} act={act} /> : <p className="small muted" style={{ margin: 0 }}>The machine found nothing that needed a note.</p>}
+              {setAside > 0 && <p className="small muted" style={{ margin: 0 }}>{setAside} more {setAside === 1 ? 'line was' : 'lines were'} set aside: the checker could not confirm {setAside === 1 ? 'it' : 'them'} from the source.</p>}
+              <WikiSection itemId={id} cards={data.wiki} act={act} />
+            </Step>
+
+            <Step n={next()} title="" optional bare>
+              <PlatesSection target={{ kind: 'item', id }} plates={data.plates} decision={data.item.plate} onChange={reload} title={<StepTitle n={n} title="Plate" optional />} />
+            </Step>
+
+            <Ready detail={data} chosen={chosen} ideasIn={ideas.filter(isIn).length} busy={busy === 'check'} onRecheck={() => act('check', () => api.post(`/api/items/${id}/check`), 'Checked')} />
+
+            <details className="section more">
+              <summary className="h2">More</summary>
+              <div className="stack" style={{ gap: 26, marginTop: 14 }}>
+                <DetailsSection detail={data} onPatch={patch} />
+                <div className="row">
+                  <button className="btn small" disabled={!!busy || flight || !source} onClick={() => act('redraft', () => api.post(`/api/items/${id}/redraft`), 'Redrafting')}>
+                    Redraft titles, excerpts and notes
+                  </button>
+                  <button className="btn quiet small" disabled={!!busy || flight} onClick={() => act('refetch', () => api.post(`/api/items/${id}/refetch`), 'Fetching again')}>
+                    Fetch the source again
+                  </button>
+                </div>
+                <p className="small muted" style={{ margin: 0 }}>Redrafting keeps everything you chose, kept or edited.</p>
+                <ItemSuggestions itemId={id} suggestions={data.suggestions} onChange={reload} />
+                <ConnectionsSection detail={data} act={act} />
+              </div>
+            </details>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+const isIn = (d: Draft) => d.status === 'kept' || d.status === 'edited';
+
+// ---------------------------------------------------------------- steps
+
+function StepTitle({ n, title, done, optional }: { n: number; title: string; done?: boolean; optional?: boolean }) {
+  return (
+    <span className="step-title">
+      <span className={`step-n${done ? ' done' : ''}`} aria-hidden="true">
+        {done ? '✓' : n}
+      </span>
+      {title}
+      {optional && <span className="small muted step-opt">optional</span>}
+      {done && <span className="sr-only"> (done)</span>}
+    </span>
+  );
+}
+
+function Step({ n, title, done, optional, hint, bare, children }: { n: number; title: string; done?: boolean; optional?: boolean; hint?: string; bare?: boolean; children: ReactNode }) {
+  if (bare) return <div className="step">{children}</div>;
+  return (
+    <section className="step section" aria-label={title}>
+      <h2 className="h2">
+        <StepTitle n={n} title={title} done={done} optional={optional} />
+      </h2>
+      {hint && <p className="small muted step-hint">{hint}</p>}
+      {children}
+    </section>
   );
 }
 
@@ -145,9 +236,17 @@ function WhySection({ detail, onSaved }: { detail: ItemDetail; onSaved: () => vo
   const why = useAutosave(`why:${item.id}`, item.why_text ?? '', (v) => api.patch(`/api/items/${item.id}`, { why_text: v }));
   const [note, setNote] = useState<Note | null>(detail.notes.find((n) => n.target === 'why') ?? null);
   return (
-    <section className="section" style={{ marginTop: 28 }}>
+    <>
+      <TextArea
+        className="editor"
+        value={why.value}
+        onChange={(e) => why.onChange(e.target.value)}
+        onSubmit={() => void why.flush().then(onSaved)}
+        onBlur={() => void why.flush().then(onSaved)}
+        placeholder="Why you pulled this out of the fire, the way you would tell a friend."
+        aria-label="Why it's here"
+      />
       <div className="row between">
-        <h2 className="h2">Why it's here</h2>
         <div className="row">
           <VoiceNote
             target="why"
@@ -157,19 +256,8 @@ function WhySection({ detail, onSaved }: { detail: ItemDetail; onSaved: () => vo
               void api.patch(`/api/items/${item.id}`, { why_note_id: n.id });
             }}
           />
+          <SaveNote state={why.state} />
         </div>
-      </div>
-      <TextArea
-        className="editor"
-        value={why.value}
-        onChange={(e) => why.onChange(e.target.value)}
-        onSubmit={() => void why.flush().then(onSaved)}
-        onBlur={() => void why.flush()}
-        placeholder="In your own words. Dictate straight into this box; nothing here is ever reworded."
-        aria-label="Why it's here"
-      />
-      <div className="row between">
-        <SaveNote state={why.state} />
         {item.why_note_id && (
           <label className="row small muted">
             <input type="checkbox" checked={!!item.why_audio} onChange={(e) => void api.patch(`/api/items/${item.id}`, { why_audio: e.target.checked }).then(onSaved)} /> Publish the voice note with it
@@ -177,7 +265,7 @@ function WhySection({ detail, onSaved }: { detail: ItemDetail; onSaved: () => vo
         )}
       </div>
       {note && <NoteCompare note={note} onUse={(t) => why.onChange(why.value.trim() ? `${why.value.trim()}\n\n${t}` : t)} />}
-    </section>
+    </>
   );
 }
 
@@ -224,6 +312,354 @@ function SourceFix({ id, text, imageUrl, onSaved }: { id: string; text: string; 
   );
 }
 
+// ---------------------------------------------------------------- your own transcript
+
+const TRANSCRIPT_TYPES = '.txt,.md,.vtt,.srt,text/plain,text/markdown,text/vtt';
+
+/** Paste or upload a transcript made elsewhere; it replaces the fetched text and the item is redrafted. */
+function TranscriptBox({ id, hasSource, onSaved }: { id: string; hasSource: boolean; onSaved: () => void }) {
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [name, setName] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
+  if (!open)
+    return (
+      <button className="btn quiet small" onClick={() => setOpen(true)}>
+        {hasSource ? 'Use your own transcript instead' : 'Add a transcript yourself'}
+      </button>
+    );
+  async function submit() {
+    setBusy(true);
+    try {
+      const r = await api.post<{ words: number; timed: boolean }>(`/api/items/${id}/transcript`, { text, name });
+      toast(`Transcript in: ${r.words.toLocaleString('en-IN')} words${r.timed ? ', with times' : ''}. Reading it again.`);
+      setOpen(false);
+      setText('');
+      onSaved();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e), true);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="section panel line" style={{ marginTop: 4, flexBasis: '100%' }}>
+      <div className="label">Your transcript</div>
+      <p className="small muted" style={{ margin: 0 }}>
+        Paste it, or choose a .txt, .md, .vtt or .srt file (yt-dlp's captions, a Whisper run on the laptop, the show's own transcript). Subtitle files keep their times. It replaces the text above, and the machine reads and drafts again from it.
+      </p>
+      <input
+        type="file"
+        accept={TRANSCRIPT_TYPES}
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          if (!f) return;
+          if (f.size > 3_000_000) return toast('That file is over 3 MB; is it a transcript?', true);
+          setName(f.name);
+          setText(await f.text());
+        }}
+      />
+      <TextArea className="compact" value={text} onChange={(e) => (setText(e.target.value), setName(undefined))} placeholder="Or paste the transcript here." />
+      <div className="row">
+        <button className="btn primary small" disabled={busy || text.trim().split(/\s+/).length < 50} onClick={() => void submit()}>
+          {busy ? 'Saving…' : 'Use this transcript'}
+        </button>
+        <button className="btn quiet small" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+        {text && <span className="small muted">{text.trim().split(/\s+/).length.toLocaleString('en-IN')} words{name ? ` from ${name}` : ''}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- your own PDF
+
+/** Upload the PDF yourself when the link will not give it up (a paywall, a download block). */
+function PdfUpload({ id, hasSource, onSaved }: { id: string; hasSource: boolean; onSaved: () => void }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <label className={`btn quiet small${busy ? ' disabled' : ''}`} style={{ cursor: 'pointer' }}>
+      {busy ? 'Uploading…' : hasSource ? 'Upload the PDF yourself' : 'Upload the PDF'}
+      <input
+        type="file"
+        hidden
+        accept="application/pdf,.pdf"
+        disabled={busy}
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = '';
+          if (!f) return;
+          setBusy(true);
+          try {
+            const fd = new FormData();
+            fd.append('file', f);
+            await api.post(`/api/items/${id}/file`, fd);
+            toast(`${f.name} uploaded. Reading it now; the link stays as the source.`);
+            onSaved();
+          } catch (err) {
+            toast(err instanceof Error ? err.message : String(err), true);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+    </label>
+  );
+}
+
+// ---------------------------------------------------------------- excerpt
+
+/** A passage as it will print: paragraphs kept, the highlight marked. */
+function Passage({ text, hl }: { text: string; hl?: [number, number] | null }) {
+  const paras: Array<{ start: number; text: string }> = [];
+  const re = /\n\s*\n/g;
+  let last = 0;
+  for (let m = re.exec(text); ; m = re.exec(text)) {
+    const end = m ? m.index : text.length;
+    if (text.slice(last, end).trim()) paras.push({ start: last, text: text.slice(last, end) });
+    if (!m) break;
+    last = m.index + m[0].length;
+  }
+  return (
+    <>
+      {paras.map((p) => {
+        const a = hl ? Math.max(hl[0], p.start) - p.start : -1;
+        const b = hl ? Math.min(hl[1], p.start + p.text.length) - p.start : -1;
+        return (
+          <p key={p.start}>
+            {hl && a < b ? (
+              <>
+                {p.text.slice(0, a)}
+                <mark>{p.text.slice(a, b)}</mark>
+                {p.text.slice(b)}
+              </>
+            ) : (
+              p.text
+            )}
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
+function ExcerptSection({ detail, chosen, act }: { detail: ItemDetail; chosen: Excerpt | null; act: Act }) {
+  const candidates = detail.excerpts.filter((e) => !e.chosen);
+  const [locator, setLocator] = useState(chosen?.locator ?? '');
+  const words = detail.source?.word_count ?? 0;
+  const type = detail.item.type as ContentType;
+  const hl: [number, number] | null = chosen && chosen.highlight_start != null && chosen.highlight_end != null ? [chosen.highlight_start, chosen.highlight_end] : null;
+  const advice = chosen ? excerptAdvice(chosen.text, words, type) : null;
+  return (
+    <>
+      {chosen ? (
+        <div className="stack" style={{ gap: 10 }}>
+          <blockquote className="excerpt">
+            <Passage text={chosen.text} hl={hl} />
+          </blockquote>
+          {advice && <div className={`small ${advice.over ? 'warn' : 'muted'}`}>{advice.message}</div>}
+          <div className="row between small">
+            <span className={chosen.verified ? 'ok' : 'bad'}>{chosen.verified ? 'Found word for word in the source' : 'Not found in the source; select it again'}</span>
+            <span className="row">
+              {hl && (
+                <button className="btn quiet small" onClick={() => act('excerpt', () => api.patch(`/api/excerpts/${chosen.id}`, { highlight: null }))}>
+                  Clear highlight
+                </button>
+              )}
+              <button className="btn quiet small" onClick={() => act('excerpt', () => api.del(`/api/excerpts/${chosen.id}`))}>
+                Remove
+              </button>
+            </span>
+          </div>
+          {!hl && <p className="small muted" style={{ margin: 0 }}>To underline one line: select it inside the tinted passage in the source, then choose Mark highlight.</p>}
+          <label className="field">
+            <span className="label">Where it is (page, time, section)</span>
+            <input
+              className="input"
+              value={locator}
+              onChange={(e) => setLocator(e.target.value)}
+              onBlur={() => locator !== (chosen.locator ?? '') && act('excerpt', () => api.patch(`/api/excerpts/${chosen.id}`, { locator }))}
+              placeholder="p. 12, Section 1, at 23:10"
+            />
+          </label>
+        </div>
+      ) : (
+        <p className="small muted" style={{ margin: 0 }}>Use one of the machine's passages below, or select any passage in the piece and choose Make excerpt.</p>
+      )}
+      {candidates.length > 0 && (
+        <div className="stack" style={{ gap: 10 }}>
+          <div className="label machine">{chosen ? 'Other passages the machine proposed' : 'Passages the machine proposed'}</div>
+          {candidates.map((c) => {
+            const a = excerptAdvice(c.text, words, type);
+            const chl: [number, number] | null = c.highlight_start != null && c.highlight_end != null ? [c.highlight_start, c.highlight_end] : null;
+            return (
+              <div key={c.id} className="cand-card">
+                {c.why && <p className="machine small" style={{ margin: 0 }}>{c.why}</p>}
+                <div className="serif cand-text">
+                  <Passage text={c.text} hl={chl} />
+                </div>
+                <div className="row between">
+                  <span className={`small ${a.over ? 'warn' : 'muted'}`}>
+                    {a.words} words{c.locator ? ` · ${c.locator}` : ''}
+                  </span>
+                  <button className="btn small" onClick={() => act('excerpt', () => api.patch(`/api/excerpts/${c.id}`, { chosen: true }), 'Excerpt set')}>
+                    Use this
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- notes and ideas: tick to include
+
+function CheckedLines({ kind, drafts, act, autoCaptions = false }: { kind: 'idea' | 'marginal'; drafts: Draft<MarginalBody>[]; act: Act; autoCaptions?: boolean }) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [text, setText] = useState('');
+  const style = checkStyle(text);
+  const live = drafts.filter((d) => d.status !== 'cut');
+  async function save(draftId: string) {
+    await act('note', () => api.patch(`/api/drafts/${draftId}`, { text, status: 'kept' }), 'Saved; checked again against its source');
+    setEditing(null);
+  }
+  return (
+    <div className="lines">
+      {live.map((d) => {
+        const b = d.body;
+        const on = isIn(d);
+        const flagged = b.verdict === 'partly' || b.verdict === 'unsupported';
+        return (
+          <div key={d.id} className={`line-row${on ? ' on' : ''}`}>
+            <input
+              type="checkbox"
+              checked={on}
+              aria-label={on ? 'Included; untick to leave it out' : 'Include'}
+              onChange={(e) => void act('note', () => api.patch(`/api/drafts/${d.id}`, { status: e.target.checked ? 'kept' : 'proposed' }))}
+            />
+            <div className="stack" style={{ gap: 6, flex: 1 }}>
+              {editing === d.id ? (
+                <>
+                  <TextArea className="machine-area compact" value={text} onChange={(e) => setText(e.target.value)} onSubmit={() => void save(d.id)} />
+                  {!style.ok && <div className="small warn">{style.issues.filter((i) => i.severity === 'error').map((i) => i.message).join(' ')}</div>}
+                  <div className="row">
+                    <button className="btn small primary" disabled={!style.ok} onClick={() => void save(d.id)}>
+                      Save and check
+                    </button>
+                    <button className="btn quiet small" onClick={() => setEditing(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="note-text">{b.text}</p>
+              )}
+              {kind === 'idea' && b.cite.kind === 'source' && (
+                <p className="serif small idea-quote">
+                  “{b.cite.quote.replace(/\s*\n\s*/g, ' ')}”{b.locator ? <span className="muted"> · {b.locator}</span> : null}
+                </p>
+              )}
+              {kind === 'marginal' && <span className="note-cite">{b.cite.kind === 'source' ? <>From the piece: “{b.cite.quote.slice(0, 120)}{b.cite.quote.length > 120 ? '…' : ''}”</> : <>From Wikipedia: {b.cite.title}</>}</span>}
+              {flagged && <span className="small warn">The checker could not confirm your edit: {b.reason}</span>}
+              {kind === 'idea' && <IdeaReaction draft={d} act={act} />}
+              {editing !== d.id && (
+                <button
+                  className="btn quiet small"
+                  style={{ alignSelf: 'flex-start' }}
+                  onClick={() => {
+                    setEditing(d.id);
+                    setText(b.text);
+                  }}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      {kind === 'idea' && autoCaptions && <p className="small muted" style={{ margin: 0 }}>This transcript has no punctuation, so the site prints each idea with its time, not the transcript's words.</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- the editor's take on an idea
+
+/** One line in your own words on an idea, typed or dictated; printed beside it in your serif. */
+function IdeaReaction({ draft, act }: { draft: Draft<MarginalBody>; act: Act }) {
+  const saved = draft.body.reaction ?? '';
+  const [v, setV] = useState(saved);
+  const [open, setOpen] = useState(Boolean(saved));
+  const [note, setNote] = useState<Note | null>(null);
+  const save = (text: string) => text.trim() !== saved.trim() && act('note', () => api.patch(`/api/drafts/${draft.id}`, { reaction: text }), text.trim() ? 'Your take is saved; the idea is ticked' : undefined);
+  if (!open)
+    return (
+      <button className="link-btn small" style={{ alignSelf: 'flex-start' }} onClick={() => setOpen(true)}>
+        Add your take
+      </button>
+    );
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <TextArea className="editor compact" value={v} onChange={(e) => setV(e.target.value)} onBlur={() => void save(v)} onSubmit={() => void save(v)} placeholder="Your take, in a line. Never reworded." aria-label="Your take on this idea" />
+      <div className="row">
+        <VoiceNote target="reaction" itemId={draft.item_id} onNote={setNote} label="Say it" />
+      </div>
+      {note && (
+        <NoteCompare
+          note={note}
+          onUse={(t) => {
+            const next = v.trim() ? `${v.trim()} ${t}` : t;
+            setV(next);
+            void save(next);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- start here
+
+function StartHereSection({ detail, ideas, onPatch }: { detail: ItemDetail; ideas: Draft<MarginalBody>[]; onPatch: (b: Record<string, unknown>) => Promise<void> }) {
+  const { item } = detail;
+  const toast = useToast();
+  const [at, setAt] = useState(item.start_at ?? '');
+  const [noteText, setNoteText] = useState(item.start_note ?? '');
+  const save = (b: Record<string, unknown>) => onPatch(b).catch((e) => toast(e instanceof Error ? e.message : String(e), true));
+  // Times of the ideas you kept (or all, if none kept yet): one tap to start there.
+  const picks = [...new Set((ideas.some(isIn) ? ideas.filter(isIn) : ideas).map((d) => d.body.locator?.replace(/^at /, '') ?? '').filter((l) => /^\d|^p\./.test(l)))].slice(0, 8);
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <div className="row" style={{ alignItems: 'flex-end' }}>
+        <label className="field" style={{ flex: '0 1 140px' }}>
+          <span className="label">Time or page</span>
+          <input className="input num" value={at} onChange={(e) => setAt(e.target.value)} onBlur={() => at !== (item.start_at ?? '') && void save({ start_at: at.trim() })} placeholder="42:06 or p. 12" />
+        </label>
+        <label className="field" style={{ flex: '1 1 220px' }}>
+          <span className="label">Why there (your words)</span>
+          <input className="input serif" value={noteText} onChange={(e) => setNoteText(e.target.value)} onBlur={() => noteText !== (item.start_note ?? '') && void save({ start_note: noteText })} placeholder="Where the argument starts to bite" />
+        </label>
+      </div>
+      {picks.length > 0 && (
+        <div className="row" style={{ gap: 6 }}>
+          <span className="small muted">From the ideas:</span>
+          {picks.map((p) => (
+            <button key={p} className="btn quiet small" onClick={() => (setAt(p), void save({ start_at: p }))}>
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- title
 
 function TitleSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: Record<string, unknown>) => Promise<void> }) {
@@ -235,8 +671,8 @@ function TitleSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: Re
     return text ? { text, italic: it } : { text: it };
   };
   const seenTitles = new Set([(item.title ?? '').trim().toLowerCase()]);
-  const options = (detail.drafts.filter((d) => d.kind === 'title' && d.status !== 'cut') as Draft<Title>[])
-    .map((d) => ({ ...d, body: norm(d.body) }))
+  const options = (detail.drafts.filter((d) => d.kind === 'title' && d.status !== 'cut' && d.status !== 'rejected') as Draft<TitleBody>[])
+    .map((d) => ({ ...d, angle: d.body.angle, body: norm(d.body) }))
     .filter((d) => {
       const k = [d.body.text, d.body.italic].filter(Boolean).join(' ').toLowerCase();
       if (seenTitles.has(k)) return false;
@@ -250,11 +686,11 @@ function TitleSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: Re
   const choose = (t: Title) => void onPatch({ title_choice: t.italic ? { text: t.text, italic: t.italic } : { text: t.text } });
   const customStyle = useMemo(() => checkStyle([custom.text, custom.italic].filter(Boolean).join(' '), { strict: false }), [custom]);
   return (
-    <fieldset className="section" style={{ border: 0, margin: 0, padding: 0 }}>
-      <legend className="h2" style={{ padding: 0, marginBottom: 10 }}>Title</legend>
+    <fieldset style={{ border: 0, margin: 0, padding: 0 }} className="stack">
+      <legend className="sr-only">Title</legend>
       {original && (
         <label className="opt">
-          <input type="radio" name="title" checked={isSame(current, original) || (!current && true)} onChange={() => choose(original)} />
+          <input type="radio" name="title" checked={isSame(current, original) || !current} onChange={() => choose(original)} />
           <span>
             <span className="serif">{original.text}</span>
             <span className="small muted" style={{ display: 'block' }}>The original title</span>
@@ -268,7 +704,7 @@ function TitleSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: Re
             <span className="serif">
               {o.body.text} {o.body.italic && <i>{o.body.italic}</i>}
             </span>
-            <span className="small machine" style={{ display: 'block' }}>Suggested by the machine</span>
+            <span className="small machine" style={{ display: 'block' }}>{ANGLE[o.angle ?? ''] ?? 'Suggested by the machine'}</span>
           </span>
         </label>
       ))}
@@ -290,205 +726,35 @@ function TitleSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: Re
   );
 }
 
-// ---------------------------------------------------------------- excerpt
+const ANGLE: Record<string, string> = {
+  turn: 'Machine · a turn of phrase',
+  fact: 'Machine · the striking fact',
+  question: 'Machine · the question it answers',
+  lift: 'Machine · lifted from the piece',
+  plain: 'Machine · plainly put',
+};
 
-type Act = <T>(label: string, fn: () => Promise<T>, done?: string) => Promise<T | undefined>;
-
-function ExcerptSection({ detail, chosen, act }: { detail: ItemDetail; chosen: Excerpt | null; act: Act }) {
-  const candidates = detail.excerpts.filter((e) => !e.chosen);
-  const [locator, setLocator] = useState(chosen?.locator ?? '');
-  const hl = chosen && chosen.highlight_start != null && chosen.highlight_end != null ? [chosen.highlight_start, chosen.highlight_end] : null;
-  return (
-    <section className="section">
-      <h2 className="h2">Excerpt</h2>
-      {chosen ? (
-        <>
-          <blockquote className="excerpt">
-            {hl ? (
-              <>
-                {chosen.text.slice(0, hl[0])}
-                <mark>{chosen.text.slice(hl[0], hl[1])}</mark>
-                {chosen.text.slice(hl[1])}
-              </>
-            ) : (
-              chosen.text
-            )}
-          </blockquote>
-          <div className="row between small">
-            <span className={chosen.verified ? 'ok' : 'bad'}>{chosen.verified ? 'Found word for word in the source' : 'Not found in the source; select it again'}</span>
-            <span className="row">
-              {hl && (
-                <button className="btn quiet small" onClick={() => act('excerpt', () => api.patch(`/api/excerpts/${chosen.id}`, { highlight: null }))}>
-                  Clear highlight
-                </button>
-              )}
-              <button className="btn quiet small" onClick={() => act('excerpt', () => api.del(`/api/excerpts/${chosen.id}`))}>
-                Remove
-              </button>
-            </span>
-          </div>
-          <label className="field">
-            <span className="label">Locator</span>
-            <input
-              className="input"
-              value={locator}
-              onChange={(e) => setLocator(e.target.value)}
-              onBlur={() => locator !== (chosen.locator ?? '') && act('excerpt', () => api.patch(`/api/excerpts/${chosen.id}`, { locator }))}
-              placeholder="p. 12, Section 1, at 23:10"
-            />
-          </label>
-          {!hl && <p className="small muted">Select the line you would underline, inside the tinted excerpt in the source, and choose Mark highlight.</p>}
-        </>
-      ) : (
-        <p className="small muted">Select a passage in the source and choose Make excerpt. Short is better: one to three sentences.</p>
-      )}
-      {candidates.length > 0 && (
-        <div className="stack">
-          <div className="label machine">The machine's candidates, matched word for word</div>
-          {candidates.map((c) => (
-            <div key={c.id} className="opt" style={{ cursor: 'default' }}>
-              <span style={{ flex: 1 }}>
-                <span className="serif" style={{ display: 'block' }}>“{c.text}”</span>
-                <span className="small muted">{c.locator}</span>
-              </span>
-              <button className="btn small" onClick={() => act('excerpt', () => api.patch(`/api/excerpts/${c.id}`, { chosen: true }), 'Excerpt set')}>
-                Use
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------- marginalia
-
-function verdictText(b: MarginalBody): { text: string; cls: string } {
-  switch (b.verdict) {
-    case 'supported':
-      return { text: b.cite.kind === 'wiki' ? `Checked against Wikipedia: ${b.cite.title}` : 'Checked against the source', cls: 'ok' };
-    case 'partly':
-      return { text: `Checker: partly right. ${b.reason ?? ''}`, cls: 'warn' };
-    case 'unsupported':
-      return { text: `Checker: not supported. ${b.reason ?? ''}`, cls: 'bad' };
-    default:
-      return { text: 'Not checked yet', cls: 'muted' };
-  }
-}
-
-function MarginaliaSection({ drafts, act }: { drafts: Draft<MarginalBody>[]; act: Act }) {
-  const [editing, setEditing] = useState<string | null>(null);
-  const [text, setText] = useState('');
-  if (!drafts.length) return null;
-  const live = drafts.filter((d) => d.status !== 'cut');
-  const cut = drafts.filter((d) => d.status === 'cut');
-  return (
-    <section className="section">
-      <div className="row between">
-        <h2 className="h2">Marginalia</h2>
-        <span className="small muted">Machine-written; you keep, cut or edit</span>
-      </div>
-      {[...live, ...cut].map((d) => {
-        const b = d.body;
-        const v = verdictText(b);
-        const flagged = b.verdict === 'partly' || b.verdict === 'unsupported';
-        const style = checkStyle(editing === d.id ? text : b.text);
-        return (
-          <div key={d.id} className={`note${d.status === 'cut' ? ' cut' : ''}${flagged && d.status !== 'cut' ? ' flag' : ''}`}>
-            {editing === d.id ? (
-              <>
-                <TextArea className="machine-area compact" value={text} onChange={(e) => setText(e.target.value)} onSubmit={() => void save(d.id)} />
-                {!style.ok && <div className="small warn">{style.issues.filter((i) => i.severity === 'error').map((i) => i.message).join(' ')}</div>}
-              </>
-            ) : (
-              <p className="note-text">{b.text}</p>
-            )}
-            <div className="note-cite">
-              {b.cite.kind === 'source' ? <>Source: “{b.cite.quote.slice(0, 140)}{b.cite.quote.length > 140 ? '…' : ''}”</> : <>Source: Wikipedia, {b.cite.title}</>}
-              {' · '}
-              <span className={`verdict ${v.cls}`}>{v.text}</span>
-            </div>
-            {b.corrected && d.status !== 'cut' && (
-              <p className="note-text" style={{ fontSize: 14 }}>
-                Corrected: {b.corrected}
-              </p>
-            )}
-            <div className="row">
-              {editing === d.id ? (
-                <>
-                  <button className="btn small primary" disabled={!style.ok} onClick={() => void save(d.id)}>
-                    Save and recheck
-                  </button>
-                  <button className="btn quiet small" onClick={() => setEditing(null)}>
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  {b.corrected && d.status !== 'cut' && (
-                    <button className="btn small primary" onClick={() => act('note', () => api.patch(`/api/drafts/${d.id}`, { useCorrected: true, status: 'kept' }), 'Using the corrected note')}>
-                      Use corrected
-                    </button>
-                  )}
-                  {d.status !== 'kept' && d.status !== 'edited' && !flagged && (
-                    <button className="btn small primary" onClick={() => act('note', () => api.patch(`/api/drafts/${d.id}`, { status: 'kept' }))}>
-                      Keep
-                    </button>
-                  )}
-                  {(d.status === 'kept' || d.status === 'edited') && <span className="small ok">Kept</span>}
-                  {d.status !== 'cut' ? (
-                    <button className="btn small" onClick={() => act('note', () => api.patch(`/api/drafts/${d.id}`, { status: 'cut' }))}>
-                      Cut
-                    </button>
-                  ) : (
-                    <button className="btn quiet small" onClick={() => act('note', () => api.patch(`/api/drafts/${d.id}`, { status: 'proposed' }))}>
-                      Restore
-                    </button>
-                  )}
-                  {d.status !== 'cut' && (
-                    <button
-                      className="btn quiet small"
-                      onClick={() => {
-                        setEditing(d.id);
-                        setText(b.text);
-                      }}
-                    >
-                      Edit
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </section>
-  );
-
-  async function save(draftId: string) {
-    await act('note', () => api.patch(`/api/drafts/${draftId}`, { text, status: 'kept' }), 'Saved; checked again against its source');
-    setEditing(null);
-  }
-}
-
-// ---------------------------------------------------------------- wikipedia
+// ---------------------------------------------------------------- wikipedia: tick to include
 
 function WikiSection({ itemId, cards, act }: { itemId: string; cards: WikiCard[]; act: Act }) {
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [summary, setSummary] = useState('');
+  const live = cards.filter((c) => c.status !== 'cut');
   return (
-    <section className="section">
-      <div className="row between">
-        <h2 className="h2">Further, via Wikipedia</h2>
-        <span className="small muted">Code finds and fetches every link</span>
-      </div>
-      <div>
-        {cards.map((c) => (
-          <div key={c.id} className={`wiki-row${c.status === 'cut' ? ' cut' : ''}`}>
-            <div>
-              <a className="serif" style={{ fontSize: 17 }} href={safeHref(c.url)} target="_blank" rel="noreferrer noopener">
+    <div className="stack" style={{ gap: 8 }}>
+      <div className="label" style={{ marginTop: 6 }}>Further reading, from Wikipedia</div>
+      <div className="lines">
+        {live.map((c) => (
+          <div key={c.id} className={`line-row${c.status === 'kept' ? ' on' : ''}`}>
+            <input
+              type="checkbox"
+              checked={c.status === 'kept'}
+              aria-label={c.status === 'kept' ? `Included: ${c.title}` : `Include ${c.title}`}
+              onChange={(e) => void act('wiki', () => api.patch(`/api/wiki/${c.id}`, { status: e.target.checked ? 'kept' : 'proposed' }))}
+            />
+            <div style={{ flex: 1 }}>
+              <a className="serif" style={{ fontSize: 16 }} href={safeHref(c.url)} target="_blank" rel="noreferrer noopener">
                 {c.title} ↗
               </a>
               {editing === c.id ? (
@@ -505,38 +771,19 @@ function WikiSection({ itemId, cards, act }: { itemId: string; cards: WikiCard[]
                 </div>
               ) : (
                 <div className="serif muted" style={{ fontSize: 15, marginTop: 2 }}>
-                  {c.summary}
+                  {c.summary}{' '}
+                  <button
+                    className="link-btn small"
+                    onClick={() => {
+                      setEditing(c.id);
+                      setSummary(c.summary);
+                    }}
+                  >
+                    Edit
+                  </button>
                 </div>
               )}
-              <div className="small muted">
-                {c.http_status === 200 ? 'Link resolves' : c.http_status ? `Link returned ${c.http_status}` : 'Not checked yet'} · found for “{c.query}”
-              </div>
-            </div>
-            <div className="row" style={{ alignItems: 'flex-start' }}>
-              {c.status !== 'kept' && (
-                <button className="btn small primary" onClick={() => act('wiki', () => api.patch(`/api/wiki/${c.id}`, { status: 'kept' }))}>
-                  Keep
-                </button>
-              )}
-              {c.status === 'kept' && <span className="small ok">Kept</span>}
-              {c.status !== 'cut' ? (
-                <button className="btn small" onClick={() => act('wiki', () => api.patch(`/api/wiki/${c.id}`, { status: 'cut' }))}>
-                  Cut
-                </button>
-              ) : (
-                <button className="btn quiet small" onClick={() => act('wiki', () => api.patch(`/api/wiki/${c.id}`, { status: 'proposed' }))}>
-                  Restore
-                </button>
-              )}
-              <button
-                className="btn quiet small"
-                onClick={() => {
-                  setEditing(c.id);
-                  setSummary(c.summary);
-                }}
-              >
-                Edit
-              </button>
+              {c.http_status != null && c.http_status !== 200 && <div className="small warn">The link returned {c.http_status}</div>}
             </div>
           </div>
         ))}
@@ -553,9 +800,44 @@ function WikiSection({ itemId, cards, act }: { itemId: string; cards: WikiCard[]
           Find
         </button>
       </form>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- ready?
+
+const BLOCKING = ['links', 'quotes', 'citations', 'style'];
+
+function Ready({ detail, chosen, ideasIn, busy, onRecheck }: { detail: ItemDetail; chosen: Excerpt | null; ideasIn: number; busy: boolean; onRecheck: () => void }) {
+  const { item, checks } = detail;
+  if (IN_FLIGHT.test(item.status)) return null;
+  const todo: string[] = [];
+  if (!item.why_text?.trim()) todo.push("Say why it's here.");
+  if (!chosen && !ideasIn) todo.push('Choose an excerpt' + (detail.drafts.some((d) => d.kind === 'idea' && d.status !== 'rejected') ? ', or tick some big ideas.' : '.'));
+  const failing = checks.filter((c: Check) => c.status === 'fail' && BLOCKING.includes(c.name));
+  for (const c of failing) todo.push(`${CHECK_NAMES[c.name] ?? c.name}: ${c.detail.summary ?? 'failed'}`);
+  const ready = todo.length === 0;
+  return (
+    <section className={`step section ready${ready ? ' is-ready' : ''}`} aria-label="Ready for a Haul">
+      <h2 className="h2">{ready ? 'Ready for a Haul' : 'Before it can go in a Haul'}</h2>
+      {ready ? (
+        <p className="small" style={{ margin: 0 }}>Everything that prints has been checked. Add it to a Haul from the Hauls page.</p>
+      ) : (
+        <ul className="todo">
+          {todo.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      )}
+      <details>
+        <summary className="small muted">All checks</summary>
+        <ChecksPanel checks={checks} busy={busy} onRecheck={onRecheck} />
+      </details>
     </section>
   );
 }
+
+const CHECK_NAMES: Record<string, string> = { links: 'Links', quotes: 'The excerpt', citations: 'Notes and ideas', style: 'House style' };
 
 // ---------------------------------------------------------------- details
 
@@ -579,15 +861,14 @@ function DetailsSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: 
     </label>
   );
   return (
-    <details className="section panel line">
-      <summary className="h2" style={{ cursor: 'pointer', fontSize: 19 }}>
-        Details
-      </summary>
-      <div className="row" style={{ alignItems: 'flex-end', marginTop: 12 }}>
-        <label className="field" style={{ flex: '1 1 160px' }}>
-          <span className="label">Type</span>
-          <TypeSelect value={item.type} onChange={(t: ContentType) => void onPatch({ type: t })} />
-        </label>
+    <div className="stack" style={{ gap: 10 }}>
+      <h3 className="h3">Details</h3>
+      <label className="field">
+        <span className="label">What kind of thing it is</span>
+        <TypeSelect value={item.type} onChange={(t: ContentType) => void onPatch({ type: t })} />
+        <span className="small muted">{deskTypeForm[item.type]}</span>
+      </label>
+      <div className="row" style={{ alignItems: 'flex-end' }}>
         {field('creator', 'By', 'Author, speaker or show')}
         {field('source_name', 'Source', 'Publication, venue, book')}
         {field('source_date', 'Date', '1945, or 7 March 1986')}
@@ -595,7 +876,7 @@ function DetailsSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: 
         {field('minutes', 'Minutes', '', 'number')}
         {field('locator', 'Default locator', 'Transcript, Chapter VII')}
       </div>
-    </details>
+    </div>
   );
 }
 
@@ -610,50 +891,45 @@ function ConnectionsSection({ detail, act }: { detail: ItemDetail; act: Act }) {
   const [note, setNote] = useState('');
   const others = (data?.items ?? []).filter((i) => i.id !== detail.item.id);
   return (
-    <details className="section panel line">
-      <summary className="h2" style={{ cursor: 'pointer', fontSize: 19 }}>
-        Connections {detail.connections.length ? `· ${detail.connections.length}` : ''}
-      </summary>
-      <div className="stack" style={{ marginTop: 12 }}>
-        {detail.connections.map((c) => (
-          <div key={c.id} className="row between">
-            <span>
-              <span className="label ink">{c.type}</span> <span className="serif">→ {c.to_title}</span>
-              <span className="serif muted" style={{ display: 'block' }}>{c.note}</span>
-            </span>
-            <button className="btn quiet small" onClick={() => act('conn', () => api.del(`/api/connections/${c.id}`))}>
-              Remove
-            </button>
-          </div>
-        ))}
-        <div className="row">
-          <select className="select" style={{ flex: '1 1 140px' }} value={type} onChange={(e) => setType(e.target.value)}>
-            {EDGE_TYPES.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
-          <select className="select" style={{ flex: '2 1 200px' }} value={to} onChange={(e) => setTo(e.target.value)}>
-            <option value="">Another item…</option>
-            {others.map((o) => (
-              <option key={o.id} value={o.id}>
-                {displayTitle(o)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <TextArea className="compact" value={note} onChange={(e) => setNote(e.target.value)} placeholder="One sentence, in your words: how they connect." />
-        <div className="row">
-          <button
-            className="btn small"
-            disabled={!to || note.trim().length < 2}
-            onClick={() => act('conn', () => api.post(`/api/items/${detail.item.id}/connections`, { toItemId: to, type, note: note.trim() }).then(() => setNote('')), 'Connected')}
-          >
-            Add connection
+    <div className="stack" style={{ gap: 10 }}>
+      <h3 className="h3">Your connections {detail.connections.length ? `· ${detail.connections.length}` : ''}</h3>
+      {detail.connections.map((c) => (
+        <div key={c.id} className="row between">
+          <span>
+            <span className="label ink">{c.type}</span> <span className="serif">→ {c.to_title}</span>
+            <span className="serif muted" style={{ display: 'block' }}>{c.note}</span>
+          </span>
+          <button className="btn quiet small" onClick={() => act('conn', () => api.del(`/api/connections/${c.id}`))}>
+            Remove
           </button>
         </div>
-        <p className="small muted">Connections publish only between items in the same Haul.</p>
+      ))}
+      <div className="row">
+        <select className="select" style={{ flex: '1 1 140px' }} value={type} onChange={(e) => setType(e.target.value)}>
+          {EDGE_TYPES.map((t) => (
+            <option key={t}>{t}</option>
+          ))}
+        </select>
+        <select className="select" style={{ flex: '2 1 200px' }} value={to} onChange={(e) => setTo(e.target.value)}>
+          <option value="">Another item…</option>
+          {others.map((o) => (
+            <option key={o.id} value={o.id}>
+              {displayTitle(o)}
+            </option>
+          ))}
+        </select>
       </div>
-    </details>
+      <TextArea className="compact" value={note} onChange={(e) => setNote(e.target.value)} placeholder="One sentence, in your words: how they connect." />
+      <div className="row">
+        <button
+          className="btn small"
+          disabled={!to || note.trim().length < 2}
+          onClick={() => act('conn', () => api.post(`/api/items/${detail.item.id}/connections`, { toItemId: to, type, note: note.trim() }).then(() => setNote('')), 'Connected')}
+        >
+          Add connection
+        </button>
+      </div>
+      <p className="small muted" style={{ margin: 0 }}>Connections publish only between items in the same Haul.</p>
+    </div>
   );
 }
-

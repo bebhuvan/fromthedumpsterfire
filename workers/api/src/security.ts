@@ -3,6 +3,9 @@
 
 /** Routes that accept multipart bodies (uploads, the Android share target). Everything else is JSON. */
 export const MULTIPART_ROUTES = new Set(['/api/capture/file', '/api/notes', '/share']);
+/** Uploading a PDF to an item already captured (a paper whose download is blocked). POST only. */
+const ITEM_FILE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/file$/;
+export const isMultipartRoute = (method: string, pathname: string) => MULTIPART_ROUTES.has(pathname) || (method === 'POST' && ITEM_FILE.test(pathname));
 
 export const CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
@@ -54,7 +57,7 @@ export function checkCsrf(req: Request): CsrfVerdict {
     if (req.headers.get('x-desk') !== '1') return { ok: false, status: 403, reason: 'missing x-desk header' };
   }
   const type = (req.headers.get('content-type') ?? '').split(';')[0]!.trim().toLowerCase();
-  if (MULTIPART_ROUTES.has(url.pathname)) {
+  if (isMultipartRoute(req.method, url.pathname)) {
     if (type !== 'multipart/form-data') return { ok: false, status: 415, reason: 'expected multipart/form-data' };
   } else if (req.method !== 'DELETE' && type !== 'application/json') {
     return { ok: false, status: 415, reason: 'expected application/json' };

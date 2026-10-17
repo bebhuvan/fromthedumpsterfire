@@ -43,7 +43,7 @@ workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
                   threads (connect.ts), rhymes, publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
-                  validator
+                  validator, quoting (excerpt length guide, when to draw out big ideas)
 migrations/       D1 migrations
 scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts
 ```
@@ -69,6 +69,9 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   quotes verified verbatim against stored source text at both ends, licences as the institution
   states them. A kept connection's published note is the editor's own words.
 - Machine prose is audited with `checkStyle`; editor text is never sent to a model for rewriting.
+- Machine notes and big ideas the judge cannot fully confirm are set aside (`rejected`) and never
+  shown; only lines the editor ticks are published. Excerpt length follows `excerptCap` in
+  `@fdf/shared/quoting`; links to originals name the person (`sourceAction`).
 - Never render stored or model text as HTML in the UI (no `dangerouslySetInnerHTML`); links go
   through `safeHref`.
 - Local: `workers/api/.dev.vars` with `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`, then

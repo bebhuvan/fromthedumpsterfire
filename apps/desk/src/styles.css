@@ -290,3 +290,83 @@ table.calls th { font-weight: 600; color: var(--ink2); }
 @media (max-width: 900px) {
   .ends, .rhyme-grid, .plate-chosen, .links-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---- the item page as a sequence of steps (2026-10-17) ---- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.steps { display: flex; flex-direction: column; }
+.step + .step, .steps > .step + details, .steps > details + .step { margin-top: 36px; }
+.step.section + .step.section { margin-top: 36px; }
+.step-title { display: inline-flex; align-items: baseline; gap: 10px; }
+.step-n { display: inline-grid; place-items: center; min-width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--ink); font: 600 13px/1 var(--sans); transform: translateY(-2px); }
+.step-n.done { background: var(--ink); color: var(--bg); }
+.step-opt { font-family: var(--sans); font-size: 12px; }
+.step-hint { margin: -4px 0 0; }
+.h3 { font: 500 18px/1.25 var(--display); margin: 0; }
+blockquote.excerpt p, .cand-text p { margin: 0; }
+blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
+.cand-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 14px; }
+.cand-text { font-size: 16.5px; line-height: 1.5; white-space: pre-wrap; }
+.cand-text mark { background: color-mix(in srgb, var(--type) 60%, transparent); }
+.lines { display: flex; flex-direction: column; }
+.line-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--rule); }
+.line-row:last-child { border-bottom: 1px solid var(--rule); }
+.line-row > input { margin-top: 5px; accent-color: var(--ink); width: 16px; height: 16px; flex: none; }
+.line-row:not(.on) .note-text, .line-row:not(.on) .idea-quote { opacity: 0.72; }
+.idea-quote { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink); }
+.link-btn { background: none; border: 0; padding: 0; color: var(--ink2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; cursor: pointer; }
+.ready { padding: 18px 20px; border-radius: 16px; background: var(--plate); }
+.ready.is-ready { background: var(--mint); }
+.ready .todo { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.ready details > .checks { margin-top: 10px; background: var(--bg); }
+.more > summary { cursor: pointer; font-size: 19px; }
+/* On a phone the steps come first; the source follows, one screen tall. */
+@media (max-width: 900px) {
+  .cols > .steps { order: -1; }
+  .cols { row-gap: 36px; }
+}
+
+/* ---- the Desk on a phone (2026-10-17): the editor reads and writes here most ---- */
+.pane-switch { display: none; }
+.section, .steps, .stack, .cols > *, .review > * { min-width: 0; }
+@media (hover: none) {
+  .kbd-help, .btn kbd { display: none; }
+}
+@media (max-width: 900px) {
+  /* The work and the piece take turns; the piece reads as a page, not a box. */
+  .pane-switch { display: flex; position: sticky; top: var(--top-h, 57px); z-index: 15; margin: 16px calc(-1 * var(--gutter)) 0; padding: 8px var(--gutter); gap: 6px; background: var(--bg); border-bottom: 1px solid var(--rule); }
+  .pane-switch button { flex: 1; min-height: 44px; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg); font: 600 14px/1.2 var(--sans); color: var(--ink2); }
+  .pane-switch button[aria-selected='true'] { background: var(--inv-bg); color: var(--inv-ink); border-color: var(--inv-bg); }
+  .cols[data-pane='work'] > .reader-col { display: none; }
+  .cols[data-pane='piece'] > .steps { display: none; }
+  .cols[data-pane='piece'] .reader { max-height: none; position: static !important; border: 0; border-radius: 0; overflow: visible; }
+  .cols[data-pane='piece'] .reader-body { overflow: visible; padding: 4px 0 40px; font-size: 18.5px; line-height: 1.65; }
+  .cols[data-pane='piece'] .reader-head { padding: 10px 0; }
+  .cols { margin-top: 18px; }
+  .item-head h1 { font-size: clamp(26px, 7.4vw, 34px); line-height: 1.12; }
+  .status-line { gap: 4px 6px; }
+}
+@media (max-width: 760px) {
+  :root { --top-h: 61px; }
+  /* Sections in a bar at the bottom, where a thumb reaches. */
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; gap: 4px; justify-content: space-around; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--rule); }
+  .nav a { flex: 1; text-align: center; padding: 13px 0; font-size: 14px; border-radius: 12px; }
+  .top-in { padding-top: 10px; padding-bottom: 10px; }
+  .page { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+  .sel-bar { bottom: calc(84px + env(safe-area-inset-bottom)) !important; }
+  .sel-bar .btn { min-height: 44px; font-size: 14px; }
+  /* Fingers, not pointers; 16 px inputs so iOS does not zoom on focus. */
+  .btn { min-height: 44px; }
+  .btn.small { min-height: 40px; font-size: 13px; padding: 0 14px; }
+  .btn.quiet.small { padding: 0 12px; }
+  .input, .select { font-size: 16px; min-height: 46px; }
+  .line-row > input, .opt input { width: 22px; height: 22px; margin-top: 2px; }
+  .link-btn { padding: 10px 0; }
+  /* Capture starts as one paste box. */
+  .capture.closed .capture-why { display: none; }
+  .capture.closed .area:not(.editor) { min-height: 72px; }
+  .desk-grid h1.display { font-size: 28px !important; }
+}
+/* Long secret names and URLs wrap instead of widening the page. */
+.kv { grid-template-columns: minmax(0, max-content) minmax(0, 1fr); }
+.kv > *, .kv > span > * { overflow-wrap: anywhere; min-width: 0; }
+.pane-switch .pane-n { font-weight: 500; opacity: 0.75; }

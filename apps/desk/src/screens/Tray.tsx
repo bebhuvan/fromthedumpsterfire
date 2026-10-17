@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { detectText, detectUrl, extractUrls } from '@fdf/shared/detect';
-import { typeLabel, type ContentType } from '@fdf/shared/tokens';
+import type { ContentType } from '@fdf/shared/tokens';
 import { api, displayTitle, parseChecks, type Captured, type Note, type TrayItem } from '../api';
 import { Link, navigate, timeAgo, useKeys, useLoad, usePoll, useToast } from '../lib/core';
 import { safeGet, safeSet } from '../theme';
-import { NoteCompare, TextArea, TypeSelect, VoiceNote } from '../ui/parts';
+import { deskTypeLabel, NoteCompare, TextArea, VoiceNote } from '../ui/parts';
 
 export function Tray() {
   const [view, setView] = useState<'tray' | 'archived'>('tray');
@@ -95,10 +95,11 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
   const [why, setWhy] = useLocal('capture-why');
   const [source, setSource] = useLocal('capture-source');
   const [sourceUrl, setSourceUrl] = useLocal('capture-source-url');
-  const [overrides, setOverrides] = useState<Record<string, ContentType>>({});
   const [note, setNote] = useState<Note | null>(null);
   const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState(false);
+  // On a phone the capture box starts as one paste field; the rest opens once there is something to capture.
+  const [focused, setFocused] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
@@ -120,11 +121,11 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
     const rest = urls.reduce((s, u) => s.split(u).join(' '), t).replace(/[\s,;•*\-–—\d.)]+/g, ' ').trim();
     if (urls.length && rest.length < 40) return urls.map((url) => {
       const auto = detectUrl(url).type;
-      return { url, auto, type: overrides[url] ?? auto };
+      return { url, auto, type: auto };
     });
     const auto = detectText(t).type;
-    return [{ text: t, auto, type: overrides['__text'] ?? auto }];
-  }, [text, overrides]);
+    return [{ text: t, auto, type: auto }];
+  }, [text]);
 
   const isPassage = pending.length === 1 && pending[0]!.text !== undefined;
 
@@ -144,7 +145,6 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
       setWhy('');
       setSource('');
       setSourceUrl('');
-      setOverrides({});
       setNote(null);
       onCaptured();
       if (r.captured.length === 1 && r.captured[0]!.id) navigate(`/item/${r.captured[0]!.id}`);
@@ -187,7 +187,7 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
 
   return (
     <section
-      className={`capture stack${drag ? ' dragging' : ''}`}
+      className={`capture stack${drag ? ' dragging' : ''}${text.trim() || why.trim() || note || focused ? ' open' : ' closed'}`}
       style={{ gap: 14 }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes('Files')) {
@@ -212,7 +212,7 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
           placeholder="Paste one link or many. Or a passage, a poem, a paragraph from a book."
           aria-label="Capture"
           autoFocus={!('ontouchstart' in window)}
-          onFocus={(e) => (boxRef.current = e.currentTarget)}
+          onFocus={(e) => ((boxRef.current = e.currentTarget), setFocused(true))}
         />
       </label>
 
@@ -220,14 +220,11 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
         <div className="chips" aria-label="What will be captured">
           {pending.map((p, i) => (
             <span key={p.url ?? i} className="chip" data-type={p.type}>
-              <span>{p.url ? p.url.replace(/^https?:\/\/(www\.)?/, '') : `${typeLabel[p.type]} · ${p.text!.split(/\s+/).length} words`}</span>
-              <TypeSelect
-                className=""
-                value={p.type}
-                onChange={(t) => setOverrides((o) => ({ ...o, [p.url ?? '__text']: t }))}
-              />
+              <span>{p.url ? p.url.replace(/^https?:\/\/(www\.)?/, '') : `${p.text!.split(/\s+/).length} words`}</span>
+              <span className="muted">{deskTypeLabel[p.type]}</span>
             </span>
           ))}
+          <span className="small muted">The type only sets how a piece is laid out. Change it on the item if it is wrong.</span>
         </div>
       )}
 
@@ -244,7 +241,7 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
         </div>
       )}
 
-      <label className="field">
+      <label className="field capture-why">
         <span className="label">Why it's here (optional, in your words)</span>
         <TextArea className="editor compact" value={why} onChange={(e) => setWhy(e.target.value)} onSubmit={submit} placeholder="Say it the way you would to a friend." />
       </label>
@@ -271,16 +268,16 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
 
 const IN_FLIGHT = /queued|fetching|reading|drafting|checking/;
 
-export function statusText(i: Pick<TrayItem, 'status' | 'status_detail' | 'pending' | 'has_why' | 'checks' | 'haul_number'>): { text: string; tone: '' | 'warn' | 'bad' } {
+export function statusText(i: Pick<TrayItem, 'status' | 'status_detail' | 'has_excerpt' | 'kept_ideas' | 'has_why' | 'checks' | 'haul_number'>): { text: string; tone: '' | 'warn' | 'bad' } {
   if (i.status === 'failed') return { text: `Failed: ${(i.status_detail ?? '').slice(0, 80)}`, tone: 'bad' };
   if (i.status === 'paused') return { text: 'Paused at the spend ceiling', tone: 'warn' };
   if (IN_FLIGHT.test(i.status)) return { text: i.status_detail ?? `${i.status[0]!.toUpperCase()}${i.status.slice(1)}…`, tone: '' };
   const checks = parseChecks(i.checks);
   if (i.haul_number) return { text: `In Haul ${i.haul_number}`, tone: '' };
-  if (!i.has_why) return { text: 'No note from you yet', tone: 'warn' };
   if (checks.links === 'fail') return { text: 'A link failed to resolve', tone: 'warn' };
-  if (i.pending) return { text: `Ready for you · ${i.pending} decision${i.pending === 1 ? '' : 's'}`, tone: '' };
-  return { text: 'Ready', tone: '' };
+  const todo = [!i.has_why && 'your note', !i.has_excerpt && !i.kept_ideas && 'an excerpt'].filter(Boolean);
+  if (todo.length) return { text: `Needs ${todo.join(' and ')}`, tone: 'warn' };
+  return { text: 'Ready for a Haul', tone: '' };
 }
 
 export function TrayList({ view = 'tray', refresh = 0, selected, keyboard = false }: { view?: string; refresh?: number; selected?: string; keyboard?: boolean }) {
@@ -357,7 +354,7 @@ export function TrayList({ view = 'tray', refresh = 0, selected, keyboard = fals
                   <Link to={`/item/${i.id}`} data-type={i.type} aria-current={current ? 'true' : undefined}>
                     <span className="tray-title">{displayTitle(i)}</span>
                     <span className="tray-meta">
-                      <span className="dot">{typeLabel[i.type] ?? i.type}</span>
+                      <span className="dot">{deskTypeLabel[i.type] ?? i.type}</span>
                       {i.source_name && <span>{i.source_name}</span>}
                       <span className={st.tone}>{st.text}</span>
                       {!selected && <span>{timeAgo(i.captured_at)}</span>}

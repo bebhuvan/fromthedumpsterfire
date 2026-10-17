@@ -3,13 +3,15 @@
 // a broadside, facing pages, a catalogue card or a page from the book. Every form shares the working
 // margin (meta, the machine's notes, speakers, section numbers), the running head, the thumb tab and
 // the folio. Mirrors apps/mobile/src/screens/ItemScreen.tsx.
-import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
+import { haulSlug, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
 import Highlighted from './Highlighted.astro';
 import Voice from './Voice.astro';
 import Notes from './Notes.astro';
+import Ideas from './Ideas.astro';
+import StartHere from './StartHere.astro';
 import SeeAlso from './SeeAlso.astro';
 import { formName, formOf, headword, speaker } from '../lib/forms';
 import {
@@ -34,11 +36,8 @@ const next: Item | undefined = haul.items[at + 1];
 const form = formOf(item);
 const H = `Haul ${haulSlug(haul.number)}`;
 const source = safeHref(item.media?.url ?? item.source.url);
-const sourceLabel = item.media
-  ? item.media.label
-  : form === 'card'
-    ? 'Go down the hole'
-    : `Read the original${item.source.name && item.source.name !== titleText(item.title) ? ` at ${item.source.name}` : ''}`;
+// Name the person, never only link them (sourceAction in @fdf/shared/haul).
+const sourceLabel = form === 'card' ? 'Go down the hole' : sourceAction(item);
 const plateSrc = item.plate ? safeHref(item.plate.url) : undefined;
 const description = item.why.text.length > 200 ? item.why.text.slice(0, item.why.text.lastIndexOf(' ', 197)) + '…' : item.why.text;
 const longTitle = titleText(item.title).length > 34;
@@ -135,6 +134,8 @@ const ogImage =
         </div>
       </header>
     ) : null}
+
+    {item.startHere && ['opening', 'offprint', 'transcript', 'page'].includes(form) ? <StartHere start={item.startHere} /> : null}
 
     {form === 'broadside' && item.excerpt ? (
       <div class="wrap">
@@ -297,6 +298,8 @@ const ogImage =
     {form === 'facing' && item.marginalia.length ? (
       <div class="wrap g row"><p class="m mh">Notes</p><div class="c"><Notes notes={item.marginalia} /></div></div>
     ) : null}
+
+    <Ideas ideas={item.ideas ?? []} />
 
     {item.plate && plateSrc && form !== 'card' ? (
       <div class="wrap g">

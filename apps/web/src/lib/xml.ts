@@ -54,9 +54,14 @@ function haulFeedHtml(h: Haul, allHauls: Haul[]): string {
       `<p><small>${esc(typeLabel[item.type])} · ${srcHtml}</small></p>`,
       `<p>${esc(item.why.text)} — <em>${esc(EDITOR_NAME)}</em></p>`,
     );
+    if (item.startHere) {
+      const at = item.startHere.url ? `<a href="${esc(item.startHere.url)}">${esc(item.startHere.at)}</a>` : esc(item.startHere.at);
+      parts.push(`<p><strong>Start here:</strong> ${at}${item.startHere.note ? ` (${esc(item.startHere.note)})` : ''}</p>`);
+    }
 
     if (item.excerpt) {
-      parts.push(`<blockquote><p>${esc(item.excerpt.text)}</p></blockquote>`);
+      const paras = item.excerpt.text.split(/\n\s*\n/).filter((x) => x.trim());
+      parts.push(`<blockquote>${paras.map((x) => `<p>${esc(x)}</p>`).join('')}</blockquote>`);
     }
     if (item.rhyme) {
       parts.push(
@@ -70,6 +75,12 @@ function haulFeedHtml(h: Haul, allHauls: Haul[]): string {
         .map((m) => `<li>${esc(m.text)} <cite>(${esc(m.cite)})</cite></li>`)
         .join('');
       parts.push(`<ul>${notes}</ul>`);
+    }
+    if (item.ideas?.length) {
+      const ideas = item.ideas
+        .map((m) => `<li><p>${esc(m.text)}</p>${m.quote ? `<blockquote><p>${esc(m.quote)}</p></blockquote>` : ''}${m.locator ? `<p><cite>${esc(m.locator)}</cite></p>` : ''}${m.reaction ? `<p><em>${esc(m.reaction)}</em> — ${esc(EDITOR_NAME)}</p>` : ''}</li>`)
+        .join('');
+      parts.push(`<p><em>The big ideas (machine, each checked against the source):</em></p><ol>${ideas}</ol>`);
     }
   }
 

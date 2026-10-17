@@ -4,6 +4,8 @@
 
 import { checkStyle, describeIssues } from '@fdf/shared/style';
 import { findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
+import { countWords, excerptCap, ideaCount, isPunctuated, wantsIdeas } from '@fdf/shared/quoting';
+import type { ContentType } from '@fdf/shared/tokens';
 import type { Env } from './env';
 import type { DraftRow, ExcerptRow, ItemRow, MarginalBody, SourceRow, WikiRow } from './db';
 import { getItem, getSource, setStatus, upsertCheck } from './db';
@@ -11,7 +13,7 @@ import type { FetchOutcome, SourceMeta } from './ingest';
 import { generateJson } from './models/router';
 import { DRAFT_SYSTEM, draftSchema, JUDGE_SYSTEM, judgeSchema, READ_SYSTEM, readSchema, type DraftOutput, type ReadingCard } from './prompts';
 import { checkLink } from './extract/http';
-import { firstSentence, resolveWikiTopic } from './wiki';
+import { bestSentence, resolveWikiTopic } from './wiki';
 import { loadRoutes, MAX_INLINE_PDF_BYTES, type DocumentInput } from './models/router';
 import { newId, nowIso, parseJson, toBase64, truncate, wordCount } from './util';
 import { pageAt } from './extract/pdf';
@@ -106,14 +108,14 @@ export async function sourcePdf(env: Env, src: SourceRow): Promise<DocumentInput
   return [{ mime: 'application/pdf', base64: toBase64(bytes), pages }];
 }
 
-export async function readItem(env: Env, itemId: string): Promise<{ queries: string[] }> {
+export async function readItem(env: Env, itemId: string): Promise<{ queries: string[]; why?: Record<string, string> }> {
   const item = await getItem(env, itemId);
   const src = await getSource(env, itemId);
   if (!item || !src) throw new Error('Item or source missing');
   await setStatus(env, itemId, 'reading');
   const max = loadRoutes(env).tasks.read.maxInputChars;
   const documents = await sourcePdf(env, src);
-  const { data, model } = await generateJson(env, {
+  const { data: raw, model } = await generateJson(env, {
     task: 'read',
     system: READ_SYSTEM,
     prompt: `${itemHeader(item)}${documents.length ? `\n\n${PDF_ATTACHED}` : ''}\n\nSOURCE TEXT:\n"""\n${truncate(src.text, max)}\n"""`,
@@ -121,6 +123,17 @@ export async function readItem(env: Env, itemId: string): Promise<{ queries: str
     documents,
     itemId,
   });
+  // List lengths are asked for in the schema's descriptions and trimmed here: one item too many is
+  // not worth rejecting (and paying for) a whole answer.
+  const data: ReadingCard = {
+    ...raw,
+    claims: raw.claims.slice(0, 8),
+    mechanisms: raw.mechanisms.slice(0, 6),
+    entities: raw.entities.slice(0, 12),
+    events: raw.events.slice(0, 10),
+    quotables: raw.quotables.slice(0, 8),
+    furtherReading: raw.furtherReading.slice(0, 4),
+  };
   // Quotables are only kept if they are really in the source.
   const quotables = data.quotables
     .map((q) => ({ ...q, found: findVerbatim(src.text, q.quote) }))
@@ -136,13 +149,28 @@ export async function readItem(env: Env, itemId: string): Promise<{ queries: str
   // Bibliographic fields from the card fill gaps only (pasted passages and OCR mostly).
   const b = data.bibliographic;
   await applyFields(env, itemId, { title: b.title || undefined, creator: b.creator || undefined, source_name: b.sourceName || undefined, source_date: b.date || undefined });
-  const queries = [...new Set(data.entities.map((e) => e.wikiQuery.trim()).filter((q) => q && !/https?:|www\./i.test(q)))];
-  return { queries: queries.slice(0, 8) };
+  // Further reading the reader chose for a curious reader comes first; entities only fill gaps.
+  const clean = (q: string) => q.trim() && !/https?:|www\./i.test(q);
+  const picked = data.furtherReading.filter((f) => clean(f.query));
+  const why = Object.fromEntries(picked.map((f) => [f.query.trim(), f.why.trim()]));
+  // Entities fill in only when the reader picked fewer than two: generic topics are what the
+  // editor found dull, and fewer, better cards beat a full row.
+  const fill = picked.length >= 2 ? [] : data.entities.map((e) => e.wikiQuery.trim()).filter(clean);
+  const queries = [...new Set([...picked.map((f) => f.query.trim()), ...fill])];
+  return { queries: queries.slice(0, 8), why };
 }
 
 // ---------------------------------------------------------------- wiki
 
-export async function resolveWiki(env: Env, itemId: string, queries: string[], limit = 5): Promise<{ cards: number }> {
+export async function resolveWiki(env: Env, itemId: string, queries: string[], limit = 4, why: Record<string, string> = {}): Promise<{ cards: number }> {
+  // A new reading replaces the cards the editor has not ticked, like any other proposal. Kept cards
+  // stay, and so does any card a kept or edited note cites.
+  const cited = (
+    await env.DB.prepare(`SELECT body FROM drafts WHERE item_id = ? AND kind = 'marginal' AND status IN ('kept', 'edited')`).bind(itemId).all<{ body: string }>()
+  ).results
+    .map((r) => parseJson<MarginalBody | null>(r.body, null))
+    .flatMap((b) => (b?.cite.kind === 'wiki' ? [b.cite.cardId] : []));
+  await env.DB.prepare(`DELETE FROM wiki_cards WHERE item_id = ? AND status = 'proposed' AND id NOT IN (SELECT value FROM json_each(?))`).bind(itemId, JSON.stringify(cited)).run();
   const existing = await env.DB.prepare('SELECT url FROM wiki_cards WHERE item_id = ?').bind(itemId).all<{ url: string }>();
   const seen = new Set(existing.results.map((r) => r.url));
   let position = existing.results.length;
@@ -156,7 +184,7 @@ export async function resolveWiki(env: Env, itemId: string, queries: string[], l
       `INSERT INTO wiki_cards (id, item_id, query, title, summary, extract, url, revision, status, position, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?)`,
     )
-      .bind(newId('wk_'), itemId, q, s.title, firstSentence(s.extract), s.extract, s.url, s.revision ?? null, position++, nowIso())
+      .bind(newId('wk_'), itemId, q, s.title, bestSentence(s.extract, why[q] ?? ''), s.extract, s.url, s.revision ?? null, position++, nowIso())
       .run();
     added++;
   }
@@ -171,7 +199,7 @@ interface DraftPieceFailure {
 }
 
 /** Check every machine-written piece of a draft: style, verbatim excerpts, real citations. */
-export function auditDraft(out: DraftOutput, source: string, cards: Pick<WikiRow, 'title'>[]): DraftPieceFailure[] {
+export function auditDraft(out: DraftOutput, source: string, cards: Pick<WikiRow, 'title'>[], limits: DraftLimits = { excerptWords: 250, ideas: 0 }): DraftPieceFailure[] {
   const failures: DraftPieceFailure[] = [];
   const titles = new Set(cards.map((c) => c.title.toLowerCase()));
   out.titles.forEach((t, i) => {
@@ -180,6 +208,15 @@ export function auditDraft(out: DraftOutput, source: string, cards: Pick<WikiRow
   });
   out.excerpts.forEach((e, i) => {
     if (!findVerbatim(source, e.quote)) failures.push({ what: `excerpt ${i + 1}`, why: '- The quotation is not in the source word for word. Copy it exactly.' });
+    const words = countWords(e.quote);
+    // A little slack: the model counts words differently from us.
+    if (words > Math.round(limits.excerptWords * 1.1)) failures.push({ what: `excerpt ${i + 1}`, why: `- It is ${words} words; this item allows at most ${limits.excerptWords}. Choose a shorter passage or one paragraph of it.` });
+  });
+  out.ideas.forEach((m, i) => {
+    const r = checkStyle(m.idea);
+    if (!r.ok) failures.push({ what: `idea ${i + 1}`, why: describeIssues(r.issues) });
+    if (!findVerbatim(source, m.quote)) failures.push({ what: `idea ${i + 1}`, why: '- Its quotation is not in the source word for word. Copy one to three consecutive sentences exactly.' });
+    else if (countWords(m.quote) > 90) failures.push({ what: `idea ${i + 1}`, why: '- Its quotation is too long. Quote at most three sentences.' });
   });
   out.marginalia.forEach((m, i) => {
     const r = checkStyle(m.text);
@@ -194,11 +231,23 @@ export function auditDraft(out: DraftOutput, source: string, cards: Pick<WikiRow
   return failures;
 }
 
+export interface DraftLimits {
+  /** Longest excerpt, in words (see excerptCap). */
+  excerptWords: number;
+  /** How many big ideas to draw out; 0 for most items. */
+  ideas: number;
+}
+
+/** What this item may be given: the excerpt length guide and, for long items, a number of ideas. */
+export function draftLimits(item: Pick<ItemRow, 'type' | 'minutes'>, sourceWords: number): DraftLimits {
+  return { excerptWords: excerptCap(sourceWords), ideas: wantsIdeas(item.type as ContentType, sourceWords, item.minutes) ? ideaCount(sourceWords) : 0 };
+}
+
 function failingIndexes(failures: DraftPieceFailure[], prefix: string): Set<number> {
   return new Set(failures.filter((f) => f.what.startsWith(prefix)).map((f) => Number(f.what.split(' ')[1]) - 1));
 }
 
-export async function draftItem(env: Env, itemId: string): Promise<{ titles: number; excerpts: number; notes: number; dropped: number; attempts: number }> {
+export async function draftItem(env: Env, itemId: string): Promise<{ titles: number; excerpts: number; notes: number; ideas: number; dropped: number; attempts: number }> {
   const item = await getItem(env, itemId);
   const src = await getSource(env, itemId);
   if (!item || !src) throw new Error('Item or source missing');
@@ -207,8 +256,14 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
   const card = parseJson<Partial<ReadingCard> & { quotables?: Array<{ quote: string }> }>(cardRow?.body, {});
   const cards = (await env.DB.prepare(`SELECT * FROM wiki_cards WHERE item_id = ? AND status != 'cut' ORDER BY position`).bind(itemId).all<WikiRow>()).results;
   const max = loadRoutes(env).tasks.draft.maxInputChars;
+  const limits = draftLimits(item, src.word_count);
   const basePrompt = [
     itemHeader(item),
+    `Excerpt length for this item: each passage between 50 and ${limits.excerptWords} words (the piece is ${src.word_count.toLocaleString('en-IN')} words).`,
+    limits.ideas ? `Ideas for this item: give ${limits.ideas}.` : 'Ideas for this item: none. Return an empty list.',
+    isPunctuated(src.text)
+      ? ''
+      : 'The source is a rough machine transcript without punctuation, so it has no sentences to count. For each idea quote 15 to 60 consecutive words; for each excerpt, one stretch of 80 words up to the limit. Copy the words exactly as they are, without adding punctuation.',
     item.why_text ? `The editor's note on why it is here (for your understanding only, never quote or rewrite it):\n${item.why_text}` : '',
     card.summary ? `Reading card summary: ${card.summary}` : '',
     card.quotables?.length ? `Lines the reader flagged:\n${card.quotables.map((q) => `- ${q.quote}`).join('\n')}` : '',
@@ -239,9 +294,9 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
       itemId,
       temperature: attempts ? 0.3 : undefined,
     });
-    out = r.data;
+    out = { ...r.data, titles: r.data.titles.slice(0, 6), excerpts: r.data.excerpts.slice(0, 4), marginalia: r.data.marginalia.slice(0, 3), ideas: r.data.ideas.slice(0, Math.max(limits.ideas, 0)) };
     model = r.model;
-    failures = auditDraft(r.data, src.text, cards);
+    failures = auditDraft(out, src.text, cards, limits);
     if (failures.length === 0) break;
   }
   if (!out) throw new Error('No draft');
@@ -251,9 +306,11 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
   const badTitles = failingIndexes(failures, 'title');
   const badExcerpts = failingIndexes(failures, 'excerpt');
   const badNotes = failingIndexes(failures, 'note');
+  const badIdeas = failingIndexes(failures, 'idea');
   const now = nowIso();
 
-  await env.DB.prepare(`DELETE FROM drafts WHERE item_id = ? AND kind IN ('title', 'marginal') AND status = 'proposed'`).bind(itemId).run();
+  // Kept and edited lines survive a redraft; proposals and the checker's rejections are replaced.
+  await env.DB.prepare(`DELETE FROM drafts WHERE item_id = ? AND kind IN ('title', 'marginal', 'idea') AND status IN ('proposed', 'rejected')`).bind(itemId).run();
   await env.DB.prepare(`DELETE FROM excerpts WHERE item_id = ? AND origin = 'machine' AND chosen = 0`).bind(itemId).run();
 
   const stmts: D1PreparedStatement[] = [];
@@ -263,7 +320,7 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
       env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, model, position, created_at, updated_at) VALUES (?, ?, 'title', ?, 'proposed', ?, ?, ?, ?)`).bind(
         newId('dr_'),
         itemId,
-        JSON.stringify(normaliseTitle(t)),
+        JSON.stringify({ ...normaliseTitle(t), ...(t.angle ? { angle: t.angle } : {}) }),
         model,
         i,
         now,
@@ -272,15 +329,16 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
     );
   });
   let excerpts = 0;
-  out.excerpts.forEach((e) => {
+  out.excerpts.forEach((e, i) => {
+    if (badExcerpts.has(i)) return;
     const found = findVerbatim(src.text, e.quote);
     if (!found) return;
     const hl = e.highlight ? findVerbatim(found.text, e.highlight) : null;
     excerpts++;
     stmts.push(
       env.DB.prepare(
-        `INSERT INTO excerpts (id, item_id, start, end, text, highlight_start, highlight_end, locator, origin, chosen, verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'machine', 0, 1, ?)`,
-      ).bind(newId('ex_'), itemId, found.start, found.end, found.text, hl?.start ?? null, hl?.end ?? null, locatorFor(item, src, found.start), now),
+        `INSERT INTO excerpts (id, item_id, start, end, text, highlight_start, highlight_end, locator, origin, chosen, verified, why, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'machine', 0, 1, ?, ?)`,
+      ).bind(newId('ex_'), itemId, found.start, found.end, found.text, hl?.start ?? null, hl?.end ?? null, locatorFor(item, src, found.start), e.why?.trim() || null, now),
     );
   });
   let notes = 0;
@@ -308,13 +366,34 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
       ),
     );
   });
+  let ideas = 0;
+  // Ideas are kept in the order the piece makes them, so a long conversation reads as a map of it.
+  const placed = out.ideas
+    .map((m, i) => ({ m, i, f: badIdeas.has(i) ? null : findVerbatim(src.text, m.quote) }))
+    .filter((x): x is { m: (typeof out.ideas)[number]; i: number; f: NonNullable<ReturnType<typeof findVerbatim>> } => Boolean(x.f))
+    .sort((a, b) => a.f.start - b.f.start);
+  placed.forEach(({ m, f }, i) => {
+    const body: MarginalBody = { text: m.idea.trim(), cite: { kind: 'source', quote: f.text, start: f.start, end: f.end }, locator: locatorFor(item, src, f.start), verdict: 'unchecked' };
+    ideas++;
+    stmts.push(
+      env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, model, position, created_at, updated_at) VALUES (?, ?, 'idea', ?, 'proposed', ?, ?, ?, ?)`).bind(
+        newId('dr_'),
+        itemId,
+        JSON.stringify(body),
+        model,
+        i,
+        now,
+        now,
+      ),
+    );
+  });
   if (stmts.length) await env.DB.batch(stmts);
-  const dropped = badTitles.size + badExcerpts.size + badNotes.size;
+  const dropped = badTitles.size + badExcerpts.size + badNotes.size + badIdeas.size;
   await upsertCheck(env, itemId, 'drafting', dropped ? 'warn' : 'pass', {
     summary: dropped ? `${dropped} draft line${dropped === 1 ? '' : 's'} failed the house checks after ${attempts} tries and were dropped` : `Drafted in ${attempts} ${attempts === 1 ? 'try' : 'tries'}; every line passed the house checks`,
     rows: failures.map((f) => ({ label: f.what, detail: f.why })),
   });
-  return { titles: out.titles.length - badTitles.size, excerpts, notes, dropped, attempts };
+  return { titles: out.titles.length - badTitles.size, excerpts, notes, ideas, dropped, attempts };
 }
 
 /** Titles set their last phrase in italic: { text: "What cheap things", italic: "cost" }. Models often repeat the phrase in both. */
@@ -346,20 +425,27 @@ export function locatorFor(item: Pick<ItemRow, 'locator' | 'type'>, src: { meta:
 
 // ---------------------------------------------------------------- judge
 
-/** Check machine notes against their cited evidence with the judge model. */
-export async function judgeNotes(env: Env, itemId: string, onlyDraftId?: string): Promise<{ checked: number }> {
+/**
+ * Check machine notes and ideas against their cited evidence with the judge model. A proposal the
+ * checker does not fully support is set aside ('rejected') and never shown to the editor, the same
+ * rule as prose that fails the house style. A line the editor kept or edited keeps its status and
+ * shows the verdict, so the editor can fix their own wording.
+ */
+export async function judgeNotes(env: Env, itemId: string, onlyDraftId?: string): Promise<{ checked: number; rejected: number }> {
   const src = await getSource(env, itemId);
-  if (!src) return { checked: 0 };
+  if (!src) return { checked: 0, rejected: 0 };
   const rows = (
-    await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind = 'marginal' AND status != 'cut' ORDER BY position`).bind(itemId).all<DraftRow>()
+    await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind IN ('marginal', 'idea') AND status NOT IN ('cut', 'rejected') ORDER BY kind, position`).bind(itemId).all<DraftRow>()
   ).results.filter((r) => !onlyDraftId || r.id === onlyDraftId);
-  if (!rows.length) return { checked: 0 };
+  if (!rows.length) return { checked: 0, rejected: 0 };
   const cards = (await env.DB.prepare(`SELECT * FROM wiki_cards WHERE item_id = ?`).bind(itemId).all<WikiRow>()).results;
-  const evidence = (b: MarginalBody) => {
+  const evidence = (b: MarginalBody, kind: string) => {
     if (b.cite.kind === 'source') {
-      // The cited line plus a little context on either side.
-      const from = Math.max(0, b.cite.start - 600);
-      const to = Math.min(src.text.length, b.cite.end + 600);
+      // The cited line plus context. An idea sums up a stretch of a talk or paper around its quote,
+      // so it is judged against that stretch (about two minutes of speech either side).
+      const pad = kind === 'idea' ? 2500 : 600;
+      const from = Math.max(0, b.cite.start - pad);
+      const to = Math.min(src.text.length, b.cite.end + pad);
       return `From the source: """${src.text.slice(from, to)}"""`;
     }
     const cid = b.cite.cardId;
@@ -367,19 +453,22 @@ export async function judgeNotes(env: Env, itemId: string, onlyDraftId?: string)
     return c ? `From Wikipedia, "${c.title}": """${c.extract}"""` : 'No evidence available.';
   };
   const bodies = rows.map((r) => parseJson<MarginalBody>(r.body, { text: '', cite: { kind: 'source', quote: '', start: 0, end: 0 } }));
-  const prompt = bodies.map((b, i) => `NOTE ${i}: ${b.text}\nEVIDENCE ${i}: ${evidence(b)}`).join('\n\n');
+  const prompt = bodies.map((b, i) => `${rows[i]!.kind === 'idea' ? 'NOTE (an idea from the piece)' : 'NOTE'} ${i}: ${b.text}\nEVIDENCE ${i}: ${evidence(b, rows[i]!.kind)}`).join('\n\n');
   const { data } = await generateJson(env, { task: 'judge', system: JUDGE_SYSTEM, prompt, schema: judgeSchema, itemId });
   const stmts: D1PreparedStatement[] = [];
+  let rejected = 0;
   bodies.forEach((b, i) => {
     const v = data.verdicts.find((x) => x.index === i);
     const next: MarginalBody = { ...b, verdict: v?.verdict ?? 'unchecked', reason: v?.reason ?? 'The checker returned no verdict.' };
-    // A correction may only narrow the note: short, in house style, never longer than the original by much.
-    if (v?.verdict === 'partly' && v.corrected && checkStyle(v.corrected).ok && v.corrected.length <= b.text.length * 1.3 + 20) next.corrected = v.corrected.trim();
-    else delete next.corrected;
-    stmts.push(env.DB.prepare('UPDATE drafts SET body = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify(next), nowIso(), rows[i]!.id));
+    delete next.corrected;
+    const row = rows[i]!;
+    // Only what the checker confirmed is offered; no verdict counts as not confirmed.
+    const reject = row.status === 'proposed' && next.verdict !== 'supported';
+    if (reject) rejected++;
+    stmts.push(env.DB.prepare('UPDATE drafts SET body = ?, status = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify(next), reject ? 'rejected' : row.status, nowIso(), row.id));
   });
   await env.DB.batch(stmts);
-  return { checked: rows.length };
+  return { checked: rows.length, rejected };
 }
 
 // ---------------------------------------------------------------- checks
@@ -443,22 +532,23 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
     results.quotes = { status: worst(rows), summary: rows[0]!.detail ?? '', rows };
   }
 
-  // Style and citations of the machine notes that will ship (kept or edited) or are waiting.
+  // Style and citations of the machine notes and ideas that will ship: the ones the editor kept or
+  // edited. Proposals the editor has not ticked are simply not published, so they are not counted.
   {
     const notes = (
-      await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind = 'marginal' AND status != 'cut' ORDER BY position`).bind(itemId).all<DraftRow>()
+      await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind IN ('marginal', 'idea') AND status IN ('kept', 'edited') ORDER BY kind DESC, position`).bind(itemId).all<DraftRow>()
     ).results;
     const styleRows: CheckSummary['rows'] = [];
     const citeRows: CheckSummary['rows'] = [];
     for (const [i, n] of notes.entries()) {
       const b = parseJson<MarginalBody | null>(n.body, null);
       if (!b) continue;
-      const label = `Note ${i + 1}${n.status === 'proposed' ? ' (waiting on you)' : ''}`;
+      const label = `${n.kind === 'idea' ? 'Idea' : 'Note'} ${i + 1}`;
       const s = checkStyle(b.text);
       styleRows.push({ label, status: s.ok ? (s.issues.length ? 'warn' : 'pass') : 'fail', detail: s.issues.map((x) => x.message).join(' ') || 'Clean' });
       const hasCite = b.cite.kind === 'source' ? Boolean(src && isVerbatimAt(src.text, b.cite, b.cite.quote)) : Boolean(b.cite.cardId);
       const verdict = b.verdict ?? 'unchecked';
-      const status = !hasCite ? 'fail' : verdict === 'supported' ? (n.status === 'proposed' ? 'warn' : 'pass') : verdict === 'unchecked' ? 'warn' : 'fail';
+      const status = !hasCite ? 'fail' : verdict === 'supported' ? 'pass' : verdict === 'unchecked' ? 'warn' : 'fail';
       citeRows.push({
         label,
         status,
@@ -466,7 +556,7 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
       });
     }
     const titleRows = (
-      await env.DB.prepare(`SELECT body FROM drafts WHERE item_id = ? AND kind = 'title' AND status != 'cut'`).bind(itemId).all<{ body: string }>()
+      await env.DB.prepare(`SELECT body FROM drafts WHERE item_id = ? AND kind = 'title' AND status NOT IN ('cut', 'rejected')`).bind(itemId).all<{ body: string }>()
     ).results.map((t, i) => {
       const tt = parseJson<{ text: string; italic?: string }>(t.body, { text: '' });
       const s = checkStyle([tt.text, tt.italic].filter(Boolean).join(' '));
@@ -476,7 +566,7 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
     results.style = { status: worst(sRows), summary: sRows.length ? `${sRows.filter((r) => r.status === 'pass').length} of ${sRows.length} machine lines pass the style check` : 'No machine prose yet', rows: sRows };
     results.citations = {
       status: worst(citeRows),
-      summary: citeRows.length ? `${citeRows.filter((r) => r.status === 'pass').length} of ${citeRows.length} notes cited and checked` : 'No machine notes',
+      summary: citeRows.length ? `${citeRows.filter((r) => r.status === 'pass').length} of ${citeRows.length} kept notes and ideas checked against their sources` : 'No machine notes kept',
       rows: citeRows,
     };
   }

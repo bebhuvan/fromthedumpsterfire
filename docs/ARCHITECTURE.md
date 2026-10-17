@@ -106,18 +106,25 @@ message; the consumer starts one `ItemWorkflow` per item.
 
 **ItemWorkflow steps.** `fetch` (per source kind: Readability on linkedom; unpdf page by page with
 page offsets, Workers AI `toMarkdown` as fallback; YouTube captions through the InnerTube Android
-client, else Whisper on the audio stream; Apple Podcasts / RSS / og:audio with chunked Whisper on
+client (human captions as they are; auto-generated ones only when the audio cannot be reached), else
+Whisper on the audio stream; Apple Podcasts / RSS / og:audio with chunked Whisper on
 MP3 in 3 MB byte ranges, one step per chunk; X via oEmbed; arXiv API + PDF; Crossref for DOIs; OCR
 of page photos by a vision model; when Readability finds under 600 characters, a Browser Rendering
 pass if enabled, see below) → snapshot raw bytes and text to R2, text to D1 → `read`
-(reading card; quotables kept only if found verbatim) → `wiki` (model-proposed queries resolved
-with the Wikipedia REST API; hits that share no word with the query are rejected) → `plate`
+(reading card; quotables kept only if found verbatim) → `wiki` (the reading card's two to four
+"further reading" picks, each with a reason, then entity queries to fill gaps, resolved with the
+Wikipedia REST API; hits that share no word with the query are rejected; the card's summary is the
+sentence of Wikipedia's lead that matches the reason, verbatim, else the first) → `plate`
 (public-domain image candidates, below) → `embed` (chunks and card into Vectorize, then candidate
 pairs) → `connect` (judged edges with quotes from both ends, below) → `draft`
-(titles, excerpt candidates, cited marginalia; audited for house style, verbatim quotes and real
-citations, regenerated up to three times with the failures listed, then anything still failing is
-dropped) → `judge` (each note against its cited evidence: supported, partly with a narrower
-correction, or unsupported) → `check` (links, quotes, style, citations, the editor's note) →
+(five titles from named angles; three excerpt candidates of one or two paragraphs within
+`excerptCap`, each with a line on why; zero to three cited margin notes; for long talks, podcasts,
+videos and papers (`wantsIdeas`) three to twelve big ideas (about one per fifteen minutes,
+`ideaCount`), from every third of the piece, each attributed and tied to a verbatim passage, stored
+in the order the piece makes them; audited for house style, verbatim quotes, length and real citations, regenerated up to
+three times with the failures listed, then anything still failing is dropped) → `judge` (each note
+against its cited evidence, each idea against the stretch around its passage; a proposal that is
+not fully supported is set aside as `rejected` and never shown) → `check` (links, quotes, style, citations, the editor's note) →
 `ready`. Errors set the item `failed`; the spend ceiling sets it `paused`. `plate`, `embed` and
 `connect` are helpers: their failures are logged and never fail the item (the spend ceiling still
 pauses it).
@@ -227,8 +234,9 @@ the bundle's `Audio.format` lets the reader app skip them on iOS.
 
 **Publish.** `assembleHaul` builds the bundle from D1, maps internal ids to slugs (never `note` or
 `thread`, which the website routes use), and lists the voice notes and chosen plates to copy next to
-the bundle. It refuses on any failing item check, any kept note not confirmed by its source, any note
-still waiting on the editor, a Rhyme whose quotes no longer match, a missing chosen plate, or any
+the bundle. It publishes only the notes, ideas and Wikipedia cards the editor ticked (unticked ones are left
+out, never a blocker), and refuses on any failing item check, any kept note or idea not confirmed by
+its source, a kept idea whose passage no longer matches, a Rhyme whose quotes no longer match, a missing chosen plate, or any
 `validateHaul` error; `validateHaul(haul, index, { filesBase })` also refuses any plate or audio URL
 not under `FILES_BASE`, so nothing hotlinks an archive (Wikimedia refuses app image loaders).
 There are two buckets: MEDIA (private) and FILES (public, only `hauls/`). `publishHaul` is the only

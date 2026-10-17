@@ -294,7 +294,7 @@ describe('generateJson across providers', () => {
     const seen = stubFetch(() => claudeOk('{"answer":"yes"}'));
     const env = makeEnv(undefined, { ...keys, AI_GATEWAY_ID: 'fdf-preview', CF_AIG_TOKEN: 'cf-token-0000000000' });
     const r = await generateJson(env, { task: 'draft', system: 'sys', context: 'source', prompt: 'go', schema: out, itemId: 'it_9' });
-    expect(r).toMatchObject({ data: { answer: 'yes' }, modelKey: 'haiku', model: 'claude-haiku-5-5' });
+    expect(r).toMatchObject({ data: { answer: 'yes' }, modelKey: 'claude-sonnet', model: 'claude-sonnet-5-5' });
     expect(seen[0]!.url).toBe('https://gateway.ai.cloudflare.com/v1/acct/fdf-preview/anthropic/v1/messages');
     expect(seen[0]!.headers['x-api-key']).toBe(keys.ANTHROPIC_API_KEY);
     expect(seen[0]!.headers['cf-aig-authorization']).toBe('Bearer cf-token-0000000000');
@@ -336,6 +336,7 @@ describe('generateJson across providers', () => {
     const env = makeEnv(undefined, keys);
     const r = await generateJson(env, { task: 'draft', system: 's', prompt: 'p', schema: out, itemId: 'it_2' });
     expect(r.modelKey).toBe('deepseek-flash');
+    // Sonnet, three tries (Claude's 529 is retried), then Gemini (cut off), then DeepSeek.
     expect(anthropicCalls).toBe(3);
     expect(seen.at(-1)!.url).toBe('https://api.deepseek.com/chat/completions');
     const rows = (await env.DB.prepare('SELECT provider, ok, error, input_tokens, cached_input_tokens, output_tokens, reasoning_tokens, cost_usd FROM model_calls ORDER BY rowid').all<Record<string, any>>()).results;
@@ -371,7 +372,8 @@ describe('generateJson across providers', () => {
     const env = makeEnv(() => answer({ answer: 'wai' }), keys);
     const r = await generateJson(env, { task: 'read', system: 's', prompt: 'p', schema: out });
     expect(r.modelKey).toBe('wai-deepseek-flash');
-    expect(seen.map((s) => new URL(s.url).host)).toEqual(['api.anthropic.com', 'api.deepseek.com', 'api.z.ai', 'generativelanguage.googleapis.com']);
+    // Sonnet, then Haiku: both Claude, each refused once (auth errors are not retried).
+    expect(seen.map((s) => new URL(s.url).host)).toEqual(['api.anthropic.com', 'api.anthropic.com', 'api.deepseek.com', 'api.z.ai', 'generativelanguage.googleapis.com']);
     const doc = { mime: 'application/pdf' as const, base64: 'JVBE', pages: 5 };
     seen.length = 0;
     await expect(generateJson(env, { task: 'ocr', system: 's', prompt: 'p', schema: out, documents: [doc], requireDocuments: true })).rejects.toThrow(/Every model/);
@@ -394,7 +396,7 @@ describe('generateJson across providers', () => {
   it('refuses a call whose worst case would cross the ceiling, before sending it', async () => {
     const seen = stubFetch(() => claudeOk('{"answer":"x"}'));
     const env = makeEnv(undefined, { ANTHROPIC_API_KEY: keys.ANTHROPIC_API_KEY, SPEND_CEILING_USD: '0.0001' });
-    await expect(generateJson(env, { task: 'draft', system: 's', prompt: 'x'.repeat(40_000), schema: out })).rejects.toThrow(/Spend ceiling: draft on haiku could cost/);
+    await expect(generateJson(env, { task: 'draft', system: 's', prompt: 'x'.repeat(40_000), schema: out })).rejects.toThrow(/Spend ceiling: draft on claude-sonnet could cost/);
     expect(seen).toHaveLength(0);
   });
 });

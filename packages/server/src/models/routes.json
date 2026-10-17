@@ -7,6 +7,7 @@
   "tasks": {
     "read": {
       "chain": [
+        "claude-sonnet",
         "haiku",
         "deepseek-flash",
         "glm-flash",
@@ -23,15 +24,16 @@
     },
     "draft": {
       "chain": [
-        "haiku",
+        "claude-sonnet",
         "gemini-flash",
         "deepseek-flash",
+        "haiku",
         "wai-kimi",
         "wai-deepseek-flash"
       ],
-      "maxTokens": 8000,
+      "maxTokens": 12000,
       "temperature": 0.5,
-      "maxInputChars": 90000,
+      "maxInputChars": 300000,
       "thinking": "low"
     },
     "judge": {
@@ -209,6 +211,25 @@
       "maxOutput": 32768,
       "temperature": false
     },
+    "gemini-argon": {
+      "provider": "google-ai-studio",
+      "model": "gemini-4-argon",
+      "prices": {
+        "in": 4,
+        "cachedIn": 0.2,
+        "out": 20
+      },
+      "json": "schema",
+      "vision": true,
+      "pdf": true,
+      "pdfMaxPages": 300,
+      "thinking": "always",
+      "caching": "auto",
+      "minCacheTokens": 4096,
+      "maxContext": 1048576,
+      "maxOutput": 65536,
+      "temperature": false
+    },
     "deepseek-flash": {
       "provider": "deepseek",
       "model": "deepseek-flash",
@@ -281,7 +302,7 @@
       "model": "@cf/moonshotai/kimi-k2.6",
       "prices": {
         "in": 0.95,
-        "out": 4.0
+        "out": 4
       },
       "json": "schema",
       "thinking": "optional"

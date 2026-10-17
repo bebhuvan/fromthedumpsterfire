@@ -15,7 +15,8 @@ prices per model, chains per task) is `packages/server/src/models/routes.json`; 
 | `deepseek-flash` | `deepseek-flash` (V4.1-Flash) | 1M / 384K | JSON object | on by default; can be off; effort low, high, max | images; no PDFs | automatic disk cache | 0.30 / 0.006 / 1.20 peak; half off-peak |
 | `glm-flash` | `glm-5.3-flash` | 1M / 128K | JSON object | always on; effort low, high, max | images, video, files | automatic | 0.15 / 0.03 / 0.50 |
 | `glm-4.7-flash` | `glm-4.7-flash` | 200K / 128K | JSON object | on by default; can be off | none | automatic | free |
-| `claude-sonnet` (not in a chain) | `claude-sonnet-5-5` | 1M / 128K | JSON schema | adaptive; cannot be off | images, PDFs | explicit | 2 / 0.10 / 10 (cache write 2.50) |
+| `claude-sonnet` (read, draft) | `claude-sonnet-5-5` | 1M / 128K | JSON schema | adaptive; cannot be off | images, PDFs | explicit | 2 / 0.10 / 10 (cache write 2.50) |
+| `gemini-argon` (not in a chain) | `gemini-4-argon` | 1M output ("long-decode") / context not stated | JSON schema | as Gemini Flash (assumed; not documented on the pricing page) | as Gemini Flash (assumed) | implicit only | 2 / 0.10 / 10 until 30 Nov 2026, then 4 / 0.20 / 20; `routes.json` carries the December prices so the ceiling never understates it. Source: https://ai.google.dev/gemini-api/docs/pricing (read 2026-10-17) |
 | `deepseek-pro` (not in a chain) | `deepseek-v4-pro` | 1M / 384K | JSON object | as Flash | none | automatic | 1.32 / 0.044 / 3.96 peak |
 
 Workers AI models (`wai-*`) need no key and are last in every chain; their prices are in
@@ -128,8 +129,8 @@ include thinking. The first model is used when its key is set; the rest are fall
 
 | Task | Chain | Thinking | Why | Expected cost |
 |---|---|---|---|---|
-| read | haiku → deepseek-flash → glm-flash → gemini-flash → wai-deepseek-flash → wai-scout | low | Cheapest strong reader, reads PDFs natively; quotables are verified in code anyway. | about $0.003 |
-| draft | haiku → gemini-flash → deepseek-flash → wai-kimi → wai-deepseek-flash | low | Best prose per cent; prompt caching makes each redraft cost about a tenth of the first. | $0.004 first draft, under $0.001 per redraft |
+| read | claude-sonnet → haiku → deepseek-flash → glm-flash → gemini-flash → wai-deepseek-flash → wai-scout | low | Since 2026-10-17 the reading card also picks the further reading, which is editorial judgement: on Haiku the picks varied run to run between "Pfeilstorch" and generic topics ("White stork", "Bird migration"); on Sonnet they were specific with reasons (Red knot and the horseshoe crabs of Delaware Bay). List lengths are asked for in descriptions and trimmed in code, so one item too many no longer costs a repair turn. | about $0.03 an article, $0.05 an hour of talk |
+| draft | claude-sonnet → gemini-flash → deepseek-flash → haiku → wai-kimi → wai-deepseek-flash | low | Titles, excerpt choice and the big ideas are editorial judgement. Measured side by side on 2026-10-17 on the same two items (The Conversation's bird-migration piece, 1,587 words; Karpathy's one-hour LLM talk, 12,151 words), cost per draft: **Haiku** ($0.003 / $0.006) flat titles, missed the best passages and ideas. **Gemini 3.8 Flash** ($0.006 / $0.018) good ideas (found "System 1 vs System 2"), misused the italic title tail. **DeepSeek Flash** ($0.008 / $0.020) strong titles and passages, but it is also the judge, so it should not draft. **Sonnet 5.5** ($0.018 / $0.06) the most consistent: best passages, ideas across the whole talk. **Gemini 4 Argon** ($0.036 / $0.098 at December prices) about Sonnet's level, not better, at 1.7 times the cost. Gemini Flash is second because it is the next best and a different family from the judge. Input limit 300,000 characters so a two-hour transcript fits whole. | $0.03 for a 1,600-word article, $0.06 for a one-hour talk; redrafts read the source from the prompt cache |
 | judge | deepseek-flash → gemini-flash → haiku → wai-kimi → wai-deepseek-flash | medium | A different model family from the drafter checks its notes; thinking helps match a claim to its evidence. | about $0.007 |
 | connect | deepseek-flash → gemini-flash → haiku → wai-kimi → wai-deepseek-flash | medium | Same reasoning: typing a link and choosing quotes at both ends is judgement work. | about $0.012 per batch of candidates |
 | clean | haiku → deepseek-flash → glm-flash → wai-deepseek-flash → wai-scout | off | Deletion-only cleanup is mechanical; the code check accepts or rejects it. | under $0.001 per voice note |
@@ -139,8 +140,9 @@ include thinking. The first model is used when its key is set; the rest are fall
 | thread | same as haul | low | Thread titles and years. | under $0.002 per thread |
 | bridge | same as haul | low | The Rhyme's bridge line (was on the `haul` route). | under $0.002 per Rhyme |
 
-Per item (read, plate, connect, draft, judge): about **$0.03**, against about $0.014 on Workers AI
-alone. The editor chose paid models first for the bulk tasks on 2026-10-16. Gemini's price doubles
+Per item (read, plate, connect, draft, judge): about **$0.04 to $0.08** since drafting moved to
+Sonnet (2026-10-17), against about $0.014 on Workers AI alone. A YouTube video with only
+auto-generated captions is now transcribed by Whisper instead ($0.0005 a minute, $0.03 an hour). The editor chose paid models first for the bulk tasks on 2026-10-16. Gemini's price doubles
 on 1 January 2027; OCR is its main use, so that roughly doubles OCR cost.
 
 ## Providers in detail

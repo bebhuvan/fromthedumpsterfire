@@ -2,7 +2,7 @@
 // searches; the editor can search too, then picks one or none. Everything shown comes from the
 // holding institution: title, maker, date, licence and a link to the work's page.
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { api, type PlateCandidate } from '../api';
 import { safeHref, useToast } from '../lib/core';
 import { Spinner, TextArea } from '../ui/parts';
@@ -17,7 +17,7 @@ const PROVIDER: Record<PlateCandidate['provider'], string> = {
 
 type Target = { kind: 'item'; id: string } | { kind: 'haul'; id: string };
 
-export function PlatesSection({ target, plates: initial, decision, onChange, title = 'Plate' }: { target: Target; plates: PlateCandidate[]; decision: string | null; onChange: () => void; title?: string }) {
+export function PlatesSection({ target, plates: initial, decision, onChange, title = 'Plate' }: { target: Target; plates: PlateCandidate[]; decision: string | null; onChange: () => void; title?: ReactNode }) {
   const toast = useToast();
   const [plates, setPlates] = useState(initial);
   const [seen, setSeen] = useState(initial);

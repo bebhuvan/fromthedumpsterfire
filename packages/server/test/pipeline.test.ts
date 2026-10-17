@@ -4,13 +4,15 @@
 import { describe, expect, it } from 'vitest';
 import { parseHTML } from 'linkedom';
 import { auditDraft, normaliseTitle } from '../src/steps';
-import { relevant, firstSentence } from '../src/wiki';
+import { relevant, firstSentence, bestSentence, pickHit } from '../src/wiki';
 import { captionsToText, youtubeId } from '../src/extract/youtube';
 import { reflow, pageAt } from '../src/extract/pdf';
 import { extractArticle } from '../src/extract/html';
 import { extractJson } from '../src/models/router';
 import { signAssertion } from '../src/fcm';
 import { arxivId } from '../src/extract/sources';
+import { isPunctuated } from '@fdf/shared/quoting';
+import { parseTranscript } from '../src/extract/transcript';
 
 const SOURCE = 'Hamming gave this talk on 7 March 1986. If you do not work on an important problem, it is unlikely you will do important work.';
 
@@ -19,11 +21,12 @@ describe('auditDraft', () => {
     const f = auditDraft(
       {
         titles: [{ text: 'Problems worth a life' }],
-        excerpts: [{ quote: 'If you do not work on an important problem, it is unlikely you will do important work.' }],
+        excerpts: [{ quote: 'If you do not work on an important problem, it is unlikely you will do important work.', why: '' }],
         marginalia: [
           { text: 'Hamming gave the talk on 7 March 1986.', cite: { kind: 'source', quote: 'Hamming gave this talk on 7 March 1986.' } },
           { text: 'He worked at Bell Labs for thirty years.', cite: { kind: 'wiki', title: 'Richard Hamming' } },
         ],
+        ideas: [],
       },
       SOURCE,
       [{ title: 'Richard Hamming' }],
@@ -34,16 +37,41 @@ describe('auditDraft', () => {
     const f = auditDraft(
       {
         titles: [{ text: 'A testament to grit' }],
-        excerpts: [{ quote: 'Work on important problems or you will not do important work.' }],
+        excerpts: [{ quote: 'Work on important problems or you will not do important work.', why: '' }],
         marginalia: [
           { text: 'He delves into research.', cite: { kind: 'source', quote: 'Hamming said research is hard.' } },
           { text: 'Shannon shared his office.', cite: { kind: 'wiki', title: 'Claude Shannon' } },
         ],
+        ideas: [],
       },
       SOURCE,
       [{ title: 'Richard Hamming' }],
     );
     expect(f.map((x) => x.what)).toEqual(['title 1', 'excerpt 1', 'note 1', 'note 1', 'note 2']);
+  });
+  it('holds excerpts to the item\'s length and checks every idea against the source', () => {
+    const long = Array.from({ length: 40 }, (_, i) => `Sentence number ${i} says a little more about the work.`).join(' ');
+    const src = `${SOURCE}\n\n${long}`;
+    const f = auditDraft(
+      {
+        titles: [{ text: 'Problems worth a life' }],
+        excerpts: [
+          { quote: long, why: '' },
+          { quote: 'If you do not work on an important problem, it is unlikely you will do important work.', why: '' },
+        ],
+        marginalia: [],
+        ideas: [
+          { idea: 'Hamming argues that unimportant problems lead to unimportant work.', quote: 'If you do not work on an important problem, it is unlikely you will do important work.' },
+          { idea: 'Hamming says luck decides everything.', quote: 'Luck favours the prepared mind.' },
+          { idea: 'Hamming delves into the vibrant tapestry of research.', quote: 'Hamming gave this talk on 7 March 1986.' },
+        ],
+      },
+      src,
+      [],
+      { excerptWords: 120, ideas: 3 },
+    );
+    expect(f.map((x) => x.what)).toEqual(['excerpt 1', 'idea 2', 'idea 3']);
+    expect(f[0]!.why).toMatch(/at most 120/);
   });
 });
 
@@ -143,5 +171,79 @@ describe('FCM OAuth assertion', () => {
     expect(claims).toMatchObject({ iss: 'push@fdf.iam.gserviceaccount.com', scope: 'https://www.googleapis.com/auth/firebase.messaging', aud: 'https://oauth2.googleapis.com/token', iat: 1_800_000_000, exp: 1_800_003_600 });
     const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', kp.publicKey, Buffer.from(s!, 'base64url'), new TextEncoder().encode(`${h}.${c}`));
     expect(ok).toBe(true);
+  });
+});
+
+describe('Wikipedia card sentence', () => {
+  const lead = 'A Pfeilstorch is a white stork that was injured by an arrow while wintering in Africa. About 25 such storks have been documented in Germany. The first and most famous was found in 1822 near the village of Klütz, and it helped prove that birds migrate rather than hibernate.';
+  it('takes the lead sentence that matches why the article was chosen, verbatim', () => {
+    expect(bestSentence(lead, 'The 1822 stork that proved birds migrate')).toBe('The first and most famous was found in 1822 near the village of Klütz, and it helped prove that birds migrate rather than hibernate.');
+    expect(lead).toContain(bestSentence(lead, 'The 1822 stork that proved birds migrate'));
+  });
+  it('falls back to the first sentence', () => {
+    expect(bestSentence(lead, '')).toBe('A Pfeilstorch is a white stork that was injured by an arrow while wintering in Africa.');
+    expect(bestSentence(lead, 'something unrelated entirely')).toBe('A Pfeilstorch is a white stork that was injured by an arrow while wintering in Africa.');
+  });
+});
+
+describe('YouTube captions: punctuated or not', () => {
+  // Older auto-captions (a 2023 talk) against the punctuated ones YouTube makes for recent uploads.
+  const old = 'hi everyone so recently I gave a 30-minute talk on large language models just kind of like an intro talk um unfortunately that talk was not recorded but a lot of people came to me after the talk and they told me that uh they really liked the talk so I would just I thought I would just re-record it and basically put it up on YouTube so here we go the busy person\'s intro to large language models director Scott okay so let\'s begin first of all what is a large language model really well a large language model is just two files right there be two files in this hypothetical directory so for example working with a specific example of the Llama 2 70b model';
+  const recent = "Hi everyone, I'm Lavinia, and welcome to the fourth edition of Weekly Tidbits. We spend a lot of time reading interesting stories that never make it into a full daily brief piece. So, once a week, we pick some of the best ones and add a little context. We sort them into four groups. Global economy, industry, and company. Let's get started. If you prefer reading the newsletter, here's the link. Number one. Saudi Arabia's oil backup route is hit. The pipeline was shut after drone attacks damaged pumping stations.";
+  it('uses captions that read as prose and sends the rest to Whisper', () => {
+    expect(isPunctuated(old)).toBe(false);
+    expect(isPunctuated(recent)).toBe(true);
+  });
+});
+
+describe('your own transcript', () => {
+  it('reads rolling auto-caption WebVTT once, without timing lines or tags, and keeps times', () => {
+    const vtt = `WEBVTT
+Kind: captions
+Language: en
+
+00:00:00.000 --> 00:00:02.500 align:start position:0%
+Hi everyone, I'm Lavinia,<00:00:01.000><c> and</c>
+
+00:00:02.500 --> 00:00:02.510
+Hi everyone, I'm Lavinia, and
+
+00:00:02.510 --> 00:00:05.000
+Hi everyone, I'm Lavinia, and
+welcome to the fourth edition.
+
+00:01:10.000 --> 00:01:12.000
+Number one. Saudi Arabia's oil route is hit.
+`;
+    const t = parseTranscript(vtt, 'k.en-orig.vtt');
+    expect(t.format).toBe('vtt');
+    expect(t.text).toBe("Hi everyone, I'm Lavinia, and welcome to the fourth edition. Number one. Saudi Arabia's oil route is hit.");
+    expect(t.times[0]).toEqual({ offset: 0, ms: 0 });
+  });
+  it('reads SRT with its times, and splits long talk into paragraphs', () => {
+    const cues = Array.from({ length: 40 }, (_, i) => `${i + 1}\n00:${String(Math.floor(i / 2)).padStart(2, '0')}:${String((i % 2) * 30).padStart(2, '0')},000 --> 00:00:59,000\nSentence number ${i} of a long talk about the economy and its many parts.`).join('\n\n');
+    const t = parseTranscript(cues, 'talk.srt');
+    expect(t.format).toBe('srt');
+    expect(t.text.split('\n\n').length).toBeGreaterThan(1);
+    expect(t.times.length).toBe(t.text.split('\n\n').length);
+    expect(t.text.slice(t.times[1]!.offset, t.times[1]!.offset + 15)).toBe('Sentence number');
+    expect(t.text).not.toMatch(/-->|^\d+$/m);
+  });
+  it('takes Markdown as written, without front matter', () => {
+    const md = "---\ntitle: 'Weekly Tidbits'\nvideo_id: DEUMys5aSMA\n---\n\nHi everyone, welcome.\nThis is the second line.\n\nNumber one.";
+    const t = parseTranscript(md, 'x.md');
+    expect(t).toEqual({ text: 'Hi everyone, welcome. This is the second line.\n\nNumber one.', times: [], format: 'text' });
+  });
+});
+
+describe('Wikipedia search picks the article that names the phrase', () => {
+  const hit = (title: string, extract: string) => ({ title, extract, url: `https://en.wikipedia.org/wiki/${title}`, key: title });
+  it('prefers a lower-ranked hit whose lead uses the words', () => {
+    const white = hit('White stork', 'The white stork is a large bird in the stork family, Ciconiidae.');
+    const pfeil = hit('Pfeilstorch', "A Pfeilstorch (German for 'arrow stork') is a white stork that is injured by an arrow.");
+    expect(pickHit('Arrow stork', [white, pfeil])?.title).toBe('Pfeilstorch');
+    expect(pickHit('Stork family', [white, pfeil])?.title).toBe('White stork');
+    expect(pickHit('Something else', [white, pfeil])?.title).toBe('White stork');
+    expect(pickHit('x', [])).toBeNull();
   });
 });

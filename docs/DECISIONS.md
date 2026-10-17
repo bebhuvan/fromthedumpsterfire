@@ -135,3 +135,53 @@ Dated, newest last. Don't reopen these without a new reason.
   but WebSockets and the browser's own DNS lookup cannot be intercepted.
 - **Voice notes prefer AAC in MP4**; WebM/Ogg notes still publish with a format field and an
   "Android only" warning rather than being blocked.
+
+## 2026-10-17 (the Desk, after the editor's first real use)
+
+- **Excerpts may run to two paragraphs** (the editor's call), capped at about a seventh of the piece
+  and 250 words (`excerptCap` in `packages/shared/src/quoting.ts`). No statute sets a safe length;
+  Indian fair dealing and US fair use both weigh the share taken, whether it substitutes for the
+  original, and whether it serves commentary, so the guide is proportional and always sits beside
+  the editor's note. The Desk warns past the guide and never blocks.
+- **Long talks, podcasts, videos and papers get their big ideas** (3 to 7), drafted by the machine,
+  each attributed by name and tied to a verbatim passage with its time or page, judged against the
+  stretch around that passage, ticked by the editor. They print in the machine's blue sans; the
+  passages are the multiple excerpts a long piece needs. Rejected: the editor rewriting every idea
+  (too slow for a two-hour podcast) and printing machine summaries without a quoted source.
+- **YouTube auto-captions are replaced by a Whisper transcript** when the audio is reachable:
+  unpunctuated captions full of "uh" make quotes unprintable. Where only auto-captions exist, ideas
+  print with their time, not the caption text.
+- **Drafting moved to Claude Sonnet 5.5** after a side-by-side on real items (MODELS.md). About
+  $0.03 to $0.06 a draft; the editor's rule is not to cut per-call quality for pennies.
+- **Machine lines the checker cannot fully confirm are set aside, never shown** (status
+  `rejected`), the same rule as prose that fails the house style. The "partly right, use the
+  corrected version" flow is gone: it was the most confusing part of the first Desk.
+- **Only what the editor ticks is printed.** Unticked notes, ideas and Wikipedia cards no longer
+  block publishing; they are simply left out. Margin notes are fewer (zero to three) and must
+  pass a "would a smart reader be glad to learn this here" test.
+- **Further reading is chosen for a curious reader**, not from the entity list: two to four
+  specific articles with a reason each, and the card shows the sentence of Wikipedia's own lead that
+  matches the reason (verbatim), falling back to the first.
+- **The item page is a sequence**: why it's here, the excerpt, the big ideas, the title, notes and
+  further reading, a plate, then a plain list of what is missing. Redraft, refetch, details,
+  connections and suggestions sit under More. On a phone the steps come before the source.
+- **Types are labelled by what they are** on the Desk ("Article or essay", "Podcast or interview"),
+  with the printed form each gives; capture no longer asks for a type.
+- **Every link to the original names the person** ("Read Amy L. Scarpignato in The Conversation",
+  "Watch Andrej Karpathy on YouTube"), from `sourceAction` in `@fdf/shared/haul`, on the site and
+  in the app.
+- **More ideas for long recordings, in their order** (the editor's call): about one per fifteen
+  minutes, three to twelve (`ideaCount`), at least a quarter from each third of the piece, stored and
+  printed in the order the piece makes them, so a long podcast item reads as a map of it. The
+  editor ticks the few worth printing; proposals cost nothing.
+- **The editor's take on an idea**: one line in their own words (typed or dictated), printed beside
+  the idea in their serif and signed. Never sent to a model; adding one ticks the idea. Chosen so a
+  long item is a conversation between the editor and the piece, not a note followed by an appendix.
+- **Start here** for long items: a time or page and a few of the editor's words, printed under the
+  byline, linking to the moment on YouTube (`&t=`); other hosts have no deep link.
+- **Rough transcripts print times, not words**: any speech transcript without punctuation (fetched
+  auto-captions or an uploaded VTT of them) keeps its ideas' quotes on the Desk as evidence and
+  prints only the time.
+- **The Desk is phone-first** (the editor reads and writes there most): a bottom bar for sections,
+  and on an item the work and the piece take turns full screen instead of a scroll box beside the
+  steps. A wide screen keeps both columns.

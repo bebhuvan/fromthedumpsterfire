@@ -1,6 +1,7 @@
 ---
 // Marks the editor's underlined phrase inside a passage. Both strings are escaped text. Anything in the
-// slot (an end mark) follows the text inside the same paragraph.
+// slot (an end mark) follows the text inside the last paragraph. A passage of two paragraphs (blank
+// line between) renders as two paragraphs; the mark sits in whichever one holds the highlight.
 interface Props {
   text: string;
   highlight?: string;
@@ -8,10 +9,14 @@ interface Props {
   as?: 'p' | 'span';
 }
 const { text, highlight, class: cls, as: Tag = 'p' } = Astro.props;
-const at = highlight ? text.indexOf(highlight) : -1;
+const paras = Tag === 'p' ? text.split(/\n\s*\n/).filter((p) => p.trim()) : [text];
+const last = paras.length - 1;
 ---
-{at >= 0 && highlight ? (
-  <Tag class={cls}>{text.slice(0, at)}<mark>{highlight}</mark>{text.slice(at + highlight.length)}<slot /></Tag>
-) : (
-  <Tag class={cls}>{text}<slot /></Tag>
-)}
+{paras.map((para, i) => {
+  const at = highlight ? para.indexOf(highlight) : -1;
+  return at >= 0 && highlight ? (
+    <Tag class={cls}>{para.slice(0, at)}<mark>{highlight}</mark>{para.slice(at + highlight.length)}{i === last ? <slot /> : null}</Tag>
+  ) : (
+    <Tag class={cls}>{para}{i === last ? <slot /> : null}</Tag>
+  );
+})}

@@ -111,6 +111,16 @@
 | Models | AI Gateways `fdf` and `fdf-preview`; spend ceiling 10 USD a month, warning at 8 (a default; change `SPEND_*` vars). Native provider adapters (Gemini, Claude, DeepSeek, Z.ai) with keys set on both Workers; in production since 2026-10-16 (pipeline `dd2c25cc`, Desk `c810af29`) |
 | Preview | Desk `fdf-desk-preview` behind Access app "FDF Desk (preview)". The site's preview Worker `fdf-web-preview` was deleted on 2026-10-16 at the editor's request; `npm run deploy:web:preview` recreates it |
 
+Go-live check (2026-10-17): production D1 `fdf-desk` has 0001–0003 recorded and nothing pending;
+`fdf-desk` (c810af29) and `fdf-pipeline` (dd2c25cc) were deployed from 415e8df, and no Desk, worker,
+package or migration file has changed since; HEAD builds and dry-runs for production (pipeline
+1,032 KiB gzipped, Desk 610 KiB); `npm run verify` 265 tests. Live: every Desk path 302s to Access;
+api. answers only `/v1/health` (200), else 403. The editor's first real capture (The Conversation,
+bird migration) ran the paid chain through gateway `fdf` to `ready` for $0.006. Not yet exercised in
+production: an authenticated session checked by someone other than the editor, and a publish (0 Hauls).
+Without `FCM_SERVICE_ACCOUNT` a publish still succeeds and the notify job logs `configured: false`;
+v1 is the only version that queues a push, so Haul 001 will not be announced if FCM is added later.
+
 Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run deploy:production`
 (Desk + pipeline), `npm run deploy:web`; migrations: `npm run db:migrate:production`.
 
@@ -310,6 +320,88 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 - No per-item OG image unless the item has a plate; the default share image is `public/og.png`
   (rendered from `scripts/og.html`).
 
+- 2026-10-17: **the Desk, reworked after the editor's first real use.** Measured on the production
+  record of the first capture (The Conversation, bird migration): titles were labels or mood lines,
+  the two excerpts were one-liners that missed the piece's best scene, the notes were Wikipedia
+  trivia, and two notes arrived marked "partly right" with a "use corrected" button. Changed:
+  - **Reading and drafting** on Claude Sonnet 5.5; drafting falls back to Gemini 3.8 Flash, then
+    DeepSeek, then Haiku. Haiku, Gemini Flash, DeepSeek Flash, Sonnet and Gemini 4 Argon were run on
+    the same two items (MODELS.md); Argon matched Sonnet at 1.7 times the cost and is defined but in
+    no chain. Five titles from named angles; three excerpt
+    candidates of one or two paragraphs within `excerptCap` (about a seventh of the piece, 250 words
+    at most), each with a line on why; zero to three notes that must pass a "glad to learn this here"
+    test; for long talks, podcasts, videos and papers, three to seven **big ideas**, each attributed
+    and tied to a verbatim passage with its time or page (`packages/shared/src/quoting.ts`).
+  - **Judge**: proposals it does not confirm (partly, unsupported or no verdict) are set aside
+    (`rejected`) and never shown; ideas
+    are judged against the stretch around their passage. **Publish**: only ticked lines print;
+    unticked ones never block.
+  - **Further reading**: the reading card now picks two to four articles a curious reader would open,
+    each with a reason (entities fill in only when it picks fewer than two); an exact Wikipedia title
+    is looked up before search; cards show the matching sentence of Wikipedia's lead, verbatim.
+    Limit: a description the model gives instead of a title ("Arrow stork") can still land on the
+    broad article ("White stork"); add the right one by name on the Desk.
+  - Model answers with one list item too many are trimmed, not rejected (the read step was paying
+    for a repair turn on most items).
+  - **Desk item page** as numbered steps (why, excerpt, big ideas, title, notes and further reading,
+    plate, what is missing; More holds the rest); phones get the steps first. Types labelled by what
+    they are; capture no longer asks for one.
+  - **Your own transcript** (paste, or .txt/.md/.vtt/.srt; subtitle times become locators) for talks,
+    videos and podcasts, and **upload the PDF yourself** on an item whose link will not give it up.
+    YouTube's audio cannot be fetched reliably from Workflow steps (403 on chunk fetches, seen today),
+    so long old videos without punctuated captions are best fed a transcript made on the laptop.
+  - **Website and app**: multi-paragraph excerpts, the big ideas (machine voice, numbered, quote and
+    time), and links that name the person ("Read Amy L. Scarpignato in The Conversation").
+  - Migration `0004_excerpt_why.sql` (additive: `excerpts.why`).
+- Verified 2026-10-17: `npm run verify`, all workspaces, tests listed by vitest. On preview with the
+  real models: the bird article and Karpathy's one-hour LLM talk drafted by Haiku and by Sonnet side
+  by side (MODELS.md); Sonnet's five talk ideas all passed the widened judge; further reading led
+  with "Pfeilstorch". Locally: the item page at 1440 px and 390 px (light and dark), a full
+  why → excerpt → ideas → ready run through the API, a local publish validated by
+  `scripts/verify-bundle.ts`, the website rendering ideas and two-paragraph excerpts, a real yt-dlp
+  VTT (12,151 words, 70 timed paragraphs, no repeats) and a PDF uploaded to an existing item.
+- Preview deployed with all of this (Desk `af247cce`, pipeline `cd49256d`); test items `it_test_*`
+  are in the preview D1.
+- **Production, 2026-10-17** (the editor approved going live): migration 0004 applied to `fdf-desk`;
+  Desk `408edbfc`, pipeline `bf19a13e`, website `1c409c49`. Checked after: every Desk path 302s to
+  Access, api. answers only `/v1/health`; the editor's bird-migration item redrafted on the
+  production pipeline (Sonnet read and draft, $0.057); the site's waiting page 200 with CSP and HSTS,
+  `www.` 301 to the apex. Deployed from an uncommitted working tree on main.
+- Known: some sites give only the first of several authors (the bird piece has two); fix "By" under
+  More. The public type label still says "Essay" for news reports; the Desk says "Article or essay".
+
+- 2026-10-17 (later): **more ideas for long recordings, the editor's take on each, and Start
+  here** (migration `0005_start_here.sql`: `items.start_at`, `items.start_note`). Verified on
+  preview with Lex Fridman's 2 h 23 min conversation with Sam Altman (YouTube refused it to
+  Cloudflare, "confirm you're not a bot", so its captions were fetched with yt-dlp on the laptop and
+  loaded through the transcript parser): 11 ideas, 10 confirmed, in time order from 5:32 to 1:40:59
+  (one at 2:10:41 set aside), reading and drafting about $0.23. Locally: the Desk's take box and
+  Start here step, the API refusing a malformed start time, a publish and a correction carrying the
+  take and a Start here linking to `&t=3617s`, and the site rendering both at 390 px. Preview Desk
+  `1fdf6f42`, pipeline `506c7867`. **Not yet in production.** The reader app shows both after its
+  next build.
+
+- 2026-10-17 (later): **the Desk on a phone.** Sections in a bottom bar (above the home indicator);
+  on an item, a sticky switch between "The work" and "The piece", which reads as a full page and
+  takes selections for excerpts (the Make excerpt bar sits above the bottom bar); capture starts as
+  one paste box with voice note and PDF in reach; 44 px buttons, 22 px checkboxes, 16 px inputs (no
+  iOS zoom); keyboard hints hidden on touch screens; Settings no longer scrolls sideways (its
+  key-value grid wraps). Checked at 390 px, light and dark, on every Desk screen: no horizontal
+  overflow, the switch sticks under the header, a simulated selection raises Make excerpt above
+  the bar. Preview Desk `b4864cd7`, pipeline `9eba0a2d`.
+- **Production, 2026-10-17 (second deploy, approved by the editor):** migration 0005 applied; Desk
+  `85f2803c`, pipeline `3ded599a` (with the fix below), website `3b027264`. Checked: Desk 302 to
+  Access, api. only `/v1/health`, site 200 with CSP and HSTS. The editor's item redrafted on the
+  production pipeline; that run found stale cards from the first reading still filling the
+  further-reading slots, so a new reading now replaces unticked cards (kept ones, and cards a kept
+  note cites, stay). After the fix the item's cards are Pfeilstorch, eBird, Bird ringing, Red knot.
+- **Reader app 0.3.0 launch APK** (2026-10-17): `EXPO_PUBLIC_USE_SEED=0`, arm64, targetSdk 36,
+  signed with the laptop's debug key (sideloading only; the Play Store needs an upload key and an
+  .aab). Checked in the file: the seed switch is inlined (the variable name is absent from the Hermes
+  bundle; the sample JSON is still packed but unreachable), and it reads files.fromthedumpsterfire.com.
+  Not run on a device here (the emulator is x86_64). Push stays off until google-services.json and
+  FCM_SERVICE_ACCOUNT exist.
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress
@@ -325,8 +417,12 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 
 ## Known gaps
 
-- The sample Haul ships inside the app until the first real Haul is published. Build launch binaries
-  with `EXPO_PUBLIC_USE_SEED=0`.
+- The sample Haul ships inside development builds until the first real Haul is published (the site
+  shows its waiting page meanwhile, so the two differ). Build launch binaries with
+  `EXPO_PUBLIC_USE_SEED=0`. Fixed 2026-10-17: the sample sat at `hauls/001/v1/haul.json`, and
+  because the app never refetches a bundle it holds, a sample build would have shown the sample
+  under the real Haul 001 after launch. It now lives under `seed/` (`apps/mobile/src/lib/seed.ts`).
+  Builds made before this fix keep the bug: replace them before Haul 001.
 - Design: the editor finds the web and app too bare. `docs/DESIGN-BRIEF.md` is being worked on in a
   separate session ("FDF design", branch `fdf-design`).
 - Podcast: proposed as one episode per Haul at `/haul/<n>/listen` (player from an external host,

@@ -34,6 +34,8 @@ export const ocrPagesSchema = z.object({
 
 export const READ_SYSTEM = `You are the reading desk of a small, careful magazine called From the Dumpster Fire. You read a source closely and fill in a structured reading card. Everything you report must come from the source text. Quotations must be copied character for character from the source, short (one or two sentences), and chosen because they are the most striking or load-bearing lines. Mechanisms are abstract patterns the piece describes (for example "principal-agent problem", "feedback loop", "Jevons paradox"). For each notable person, work, place, idea or event, give a plain Wikipedia search query (a title, never a URL).
 
+Separately, choose "furtherReading": two to four Wikipedia articles a curious reader of this piece would actually open next. Pick the specific over the general: the odd thing the piece mentions in passing, the named idea or episode it turns on, the person or work it leans on, the history behind its central fact. Never a generic topic (a common species, a country, a publisher, a website, the field itself) unless the piece is about exactly that. For each, the exact title of the English Wikipedia article as Wikipedia names it ("Great Stink", not "London sewage crisis of 1858"), and in "why" one short line naming what in this piece makes it worth opening.
+
 ${HOUSE_STYLE}`;
 
 export const readSchema = z.object({
@@ -46,8 +48,8 @@ export const readSchema = z.object({
       date: z.string().default(''),
     })
     .describe('Only what the source itself states; empty strings when unknown.'),
-  claims: z.array(z.string()).max(8).default([]),
-  mechanisms: z.array(z.string()).max(6).default([]),
+  claims: z.array(z.string()).describe('At most 8.').default([]),
+  mechanisms: z.array(z.string()).describe('At most 6.').default([]),
   entities: z
     .array(
       z.object({
@@ -55,29 +57,58 @@ export const readSchema = z.object({
         kind: z.string().default('concept'),
         wikiQuery: z.string().describe('A Wikipedia article title or search phrase. Never a URL.'),
       }),
-    )
-    .max(12)
-    .default([]),
-  events: z.array(z.object({ date: z.string(), what: z.string() })).max(10).default([]),
-  quotables: z.array(z.object({ quote: z.string(), why: z.string().default('') })).max(8).default([]),
+    ).describe('At most 12.').default([]),
+  events: z.array(z.object({ date: z.string(), what: z.string() })).describe('At most 10.').default([]),
+  quotables: z.array(z.object({ quote: z.string(), why: z.string().default('') })).describe('At most 8.').default([]),
+  furtherReading: z
+    .array(z.object({ query: z.string().describe('A Wikipedia article title or search phrase. Never a URL.'), why: z.string().default('') })).describe('At most 4.').default([]),
 });
 export type ReadingCard = z.infer<typeof readSchema>;
 
-export const DRAFT_SYSTEM = `You draft apparatus for one item in From the Dumpster Fire, a magazine where one editor chooses things worth saving and a machine adds short, checked notes in the margins. The editor approves or cuts every line you write. You write:
+export const DRAFT_SYSTEM = `You draft apparatus for one item in From the Dumpster Fire, a magazine where one editor chooses things worth saving from the internet and the archive, and a machine adds checked notes. The editor approves, cuts or rewrites every line you write. Read the whole source before you choose anything. You write four things.
 
-1. Three title options for the item as it will appear in the magazine. Short, plain, specific, drawn from the piece. One may simply be the original title. A title may set its last phrase in italic: put that phrase in "italic" and the rest in "text".
-   The editor may adopt a title as his own, so titles follow the editor's register below. The excerpts and notes stay in the machine's plain, factual voice.
-2. Two or three excerpt candidates: passages copied character for character from the source, each one to three sentences, the most quotable and representative. For each, give the single sentence or clause the editor might underline as "highlight" (it must be an exact substring of the quote).
-3. Two to four marginal notes: short factual notes (one or two sentences each) that give a reader context they would not get from the piece: when and where it appeared, who the author was, what happened next, a precise date or number. Every note must cite its evidence. Cite the source with an exact quotation from it, or cite one of the Wikipedia articles provided by its exact title. Only state what the cited evidence supports. Never invent facts. Never praise.
+1. TITLES. Five options for the title the item will carry in the magazine, each from a different angle, and name the angle:
+   - "turn": a twist on a familiar phrase, or a pun, that fits this piece exactly
+   - "fact": the most surprising concrete fact or number in the piece, put so it lands
+   - "question": the question the piece answers, asked plainly
+   - "lift": a short phrase taken word for word from the piece that works on its own
+   - "plain": what a friend would call it in one breath
+   A good title makes someone who has not read the piece want to, and tells them truthfully what is inside. Two to seven words. Concrete nouns over abstractions. It must make sense without the piece.
+   Bad titles, and why: "Where money goes, from banks to apps" (a table of contents); "Markets, memory and a few lost receipts" (a mood with no claim); "A history of the shipping container" (a label); "Why everything you know about sleep is wrong" (clickbait).
+   Good titles from this magazine: "What cheap things cost", "Cheaper power, more burning", "Horny for status", "Sauron in our pockets", "Broken news", "What's your enough?".
+   A title may set its last phrase in italic: put that phrase in "italic" and the rest in "text".
+
+2. EXCERPTS. Three candidate passages the magazine could quote, each of a different kind. The excerpt is the centre of the item: someone should be able to read it alone, feel the piece's force, and want the rest. Look for:
+   - the passage where the piece makes its central argument or its turn, in the author's best words
+   - a scene, story or example told in full, with its point
+   - a surprising fact or finding together with what follows from it
+   Avoid: openings that only set up the topic; signposting ("In this essay"); the author describing their own book, project or methods; summaries; image captions and photo credits; lists with no turn; anything that leans on what came before it to make sense; passages that merely restate the headline.
+   Each passage is one paragraph, or two consecutive paragraphs, within the length given for this item. Copy it character for character from the source, including the blank line between two paragraphs. Never join sentences that are not next to each other.
+   For each, give "highlight": the one sentence in it a reader would underline (an exact substring of the passage), and "why": one short line telling the editor what the passage does. "why" is shown only to the editor.
+
+3. NOTES. Zero to three margin notes, set beside the piece in the margin. A note earns its place only when a careful reader would be glad to learn it here: who a named person is and why they matter to this piece, what an unfamiliar term means when the piece does not say, the date or number that changes how a claim reads, what happened afterwards, or a striking fact from the cited article that bears directly on the piece's argument. Test each note: would a smart reader say "I didn't know that, and it matters here"? If not, leave it out. Never: a definition the piece already gives; another name for something the piece explains; general facts about a species, place, company, publisher or website; anything about the article's own publication or date; a restatement of the piece. One or two sentences each. Every note must cite its evidence: an exact quotation from the source, or one of the Wikipedia articles provided, by its exact title. State only what the cited evidence says. If nothing earns a note, return none: an empty list is a good answer.
+
+4. IDEAS. Only when the item asks for them (it says how many, or none). For a long talk, podcast, video or paper a short excerpt cannot stand for the whole, so draw out its big ideas: the claims and insights a thoughtful listener would take away and argue about over dinner. Prefer the counterintuitive, the specific, the useful and the challenging over the obvious and the general. Order them by importance. For each:
+   - "idea": one or two plain sentences stating the idea as the speaker or author puts it, attributed by name ("Karpathy argues that ..."). Report what they say. Never add your own view, and never say whether they are right.
+   - "quote": one to three consecutive sentences copied character for character from the source where the idea is stated, so a reader can check it.
+   No two ideas may come from the same passage. Together they must cover the piece from start to end: split it into thirds and take at least a quarter of the ideas from each third, including the last; in a long conversation, look for an idea wherever the talk turns to something new.
 
 ${HOUSE_STYLE}
 
-The editor's register, for the title options only:
+The editor's register, for the titles only (excerpts are the author's words; notes and ideas stay in the machine's plain, factual voice):
 ${editorVoice}`;
 
+export const TITLE_ANGLES = ['turn', 'fact', 'question', 'lift', 'plain'] as const;
+
 export const draftSchema = z.object({
-  titles: z.array(z.object({ text: z.string(), italic: z.string().optional() })).min(1).max(4),
-  excerpts: z.array(z.object({ quote: z.string(), highlight: z.string().optional() })).max(4).default([]),
+  titles: z
+    .array(z.object({ text: z.string(), italic: z.string().optional(), angle: z.enum(TITLE_ANGLES).optional() }))
+    .min(1)
+    .describe('At most 6.'),
+  excerpts: z
+    .array(z.object({ quote: z.string(), highlight: z.string().optional(), why: z.string().optional().default('') }))
+    .describe('At most 4.')
+    .default([]),
   marginalia: z
     .array(
       z.object({
@@ -89,12 +120,16 @@ export const draftSchema = z.object({
         }),
       }),
     )
-    .max(5)
+    .describe('At most 4.')
+    .default([]),
+  ideas: z
+    .array(z.object({ idea: z.string(), quote: z.string().describe('One to three consecutive sentences, copied exactly from the source.') }))
+    .describe('As many as the item asks for, at most 12.')
     .default([]),
 });
 export type DraftOutput = z.infer<typeof draftSchema>;
 
-export const JUDGE_SYSTEM = `You are the fact-checker for a magazine. For each numbered note you are given the note and the evidence it cites. Decide whether the evidence fully supports every claim in the note. "supported": every fact in the note is in the evidence. "partly": some of it is, some is not or is overstated. "unsupported": the evidence does not back the note. For "partly", give a corrected version of the note that only says what the evidence supports, in the same plain style.
+export const JUDGE_SYSTEM = `You are the fact-checker for a magazine. For each numbered note you are given the note and the evidence it cites. Decide whether the evidence fully supports every claim in the note. "supported": every fact in the note is in the evidence, and nothing is overstated. "partly": some of it is, some is not or is overstated. "unsupported": the evidence does not back the note. A note that reports what a speaker or author argues is supported when the evidence shows them arguing it; you are checking the report, not whether the argument is right. A note marked as an idea sums up what the speaker or author says across the stretch of evidence given: it is supported when every claim in it is made somewhere in that stretch, even if not in one sentence. The evidence may be a rough machine transcript without punctuation; read it for meaning. Give a one-sentence reason.
 
 ${HOUSE_STYLE}`;
 

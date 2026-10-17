@@ -26,6 +26,9 @@ export interface ItemRow {
   media: string | null;
   plate: string | null;
   locator: string | null;
+  /** The editor's "start here": a time or page, and their few words (0005). */
+  start_at?: string | null;
+  start_note?: string | null;
   archived: number;
   captured_at: string;
   updated_at: string;
@@ -85,6 +88,8 @@ export interface ExcerptRow {
   origin: string;
   chosen: number;
   verified: number;
+  /** The machine's one line on why it proposed this passage (Desk only). */
+  why?: string | null;
   created_at: string;
 }
 
@@ -143,6 +148,10 @@ export interface MarginalBody {
   verdict?: 'supported' | 'partly' | 'unsupported' | 'unchecked';
   reason?: string;
   corrected?: string;
+  /** Ideas only: where the quoted passage sits (page, time, section). */
+  locator?: string;
+  /** Ideas only: the editor's own line on it, verbatim. Never sent to a model. */
+  reaction?: string;
   /** True once the editor has changed the text. */
   edited?: boolean;
 }

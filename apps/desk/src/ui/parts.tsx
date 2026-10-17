@@ -44,12 +44,45 @@ export function Flame({ size = 18 }: { size?: number }) {
 
 export const CONTENT_TYPES = Object.keys(typeSwatch) as ContentType[];
 
+/**
+ * What each type means, in the editor's terms. The public label (typeLabel) is shorter; the type
+ * itself only decides the printed form the piece gets on the site and in the app.
+ */
+export const deskTypeLabel: Record<ContentType, string> = {
+  essay: 'Article or essay',
+  post: 'Post (X, Bluesky, a note)',
+  talk: 'Talk or lecture',
+  video: 'Video',
+  podcast: 'Podcast or interview',
+  paper: 'Paper or report',
+  poem: 'Poem',
+  passage: 'Passage from a book',
+  rhymes: 'Rhymes (then and now)',
+  'rabbit-hole': 'Rabbit hole (Wikipedia)',
+};
+
+/** How each type is printed, so the choice reads as a layout decision. */
+export const deskTypeForm: Record<ContentType, string> = {
+  essay: 'Printed as a magazine opening: title, your note, the excerpt pulled out.',
+  post: 'Printed as a magazine opening, the post quoted whole.',
+  talk: 'Printed as a transcript: the speaker, your note and the machine as turns.',
+  video: 'Printed as a transcript, with a link to the video.',
+  podcast: 'Printed as a transcript, with a link to the episode.',
+  paper: 'Printed as an offprint: abstract, notes and references.',
+  poem: 'Printed as a broadside: the poem set large, line breaks kept.',
+  passage: 'Printed as a page from the book.',
+  rhymes: 'Printed as facing pages: then and now.',
+  'rabbit-hole': 'Printed as a catalogue card.',
+};
+
 export function TypeSelect({ value, onChange, className = 'select' }: { value: ContentType; onChange: (t: ContentType) => void; className?: string }) {
+  // Rhymes are made with their own button; offer the type only to an item that already is one.
+  const types = CONTENT_TYPES.filter((t) => t !== 'rhymes' || value === 'rhymes');
   return (
-    <select className={className} value={value} onChange={(e) => onChange(e.target.value as ContentType)} aria-label="Content type">
-      {CONTENT_TYPES.map((t) => (
+    <select className={className} value={value} onChange={(e) => onChange(e.target.value as ContentType)} aria-label="Type">
+      {types.map((t) => (
         <option key={t} value={t}>
-          {typeLabel[t]}
+          {deskTypeLabel[t] ?? typeLabel[t]}
         </option>
       ))}
     </select>

@@ -55,6 +55,7 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
     `${h2} Why it's here (Editor — ${EDITOR_NAME})`,
     '',
     item.why.text,
+    ...(item.startHere ? ['', `**Start here:** ${item.startHere.url ? `[${item.startHere.at}](${item.startHere.url})` : item.startHere.at}${item.startHere.note ? ` (${item.startHere.note})` : ''}`] : []),
   ];
 
   if (item.excerpt) {
@@ -95,6 +96,16 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
     for (const m of item.marginalia) {
       lines.push(`- ${m.text} *(Cite: ${m.cite})*`);
     }
+  }
+
+  if (item.ideas?.length) {
+    lines.push('', `${h2} The Big Ideas (Machine, each checked against the source)`, '');
+    item.ideas.forEach((m, i) => {
+      lines.push(`${i + 1}. ${m.text}`);
+      if (m.quote) lines.push(`   > "${m.quote}"${m.locator ? ` (${m.locator})` : ''}`);
+      else if (m.locator) lines.push(`   (${m.locator})`);
+      if (m.reaction) lines.push(`   *Editor:* ${m.reaction}`);
+    });
   }
 
   if (item.plate) {

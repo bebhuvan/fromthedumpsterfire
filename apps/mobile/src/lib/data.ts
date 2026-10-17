@@ -7,17 +7,14 @@
 import { useEffect, useState } from 'react';
 import { File, Paths } from 'expo-file-system';
 import { BUNDLE_VERSION, type Haul, type HaulIndex, type HaulSummary } from '@fdf/shared/haul';
-import seedIndex from '@fdf/shared/fixtures/index.json';
-import seedHaul from '@fdf/shared/fixtures/haul-001.json';
 import { useReader } from './store';
+import { INDEX_PATH, seedTable } from './seed';
 
 const BASE = process.env.EXPO_PUBLIC_FILES_BASE ?? 'https://files.fromthedumpsterfire.com';
-const INDEX_PATH = 'hauls/index.json';
 
-// Sample content ships in the binary until the first real Haul is published. Set
-// EXPO_PUBLIC_USE_SEED=0 for launch builds.
-const SEEDS: Record<string, unknown> =
-  process.env.EXPO_PUBLIC_USE_SEED === '0' ? {} : { [INDEX_PATH]: seedIndex, 'hauls/001/v1/haul.json': seedHaul };
+// Sample content ships in development builds until the first real Haul is published, at seed/
+// paths a real Haul can never have (see seed.ts). Launch builds set EXPO_PUBLIC_USE_SEED=0.
+const SEEDS: Record<string, unknown> = seedTable(process.env.EXPO_PUBLIC_USE_SEED !== '0');
 
 const memory = new Map<string, unknown>();
 const inflight = new Map<string, Promise<unknown | null>>();

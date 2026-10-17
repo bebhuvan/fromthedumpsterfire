@@ -46,6 +46,8 @@ function fields(item: Item): Field[] {
     [item.excerpt?.text ?? '', 1.5, 1],
     [item.rhyme ? `${item.rhyme.then.quote} ${item.rhyme.now.quote}` : '', 1.5, 1],
     [item.marginalia.map((m) => m.text).join(' '), 1, 1],
+    [(item.ideas ?? []).map((m) => m.text).join(' '), 1, 1],
+    [[(item.ideas ?? []).map((m) => m.reaction ?? '').join(' '), item.startHere?.note ?? ''].join(' '), 1.5, 1],
     [item.connections.map((c) => `${c.title} ${c.note}`).join(' '), 1, 1],
   ];
   return f.filter(([text]) => text.trim().length > 0);
