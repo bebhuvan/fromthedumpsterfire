@@ -117,7 +117,8 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   packages/shared would otherwise ship a stale bundle.
 - JS-only changes ship over the air: `npm run app:update` (signed with the key in
   `~/.config/fdf/app-updates/`, served by `/v1/updates` on the Desk Worker; `-- --rollback` undoes).
-  Native changes (new modules, `app.json` plugins, Firebase) change the fingerprint and need a new APK.
+  Native changes (new modules, `app.json` plugins, Firebase, even `apps/mobile/.gitignore`) change the
+  fingerprint and need a new APK; the script prints the runtime it targets (`assets/fingerprint` in the APK).
 - Plates and voice notes must be served from our files host. Archives such as Wikimedia refuse the
   app's image requests (403 even with a descriptive User-Agent), so never hotlink them.
 

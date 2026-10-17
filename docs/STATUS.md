@@ -412,7 +412,8 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   the emulator a published update downloaded on one launch and ran on the next, a manifest with a
   stale signature was refused, and `--rollback` restored the embedded JS. Production now holds that
   roll-back directive (safe: phones on their embedded JS get "no update"). APK
-  from-the-dumpster-fire-0.3.0-ota.apk (arm64 + x86_64, runtime fd374857…) replaces the push APK;
+  from-the-dumpster-fire-0.3.0-ota.apk (arm64, runtime 942dd8e9…; the emulator test ran on fd374857…,
+  before a `.gitignore` edit moved the fingerprint) replaces the push APK;
   older APKs have no updater, so each reader needs this one install. Signing key:
   `~/.config/fdf/app-updates/private-key.pem` (back it up). Publish: `npm run app:update`.
 
