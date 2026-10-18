@@ -205,6 +205,7 @@ export function extractorLabel(x: string): string {
     browser: 'rendered in a browser, then extracted',
     transcript: 'your transcript',
     'substack-api': 'from Substack',
+    'substack-page': 'extracted from the Substack page',
     'substack-feed': "from the newsletter's feed",
     'wordpress-api': 'from the WordPress site',
     'medium-feed': "from Medium's feed",

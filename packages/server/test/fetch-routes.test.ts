@@ -146,6 +146,20 @@ describe('Substack', () => {
     await expect(fetchSource(makeEnv(), item('https://www.slowboring.com/p/the-voice-of-a-generation'))).rejects.toThrow(/paid subscribers: its feed carries only the opening/);
   });
 
+  it('when the API and feed refuse but the page answers, reads the post body alone', async () => {
+    const page = fixture('archived-page.html').replace('</div></div></article>', '</div></div><div class="post-footer"><a>Share</a></div><div class="portable-archive">No posts</div></article>');
+    serve({
+      'https://sugataraju.substack.com/api/': html('<title>Too Many Requests</title>', 429),
+      'https://sugataraju.substack.com/feed': html('<title>Too Many Requests</title>', 429),
+      [SUB]: html(page),
+    });
+    const out = await fetchSource(makeEnv(), item(SUB));
+    expect(out.extractor).toBe('substack-page');
+    expect(text(out).startsWith('The protest began on a Monday')).toBe(true);
+    expect(text(out).endsWith('in the heat.')).toBe(true);
+    expect(out.fields).toMatchObject({ title: 'The new ordinariness of Rahul Gandhi', creator: 'Sugata Srinivasaraju' });
+  });
+
   it('a /p/ link on a site that is not Substack goes straight on to the page', async () => {
     const page = `<html><head><title>A plain site</title></head><body><article><h1>A plain site</h1>${'<p>An ordinary article on an ordinary site, long enough to read as one, with sentences that go on.</p>'.repeat(8)}</article></body></html>`;
     serve({ 'https://plain.example.org/p/an-article': html(page) });

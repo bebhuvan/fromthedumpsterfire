@@ -5,7 +5,7 @@ import type { Media } from '@fdf/shared/haul';
 import type { SourceKind } from '@fdf/shared/detect';
 import type { Env } from './env';
 import { fetchBytes, decode, type Fetched } from './extract/http';
-import { mediumFromFeed, mediumTarget, paywallMarker, PaywalledError, RouteMissError, substackFromApi, substackFromFeed, substackTarget, wordpressFromApi, wordpressHints, wordpressTarget, type PlatformArticle } from './extract/platforms';
+import { mediumFromFeed, mediumTarget, paywallMarker, PaywalledError, RouteMissError, substackFromApi, substackFromFeed, substackPageBody, substackTarget, wordpressFromApi, wordpressHints, wordpressTarget, type PlatformArticle } from './extract/platforms';
 import { fetchSnapshot, latestSnapshot, savePageNow, type WaybackCopy } from './extract/wayback';
 import { extractArticle } from './extract/html';
 import { browserAvailable, renderPage } from './extract/browser';
@@ -191,6 +191,8 @@ async function afterRefusal(url: string, why: string, status: number, tried: str
   const fromCopy = (copy: WaybackCopy | null): FetchOutcome | null => {
     if (!copy) return null;
     const ex = extractArticle(copy.html, url);
+    const sub = substackPageBody(copy.html);
+    if (sub) Object.assign(ex, sub);
     const paywall = paywallMarker(copy.html);
     if (paywall) throw new PaywalledError(`${paywall}; the archived copy has only the public preview. Paste the text or upload a PDF if you have it`);
     if (ex.text.length < 400 || isBotCheck({ url: copy.raw, status: 200, contentType: 'text/html', bytes: new Uint8Array() }, copy.html)) {
@@ -292,6 +294,12 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
   let ex = extractArticle(html, page.url);
   const paywall = paywallMarker(html);
   if (paywall) throw new PaywalledError(`${paywall}; only the public preview is readable. Paste the text or upload a PDF if you have it`);
+  let extractor = 'readability';
+  const sub = substackPageBody(html);
+  if (sub) {
+    ex = { ...ex, ...sub };
+    extractor = 'substack-page';
+  }
   // A WordPress site says where its API is; the API has the post alone, with its authors.
   const hints = wordpressHints(html);
   if (hints) {
@@ -314,10 +322,10 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
         ex = altEx;
         html = altHtml;
         page = alt;
+        extractor = 'readability';
       }
     }
   }
-  let extractor = 'readability';
   if (ex.text.length < MIN_STATIC_TEXT && browserAvailable(env)) {
     // The page may build its text with JavaScript: render it (guarded; see extract/browser.ts).
     const rendered = await renderPage(env, page.url).catch((e) => {

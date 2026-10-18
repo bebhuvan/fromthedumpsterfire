@@ -11,6 +11,7 @@
 import { DOMParser } from 'linkedom';
 import { FatalError } from '../util';
 import { fetchBytes, decode, type Fetched } from './http';
+import { parseHTML } from 'linkedom';
 import { fragmentText, plainText } from './html';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,12 +40,7 @@ export interface PlatformArticle {
 }
 
 /** The post is paid or members-only and only a preview is public. Not worth retrying. */
-export class PaywalledError extends FatalError {
-  constructor(message: string) {
-    super(message);
-    this.name = 'PaywalledError';
-  }
-}
+export class PaywalledError extends FatalError {}
 
 /** A platform route that could not be used this time (refused, not found, wrong shape). */
 export class RouteMissError extends Error {
@@ -244,6 +240,20 @@ export async function substackFromFeed(t: SubstackTarget, postUrl: string): Prom
     canonical: tag(item, 'link') || undefined,
     audio: encType.startsWith('audio/') ? enclosure.getAttribute('url') : undefined,
   };
+}
+
+/**
+ * The post body of a Substack page (fetched or archived): the same element the API's body_html
+ * fills, so the text matches the API route's and leaves out the share bar, "No posts" and the
+ * subscribe boxes that Readability keeps.
+ */
+export function substackPageBody(html: string): { text: string; headings: Array<{ offset: number; text: string }> } | null {
+  if (!/substackcdn\.com/.test(html) || !/class="available-content"/.test(html)) return null;
+  const { document } = parseHTML(html);
+  const body = (document as El).querySelector('.available-content .body') ?? (document as El).querySelector('.available-content');
+  if (!body) return null;
+  const out = fragmentText(body.innerHTML, SUBSTACK_STRIP);
+  return out.text.length >= 200 ? out : null;
 }
 
 // ---------------------------------------------------------------- WordPress
