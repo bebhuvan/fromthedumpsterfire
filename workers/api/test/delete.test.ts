@@ -44,6 +44,8 @@ describe('DELETE /api/items/:id', () => {
     expect(t.sql.some((q) => q.startsWith('DELETE FROM items'))).toBe(true);
     expect(t.sql.some((q) => q.startsWith('UPDATE rhymes SET then_item_id = NULL'))).toBe(true);
     expect(t.sql.some((q) => q.startsWith('DELETE FROM notes'))).toBe(true);
+    expect(t.sql.some((q) => q.startsWith('DELETE FROM runs'))).toBe(true);
+    expect(t.sql.some((q) => q.includes('model_calls'))).toBe(false);
     expect(t.deleted).toEqual([['uploads/it1.pdf', 'snapshots/it1.html', 'snapshots/it1/text.txt', 'notes/n1.webm']]);
     expect(t.sent).toEqual([{ kind: 'purge', vectorIds: ['it1:card', 'it1:0'] }]);
   });

@@ -382,6 +382,8 @@ app.delete('/api/items/:id', async (c) => {
     c.env.DB.prepare('UPDATE rhymes SET then_item_id = NULL WHERE then_item_id = ?').bind(id),
     c.env.DB.prepare('UPDATE rhymes SET now_item_id = NULL WHERE now_item_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM notes WHERE item_id = ?').bind(id),
+    // Run history has no foreign key; the spend ledger (model_calls) is kept on purpose.
+    c.env.DB.prepare('DELETE FROM runs WHERE item_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM items WHERE id = ?').bind(id),
   ]);
   const keys = [item.file_key, snapshot?.snapshot_key, snapshot?.text_key, ...audio.map((a) => a.audio_key)].filter((k): k is string => Boolean(k));
