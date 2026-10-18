@@ -454,6 +454,27 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   `fc9cee5c`, Desk `cbd9aca2`. Desk 302 to Access, api. only `/v1/health`. The editor's two items
   that failed with 429 before this (`it_01m56b…`) are untouched: Try again on the Desk now uses
   the new routes.
+- **Pages read by Defuddle** (2026-10-18): `extract/html.ts` now reads a page with Defuddle on
+  linkedom, falling back to Readability when Defuddle finds under 60 per cent of its text, after
+  removing dialogs, pop-ups, script-only (`[hidden]`, `v-cloak`), print-hidden and "also read"
+  boxes; exact furniture lines ("Share", "Subscribe", "No posts") are dropped and footnote
+  back-links skipped. Pages that leave out `<body>` (valid HTML) used to come back empty; they now
+  read. `sources.extractor` is `defuddle`, `readability` or `page`. Chosen on a side-by-side of 19
+  real pages (DECISIONS 2026-10-18). Tests: 322 (6 new in `extract-html.test.ts`, made-up text in
+  the shapes of the real pages). Pipeline production `9da99db4`, preview `b3372552`. Checked on
+  production with `it_fetchtest_d*` items, cleaned up afterwards (rows, files, 157 vectors, runs),
+  $0.38 of model calls:
+
+  | Link | Read by | Words | Author | Result |
+  |---|---|---|---|---|
+  | sugataraju.substack.com, "The new ordinariness of Rahul Gandhi" | Substack page body (the page answered this time) | 1,944 | Sugata Srinivasaraju | ready |
+  | danluu.com, "Willingness to look stupid" (no `<body>` tag) | Defuddle | 5,759 (was 0) | Dan Luu | ready |
+  | The Hindu, "Metrics to minds" | Defuddle | 1,327 | Shelley Walia | ready; no login pop-up or "also read" links |
+  | The Guardian, Elif Shafak interview | Defuddle | 2,239 | Lisa Allardice (was a profile URL) | ready |
+  | paulgraham.com, "How to Do Great Work" | Defuddle | 11,822 | Paul Graham | ready; footnote markers no longer split paragraphs |
+
+  The Hindu's date shows as 16 October: the page says 00:16 IST on the 17th, and `yearOrDate`
+  reads it in UTC.
 
 ## Milestones
 

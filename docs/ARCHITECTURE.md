@@ -39,7 +39,7 @@ The reader app has no editor mode. All write routes sit behind Access.
 
 ## Per-item pipeline (Workflow steps)
 
-1. **fetch**: resolve the source, extract clean text (Readability on linkedom; unpdf / toMarkdown
+1. **fetch**: resolve the source, extract clean text (Defuddle on linkedom, Readability as the fallback; unpdf / toMarkdown
    for PDFs; captions or Whisper for video and audio), snapshot to R2.
 2. **transcribe**: editor voice note to text (Workers AI Whisper).
 3. **clean**: remove fillers and fix punctuation. Code diffs input vs output tokens and rejects any
@@ -107,12 +107,12 @@ is honoured only then and only on localhost.
 `POST /api/notes` (voice notes, transcribed and cleaned synchronously). Each new item is a queue
 message; the consumer starts one `ItemWorkflow` per item.
 
-**ItemWorkflow steps.** `fetch` (per source kind: articles by the fetch order below, Readability on linkedom for pages; unpdf page by page with
+**ItemWorkflow steps.** `fetch` (per source kind: articles by the fetch order below; pages read by Defuddle on linkedom after pop-ups, script-only boxes and "also read" boxes are removed, with Readability when Defuddle finds much less (`extract/html.ts`; `sources.extractor` says which); unpdf page by page with
 page offsets, Workers AI `toMarkdown` as fallback; YouTube captions through the InnerTube Android
 client (human captions as they are; auto-generated ones only when the audio cannot be reached), else
 Whisper on the audio stream; Apple Podcasts / RSS / og:audio with chunked Whisper on
 MP3 in 3 MB byte ranges, one step per chunk; X via oEmbed; arXiv API + PDF; Crossref for DOIs; OCR
-of page photos by a vision model; when Readability finds under 600 characters, a Browser Rendering
+of page photos by a vision model; when the readers find under 600 characters, a Browser Rendering
 pass if enabled, see below) → snapshot raw bytes and text to R2, text to D1 → `read`
 (reading card; quotables kept only if found verbatim) → `wiki` (the reading card's two to four
 "further reading" picks, each with a reason, then entity queries to fill gaps, resolved with the

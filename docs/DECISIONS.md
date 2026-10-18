@@ -212,3 +212,15 @@ Dated, newest last. Don't reopen these without a new reason.
   domain before the page, since those refuse the page as often as substack.com does.
 - **Save Page Now anonymously**, polled for at most 90 s inside the fetch step. An archive.org
   account (SPN2 keys) would lift the anonymous rate limit but adds a secret; not needed so far.
+
+- **Pages are read by Defuddle, Readability as the fallback.** A side-by-side on 19 real pages
+  (Substack, essays, blogs, The Guardian, BBC, The Hindu, Scroll, Aeon, Quanta, Wikipedia,
+  Wikisource): the same words within about 3 per cent on most, with Defuddle leaving out share
+  bars, keeping paragraphs whole where Readability split footnote markers into their own lines,
+  and finding author names where the page meta had a profile URL. Readability is used when
+  Defuddle finds under 60 per cent of its text. Defuddle's async extractors stay off
+  (`useAsync: false`), since they would fetch third-party APIs outside `guardedFetch`. Before
+  either reader runs, dialogs, pop-ups, `[hidden]`/`v-cloak` boxes, print-hidden and "also read"
+  boxes are removed, and exact furniture lines ("Share", "Subscribe", "No posts") are dropped
+  from the stored text. Rejected for now: Scrapling (its value is bot-check evasion and browser
+  fingerprints, which the fetch rules exclude, and it is Python with a browser, not a Worker).
