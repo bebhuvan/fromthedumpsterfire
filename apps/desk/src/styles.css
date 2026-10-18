@@ -63,6 +63,7 @@ mark { background: var(--type, var(--butter)); color: inherit; padding: 0 2px; -
 .btn.primary:hover { opacity: 0.88; }
 .btn.quiet { border-color: transparent; background: transparent; color: var(--ink2); padding: 0 10px; }
 .btn.quiet:hover { color: var(--ink); background: var(--plate); }
+.btn.quiet.danger { color: var(--bad); }
 .btn.small { min-height: 30px; padding: 0 12px; font-size: 12px; }
 .btn kbd { font: 500 11px var(--sans); opacity: 0.6; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

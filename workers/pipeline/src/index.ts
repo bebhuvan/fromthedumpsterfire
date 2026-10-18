@@ -203,6 +203,12 @@ async function handle(env: Env, msg: QueueMessage): Promise<void> {
       await judgeCandidates(env, msg.itemId, found.candidates);
       return;
     }
+    case 'purge': {
+      const ids = msg.vectorIds ?? [];
+      if (!env.VECTORS || !ids.length) return;
+      for (let i = 0; i < ids.length; i += 1000) await env.VECTORS.deleteByIds(ids.slice(i, i + 1000));
+      return;
+    }
     case 'haul-draft': {
       if (!msg.haulId) return;
       if (msg.what === 'route') await draftRoute(env, msg.haulId);

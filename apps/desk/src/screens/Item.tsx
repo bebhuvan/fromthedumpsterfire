@@ -99,6 +99,7 @@ function ItemReviewInner({ id }: { id: string }) {
             <button className="btn quiet small" disabled={!!busy} onClick={() => act('archive', () => patch({ archived: !item.archived }), item.archived ? 'Back in the tray' : 'Archived')}>
               {item.archived ? 'Unarchive' : 'Archive'}
             </button>
+            <DeleteItem id={id} busy={!!busy} />
           </div>
         </header>
 
@@ -139,6 +140,7 @@ function ItemReviewInner({ id }: { id: string }) {
           </div>
 
           <div className="steps">
+            {item.status === 'failed' && !flight && <FetchFailed detail={data} act={act} />}
             <Step n={next()} title="Why it's here" done={Boolean(item.why_text?.trim())} hint="Your words, typed or dictated. Never reworded.">
               <WhySection key={`why-${id}`} detail={data} onSaved={reload} />
             </Step>
@@ -317,23 +319,24 @@ function SourceFix({ id, text, imageUrl, onSaved }: { id: string; text: string; 
 const TRANSCRIPT_TYPES = '.txt,.md,.vtt,.srt,text/plain,text/markdown,text/vtt';
 
 /** Paste or upload a transcript made elsewhere; it replaces the fetched text and the item is redrafted. */
-function TranscriptBox({ id, hasSource, onSaved }: { id: string; hasSource: boolean; onSaved: () => void }) {
+function TranscriptBox({ id, hasSource, onSaved, as = 'transcript' }: { id: string; hasSource: boolean; onSaved: () => void; as?: 'transcript' | 'text' }) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
+  const pasting = as === 'text';
   const [text, setText] = useState('');
   const [name, setName] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   if (!open)
     return (
       <button className="btn quiet small" onClick={() => setOpen(true)}>
-        {hasSource ? 'Use your own transcript instead' : 'Add a transcript yourself'}
+        {pasting ? 'Paste the text yourself' : hasSource ? 'Use your own transcript instead' : 'Add a transcript yourself'}
       </button>
     );
   async function submit() {
     setBusy(true);
     try {
-      const r = await api.post<{ words: number; timed: boolean }>(`/api/items/${id}/transcript`, { text, name });
-      toast(`Transcript in: ${r.words.toLocaleString('en-IN')} words${r.timed ? ', with times' : ''}. Reading it again.`);
+      const r = await api.post<{ words: number; timed: boolean }>(`/api/items/${id}/transcript`, { text, name, as });
+      toast(`${pasting ? 'Text' : 'Transcript'} in: ${r.words.toLocaleString('en-IN')} words${r.timed ? ', with times' : ''}. Reading it now.`);
       setOpen(false);
       setText('');
       onSaved();
@@ -345,11 +348,17 @@ function TranscriptBox({ id, hasSource, onSaved }: { id: string; hasSource: bool
   }
   return (
     <div className="section panel line" style={{ marginTop: 4, flexBasis: '100%' }}>
-      <div className="label">Your transcript</div>
-      <p className="small muted" style={{ margin: 0 }}>
-        Paste it, or choose a .txt, .md, .vtt or .srt file (yt-dlp's captions, a Whisper run on the laptop, the show's own transcript). Subtitle files keep their times. It replaces the text above, and the machine reads and drafts again from it.
-      </p>
-      <input
+      <div className="label">{pasting ? "The piece's text" : 'Your transcript'}</div>
+      {pasting ? (
+        <p className="small muted" style={{ margin: 0 }}>
+          Open the original, select the article's text, copy it and paste it here as it is. Excerpts are matched word for word against what you paste, and the machine reads and drafts from it.
+        </p>
+      ) : (
+        <p className="small muted" style={{ margin: 0 }}>
+          Paste it, or choose a .txt, .md, .vtt or .srt file (yt-dlp's captions, a Whisper run on the laptop, the show's own transcript). Subtitle files keep their times. It replaces the text above, and the machine reads and drafts again from it.
+        </p>
+      )}
+      {!pasting && <input
         type="file"
         accept={TRANSCRIPT_TYPES}
         onChange={async (e) => {
@@ -359,11 +368,11 @@ function TranscriptBox({ id, hasSource, onSaved }: { id: string; hasSource: bool
           setName(f.name);
           setText(await f.text());
         }}
-      />
-      <TextArea className="compact" value={text} onChange={(e) => (setText(e.target.value), setName(undefined))} placeholder="Or paste the transcript here." />
+      />}
+      <TextArea className="compact" value={text} onChange={(e) => (setText(e.target.value), setName(undefined))} placeholder={pasting ? "Paste the piece's text here." : 'Or paste the transcript here.'} />
       <div className="row">
         <button className="btn primary small" disabled={busy || text.trim().split(/\s+/).length < 50} onClick={() => void submit()}>
-          {busy ? 'Saving…' : 'Use this transcript'}
+          {busy ? 'Saving…' : pasting ? 'Use this text' : 'Use this transcript'}
         </button>
         <button className="btn quiet small" onClick={() => setOpen(false)}>
           Cancel
@@ -371,6 +380,62 @@ function TranscriptBox({ id, hasSource, onSaved }: { id: string; hasSource: bool
         {text && <span className="small muted">{text.trim().split(/\s+/).length.toLocaleString('en-IN')} words{name ? ` from ${name}` : ''}</span>}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- when the fetch fails
+
+/** Why the fetch failed, in plain words, and every way out: again, the text by hand, a PDF, or delete. */
+function FetchFailed({ detail, act }: { detail: ItemDetail; act: Act }) {
+  const { item } = detail;
+  const why = item.status_detail ?? '';
+  const explain = /429|too many/i.test(why)
+    ? 'The site turned the Desk away for asking too often. That usually passes within the hour: try again later, or paste the text now.'
+    : /\b(401|403)\b|blocked|forbidden/i.test(why)
+      ? 'The site does not let the Desk fetch it. Paste the text or upload a PDF instead.'
+      : /\b(404|410)\b/.test(why)
+        ? 'The page is not there any more. Check the link, or paste the text if you have it.'
+        : 'Try again, or bring the text in yourself.';
+  const media = ['talk', 'video', 'podcast'].includes(item.type);
+  return (
+    <div className="section panel line fetch-failed">
+      <div className="label">The fetch failed</div>
+      <p style={{ margin: '6px 0 0' }}>{explain}</p>
+      <p className="small muted" style={{ margin: '4px 0 0' }}>{why}</p>
+      <div className="row" style={{ marginTop: 12, gap: 6 }}>
+        <button className="btn small" onClick={() => act('refetch', () => api.post(`/api/items/${item.id}/refetch`), 'Fetching again')}>
+          Try again
+        </button>
+        <TranscriptBox id={item.id} hasSource={false} onSaved={() => act('pasted', async () => true)} as={media ? 'transcript' : 'text'} />
+        {!media && item.kind !== 'image' && <PdfUpload id={item.id} hasSource={false} onSaved={() => act('pdf', async () => true)} />}
+      </div>
+    </div>
+  );
+}
+
+/** Delete for good, after a confirm. Archive is the gentler way to clear the tray. */
+function DeleteItem({ id, busy }: { id: string; busy: boolean }) {
+  const toast = useToast();
+  const [deleting, setDeleting] = useState(false);
+  return (
+    <button
+      className="btn quiet small danger"
+      disabled={busy || deleting}
+      onClick={async () => {
+        if (!window.confirm('Delete this item for good? Its notes, excerpts and files go with it. Archive keeps it, out of the tray.')) return;
+        setDeleting(true);
+        try {
+          await api.del(`/api/items/${id}`);
+          toast('Deleted');
+          navigate('/');
+        } catch (e) {
+          toast(e instanceof Error ? e.message : String(e), true);
+          setDeleting(false);
+        }
+      }}
+    >
+      {deleting ? 'Deleting…' : 'Delete'}
+    </button>
   );
 }
 

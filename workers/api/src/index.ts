@@ -366,16 +366,28 @@ app.patch('/api/items/:id', async (c) => {
   return c.json({ item: await itemOr404(c.env, id) });
 });
 
+// Delete an item for good: its rows (most cascade), its private files in MEDIA, and its vectors
+// (purged by the pipeline, which holds the Vectorize binding). Never one in a published Haul.
 app.delete('/api/items/:id', async (c) => {
   const id = c.req.param('id');
-  const inHaul = await c.env.DB.prepare(`SELECT h.status FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ?`).bind(id).first<{ status: string }>();
-  if (inHaul?.status === 'published') return c.json({ error: 'This item is in a published Haul; archive it instead' }, 409);
+  const item = await itemOr404(c.env, id);
+  const inHaul = await c.env.DB.prepare(`SELECT h.status FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ? AND h.status = 'published'`).bind(id).first<{ status: string }>();
+  if (inHaul) return c.json({ error: 'This item is in a published Haul; archive it instead' }, 409);
+  const snapshot = await c.env.DB.prepare('SELECT snapshot_key FROM sources WHERE item_id = ?').bind(id).first<{ snapshot_key: string | null }>();
+  const audio = (await c.env.DB.prepare('SELECT audio_key FROM notes WHERE item_id = ?').bind(id).all<{ audio_key: string }>()).results;
+  const chunks = (await c.env.DB.prepare('SELECT id FROM chunks WHERE item_id = ?').bind(id).all<{ id: string }>()).results;
   await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM haul_items WHERE item_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM connections WHERE item_id = ? OR to_item_id = ?').bind(id, id),
+    c.env.DB.prepare('UPDATE rhymes SET then_item_id = NULL WHERE then_item_id = ?').bind(id),
+    c.env.DB.prepare('UPDATE rhymes SET now_item_id = NULL WHERE now_item_id = ?').bind(id),
+    c.env.DB.prepare('DELETE FROM notes WHERE item_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM items WHERE id = ?').bind(id),
   ]);
-  return c.json({ ok: true });
+  const keys = [item.file_key, snapshot?.snapshot_key, ...audio.map((a) => a.audio_key)].filter((k): k is string => Boolean(k));
+  if (keys.length) await c.env.MEDIA.delete(keys);
+  if (chunks.length) await c.env.INGEST_QUEUE.send({ kind: 'purge', vectorIds: chunks.map((r) => r.id) });
+  return c.json({ ok: true, files: keys.length, vectors: chunks.length });
 });
 
 // The editor may correct a transcription (OCR or a pasted passage). Excerpts that no longer match are unchosen.
@@ -400,22 +412,27 @@ app.post('/api/items/:id/transcript', async (c) => {
   const id = c.req.param('id');
   const item = await itemOr404(c.env, id);
   if (item.kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own' }, 409);
-  const b = await body(c, z.object({ text: z.string().min(1).max(1_500_000), name: z.string().max(200).optional() }));
-  const parsed = parseTranscript(b.text, b.name ?? '');
-  if (parsed.text.split(/\s+/).length < 50) return c.json({ error: 'That transcript is too short to read (under 50 words)' }, 400);
+  const b = await body(c, z.object({ text: z.string().min(1).max(1_500_000), name: z.string().max(200).optional(), as: z.enum(['transcript', 'text']).optional() }));
+  // `as: 'text'` is an article's own text, pasted when the site refused the fetch; it is kept as
+  // pasted (correctable, never treated as a rough transcript).
+  const pasted = b.as === 'text';
+  const parsed = pasted ? parseTranscript(b.text, 'pasted.txt') : parseTranscript(b.text, b.name ?? '');
+  if (parsed.text.split(/\s+/).length < 50) return c.json({ error: `That ${pasted ? 'text' : 'transcript'} is too short to read (under 50 words)` }, 400);
   await storeSource(c.env, id, {
     kind: 'text',
     text: parsed.text,
-    extractor: 'transcript',
-    meta: {
-      ...(parsed.times.length ? { times: parsed.times } : {}),
-      note: `Your transcript${b.name ? ` (${b.name})` : ''}${parsed.times.length ? '' : '; no times, so locators come from the item'}.`,
-    },
+    extractor: pasted ? 'pasted' : 'transcript',
+    meta: pasted
+      ? { note: 'Text you pasted from the original.' }
+      : {
+          ...(parsed.times.length ? { times: parsed.times } : {}),
+          note: `Your transcript${b.name ? ` (${b.name})` : ''}${parsed.times.length ? '' : '; no times, so locators come from the item'}.`,
+        },
     fields: {},
   });
   const exs = (await c.env.DB.prepare('SELECT * FROM excerpts WHERE item_id = ?').bind(id).all<ExcerptRow>()).results;
   for (const ex of exs) if (!isVerbatimAt(parsed.text, ex, ex.text)) await c.env.DB.prepare('DELETE FROM excerpts WHERE id = ?').bind(ex.id).run();
-  await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = 'Reading your transcript' WHERE id = ?`).bind(id).run();
+  await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = ? WHERE id = ?`).bind(pasted ? 'Reading the text you pasted' : 'Reading your transcript', id).run();
   await c.env.INGEST_QUEUE.send({ kind: 'redraft', itemId: id });
   return c.json({ ok: true, words: parsed.text.split(/\s+/).length, timed: parsed.times.length > 0, format: parsed.format });
 });

@@ -416,6 +416,13 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   before a `.gitignore` edit moved the fingerprint) replaces the push APK;
   older APKs have no updater, so each reader needs this one install. Signing key:
   `~/.config/fdf/app-updates/private-key.pem` (back it up). Publish: `npm run app:update`.
+- **Failed fetches and Delete** (2026-10-18): a Substack link failed with 429 and the editor had no
+  way to discard it. Item page: a red Delete (confirm; refused for a published Haul's item) beside
+  Archive, removing rows, MEDIA files (upload, snapshot, voice notes) and, via a `purge` queue
+  message to the pipeline, the item's vectors; rhymes that cited it lose the link. A failed item
+  opens with a "The fetch failed" panel: plain reason, Try again, paste the text (stored as `pasted`),
+  upload a PDF. 429 and 503 are now retried by the fetch step (15 s, 30 s, 60 s) instead of failing
+  at once. Checked on a local Desk at phone width and a local delete (rows gone, 1 file, 13 vectors).
 
 ## Milestones
 

@@ -83,6 +83,9 @@ function yearOrDate(s?: string): string | undefined {
 
 async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
   let page = await fetchBytes(url, { browser: true, maxBytes: 15 * 1024 * 1024 });
+  // Too many requests or briefly unavailable: worth another try (the fetch step retries with backoff).
+  if (page.status === 429 || page.status === 503)
+    throw new Error(`${host(url) || 'The site'} refused the fetch for now (${page.status}: ${page.status === 429 ? 'too many requests' : 'unavailable'})`);
   if (page.status >= 400) throw new FatalError(`The page returned ${page.status}`);
   if (page.contentType.includes('application/pdf')) return fromPdfBytes(env, page.bytes, page.url, undefined);
   let html = decode(page.bytes, page.contentType);

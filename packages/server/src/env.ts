@@ -2,11 +2,13 @@
 // needs a binding the current worker lacks fails loudly rather than reaching for a default.
 
 export interface QueueMessage {
-  kind: 'ingest' | 'redraft' | 'notify' | 'haul-draft' | 'connect';
+  kind: 'ingest' | 'redraft' | 'notify' | 'haul-draft' | 'connect' | 'purge';
   itemId?: string;
   haulId?: string;
   version?: number;
   what?: 'questions' | 'route';
+  /** purge: Vectorize ids of a deleted item (the Desk Worker has no Vectorize binding). */
+  vectorIds?: string[];
 }
 
 export interface ItemWorkflowParams {
