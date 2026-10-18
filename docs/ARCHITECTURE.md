@@ -107,7 +107,7 @@ is honoured only then and only on localhost.
 `POST /api/notes` (voice notes, transcribed and cleaned synchronously). Each new item is a queue
 message; the consumer starts one `ItemWorkflow` per item.
 
-**ItemWorkflow steps.** `fetch` (per source kind: Readability on linkedom; unpdf page by page with
+**ItemWorkflow steps.** `fetch` (per source kind: articles by the fetch order below, Readability on linkedom for pages; unpdf page by page with
 page offsets, Workers AI `toMarkdown` as fallback; YouTube captions through the InnerTube Android
 client (human captions as they are; auto-generated ones only when the audio cannot be reached), else
 Whisper on the audio stream; Apple Podcasts / RSS / og:audio with chunked Whisper on
@@ -185,6 +185,37 @@ captured item with a fetched source, and its quote is a selection in that source
 quotation found verbatim there (offsets stored). The bridge renders in the machine's voice, so it
 must pass `checkStyle` whoever writes it; the `haul` task can draft it from the two quotes. The item's
 own source fields follow the "then" end. Checks and publish re-verify both quotes at their offsets.
+
+**Article fetch order** (`fromArticleUrl` in `packages/server/src/ingest.ts`; routes in
+`extract/platforms.ts`, archive in `extract/wayback.ts`). Many sites refuse Cloudflare's servers
+(Substack answers 429 at times, Medium always shows a bot check), so a link is tried in this order:
+
+1. **Platform routes chosen from the address**, before the page: Substack's post API
+   (`/api/v1/posts/<slug>`; `open.substack.com/pub/…` and app links by id; any other host with a
+   `/p/<slug>` path is tried as a custom domain), then the publication's `/feed` when the API
+   refuses; wordpress.com blogs through `public-api.wordpress.com/wp/v2/sites/<host>/posts?slug=`;
+   Medium through the author's or publication's RSS feed (`medium.com/feed/@user`), which holds
+   the full text of the latest free stories.
+2. **The page.** A Substack page is read from its post body element; a WordPress page that
+   advertises `api.w.org` is read through its REST API instead (the post alone, with its authors),
+   unless the API's copy of a long post is under half the page's.
+3. **When the page refuses** (401, 403, 429, 5xx, a bot-check page, no answer) or is gone (404,
+   410): the WordPress REST API by slug, a Medium-shaped link's `/feed`, then the newest Wayback
+   Machine capture recorded as a 200 (CDX, then the availability API), read raw (`id_`, gunzipped
+   when the archive sends the stored gzip body), else, for a refusal and not a missing page, Save
+   Page Now (anonymous POST, job polled every 6 s for at most 90 s). If everything fails, a 429,
+   5xx or capture still in progress stays retryable (the step's backoff runs the chain again and
+   finds a capture that landed meanwhile); other refusals fail with every attempt listed.
+
+Free content only. Substack's `audience` and `wordcount`, the feed's "Read more" tail, Medium's
+`medium-feed-link`, a password-protected WordPress post and the paywall markup on Substack and
+Medium pages (fetched or archived) each stop the fetch with "paid subscribers" or "members-only";
+nothing is retried and no other copy is looked for. The item keeps the original link (a Wayback
+copy never becomes `canonical_url`). `sources.meta.via` records the route, a label, the API, feed
+or archive URL and the capture time; the Desk prints the label under the source, with a link to
+the archived copy. APIs, feeds and the archive are asked with the Desk's own user agent, through
+`guardedFetch`, with byte caps on what is streamed (8 MB for APIs and feeds, 15 MB for pages and
+copies, including what a gzip copy inflates to).
 
 **Browser Rendering.** Off unless the `BROWSER` binding exists and `BROWSER_FALLBACK=on`. Every
 request the rendered page makes (the navigation, each redirect hop, frames, subresources) is

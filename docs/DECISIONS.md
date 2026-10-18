@@ -191,3 +191,24 @@ Dated, newest last. Don't reopen these without a new reason.
   control of the Cloudflare account alone cannot ship code to readers' phones. Runtime version is
   the native fingerprint, not the app version, so a forgotten version bump cannot send JS to a build
   it does not fit.
+
+## 2026-10-18 (sources that refuse Cloudflare)
+
+- **Platform routes before the page, the Wayback Machine after a refusal.** Substack (post API,
+  then feed), WordPress (REST API) and Medium (RSS) give the post alone with its real title,
+  authors and date, and often answer when the page refuses Cloudflare's servers. When the site
+  still refuses, the Internet Archive fetches the page from its own servers: its latest copy, else
+  a Save Page Now capture. Manual paste and PDF upload stay as the last resort. Rejected: paid
+  scraping APIs, residential proxies, solving or dodging bot checks, and disguised user agents for
+  these routes (APIs, feeds and the archive are asked as the Desk).
+- **Free content only.** A paid or members-only post, or a feed or archived copy that carries only
+  the preview, fails the fetch with a plain "paid subscribers" message. Its preview is never stored
+  as though it were the piece, and no other copy is sought.
+- **The item keeps the original link.** The source records where the text came from (`meta.via`:
+  route, label, API/feed/archive URL, capture time), and the Desk shows it under the source.
+- **WordPress by slug only after a refusal.** Most sites are not WordPress, so a blind REST call on
+  every link is waste; a page that answers says whether it is WordPress (`api.w.org`), and
+  wordpress.com blogs are known from the host. A `/p/<slug>` path is tried as a Substack custom
+  domain before the page, since those refuse the page as often as substack.com does.
+- **Save Page Now anonymously**, polled for at most 90 s inside the fetch step. An archive.org
+  account (SPN2 keys) would lift the anonymous rate limit but adds a secret; not needed so far.

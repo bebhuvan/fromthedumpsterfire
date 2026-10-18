@@ -67,6 +67,11 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/`. Only
   `publish.ts` writes to FILES; published plates and voice notes are copied there (never hotlinked),
   and `validateHaul(…, { filesBase })` enforces it.
+- Articles are fetched in a fixed order (ARCHITECTURE "Article fetch order"): platform routes
+  (Substack API and feed, WordPress REST, Medium RSS) before the page, the Wayback Machine (latest
+  copy, else Save Page Now) after a refusal. Free content only: a paid preview fails the fetch and
+  is never stored as the piece. The item keeps the original link; `sources.meta.via` says where the
+  text came from. No paid scrapers, proxies, bot-check evasion or disguised user agents.
 - Machine-suggested connections, rhyme quotes and plate metadata follow the same rules as excerpts:
   quotes verified verbatim against stored source text at both ends, licences as the institution
   states them. A kept connection's published note is the editor's own words.

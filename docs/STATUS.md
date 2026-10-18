@@ -423,6 +423,37 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   opens with a "The fetch failed" panel: plain reason, Try again, paste the text (stored as `pasted`),
   upload a PDF. 429 and 503 are now retried by the fetch step (15 s, 30 s, 60 s) instead of failing
   at once. Checked on a local Desk at phone width and a local delete (rows gone, 1 file, 13 vectors).
+- **Sources that refuse Cloudflare** (2026-10-18): articles now go through platform routes before
+  the page and the Wayback Machine after a refusal (ARCHITECTURE "Article fetch order"):
+  Substack's post API and feed (custom domains and app links too), WordPress REST (from the page's
+  `api.w.org` link, by slug after a refusal, wordpress.com through its public API), Medium's RSS,
+  then the latest raw Wayback copy or a Save Page Now capture. Paid and members-only posts fail with
+  a plain message and are never stored as previews. The source line on the Desk says where the text
+  came from (`meta.via`), with a link to an archived copy. Substack pages, fetched or archived, are
+  read from the post body (Readability kept "Share" and "No posts"). Delete now also removes the
+  stored text file and the item's run history. Tests: 316 (22 new, fixtures in
+  `packages/server/test/fixtures/fetch`, no network).
+- **Verified on production, 2026-10-18** (pipeline `baa4cc06`, the same code as now), test items
+  `it_fetchtest_*`, all cleaned up afterwards (rows, MEDIA files, vectors, runs):
+
+  | Link | Route | Words | Result |
+  |---|---|---|---|
+  | sugataraju.substack.com, "The new ordinariness of Rahul Gandhi" | Substack API (an earlier run took the page; on preview, the Wayback copy) | 1,944 | ready |
+  | sugataraju.substack.com, "Each player in its own separate groove" | Substack feed (API refused) | 725 | ready |
+  | slowboring.com (Substack, custom domain), "Destroying the West…" | Substack API | 2,352 | ready |
+  | slowboring.com, "The voice of a generation" (paid) | Substack API | 61 of 1,456 | failed: "for paid subscribers" |
+  | themarginalian.org (self-hosted WordPress) | WordPress REST via `api.w.org` | 364 | ready |
+  | terrytao.wordpress.com | wordpress.com public API | 257 | ready |
+  | karpathy.medium.com, "Software 2.0" | Medium feed | 2,131 | ready |
+  | medium.com/@ev, "Welcome to Medium" (not in the feed) | bot check, then Wayback copy of 12 Nov 2020 | 549 | ready |
+
+  Substack's refusals come and go: the same link took three routes on three runs. Save Page Now
+  ran from the laptop (anonymous POST, job, status, snapshot) and in tests, but no production run
+  needed it, so it has not yet run from Cloudflare. Models for the test runs: $0.34 production,
+  $0.12 preview. Production now: pipeline `109322d9`, Desk `e8f418a2`; preview: pipeline
+  `fc9cee5c`, Desk `cbd9aca2`. Desk 302 to Access, api. only `/v1/health`. The editor's two items
+  that failed with 429 before this (`it_01m56b…`) are untouched: Try again on the Desk now uses
+  the new routes.
 
 ## Milestones
 
@@ -460,3 +491,7 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 - Final pick of the app icon (current: ember flame on ink).
 - Whether `checkStyle` should allow "leverage"/"leveraged" in finance contexts (your own notes use it
   20 times as a finance term; see `docs/VOICE.md`).
+- The page fetch itself (older code) still sends a Chrome user agent (`BROWSER_UA` in
+  `extract/http.ts`) because some publishers serve a stub to unknown agents. The new routes use the
+  Desk's own agent. Switch the page fetch to the Desk's agent too? It is more honest, but a few
+  sites that work today may then need the Wayback route.
