@@ -373,7 +373,7 @@ app.delete('/api/items/:id', async (c) => {
   const item = await itemOr404(c.env, id);
   const inHaul = await c.env.DB.prepare(`SELECT h.status FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ? AND h.status = 'published'`).bind(id).first<{ status: string }>();
   if (inHaul) return c.json({ error: 'This item is in a published Haul; archive it instead' }, 409);
-  const snapshot = await c.env.DB.prepare('SELECT snapshot_key FROM sources WHERE item_id = ?').bind(id).first<{ snapshot_key: string | null }>();
+  const snapshot = await c.env.DB.prepare('SELECT snapshot_key, text_key FROM sources WHERE item_id = ?').bind(id).first<{ snapshot_key: string | null; text_key: string | null }>();
   const audio = (await c.env.DB.prepare('SELECT audio_key FROM notes WHERE item_id = ?').bind(id).all<{ audio_key: string }>()).results;
   const chunks = (await c.env.DB.prepare('SELECT id FROM chunks WHERE item_id = ?').bind(id).all<{ id: string }>()).results;
   await c.env.DB.batch([
@@ -384,7 +384,7 @@ app.delete('/api/items/:id', async (c) => {
     c.env.DB.prepare('DELETE FROM notes WHERE item_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM items WHERE id = ?').bind(id),
   ]);
-  const keys = [item.file_key, snapshot?.snapshot_key, ...audio.map((a) => a.audio_key)].filter((k): k is string => Boolean(k));
+  const keys = [item.file_key, snapshot?.snapshot_key, snapshot?.text_key, ...audio.map((a) => a.audio_key)].filter((k): k is string => Boolean(k));
   if (keys.length) await c.env.MEDIA.delete(keys);
   if (chunks.length) await c.env.INGEST_QUEUE.send({ kind: 'purge', vectorIds: chunks.map((r) => r.id) });
   return c.json({ ok: true, files: keys.length, vectors: chunks.length });

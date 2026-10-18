@@ -13,7 +13,7 @@ function env(published: boolean) {
   const first = (q: string) => {
     if (q.startsWith('SELECT * FROM items')) return { id: 'it1', file_key: 'uploads/it1.pdf' };
     if (q.includes('haul_items')) return published ? { status: 'published' } : null;
-    if (q.startsWith('SELECT snapshot_key')) return { snapshot_key: 'snapshots/it1.html' };
+    if (q.startsWith('SELECT snapshot_key')) return { snapshot_key: 'snapshots/it1.html', text_key: 'snapshots/it1/text.txt' };
     return null;
   };
   const all = (q: string) => {
@@ -44,7 +44,7 @@ describe('DELETE /api/items/:id', () => {
     expect(t.sql.some((q) => q.startsWith('DELETE FROM items'))).toBe(true);
     expect(t.sql.some((q) => q.startsWith('UPDATE rhymes SET then_item_id = NULL'))).toBe(true);
     expect(t.sql.some((q) => q.startsWith('DELETE FROM notes'))).toBe(true);
-    expect(t.deleted).toEqual([['uploads/it1.pdf', 'snapshots/it1.html', 'notes/n1.webm']]);
+    expect(t.deleted).toEqual([['uploads/it1.pdf', 'snapshots/it1.html', 'snapshots/it1/text.txt', 'notes/n1.webm']]);
     expect(t.sent).toEqual([{ kind: 'purge', vectorIds: ['it1:card', 'it1:0'] }]);
   });
 
