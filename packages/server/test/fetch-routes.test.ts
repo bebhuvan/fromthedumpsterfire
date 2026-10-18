@@ -164,7 +164,7 @@ describe('Substack', () => {
     const page = `<html><head><title>A plain site</title></head><body><article><h1>A plain site</h1>${'<p>An ordinary article on an ordinary site, long enough to read as one, with sentences that go on.</p>'.repeat(8)}</article></body></html>`;
     serve({ 'https://plain.example.org/p/an-article': html(page) });
     const out = await fetchSource(makeEnv(), item('https://plain.example.org/p/an-article'));
-    expect(out.extractor).toBe('readability');
+    expect(out.extractor).toBe('defuddle');
     expect(calls.map((c) => new URL(c.url).pathname)).toEqual(['/api/v1/posts/an-article', '/p/an-article']); // no feed request
   });
 });

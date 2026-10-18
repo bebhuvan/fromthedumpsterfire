@@ -294,7 +294,7 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
   let ex = extractArticle(html, page.url);
   const paywall = paywallMarker(html);
   if (paywall) throw new PaywalledError(`${paywall}; only the public preview is readable. Paste the text or upload a PDF if you have it`);
-  let extractor = 'readability';
+  let extractor: string = ex.reader;
   const sub = substackPageBody(html);
   if (sub) {
     ex = { ...ex, ...sub };
@@ -322,7 +322,7 @@ async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
         ex = altEx;
         html = altHtml;
         page = alt;
-        extractor = 'readability';
+        extractor = altEx.reader;
       }
     }
   }

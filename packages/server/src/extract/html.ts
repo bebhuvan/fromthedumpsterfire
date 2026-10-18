@@ -1,9 +1,14 @@
-// Article extraction: Readability on linkedom, then the article HTML flattened to the plain-text
-// form the Desk stores (paragraphs separated by blank lines, headings marked with "## ", verse
-// line breaks kept). Excerpt offsets index into exactly this text.
+// Article extraction: Defuddle on linkedom (Readability as the fallback), then the article HTML
+// flattened to the plain-text form the Desk stores (paragraphs separated by blank lines, headings
+// marked with "## ", verse line breaks kept). Excerpt offsets index into exactly this text.
+//
+// Defuddle won a side-by-side on 19 real pages (2026-10-18): fewer share bars and footers, whole
+// paragraphs where Readability split footnote markers out, real author names where the page meta
+// has a profile URL. Readability is kept for pages where Defuddle finds much less.
 
 import { parseHTML } from 'linkedom';
 import { Readability } from '@mozilla/readability';
+import Defuddle from 'defuddle';
 
 // linkedom's DOM is untyped here: the Workers type set has no DOM lib, and mixing the two clashes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,7 +35,35 @@ export interface ExtractedPage {
   text: string;
   meta: PageMeta;
   headings: Array<{ offset: number; text: string }>;
+  /** Which reader found the article: 'defuddle', 'readability', or 'page' (the whole body). */
+  reader: 'defuddle' | 'readability' | 'page';
 }
+
+// Furniture no article contains: dialogs and pop-ups (a login-limit box, a cookie wall), anything
+// the site hides until its scripts run or leaves out of print, and "also read" boxes set inside
+// the article body. Removed before either reader looks at the page.
+const CLUTTER = [
+  'dialog',
+  '[role="dialog"]',
+  '[role="alertdialog"]',
+  '[aria-modal="true"]',
+  '[hidden]',
+  '[v-cloak]',
+  '[class*="popup"]',
+  '[id*="popup"]',
+  '[class*="modal"]',
+  '.print-hide',
+  '.no-print',
+  '.d-print-none',
+  '.hidden-print',
+  '[class*="also-read"]',
+  '[class*="sponsor"]',
+].join(',');
+
+// Whole paragraphs that are site furniture, matched exactly (a sentence that merely contains
+// "share" is left alone).
+const FURNITURE =
+  /^(share|share this( post| article)?|subscribe|subscribed|sign up|sign in|log in|log out|leave a comment|comments?|no posts|like|restack|listen|copy link|print|advertisement|read more|ready for more\?|\d+ \/ \d+|terms (&|and) conditions.*|looks like you are already logged in.*|sponsored by:.*)$/i;
 
 const BLOCK = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'BLOCKQUOTE', 'PRE', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'FIGCAPTION', 'TR', 'DD', 'DT', 'ASIDE', 'HEADER', 'FOOTER', 'TABLE', 'UL', 'OL', 'FIGURE', 'MAIN', 'HR']);
 const SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'IFRAME', 'BUTTON', 'FORM', 'INPUT', 'SELECT', 'TEXTAREA', 'NAV']);
@@ -101,7 +134,7 @@ export function flatten(root: Element): { text: string; headings: Array<{ offset
       .replace(/[ \t\r\f\v ]+/g, ' ')
       .replace(/ *\n */g, '\n')
       .trim();
-    if (t) {
+    if (t && t !== '•' && !FURNITURE.test(t)) {
       const offsetBefore = blocks.reduce((s, b) => s + b.length + 2, 0);
       if (currentHeading) {
         blocks.push(`## ${t.replace(/\n/g, ' ')}`);
@@ -129,8 +162,11 @@ export function flatten(root: Element): { text: string; headings: Array<{ offset
     // Footnote markers ("[12]", "[a]", "[citation needed]") are apparatus, not the author's text:
     // keeping them breaks verbatim matching of quotes that a reader (or a model) copies without them.
     if (tag === 'SUP' && /^\s*\[(\d{1,4}|[a-z]{1,2}|note \d+|[a-z][a-z ]{2,24})\]\s*$/i.test(el.textContent ?? '')) return;
+    // A footnote's back-link ("↩") is apparatus too.
+    if (tag === 'A' && /^\s*[↩↑⤴]\uFE0E?\s*$/.test(el.textContent ?? '')) return;
     const block = BLOCK.has(tag);
-    if (block) flush();
+    // A list item's bullet stays with the paragraph inside it.
+    if (block && current.trim() !== '•') flush();
     if (/^H[1-6]$/.test(tag)) currentHeading = true;
     if (tag === 'LI') current += '• ';
     for (const child of Array.from(el.childNodes)) walk(child);
@@ -141,48 +177,111 @@ export function flatten(root: Element): { text: string; headings: Array<{ offset
   return { text: blocks.join('\n\n'), headings };
 }
 
-export function extractArticle(html: string, url: string): ExtractedPage {
+const HEAD_TAGS = new Set(['META', 'TITLE', 'LINK', 'STYLE', 'SCRIPT', 'BASE', 'NOSCRIPT', 'TEMPLATE']);
+
+/**
+ * The page as a document. HTML may leave out <body> (and <html>, <head>); linkedom then leaves the
+ * body empty and hangs the content off the root, so such pages are rebuilt with explicit tags.
+ */
+export function parsePage(html: string): Document {
   const { document } = parseHTML(html);
-  const meta = readMeta(document as unknown as Document, url);
+  if (/<body[\s>]/i.test(html)) return document;
+  const root = (document as Document).documentElement;
+  if (!root) return document;
+  const nodes: Node[] = root.tagName?.toUpperCase() === 'HTML' ? Array.from(root.childNodes) : [root];
+  let head = '';
+  let body = '';
+  let inBody = false;
+  for (const n of nodes) {
+    const tag = n.nodeType === 1 ? n.tagName.toUpperCase() : '';
+    if (tag === 'HEAD') head += n.innerHTML;
+    else if (!inBody && (HEAD_TAGS.has(tag) || (n.nodeType === 3 && !(n.textContent ?? '').trim()) || n.nodeType === 8)) head += n.toString();
+    else {
+      inBody = true;
+      body += n.toString();
+    }
+  }
+  const lang = root.getAttribute?.('lang');
+  return parseHTML(`<!doctype html><html${lang ? ` lang="${lang.replace(/"/g, '')}"` : ''}><head>${head}</head><body>${body}</body></html>`).document;
+}
+
+function cleaned(html: string): Document {
+  const doc = parsePage(html);
+  for (const el of Array.from(doc.querySelectorAll(CLUTTER)) as Element[]) if (el.tagName.toUpperCase() !== 'BODY' && el.tagName.toUpperCase() !== 'HTML') el.remove();
+  return doc;
+}
+
+const looksLikeUrl = (s?: string | null) => !!s && /^(https?:\/\/|www\.)/i.test(s.trim());
+const fromHtml = (html: string) => flatten(parseHTML(`<!doctype html><html><body>${html}</body></html>`).document.body as unknown as Element);
+
+export function extractArticle(html: string, url: string): ExtractedPage {
+  const meta = readMeta(parsePage(html), url);
+  // A profile URL is not an author's name.
+  if (looksLikeUrl(meta.creator)) meta.creator = undefined;
   let text = '';
   let headings: Array<{ offset: number; text: string }> = [];
+  let reader: ExtractedPage['reader'] = 'page';
+
+  let d: { text: string; headings: typeof headings } | null = null;
   try {
-    const clone = parseHTML(html).document as unknown as Document;
-    const article = new Readability(clone, { charThreshold: 300, keepClasses: false }).parse();
+    // No async extractors: Defuddle would otherwise fetch from third-party APIs itself, outside
+    // guardedFetch.
+    const out = new Defuddle(cleaned(html), { url, useAsync: false }).parse();
+    if (out.content) d = fromHtml(out.content);
+    if (out.author && !looksLikeUrl(out.author)) meta.creator = meta.creator ?? out.author;
+    meta.title = meta.title ?? (out.title || undefined);
+    meta.siteName = meta.siteName ?? (out.site || undefined);
+    meta.date = meta.date ?? (out.published || undefined);
+  } catch {
+    /* fall through to Readability */
+  }
+  let r: { text: string; headings: typeof headings } | null = null;
+  try {
+    const article = new Readability(cleaned(html), { charThreshold: 300, keepClasses: false }).parse();
     if (article?.content) {
-      const { document: adoc } = parseHTML(`<!doctype html><html><body>${article.content}</body></html>`);
-      const flat = flatten(adoc.body as unknown as Element);
-      text = flat.text;
-      headings = flat.headings;
+      r = fromHtml(article.content);
+      if (article.byline && !looksLikeUrl(article.byline)) meta.creator = meta.creator ?? article.byline;
       meta.title = meta.title ?? article.title ?? undefined;
-      meta.creator = meta.creator ?? article.byline ?? undefined;
       meta.siteName = meta.siteName ?? article.siteName ?? undefined;
       meta.date = meta.date ?? article.publishedTime ?? undefined;
     }
   } catch {
-    /* fall through to the whole-body fallback */
+    /* fall through */
+  }
+  // Defuddle unless it found much less than Readability (it dropped part of the article).
+  if (d && d.text.length >= 200 && (!r || d.text.length >= r.text.length * 0.6)) {
+    ({ text, headings } = d);
+    reader = 'defuddle';
+  } else if (r && r.text.length >= (d?.text.length ?? 0)) {
+    ({ text, headings } = r);
+    reader = 'readability';
+  } else if (d) {
+    ({ text, headings } = d);
+    reader = 'defuddle';
   }
   if (text.length < 200) {
-    const body = (document as unknown as Document).body;
+    const body = cleaned(html).body;
     if (body) {
       const flat = flatten(body as unknown as Element);
       if (flat.text.length > text.length) {
         text = flat.text;
         headings = flat.headings;
+        reader = 'page';
       }
     }
   }
   // Drop a leading heading that only repeats the title.
   if (meta.title && text.startsWith('## ')) {
     const first = text.split('\n\n', 1)[0]!.slice(3).trim();
-    if (first.toLowerCase() === meta.title.toLowerCase()) {
+    const bare = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+    if (bare(first) === bare(meta.title)) {
       const cut = text.indexOf('\n\n');
       const removed = cut < 0 ? text.length : cut + 2;
       text = cut < 0 ? '' : text.slice(removed);
       headings = headings.filter((h) => h.offset >= removed).map((h) => ({ ...h, offset: h.offset - removed }));
     }
   }
-  return { text, meta, headings };
+  return { text, meta, headings, reader };
 }
 
 /**
