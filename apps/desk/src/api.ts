@@ -111,6 +111,8 @@ export interface SourceMeta {
   note?: string;
   captionsAuto?: boolean;
   description?: string;
+  /** Where the text came from when not the page itself (platform API or feed, archived copy). */
+  via?: { route: string; label: string; url?: string; at?: string };
 }
 
 export interface Source {

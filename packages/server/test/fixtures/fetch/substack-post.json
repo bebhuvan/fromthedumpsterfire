@@ -1,0 +1,25 @@
+{
+  "audience": "everyone",
+  "canonical_url": "https://sugataraju.substack.com/p/the-new-ordinariness-of-rahul-gandhi",
+  "id": 220314845,
+  "post_date": "2026-10-14T05:47:45.203Z",
+  "publication_id": 7469360,
+  "slug": "the-new-ordinariness-of-rahul-gandhi",
+  "title": "The new ordinariness of Rahul Gandhi",
+  "subtitle": "A sample subtitle for the fixture",
+  "description": "A sample subtitle for the fixture",
+  "type": "newsletter",
+  "cover_image": "https://substack-post-media.s3.amazonaws.com/public/images/cover.jpeg",
+  "wordcount": 150,
+  "body_html": "<div class=\"captioned-image-container\"><figure><a class=\"image-link image2 is-viewable-img\" href=\"https://substackcdn.com/image/x.jpeg\"><div class=\"image2-inset\"><picture><img src=\"https://substackcdn.com/image/x.jpeg\" alt=\"\"></picture><div class=\"image-link-expand\"><button>Expand</button></div></div></a><figcaption class=\"image-caption\">A crowd on Janpath, photographed for the fixture.</figcaption></figure></div><p>The protest began on a Monday and did not stop for three days. Its leader walked at the front, in a white T-shirt, and the cameras walked with him.<a class=\"footnote-anchor\" data-component-name=\"FootnoteAnchorToDOM\" id=\"footnote-anchor-1\" href=\"#footnote-1\">1</a> Nobody could say what it was for, and that was the point the crowd seemed to enjoy.</p><div class=\"subscription-widget-wrap-editor\" data-component-name=\"SubscribeWidgetToDOM\"><div class=\"subscription-widget show-subscribe\"><div class=\"preamble\"><p class=\"cta-caption\">Thanks for reading! Subscribe for free to receive new posts.</p></div><form class=\"subscription-widget-subscribe\"><input type=\"email\" class=\"email-input\" name=\"email\"><input type=\"submit\" class=\"button primary\" value=\"Subscribe\"></form></div></div><h3>A dance in the head</h3><p>“There is a difference,” a party worker told me, “between being ordinary and being seen to be ordinary.” He meant it kindly. The second kind of ordinariness has to be staged, and staging is a craft with its own rules and its own costs.</p><p>That craft is what the next year will test, far more than any single speech or march through the old city in the heat.</p><p class=\"button-wrapper\" data-component-name=\"ButtonCreateButton\"><a class=\"button primary\" href=\"https://sugataraju.substack.com/subscribe\"><span>Subscribe now</span></a></p><div class=\"footnote\" data-component-name=\"FootnoteToDOM\"><a id=\"footnote-1\" href=\"#footnote-anchor-1\" class=\"footnote-number\">1</a><div class=\"footnote-content\"><p>The march route was announced the night before.</p></div></div>",
+  "truncated_body_text": "The protest began on a Monday and did not stop for three days.",
+  "publishedBylines": [
+    {
+      "id": 140016440,
+      "name": "Sugata Srinivasaraju",
+      "publicationUsers": [{ "id": 7621282, "publication_id": 7469360, "role": "admin", "publication": { "id": 7469360, "name": "Sugata Srinivasaraju", "subdomain": "sugataraju", "custom_domain": null } }]
+    },
+    { "id": 5, "name": "A. Guest Writer", "publicationUsers": [] }
+  ],
+  "comments": [{ "id": 1, "body": "A reader's comment that must never end up in the source text." }]
+}

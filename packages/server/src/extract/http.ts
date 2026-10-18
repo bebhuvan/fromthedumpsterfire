@@ -12,6 +12,7 @@ export interface Fetched {
   status: number;
   contentType: string;
   bytes: Uint8Array;
+  headers?: Headers;
 }
 
 export interface FetchOptions {
@@ -60,7 +61,7 @@ export async function fetchBytes(url: string, opts: FetchOptions = {}): Promise<
     bytes.set(c, off);
     off += c.byteLength;
   }
-  return { url: finalUrlOf(res, url), status: res.status, contentType: res.headers.get('content-type') ?? '', bytes };
+  return { url: finalUrlOf(res, url), status: res.status, contentType: res.headers.get('content-type') ?? '', bytes, headers: res.headers };
 }
 
 export async function fetchText(url: string, opts: FetchOptions = {}): Promise<Fetched & { text: string }> {

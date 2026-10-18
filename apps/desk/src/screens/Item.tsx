@@ -389,7 +389,9 @@ function TranscriptBox({ id, hasSource, onSaved, as = 'transcript' }: { id: stri
 function FetchFailed({ detail, act }: { detail: ItemDetail; act: Act }) {
   const { item } = detail;
   const why = item.status_detail ?? '';
-  const explain = /429|too many/i.test(why)
+  const explain = /paid subscribers|members-only|password-protected|only part of this post/i.test(why)
+    ? 'Only part of this piece is free to read, and the Desk reads only what is free. Paste the text or upload a PDF if you have a copy.'
+    : /429|too many/i.test(why)
     ? 'The site turned the Desk away for asking too often. That usually passes within the hour: try again later, or paste the text now.'
     : /\b(401|403)\b|blocked|forbidden/i.test(why)
       ? 'The site does not let the Desk fetch it. Paste the text or upload a PDF instead.'

@@ -1,0 +1,14 @@
+{
+  "audience": "only_paid",
+  "canonical_url": "https://www.slowboring.com/p/the-voice-of-a-generation",
+  "post_date": "2026-10-17T10:02:00.000Z",
+  "publication_id": 159185,
+  "slug": "the-voice-of-a-generation",
+  "title": "The voice of a generation",
+  "subtitle": "A paid post",
+  "type": "newsletter",
+  "wordcount": 1456,
+  "body_html": "<p>Some writers come to stand for the people of their age, whether they want to or not. This is the free opening of a paid post, and it stops here.</p>",
+  "truncated_body_text": "Some writers come to stand for the people of their age.",
+  "publishedBylines": [{ "id": 9, "name": "Halina Bennet", "publicationUsers": [] }]
+}

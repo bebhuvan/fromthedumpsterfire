@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Excerpt, Source } from '../api';
+import { safeHref } from '../lib/core';
 
 interface Block {
   start: number;
@@ -136,6 +137,19 @@ export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, bus
           {meta.captionsAuto ? ' (auto-generated captions)' : ''}
         </span>
         {meta.note && <span className="small warn">{meta.note}</span>}
+        {meta.via && (
+          <span className="small muted via">
+            {meta.via.label}
+            {meta.via.route.startsWith('wayback') && safeHref(meta.via.url) && (
+              <>
+                {' · '}
+                <a href={safeHref(meta.via.url)} target="_blank" rel="noopener noreferrer">
+                  open the copy
+                </a>
+              </>
+            )}
+          </span>
+        )}
       </div>
       <div className="reader-body" ref={body} onMouseUp={read} onKeyUp={read}>
         {bl.map((b) => {
@@ -190,6 +204,11 @@ export function extractorLabel(x: string): string {
     description: 'video description',
     browser: 'rendered in a browser, then extracted',
     transcript: 'your transcript',
+    'substack-api': 'from Substack',
+    'substack-feed': "from the newsletter's feed",
+    'wordpress-api': 'from the WordPress site',
+    'medium-feed': "from Medium's feed",
+    wayback: 'from the Wayback Machine',
   };
   return m[x] ?? x;
 }

@@ -1,0 +1,19 @@
+[
+  {
+    "id": 155275,
+    "date": "2026-10-17T17:50:33",
+    "date_gmt": "2026-10-17T12:20:33",
+    "slug": "anthropic-employment",
+    "status": "publish",
+    "type": "post",
+    "link": "https://ma.tt/2026/10/anthropic-employment/",
+    "title": { "rendered": "Employment &#8217;s next decade" },
+    "content": {
+      "rendered": "<p>A short post for the fixture, with a sentence that runs long enough to count as an article&#8217;s worth of text for the extractor&#8217;s threshold.</p>\n<p>A second paragraph says something about work, and about how tools change it, in the plain way a blog post does.</p>\n<div class=\"sharedaddy sd-sharing-enabled\"><div class=\"robots-nocontent sd-block sd-social\"><h3 class=\"sd-title\">Share this:</h3><ul><li>Facebook</li><li>X</li></ul></div></div><div id='jp-relatedposts' class='jp-relatedposts'><h3 class=\"jp-relatedposts-headline\"><em>Related</em></h3></div>",
+      "protected": false
+    },
+    "excerpt": { "rendered": "<p>A short post for the fixture [&hellip;]</p>\n", "protected": false },
+    "jetpack_featured_media_url": "",
+    "_embedded": { "author": [{ "id": 1, "name": "Matt" }] }
+  }
+]

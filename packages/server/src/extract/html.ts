@@ -184,3 +184,22 @@ export function extractArticle(html: string, url: string): ExtractedPage {
   }
   return { text, meta, headings };
 }
+
+/**
+ * A platform's article body (an API's HTML, a feed's content) in the same stored form as a page:
+ * no Readability pass, since the platform has already cut the article out. `strip` removes
+ * platform furniture (subscribe boxes, share bars) before flattening.
+ */
+export function fragmentText(html: string, strip: string[] = []): { text: string; headings: Array<{ offset: number; text: string }> } {
+  const { document } = parseHTML(`<!doctype html><html><body>${html}</body></html>`);
+  const body = (document as unknown as Document).body;
+  for (const sel of strip) for (const el of Array.from(body.querySelectorAll(sel)) as Element[]) el.remove();
+  return flatten(body as unknown as Element);
+}
+
+/** Plain text of a small HTML string (a title with entities or tags). */
+export function plainText(html: string | undefined | null): string {
+  if (!html) return '';
+  const { document } = parseHTML(`<!doctype html><html><body>${html}</body></html>`);
+  return ((document as unknown as Document).body?.textContent ?? '').replace(/\s+/g, ' ').trim();
+}

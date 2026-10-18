@@ -4,7 +4,9 @@
 import type { Media } from '@fdf/shared/haul';
 import type { SourceKind } from '@fdf/shared/detect';
 import type { Env } from './env';
-import { fetchBytes, decode } from './extract/http';
+import { fetchBytes, decode, type Fetched } from './extract/http';
+import { mediumFromFeed, mediumTarget, paywallMarker, PaywalledError, RouteMissError, substackFromApi, substackFromFeed, substackTarget, wordpressFromApi, wordpressHints, wordpressTarget, type PlatformArticle } from './extract/platforms';
+import { fetchSnapshot, latestSnapshot, savePageNow, type WaybackCopy } from './extract/wayback';
 import { extractArticle } from './extract/html';
 import { browserAvailable, renderPage } from './extract/browser';
 
@@ -18,7 +20,7 @@ import { wikiKeyFromUrl, wikiSummary } from './wiki';
 import { generateJson } from './models/router';
 import { ocrSchema } from './prompts';
 import { OCR_SYSTEM } from './prompts';
-import { FatalError, readingMinutes, toBase64, wordCount } from './util';
+import { errorMessage, FatalError, readingMinutes, toBase64, wordCount } from './util';
 import { isPunctuated } from '@fdf/shared/quoting';
 
 export interface SourceMeta {
@@ -32,6 +34,8 @@ export interface SourceMeta {
   /** Auto-captions without punctuation (older YouTube uploads). */
   roughCaptions?: boolean;
   note?: string;
+  /** Where the text came from when it was not the page itself: a platform API or feed, or an archived copy. */
+  via?: { route: string; label: string; url?: string; at?: string };
 }
 
 export interface ItemFields {
@@ -81,15 +85,225 @@ function yearOrDate(s?: string): string | undefined {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
 }
 
+/** Statuses that mean "not to you, not now" rather than "no such page": worth another route. */
+const REFUSED = new Set([401, 403, 406, 429, 451, 500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 529]);
+/** Gone from the site, maybe not from the archive. */
+const GONE = new Set([404, 410]);
+
+/** A bot check or challenge page served in place of the article. We never try to pass one. */
+export function isBotCheck(page: Fetched, html: string): boolean {
+  if (page.headers?.get('cf-mitigated') === 'challenge') return true;
+  if (html.length > 400_000) return false;
+  const title = /<title[^>]*>([^<]{0,200})<\/title>/i.exec(html)?.[1] ?? '';
+  return /just a moment|attention required|are you a robot|verify you are human|security check|access denied|please enable (javascript and )?cookies/i.test(title);
+}
+
+const VIA_LABEL: Record<string, string> = {
+  'substack-api': "Read through Substack's post API",
+  'substack-feed': "Read from the newsletter's RSS feed",
+  'wordpress-api': "Read through the site's WordPress API",
+  'medium-feed': "Read from the author's Medium RSS feed",
+};
+
+function platformOutcome(a: PlatformArticle, url: string): FetchOutcome {
+  // The platform has cut out the post itself, so a short one is whole (an aside, a link post).
+  if (a.text.trim().length < 20) throw new RouteMissError(`${VIA_LABEL[a.route]} gave no readable text`);
+  const words = wordCount(a.text);
+  return {
+    kind: 'text',
+    text: a.text,
+    extractor: a.route,
+    meta: { headings: a.headings, description: a.description, image: a.image, via: { route: a.route, label: VIA_LABEL[a.route]!, url: a.from } },
+    fields: {
+      title: a.title,
+      creator: a.creator,
+      source_name: a.siteName ?? host(url),
+      source_date: yearOrDate(a.date),
+      minutes: readingMinutes(words),
+      canonical_url: a.canonical,
+      media: a.audio ? { kind: 'audio', url: a.audio, label: 'Listen' } : undefined,
+    },
+    snapshot: { bytes: new TextEncoder().encode(`<!doctype html><meta charset="utf-8"><title>${(a.title ?? '').replace(/</g, '&lt;')}</title><article>${a.html}</article>`), contentType: 'text/html; charset=utf-8', ext: 'html' },
+  };
+}
+
+/** Try one platform route; a miss is noted and returns null, a paywall stops everything. */
+async function attempt(tried: string[], label: string, fn: () => Promise<PlatformArticle>, url: string): Promise<FetchOutcome | null> {
+  try {
+    const out = platformOutcome(await fn(), url);
+    console.log(JSON.stringify({ event: 'fetch-route', route: label, url, words: wordCount((out as { text: string }).text) }));
+    return out;
+  } catch (e) {
+    if (e instanceof PaywalledError) throw e;
+    tried.push(`${label}: ${errorMessage(e).slice(0, 160)}`);
+    return null;
+  }
+}
+
+/** Routes we can choose from the address alone, before touching the page. */
+async function platformFirst(url: string, tried: string[]): Promise<FetchOutcome | null> {
+  const sub = substackTarget(url);
+  if (sub) {
+    let refused = !sub.guess;
+    const viaApi = await attempt(tried, 'Substack API', async () => {
+      try {
+        return await substackFromApi(sub);
+      } catch (e) {
+        // A custom domain that refuses us is likely Substack too; a 404 or HTML means it is not.
+        if (e instanceof RouteMissError && REFUSED.has(e.status)) refused = true;
+        else if (sub.guess) refused = false;
+        throw e;
+      }
+    }, url);
+    if (viaApi) return viaApi;
+    if (refused || !sub.guess) {
+      const viaFeed = await attempt(tried, 'Substack feed', () => substackFromFeed(sub, url), url);
+      if (viaFeed) return viaFeed;
+    }
+  }
+  const med = mediumTarget(url);
+  if (med && !med.guess) {
+    const viaFeed = await attempt(tried, 'Medium feed', () => mediumFromFeed(med), url);
+    if (viaFeed) return viaFeed;
+  }
+  const wp = wordpressTarget(url);
+  if (wp && !wp.guess) {
+    const viaApi = await attempt(tried, 'WordPress API', () => wordpressFromApi(wp, url), url);
+    if (viaApi) return viaApi;
+  }
+  return null;
+}
+
+/** The page refused us: platform guesses not yet tried, then the Wayback Machine. */
+async function afterRefusal(url: string, why: string, status: number, tried: string[], opts: { save: boolean }): Promise<FetchOutcome | null> {
+  if (!GONE.has(status)) {
+    const wp = wordpressTarget(url);
+    if (wp?.guess) {
+      const viaApi = await attempt(tried, 'WordPress API', () => wordpressFromApi(wp, url), url);
+      if (viaApi) return viaApi;
+    }
+    const med = mediumTarget(url);
+    if (med?.guess) {
+      const viaFeed = await attempt(tried, 'Medium feed', () => mediumFromFeed(med), url);
+      if (viaFeed) return viaFeed;
+    }
+  }
+  const fromCopy = (copy: WaybackCopy | null): FetchOutcome | null => {
+    if (!copy) return null;
+    const ex = extractArticle(copy.html, url);
+    const paywall = paywallMarker(copy.html);
+    if (paywall) throw new PaywalledError(`${paywall}; the archived copy has only the public preview. Paste the text or upload a PDF if you have it`);
+    if (ex.text.length < 400 || isBotCheck({ url: copy.raw, status: 200, contentType: 'text/html', bytes: new Uint8Array() }, copy.html)) {
+      tried.push(`Wayback copy of ${copy.archivedAt.slice(0, 10)}: no readable article in it`);
+      return null;
+    }
+    const words = wordCount(ex.text);
+    const day = yearOrDate(copy.archivedAt);
+    console.log(JSON.stringify({ event: 'fetch-route', route: copy.saved ? 'wayback-saved' : 'wayback', url, words, archived: copy.timestamp }));
+    const canonical = ex.meta.canonical && host(ex.meta.canonical) === host(url) ? ex.meta.canonical : undefined;
+    return {
+      kind: 'text',
+      text: ex.text,
+      extractor: 'wayback',
+      meta: {
+        headings: ex.headings,
+        lang: ex.meta.lang,
+        description: ex.meta.description,
+        image: ex.meta.image,
+        via: {
+          route: copy.saved ? 'wayback-saved' : 'wayback',
+          label: `From the Wayback Machine's ${copy.saved ? 'fresh capture' : 'copy'} of ${day} (the site ${why})`,
+          url: copy.url,
+          at: copy.archivedAt,
+        },
+      },
+      fields: {
+        title: ex.meta.title,
+        creator: ex.meta.creator,
+        source_name: ex.meta.siteName ?? host(url),
+        source_date: yearOrDate(ex.meta.date),
+        minutes: readingMinutes(words),
+        canonical_url: canonical,
+      },
+      snapshot: { bytes: new TextEncoder().encode(copy.html), contentType: 'text/html; charset=utf-8', ext: 'html' },
+    };
+  };
+  try {
+    const latest = await latestSnapshot(url);
+    if (latest) {
+      const got = fromCopy(await fetchSnapshot(latest.timestamp, latest.original));
+      if (got) return got;
+    } else tried.push('Wayback Machine: no copy yet');
+  } catch (e) {
+    if (e instanceof PaywalledError) throw e;
+    tried.push(`Wayback Machine: ${errorMessage(e).slice(0, 160)}`);
+  }
+  // A page that is gone cannot be saved now; one that refuses us can be, by the archive.
+  if (GONE.has(status) || !opts.save) return null;
+  try {
+    const saved = await savePageNow(url);
+    if (!saved.ok) {
+      tried.push(saved.reason);
+      return null;
+    }
+    return fromCopy(await fetchSnapshot(saved.timestamp, saved.original, true));
+  } catch (e) {
+    if (e instanceof PaywalledError) throw e;
+    tried.push(`Save Page Now: ${errorMessage(e).slice(0, 160)}`);
+    return null;
+  }
+}
+
+const refusalWords = (status: number) =>
+  status === 429 ? 'too many requests' : status === 403 || status === 401 ? 'forbidden' : GONE.has(status) ? 'not found' : status === 0 ? 'no answer' : status >= 500 ? 'unavailable' : 'refused';
+
 async function fromArticleUrl(env: Env, url: string): Promise<FetchOutcome> {
-  let page = await fetchBytes(url, { browser: true, maxBytes: 15 * 1024 * 1024 });
-  // Too many requests or briefly unavailable: worth another try (the fetch step retries with backoff).
-  if (page.status === 429 || page.status === 503)
-    throw new Error(`${host(url) || 'The site'} refused the fetch for now (${page.status}: ${page.status === 429 ? 'too many requests' : 'unavailable'})`);
+  const tried: string[] = [];
+  const early = await platformFirst(url, tried);
+  if (early) return early;
+
+  let page: Fetched | null = null;
+  let pageError = '';
+  try {
+    page = await fetchBytes(url, { browser: true, maxBytes: 15 * 1024 * 1024 });
+  } catch (e) {
+    if (e && typeof e === 'object' && 'fatal' in e) throw e; // blocked address, too large
+    pageError = errorMessage(e).slice(0, 160);
+  }
+  let html = page && page.status < 400 && !page.contentType.includes('application/pdf') ? decode(page.bytes, page.contentType) : '';
+  const botCheck = page ? isBotCheck(page, html || decode(page.bytes.subarray(0, 200_000), page.contentType)) : false;
+  const status = page ? (botCheck && page.status < 400 ? 403 : page.status) : 0;
+
+  if (!page || botCheck || REFUSED.has(status) || GONE.has(status)) {
+    const why = page ? `${botCheck ? 'showed a bot check' : `refused the Desk: ${status}, ${refusalWords(status)}`}` : `did not answer: ${pageError}`;
+    const rescued = await afterRefusal(url, why, status, tried, { save: true });
+    if (rescued) return rescued;
+    const detail = tried.length ? ` Tried: ${tried.join('; ')}.` : '';
+    const site = host(url) || 'The site';
+    // Too many requests, briefly unavailable, or a capture still in progress: worth another try
+    // (the fetch step retries with backoff, and a capture that lands meanwhile is found then).
+    if (!page || status === 429 || status >= 500 || tried.some((t) => /still working/.test(t)))
+      throw new Error(`${site} refused the fetch for now (${status || 'no answer'}: ${refusalWords(status)}).${detail}`);
+    if (GONE.has(status)) throw new FatalError(`The page returned ${status}, and the Wayback Machine has no readable copy.${detail}`);
+    throw new FatalError(`${site} ${botCheck ? 'answered with a bot check' : `refused the fetch (${status}: ${refusalWords(status)})`}.${detail}`);
+  }
   if (page.status >= 400) throw new FatalError(`The page returned ${page.status}`);
   if (page.contentType.includes('application/pdf')) return fromPdfBytes(env, page.bytes, page.url, undefined);
-  let html = decode(page.bytes, page.contentType);
   let ex = extractArticle(html, page.url);
+  const paywall = paywallMarker(html);
+  if (paywall) throw new PaywalledError(`${paywall}; only the public preview is readable. Paste the text or upload a PDF if you have it`);
+  // A WordPress site says where its API is; the API has the post alone, with its authors.
+  const hints = wordpressHints(html);
+  if (hints) {
+    const wp = wordpressTarget(page.url, hints);
+    if (wp) {
+      const viaApi = await attempt(tried, 'WordPress API', () => wordpressFromApi(wp, page!.url), url);
+      // A membership plugin can trim the API's copy of a long post; keep the page when the API has
+      // much less of a long one. Short posts read from the page carry share bars and menus.
+      const pageWords = wordCount(ex.text);
+      if (viaApi && viaApi.kind === 'text' && (pageWords < 300 || wordCount(viaApi.text) >= pageWords * 0.5)) return viaApi;
+    }
+  }
   if (ex.text.length < 400) {
     // Some sites serve a stub to browsers without JS but the real text to plain agents.
     const alt = await fetchBytes(url, { maxBytes: 15 * 1024 * 1024 }).catch(() => null);
