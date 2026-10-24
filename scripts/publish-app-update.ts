@@ -83,7 +83,10 @@ try {
     pointer = part('directive', { type: 'rollBackToEmbedded', parameters: { commitTime: new Date().toISOString() } });
   } else {
     const out = join(work, 'dist');
-    run('npx', ['expo', 'export', '--platform', PLATFORM, '--output-dir', out]);
+    // --clear: Metro's transform cache does not key on EXPO_PUBLIC_* values, so without it a cached
+    // transform from a development build (samples in) could ship in a launch update. Checked
+    // 2026-10-24: two exports in a row, seed off then on, gave the same bundle until cleared.
+    run('npx', ['expo', 'export', '--clear', '--platform', PLATFORM, '--output-dir', out]);
     const meta = JSON.parse(readFileSync(join(out, 'metadata.json'), 'utf8')) as {
       fileMetadata: Record<string, { bundle: string; assets: Array<{ path: string; ext: string }> }>;
     };

@@ -12,9 +12,12 @@ import { INDEX_PATH, seedTable } from './seed';
 
 const BASE = process.env.EXPO_PUBLIC_FILES_BASE ?? 'https://files.fromthedumpsterfire.com';
 
-// Sample content ships in development builds until the first real Haul is published, at seed/
-// paths a real Haul can never have (see seed.ts). Launch builds set EXPO_PUBLIC_USE_SEED=0.
-const SEEDS: Record<string, unknown> = seedTable(process.env.EXPO_PUBLIC_USE_SEED !== '0');
+// Sample Hauls ship in development builds until real Hauls are published, at seed/ paths a real
+// Haul can never have (see seed.ts). Launch builds set EXPO_PUBLIC_USE_SEED=0; the flag is inlined
+// at build time and the require below is folded away, so the samples are not in a launch bundle.
+const SEEDS: Record<string, unknown> = seedTable(
+  process.env.EXPO_PUBLIC_USE_SEED !== '0' ? (require('./seedData') as typeof import('./seedData')).seedData : null,
+);
 
 const memory = new Map<string, unknown>();
 const inflight = new Map<string, Promise<unknown | null>>();
