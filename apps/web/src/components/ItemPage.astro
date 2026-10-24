@@ -12,6 +12,7 @@ import Voice from './Voice.astro';
 import Notes from './Notes.astro';
 import Ideas from './Ideas.astro';
 import Blocks from './Blocks.astro';
+import Credit from './Credit.astro';
 import StartHere from './StartHere.astro';
 import SeeAlso from './SeeAlso.astro';
 import { formName, formOf, headword, speaker } from '../lib/forms';
@@ -44,7 +45,6 @@ const description = item.why.text.length > 200 ? item.why.text.slice(0, item.why
 const longTitle = titleText(item.title).length > 34;
 const hw = headword(item.title.text);
 const matched = 'matched word for word against the source';
-const licence = item.plate ? item.plate.licence.charAt(0).toUpperCase() + item.plate.licence.slice(1) : '';
 const lastmod = haulLastmod(haul);
 const ogImage =
   item.plate && plateSrc
@@ -168,7 +168,7 @@ const ogImage =
         {item.plate && plateSrc ? (
           <figure class="plate">
             <img src={plateSrc} width={item.plate.width} height={item.plate.height} alt={item.plate.caption || `Plate for ${titleText(item.title)}`} loading="lazy" decoding="async" />
-            <figcaption><span>{item.plate.caption}</span><span class="cr">{item.plate.credit}. {licence}.</span></figcaption>
+            <figcaption><Credit plate={item.plate} maker={item.type === 'image' ? item.creator : undefined} /></figcaption>
           </figure>
         ) : null}
       </div>
@@ -219,7 +219,7 @@ const ogImage =
             <h1 class="prt-t display" id="item-title"><Title title={item.title} as="span" /></h1>
             <span class="prt-by">{item.creator}{item.source.date ? `, ${item.source.date}` : ''}</span>
             <span class="prt-from"><i>{item.source.name}</i></span>
-            <span class="prt-cr">{item.plate.credit}. {licence}.</span>
+            <span class="prt-cr"><Credit plate={item.plate} noCaption noBy /></span>
           </figcaption>
         </figure>
       </div>
@@ -400,7 +400,7 @@ const ogImage =
       <div class="wrap g">
         <figure class="c plate">
           <img src={plateSrc} width={item.plate.width} height={item.plate.height} alt={item.plate.caption || `Plate for ${titleText(item.title)}`} loading="lazy" decoding="async" />
-          <figcaption><span>{item.plate.caption}</span><span class="cr">{item.plate.credit}. {licence}.</span></figcaption>
+          <figcaption><Credit plate={item.plate} maker={item.type === 'image' ? item.creator : undefined} /></figcaption>
         </figure>
       </div>
     ) : null}

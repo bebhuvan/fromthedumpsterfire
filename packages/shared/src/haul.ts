@@ -299,3 +299,14 @@ export function sourceAction(item: Pick<Item, 'type' | 'creator' | 'source' | 'm
   const venue = watchHost && verb === 'Watch' && !/youtube|vimeo/i.test(place) ? (host.includes('vimeo') ? 'Vimeo' : 'YouTube') : place;
   return [`${verb} ${subject}${venue ? ` ${prep} ${venue}` : ''}`, dur].filter(Boolean).join(' · ');
 }
+
+/**
+ * The credit line under a picture: who made it, who holds it, the licence. The house rule is to
+ * name people; the link to where it came from (plate.sourceUrl) goes beside it.
+ */
+export function creditLine(plate: Pick<Plate, 'credit' | 'licence' | 'creator' | 'date'>, opts: { maker?: string; noBy?: boolean } = {}): string {
+  const by = opts.noBy ? '' : (plate.creator || opts.maker || '').trim();
+  const holder = plate.credit.trim() && plate.credit.trim() !== by ? plate.credit.trim() : '';
+  const licence = plate.licence.charAt(0).toUpperCase() + plate.licence.slice(1);
+  return [by ? `By ${by}${plate.date ? `, ${plate.date}` : ''}.` : '', holder ? `${holder}.` : '', `${licence}.`].filter(Boolean).join(' ');
+}

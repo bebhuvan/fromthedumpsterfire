@@ -1,7 +1,7 @@
 # Builds the development sample Hauls 002 and 003 (local web only; never published).
 # They exist to exercise every content type, every block kind and the edition colours.
 import json
-WAVE = {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/1280px-Tsunami_by_hokusai_19th_century.jpg", "width": 1280, "height": 860, "caption": "Under the Wave off Kanagawa, about 1831.", "credit": "Katsushika Hokusai, via Wikimedia Commons", "licence": "public domain"}
+WAVE = {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/1280px-Tsunami_by_hokusai_19th_century.jpg", "width": 1280, "height": 860, "caption": "Under the Wave off Kanagawa, about 1831.", "credit": "Wikimedia Commons", "licence": "public domain", "creator": "Katsushika Hokusai", "date": "about 1831", "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tsunami_by_hokusai_19th_century.jpg"}
 def item(id, type, title, creator, src, date, url, why, **kw):
     d = {"id": id, "type": type, "title": title if isinstance(title, dict) else {"text": title}, "creator": creator,
          "source": {"name": src, "date": date, "url": url}, "why": {"text": why}, "marginalia": [], "wiki": [], "connections": []}

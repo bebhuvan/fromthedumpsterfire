@@ -756,3 +756,7 @@ blockquote > p + p { margin-top: 0.65em; }
   .sp-jacket { grid-column: span 3; }
 }
 .has-ed .sp-h { border-top-color: var(--ed); }
+.cap-t { display: block; }
+.cr a { color: inherit; }
+.cr-by { color: var(--ink); }
+.prt-cr .cr { display: block; }

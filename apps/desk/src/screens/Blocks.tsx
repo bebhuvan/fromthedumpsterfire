@@ -293,7 +293,7 @@ export function PictureForm({ itemId, busy, setBusy, onDone, asPlate = false, fr
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const preview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
   const hasPicture = Boolean(file || url.trim() || useCaptured);
-  const ready = hasPicture && f.credit.trim() && f.licence.trim();
+  const ready = hasPicture && f.credit.trim() && f.licence.trim() && f.creator.trim() && (f.sourceUrl.trim() || !file);
 
   async function submit() {
     setBusy(true);
@@ -317,7 +317,7 @@ export function PictureForm({ itemId, busy, setBusy, onDone, asPlate = false, fr
   return (
     <div className="panel line stack" style={{ gap: 10 }}>
       <p className="small muted" style={{ margin: 0 }}>
-        Upload the picture or link to the image file. Say whose it is and under what licence: an archive’s statement (“public domain”, “CC BY 4.0”), or for a meme, “© the creator, shown for commentary”. It is copied to our own files; never hotlinked.
+        Upload the picture or link to the image file. Name who made it and where you found it, and say under what licence: an archive’s statement (“public domain”, “CC BY 4.0”), or for a meme, “© the creator, shown for commentary”. It is copied to our own files; never hotlinked.
       </p>
       {fromUpload && (
         <label className="row small">
@@ -367,15 +367,15 @@ export function PictureForm({ itemId, busy, setBusy, onDone, asPlate = false, fr
       </label>
       <div className="row" style={{ alignItems: 'flex-end' }}>
         <label className="field" style={{ flex: '1 1 160px' }}>
-          <span className="label">Made by (optional)</span>
-          <input className="input" value={f.creator} onChange={set('creator')} />
+          <span className="label">Made by (required: a name, or “Unknown”)</span>
+          <input className="input" value={f.creator} onChange={set('creator')} placeholder="Katsushika Hokusai" />
         </label>
         <label className="field" style={{ flex: '0 1 120px' }}>
           <span className="label">Date (optional)</span>
           <input className="input" value={f.date} onChange={set('date')} placeholder="1831" />
         </label>
         <label className="field" style={{ flex: '2 1 220px' }}>
-          <span className="label">Its page (optional, https)</span>
+          <span className="label">Where you found it (required for uploads, https)</span>
           <input className="input" type="url" inputMode="url" value={f.sourceUrl} onChange={set('sourceUrl')} placeholder="https://www.metmuseum.org/art/collection/…" />
         </label>
       </div>

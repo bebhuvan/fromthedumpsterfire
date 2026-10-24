@@ -1,0 +1,21 @@
+---
+// The credit under every picture: the editor's caption, then who made it, who holds it and the
+// licence (creditLine in @fdf/shared/haul), and a link to where it came from. The house rule is to
+// name people and always point back to them.
+import { creditLine, type Plate } from '@fdf/shared/haul';
+import { safeHref } from '../lib/site';
+
+interface Props {
+  plate: Plate;
+  /** The maker when the plate does not say (a Picture item's creator). */
+  maker?: string;
+  /** Leave out the caption (the print's label sets its own title). */
+  noCaption?: boolean;
+  /** Leave out the maker (the print's label already names them). */
+  noBy?: boolean;
+}
+const { plate, maker, noCaption, noBy } = Astro.props;
+const from = safeHref(plate.sourceUrl);
+---
+{!noCaption && plate.caption ? <span class="cap-t">{plate.caption}</span> : null}
+<span class="cr">{creditLine(plate, { maker, noBy })}{from ? <> <a href={from} rel="noopener noreferrer" target="_blank">Where it’s from<span class="sr"> (opens in a new tab)</span></a></> : null}</span>

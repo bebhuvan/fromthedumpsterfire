@@ -6,6 +6,7 @@
 import { embedSrc, videoHref, type Block } from '@fdf/shared/haul';
 import { CODE_LANGS_SHORT } from '../lib/forms';
 import { safeHref } from '../lib/site';
+import Credit from './Credit.astro';
 
 interface Props {
   blocks: Block[];
@@ -105,11 +106,10 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
       }
       if (b.kind === 'image') {
         const src = safeHref(b.plate.url);
-        const licence = b.plate.licence.charAt(0).toUpperCase() + b.plate.licence.slice(1);
         return src ? (
           <figure class="g blk blk-image">
             <img class="c" src={src} width={b.plate.width} height={b.plate.height} alt={b.plate.caption || ''} loading="lazy" decoding="async" />
-            <figcaption class="c plate-cap"><span>{b.plate.caption}</span><span class="cr">{b.plate.credit}. {licence}.</span></figcaption>
+            <figcaption class="c plate-cap"><Credit plate={b.plate} /></figcaption>
           </figure>
         ) : null;
       }

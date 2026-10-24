@@ -174,7 +174,7 @@ describe('blocks, new fields and the edition', () => {
     await addCode(env, jev, { code, lang: 'python' });
     await addVideo(env, jev, { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1m' });
     await addAudio(env, jev, { url: 'https://open.spotify.com/episode/4rOoJ6Egrf8K2IrywzwOMk', title: 'The Coal Question, read aloud' });
-    await addPicture(env, jev, { bytes: fakeJpeg(900, 600), caption: 'A colliery, 1860s.', credit: 'Science Museum Group', licence: 'CC BY-NC-SA 4.0', sourceUrl: 'https://collection.sciencemuseumgroup.org.uk/objects/co1' });
+    await addPicture(env, jev, { bytes: fakeJpeg(900, 600), caption: 'A colliery, 1860s.', creator: 'A maker', credit: 'Science Museum Group', licence: 'CC BY-NC-SA 4.0', sourceUrl: 'https://collection.sciencemuseumgroup.org.uk/objects/co1' });
     // A cut block stays on the Desk and never prints.
     await addQuote(env, jev, { text: 'As a rule, new modes of economy will lead to an increase of consumption.' });
     const ids = (await blocksFor(env, 'it_jevons')).map((b) => b.id);
@@ -191,7 +191,7 @@ describe('blocks, new fields and the edition', () => {
 
     // Without its picture, a Picture cannot publish.
     expect((await assembleHaul(env, 'hl_1')).problems.map((p) => p.message)).toEqual([expect.stringMatching(/Picture needs its picture/)]);
-    await setPicturePlate(env, await row(env, 'it_bush'), { bytes: fakeJpeg(1280, 860), caption: 'A memex, drawn for Life, 1945.', credit: 'Life magazine', licence: '© Time Inc., shown for commentary' });
+    await setPicturePlate(env, await row(env, 'it_bush'), { bytes: fakeJpeg(1280, 860), caption: 'A memex, drawn for Life, 1945.', creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'Life magazine', licence: '© Time Inc., shown for commentary' });
 
     const r = await publishHaul(env, 'hl_1');
     expect(r.problems).toEqual([]);
@@ -217,7 +217,7 @@ describe('blocks, new fields and the edition', () => {
     expect(audio).toEqual({ kind: 'audio', provider: 'spotify', url: 'https://open.spotify.com/episode/4rOoJ6Egrf8K2IrywzwOMk', title: 'The Coal Question, read aloud' });
     expect(image).toEqual({
       kind: 'image',
-      plate: { url: 'https://files.example.org/hauls/001/media/the-coal-question-5.jpg', width: 900, height: 600, caption: 'A colliery, 1860s.', credit: 'Science Museum Group', licence: 'CC BY-NC-SA 4.0', sourceUrl: 'https://collection.sciencemuseumgroup.org.uk/objects/co1' },
+      plate: { url: 'https://files.example.org/hauls/001/media/the-coal-question-5.jpg', width: 900, height: 600, caption: 'A colliery, 1860s.', creator: 'A maker', credit: 'Science Museum Group', licence: 'CC BY-NC-SA 4.0', sourceUrl: 'https://collection.sciencemuseumgroup.org.uk/objects/co1' },
     });
     for (const k of ['hauls/001/media/the-coal-question-1-poster.jpg', 'hauls/001/media/the-coal-question-5.jpg']) expect(env.FILES.objects.has(k)).toBe(true);
 
@@ -225,7 +225,7 @@ describe('blocks, new fields and the edition', () => {
     expect(haul.items[1]!.blocks).toBeUndefined();
     const pic = haul.items[2]!;
     expect(pic.type).toBe('image');
-    expect(pic.plate).toEqual({ url: expect.stringMatching(/^https:\/\/files\.example\.org\/hauls\/001\/plates\/as-we-may-think\.jpg$/), width: 1280, height: 860, caption: 'A memex, drawn for Life, 1945.', credit: 'Life magazine', licence: '© Time Inc., shown for commentary' });
+    expect(pic.plate).toEqual({ url: expect.stringMatching(/^https:\/\/files\.example\.org\/hauls\/001\/plates\/as-we-may-think\.jpg$/), width: 1280, height: 860, caption: 'A memex, drawn for Life, 1945.', creator: 'A maker', credit: 'Life magazine', licence: '© Time Inc., shown for commentary', sourceUrl: 'https://example.org/found' });
   });
 
   it('refuses a pull quote or code that no longer matches the source, and defaults the edition by number', async () => {

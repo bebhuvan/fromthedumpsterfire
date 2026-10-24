@@ -370,18 +370,28 @@ async function storePicture(env: Env, key: (ext: string) => string, bytes: Uint8
   return { key: k, mime: size!.mime, width: size!.width, height: size!.height, bytes: bytes.byteLength };
 }
 
+/** Where the picture came from: the editor's page link, else the image link it was fetched from. An upload must say. */
+function sourced(m: PictureMeta, input: { bytes?: Uint8Array; url?: string }): PictureMeta {
+  if (m.sourceUrl?.trim()) return m;
+  if (!input.bytes && input.url?.trim()) return { ...m, sourceUrl: input.url.trim() };
+  return refuse('Say where you found the picture (a link to its page or post), so readers can follow it to the person who made it.', 400);
+}
+
 function checkPictureMeta(m: PictureMeta): Required<Pick<PictureMeta, 'credit' | 'licence'>> & PictureMeta {
   const credit = m.credit?.trim();
   const licence = m.licence?.trim();
   if (!credit) refuse('Say whose picture it is (the credit): the artist, photographer or holder.', 400);
   if (!licence) refuse('State the licence: "public domain", "CC BY 4.0", or for a meme "© the creator, shown for commentary".', 400);
+  // The house rule: every picture names who made it and where it came from, so a reader can always
+  // follow it back to the person (DECISIONS 2026-10-24).
+  if (!m.creator?.trim()) refuse('Name who made the picture: the artist, photographer or poster. Write “Unknown” only if nobody can say.', 400);
   if (m.sourceUrl?.trim() && !/^https:\/\//.test(m.sourceUrl.trim())) refuse('The link to the picture’s page must be https.', 400);
   return { ...m, credit: credit!, licence: licence! };
 }
 
 /** A picture block: an uploaded file, or an image link fetched through the guard. */
 export async function addPicture(env: Env, item: ItemRow, input: { bytes?: Uint8Array; url?: string } & PictureMeta): Promise<string> {
-  const m = checkPictureMeta(input);
+  const m = sourced(checkPictureMeta(input), input);
   const id = newId('bk_');
   const got = input.bytes ? { bytes: input.bytes, finalUrl: undefined } : input.url ? await fetchImage(input.url) : refuse('Upload a picture or give a link to one.', 400);
   const stored = await storePicture(env, (ext) => `blocks/${id}/image.${ext}`, got.bytes, got.finalUrl);
@@ -410,7 +420,7 @@ export async function addPicture(env: Env, item: ItemRow, input: { bytes?: Uint8
  * stand in for an institution's.
  */
 export async function setPicturePlate(env: Env, item: ItemRow, input: { bytes?: Uint8Array; url?: string } & PictureMeta): Promise<string> {
-  const m = checkPictureMeta(input);
+  const m = sourced(checkPictureMeta(input), input);
   const id = newId('pl_');
   const got = input.bytes ? { bytes: input.bytes, finalUrl: undefined } : input.url ? await fetchImage(input.url) : refuse('Upload a picture or give a link to one.', 400);
   const stored = await storePicture(env, (ext) => `plates/${id}.${ext}`, got.bytes, got.finalUrl);

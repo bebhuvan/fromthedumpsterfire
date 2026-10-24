@@ -71,10 +71,10 @@ describe('block routes', () => {
     };
     // JSON is refused on the upload route (multipart only), and multipart elsewhere.
     expect((await call(env, '/api/items/it_jevons/picture', json('POST', {}))).status).toBe(415);
-    const noLicence = await call(env, '/api/items/it_jevons/picture', form({ credit: 'Punch' }));
+    const noLicence = await call(env, '/api/items/it_jevons/picture', form({ creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'Punch' }));
     expect([noLicence.status, noLicence.body.error]).toEqual([400, expect.stringMatching(/licence/)]);
-    expect((await call(env, '/api/items/it_jevons/picture', form({ credit: 'Punch', licence: 'Public domain' }, false))).status).toBe(400);
-    const ok = await call(env, '/api/items/it_jevons/picture', form({ credit: 'Punch', licence: 'Public domain', caption: 'A colliery.' }));
+    expect((await call(env, '/api/items/it_jevons/picture', form({ creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'Punch', licence: 'Public domain' }, false))).status).toBe(400);
+    const ok = await call(env, '/api/items/it_jevons/picture', form({ creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'Punch', licence: 'Public domain', caption: 'A colliery.' }));
     expect(ok.status).toBe(200);
     const blk = ok.body.blocks![0]!;
     expect(blk.body).toMatchObject({ kind: 'image', width: 800, height: 600, credit: 'Punch', licence: 'Public domain' });
@@ -83,7 +83,7 @@ describe('block routes', () => {
     expect(img.headers.get('content-type')).toBe('image/jpeg');
 
     // As a Picture item's own plate.
-    const plate = await call(env, '/api/items/it_jevons/picture', form({ credit: 'Hokusai', licence: 'public domain', as: 'plate' }));
+    const plate = await call(env, '/api/items/it_jevons/picture', form({ creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'Hokusai', licence: 'public domain', as: 'plate' }));
     expect(plate.status).toBe(200);
     expect((await env.DB.prepare(`SELECT plate FROM items WHERE id = 'it_jevons'`).first<{ plate: string }>())!.plate).toBe(plate.body.plateId);
   });

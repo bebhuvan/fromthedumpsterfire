@@ -5,7 +5,7 @@
 // credit and licence.
 import { memo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { videoHref, type Block } from '@fdf/shared/haul';
+import { creditLine, videoHref, type Block } from '@fdf/shared/haul';
 import type { CodeRole } from '@fdf/shared/tokens';
 import { fonts, usePalette, useTextScale } from '@/theme';
 import { clock, CODE_LANGS, codeLines } from '@/lib/code';
@@ -153,7 +153,6 @@ function AudioBlock({ block }: { block: Extract<Block, { kind: 'audio' }> }) {
 export function Picture({ plate, style }: { plate: Extract<Block, { kind: 'image' }>['plate']; style?: object }) {
   const p = usePalette();
   const [failed, setFailed] = useState(false);
-  const licence = plate.licence.charAt(0).toUpperCase() + plate.licence.slice(1);
   return (
     <View style={style}>
       {failed ? null : (
@@ -166,10 +165,24 @@ export function Picture({ plate, style }: { plate: Extract<Block, { kind: 'image
         />
       )}
       <Text style={[st.caption, { color: p.ink }]}>{plate.caption}</Text>
-      <Meta style={{ marginTop: 3 }}>
-        {plate.credit}. {licence}.
-      </Meta>
+      <Credit plate={plate} />
     </View>
+  );
+}
+
+/** Who made a picture, who holds it, the licence, and a link back to where it came from. */
+export function Credit({ plate, maker, noBy }: { plate: Extract<Block, { kind: 'image' }>['plate']; maker?: string; noBy?: boolean }) {
+  const p = usePalette();
+  const from = plate.sourceUrl;
+  return (
+    <Meta style={{ marginTop: 3 }}>
+      {creditLine(plate, { maker, noBy })}
+      {from ? (
+        <Text accessibilityRole="link" onPress={() => void openSource(from, p)} style={{ textDecorationLine: 'underline' }}>
+          {' '}Where it’s from
+        </Text>
+      ) : null}
+    </Meta>
   );
 }
 

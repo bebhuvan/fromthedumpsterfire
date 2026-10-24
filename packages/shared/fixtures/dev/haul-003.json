@@ -116,8 +116,11 @@
     "width": 1280,
     "height": 860,
     "caption": "Under the Wave off Kanagawa, about 1831.",
-    "credit": "Katsushika Hokusai, via Wikimedia Commons",
-    "licence": "public domain"
+    "credit": "Wikimedia Commons",
+    "licence": "public domain",
+    "creator": "Katsushika Hokusai",
+    "date": "about 1831",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tsunami_by_hokusai_19th_century.jpg"
    }
   },
   {

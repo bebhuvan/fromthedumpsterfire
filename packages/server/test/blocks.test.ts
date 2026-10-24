@@ -197,17 +197,17 @@ describe('video, audio and pictures', () => {
       if (url === 'https://images.example.org/page') return new Response('<html></html>', { headers: { 'content-type': 'text/html' } });
     });
     const it0 = await item(env);
-    await refused(addPicture(env, it0, { bytes: fakeJpeg(), credit: 'Punch', licence: '' }), /licence/);
-    await refused(addPicture(env, it0, { bytes: fakeJpeg(), credit: ' ', licence: 'public domain' }), /credit/);
-    await refused(addPicture(env, it0, { bytes: new TextEncoder().encode('<svg onload=alert(1)></svg>'), credit: 'x', licence: 'y' }), /not a JPEG, PNG/);
-    await refused(addPicture(env, it0, { url: 'https://images.example.org/page', credit: 'x', licence: 'y' }), /text\/html/);
-    await refused(addPicture(env, it0, { url: 'http://127.0.0.1/x.png', credit: 'x', licence: 'y' }), /could not be fetched/);
-    await addPicture(env, it0, { bytes: fakeJpeg(1600, 1000), caption: 'Punch, 1855.', credit: 'Punch', licence: 'Public domain', sourceUrl: 'https://commons.wikimedia.org/wiki/File:x.jpg' });
-    await addPicture(env, it0, { url: 'https://images.example.org/meme.png', credit: 'The creator', licence: '© the creator, shown for commentary' });
+    await refused(addPicture(env, it0, { bytes: fakeJpeg(), creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'Punch', licence: '' }), /licence/);
+    await refused(addPicture(env, it0, { bytes: fakeJpeg(), creator: 'A maker', sourceUrl: 'https://example.org/found', credit: ' ', licence: 'public domain' }), /credit/);
+    await refused(addPicture(env, it0, { bytes: new TextEncoder().encode('<svg onload=alert(1)></svg>'), creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'x', licence: 'y' }), /not a JPEG, PNG/);
+    await refused(addPicture(env, it0, { url: 'https://images.example.org/page', creator: 'A maker', credit: 'x', licence: 'y' }), /text\/html/);
+    await refused(addPicture(env, it0, { url: 'http://127.0.0.1/x.png', creator: 'A maker', credit: 'x', licence: 'y' }), /could not be fetched/);
+    await addPicture(env, it0, { bytes: fakeJpeg(1600, 1000), caption: 'Punch, 1855.', creator: 'A maker', credit: 'Punch', licence: 'Public domain', sourceUrl: 'https://commons.wikimedia.org/wiki/File:x.jpg' });
+    await addPicture(env, it0, { url: 'https://images.example.org/meme.png', creator: 'A maker', credit: 'The creator', licence: '© the creator, shown for commentary' });
     const rows = await blocksFor(env, 'it_jevons');
     expect(rows.map((r) => JSON.parse(r.body))).toEqual([
-      { kind: 'image', caption: 'Punch, 1855.', credit: 'Punch', licence: 'Public domain', width: 1600, height: 1000, sourceUrl: 'https://commons.wikimedia.org/wiki/File:x.jpg' },
-      { kind: 'image', caption: '', credit: 'The creator', licence: '© the creator, shown for commentary', width: 640, height: 480 },
+      { kind: 'image', caption: 'Punch, 1855.', creator: 'A maker', credit: 'Punch', licence: 'Public domain', width: 1600, height: 1000, sourceUrl: 'https://commons.wikimedia.org/wiki/File:x.jpg' },
+      { kind: 'image', caption: '', creator: 'A maker', credit: 'The creator', licence: '© the creator, shown for commentary', width: 640, height: 480, sourceUrl: 'https://images.example.org/meme.png' },
     ]);
     expect(rows.map((r) => r.mime)).toEqual(['image/jpeg', 'image/png']);
     for (const r of rows) expect(env.MEDIA.objects.has(r.media_key!)).toBe(true);
@@ -224,7 +224,7 @@ describe('video, audio and pictures', () => {
   it('makes an uploaded picture a Picture item’s own plate', async () => {
     const env = await seedHaul(makeEnv());
     await env.DB.prepare(`UPDATE items SET type = 'image' WHERE id = 'it_jevons'`).run();
-    const plateId = await setPicturePlate(env, await item(env), { bytes: fakeJpeg(1280, 860), caption: 'Under the Wave off Kanagawa, about 1831.', credit: 'Katsushika Hokusai, via Wikimedia Commons', licence: 'public domain' });
+    const plateId = await setPicturePlate(env, await item(env), { bytes: fakeJpeg(1280, 860), caption: 'Under the Wave off Kanagawa, about 1831.', creator: 'A maker', sourceUrl: 'https://example.org/found', credit: 'Katsushika Hokusai, via Wikimedia Commons', licence: 'public domain' });
     const p = await env.DB.prepare('SELECT * FROM plates WHERE id = ?').bind(plateId).first<Record<string, unknown>>();
     expect(p).toMatchObject({ provider: 'editor', status: 'chosen', width: 1280, height: 860, institution: 'Katsushika Hokusai, via Wikimedia Commons', licence: 'public domain', r2_key: `plates/${plateId}.jpg` });
     expect((await item(env)).plate).toBe(plateId);

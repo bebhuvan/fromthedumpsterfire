@@ -213,6 +213,7 @@ function checkItem(c: Collector, item: Item, p: string) {
   c.str(item.handle, `${p}.handle`, { optional: true });
   c.str(item.recipient, `${p}.recipient`, { optional: true });
   c.str(item.place, `${p}.place`, { optional: true });
+  if (item.type === 'image' && typeof item.creator === 'string' && !item.creator.trim()) c.err(`${p}.creator`, 'credit', 'a picture names who made it');
   if (item.blocks !== undefined && c.arr(item.blocks, `${p}.blocks`)) item.blocks.forEach((b, k) => checkBlock(c, b, `${p}.blocks[${k}]`));
 }
 
@@ -255,7 +256,11 @@ function checkBlock(c: Collector, b: Block, p: string) {
       c.num(b.seconds, `${p}.seconds`, true);
       break;
     case 'image':
-      if (c.obj(b.plate, `${p}.plate`)) c.plate(b.plate, `${p}.plate`);
+      if (c.obj(b.plate, `${p}.plate`)) {
+        c.plate(b.plate, `${p}.plate`);
+        // Name the person: every picture says who made it ("Unknown" only when nobody can say).
+        if (typeof b.plate.creator !== 'string' || !b.plate.creator.trim()) c.err(`${p}.plate.creator`, 'credit', 'a picture names who made it');
+      }
       break;
   }
 }

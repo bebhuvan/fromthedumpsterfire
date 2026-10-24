@@ -17,7 +17,7 @@ import { reader, useReader } from '@/lib/store';
 import { Highlighted, Machine, Meta, Note, Title } from '@/ui/type';
 import { Action, Apparatus, Folio, Key, RunHead, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
-import { Blocks, Picture } from '@/ui/Blocks';
+import { Blocks, Credit, Picture } from '@/ui/Blocks';
 
 /** Index form of a two-word name: "Joseph Bazalgette" becomes "Bazalgette, Joseph". */
 const inverted = (n: string) => {
@@ -197,7 +197,7 @@ function PlateView({ item, style }: { item: Item; style?: object }) {
         style={{ width: '100%', aspectRatio: plate.width / plate.height, backgroundColor: p.plate }}
       />
       <Text style={[styles.caption, { color: p.ink }]}>{plate.caption}</Text>
-      <Meta style={{ marginTop: 3 }}>{plate.credit}. {plate.licence[0]!.toUpperCase() + plate.licence.slice(1)}.</Meta>
+      <Credit plate={plate} />
     </View>
   );
 }
@@ -533,7 +533,6 @@ function Print({ item }: { item: Item }) {
   const p = usePalette();
   const plate = item.plate!;
   const [failed, setFailed] = useState(false);
-  const licence = plate.licence.charAt(0).toUpperCase() + plate.licence.slice(1);
   return (
     <View style={{ marginTop: 22 }}>
       <View style={[styles.mount, { backgroundColor: p.plate }]}>
@@ -558,9 +557,7 @@ function Print({ item }: { item: Item }) {
           {item.source.date ? `, ${item.source.date}` : ''}
         </Text>
         <Text style={[styles.prFrom, { color: p.ink2 }]}>{item.source.name}</Text>
-        <Meta style={{ marginTop: 6 }}>
-          {plate.credit}. {licence}.
-        </Meta>
+        <Credit plate={plate} noBy />
       </View>
     </View>
   );
