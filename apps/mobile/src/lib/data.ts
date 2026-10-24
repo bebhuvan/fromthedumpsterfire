@@ -4,9 +4,10 @@
 // it is never fetched again. Only the small index is refreshed, once per launch, in the background.
 // Screens render from memory or disk synchronously, so nothing waits on the network.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { File, Paths } from 'expo-file-system';
 import { BUNDLE_VERSION, type Haul, type HaulIndex, type HaulSummary } from '@fdf/shared/haul';
+import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 import { useReader } from './store';
 import { INDEX_PATH, seedTable } from './seed';
 
@@ -180,3 +181,115 @@ export function clearDownloads() {
   }
   for (const key of [...memory.keys()]) if (key !== INDEX_PATH) memory.delete(key);
 }
+
+// ---------- the shelf ----------
+//
+// One small mutable file (shelf/shelf.json), unlike the immutable Haul bundles: the editor adds a note
+// to a book any day. It is checked at most every SHELF_TTL while the app runs, with the ETag of the copy
+// on disk, so an unchanged shelf costs a 304. A copy that fails validateShelf is never stored or shown.
+// Offline, the copy on disk is shown; with none, the development sample (dev builds only), else nothing.
+
+const SHELF_TTL = 20 * 60_000;
+const shelfEtagFile = () => new File(Paths.document, 'shelf__shelf.etag');
+const okShelf = (v: unknown): v is Shelf => Boolean(v) && validateShelf(v as Shelf).length === 0;
+
+let shelfNow: Shelf | null | undefined; // undefined until first read from disk
+/** What the last check learned: 'none' when the files host has no shelf yet (404). */
+type Remote = 'unknown' | 'ok' | 'none' | 'offline';
+let shelfRemote = 'unknown' as Remote;
+let shelfCheckedAt = 0;
+let shelfInflight: Promise<void> | null = null;
+const shelfListeners = new Set<() => void>();
+let shelfSnap: { data: Shelf | null; remote: Remote } = { data: null, remote: shelfRemote };
+
+function shelfLocal(): Shelf | null {
+  if (shelfNow === undefined) {
+    const disk = readDisk(SHELF_PATH);
+    const seed = SEEDS[SHELF_PATH];
+    shelfNow = okShelf(disk) ? disk : okShelf(seed) ? seed : null;
+    shelfSnap = { data: shelfNow, remote: shelfRemote };
+  }
+  return shelfNow;
+}
+
+function shelfChanged(data: Shelf | null) {
+  shelfNow = data;
+  shelfSnap = { data, remote: shelfRemote };
+  shelfListeners.forEach((l) => l());
+}
+
+function readEtag(): string | null {
+  try {
+    const f = shelfEtagFile();
+    return f.exists && fileFor(SHELF_PATH).exists ? f.textSync().trim() || null : null;
+  } catch {
+    return null;
+  }
+}
+
+function refreshShelf(): Promise<void> {
+  if (shelfInflight) return shelfInflight;
+  shelfInflight = (async () => {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 10_000);
+      const etag = readEtag();
+      const res = await fetch(`${BASE}/${SHELF_PATH}`, { signal: ctrl.signal, headers: etag ? { 'If-None-Match': etag } : {} });
+      clearTimeout(timer);
+      shelfCheckedAt = Date.now();
+      if (res.status === 304) {
+        shelfRemote = 'ok';
+        return shelfChanged(shelfLocal());
+      }
+      // No shelf published yet: a development build keeps its sample, a launch build shows none.
+      if (res.status === 404) {
+        shelfRemote = 'none';
+        return shelfChanged(shelfLocal());
+      }
+      if (!res.ok) throw new Error(String(res.status));
+      const text = await res.text();
+      const json = JSON.parse(text) as unknown;
+      if (!okShelf(json)) throw new Error('invalid shelf'); // a newer app, or a bad file: keep what we have
+      writeDisk(SHELF_PATH, text);
+      const tag = res.headers.get('etag');
+      try {
+        const f = shelfEtagFile();
+        if (!f.exists) f.create();
+        f.write(tag ?? '');
+      } catch {
+        // Without the tag the next check downloads the whole (small) file.
+      }
+      shelfRemote = 'ok';
+      shelfChanged(json);
+    } catch {
+      if (shelfRemote === 'unknown') shelfRemote = 'offline';
+      shelfChanged(shelfLocal());
+    } finally {
+      shelfInflight = null;
+    }
+  })();
+  return shelfInflight;
+}
+
+function subscribeShelf(l: () => void) {
+  shelfListeners.add(l);
+  return () => shelfListeners.delete(l);
+}
+
+/**
+ * The shelf, offline-first: the copy on disk renders at once and a check runs in the background when
+ * the last one is older than SHELF_TTL. 'empty' means there is no shelf (or no books) to show yet.
+ */
+export function useShelf(): Load<Shelf> {
+  shelfLocal();
+  const snap = useSyncExternalStore(subscribeShelf, () => shelfSnap);
+  useEffect(() => {
+    if (Date.now() - shelfCheckedAt > SHELF_TTL) void refreshShelf();
+  }, []);
+  const { data, remote } = snap;
+  if (data?.books.length) return { data, status: 'ready' };
+  if (data || remote === 'none') return { data, status: 'empty' };
+  return { data: null, status: remote === 'offline' ? 'offline' : 'loading' };
+}
+
+export const shelfUrl = (id?: string) => `https://fromthedumpsterfire.com/shelf${id ? `/${id}` : ''}`;

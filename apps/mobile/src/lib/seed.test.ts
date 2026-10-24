@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BLOCK_KINDS, type Haul, type HaulIndex } from '@fdf/shared/haul';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
+import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 import { INDEX_PATH, seedTable } from './seed';
 import { seedData } from './seedData';
 
@@ -14,6 +15,14 @@ describe('the sample Hauls in development builds', () => {
       expect((t[h.path] as Haul).number).toBe(h.number);
     }
     expect(Object.keys(t).filter((k) => k.startsWith('hauls/') && k !== INDEX_PATH)).toEqual([]);
+  });
+
+  it('carry a valid shelf whose book a sample Haul points to', () => {
+    const shelf = seedTable(seedData)[SHELF_PATH] as Shelf;
+    expect(validateShelf(shelf)).toEqual([]);
+    const linked = Object.values(seedData.hauls).flatMap((h) => h.items).filter((i) => i.shelf);
+    expect(linked.length).toBeGreaterThan(0);
+    for (const i of linked) expect(shelf.books.some((b) => b.id === i.shelf)).toBe(true);
   });
 
   it('carry every content type and every block kind, so each form can be seen', () => {
