@@ -1,41 +1,54 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+The reader app of From the Dumpster Fire: Expo 57 / React Native, Android and iOS. Read the root
+CLAUDE.md ("The reader app") and docs/DESIGN.md first; they win over anything generic below.
 
 ## Expo has changed — do not trust your training data
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+Expo ships breaking changes every SDK release. Before writing code that touches an Expo or React
+Native API, read the major version of `expo` in `package.json` and fetch the matching docs
+(`https://docs.expo.dev/versions/v<major>.0.0/`, index at https://docs.expo.dev/llms.txt).
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+## Rules of this app
+
+- **Navigation is React Navigation** (native stack + bottom tabs), never Expo Router (it pulls in
+  Reanimated and more native modules; docs/DECISIONS.md). Routes and deep links: `src/nav.ts`.
+- Lean by rule: no Reanimated, SVG runtime, icon fonts, UI kits or web views. Icons and controls are
+  drawn with views (`ui/parts.tsx`, `ui/controls.tsx`). Brand marks that need curves (the masthead's
+  strike and caret) are pre-rendered white PNGs in `assets/marks/`, tinted with `tintColor`.
+- Fonts are static cuts named in `src/theme.ts`; never set `fontWeight` or `fontStyle`. Code uses
+  `fonts.mono` (the system monospace), so no font file is needed.
+- Colours only from `@fdf/shared/tokens` via `usePalette()`, type colours via `typeColor`, a Haul's
+  edition ink via `useEdition(haul)`. Blue sans is the machine's alone.
+- Never edit `android/` or `ios/` (Continuous Native Generation). A new native module, an
+  `app.json` plugin or a change to `.gitignore` changes the runtime fingerprint and needs a new APK;
+  everything else ships over the air (`npm run app:update` at the root). Check before and after with
+  `npx expo-updates runtimeversion:resolve --platform android`.
+
+## Where things are
+
+- `src/App.tsx` navigators; `src/ui/TabBar.tsx` the bar (Latest, Threads, Archive, Search, Menu).
+- `src/screens/Menu.tsx` the contents page (Saved, About, Settings, the editor); `Settings.tsx`.
+- `src/screens/ItemScreen.tsx` every printed form (choice in `lib/forms.ts`, the website's);
+  `ui/Specimen.tsx` the cover's specimens; `ui/Blocks.tsx` pull quotes, code, video, audio, pictures.
+- `ui/Fingerprint.tsx` (full and mini) from `@fdf/shared/fingerprint`, points in `lib/fpGeometry.ts`.
+- `ui/screen.tsx` `Screen` (pass `edition` for the band on a Haul's pages), `Waiting`.
+- `lib/data.ts` offline-first bundles; `lib/seed.ts` + `lib/seedData.ts` the development samples
+  (Hauls 001 to 003, every type and block kind). `seedData` is only required behind
+  `EXPO_PUBLIC_USE_SEED`, so launch bundles do not contain it: verify with
+  `EXPO_PUBLIC_USE_SEED=0 npx expo export --clear --no-bytecode --platform android` and grep the
+  bundle for `samplewriter` (0 hits). Always `--clear`: Metro's cache ignores EXPO_PUBLIC_ values.
 
 ## Commands
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
-
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+npx tsc --noEmit                          # typecheck (npm run verify at the root runs it with the tests)
+npm run prebuild:android                  # regenerate android/ (after native config changes)
+ARCH=x86_64 npm run build:android         # release APK for the emulator (AVD writing_desk_t9)
+adb install -r android/app/build/outputs/apk/release/app-release.apk
+adb shell am start -a android.intent.action.VIEW -d dumpsterfire://haul/2/datasette   # open a screen
+adb shell cmd uimode night yes            # dark mode (the app follows the system by default)
+adb exec-out screencap -p > shot.png
 ```
 
-Run lint and typecheck before declaring any task done.
-
-## Navigation & Routing
-
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
-
-## Building with EAS
-
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
-
-## Rules
-
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+`adb shell pm clear com.fromthedumpsterfire.app` first if an older build left a live (empty) index on
+disk: a stored index wins over the samples. Use `npx expo install <package>` for any dependency, and
+only with a reason.

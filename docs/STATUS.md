@@ -476,6 +476,44 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   The Hindu's date shows as 16 October: the page says 00:16 IST on the 17th, and `yearOrDate`
   reads it in UTC.
 
+- **Reader app for launch** (2026-10-24): the app now matches the website's new design, and has a
+  real menu. The bar is the website's navigation in its order (Latest, Threads, Archive, Search,
+  Menu; small sans words, an ember rule under the current one). Menu is a contents page: the struck
+  masthead large with its strap, then Reading (the latest Haul with its number in edition ink, every
+  Haul, threads, search, saved) and The house (how it's made, settings, a note to the editor).
+  Saved is now a pushed page from the menu; Archive is a tab (deep link `/hauls` unchanged).
+  Settings is set as a page (groups under sans labels and ink rules, serif descriptions, appearance
+  as three little pages, text size as "Aa" at each size, square switches drawn with views). About
+  carries the house rules with their checks, the two voices as a transcript and a key to every
+  form. Editions: a 4pt band in the Haul's edition ink on every page of a Haul, the cover's number
+  and the running head in that ink, the cover's ghost numeral gone. The fingerprint is drawn from
+  `@fdf/shared/fingerprint` with views (`ui/Fingerprint.tsx`, geometry in `lib/fpGeometry.ts`), full
+  on the cover, mini in the running head and the archive. The masthead's strike and caret are the
+  website's marks as 1 KB white PNGs tinted ember (`assets/marks/`). New forms on the item page and
+  as specimens: epigraph, letter, clipping, mounted print, jacket, specimen label; speech as a
+  transcript. Blocks (`ui/Blocks.tsx`): pull quote, code (system monospace, roles from
+  `palette.code`, numbered gutter, sideways scroll), video poster opening YouTube or Vimeo, audio
+  files in the editor's player, Spotify and Apple episodes as a row that opens their app, pictures.
+  Development builds carry the sample Hauls 002 and 003.
+
+  What was verified: release APK on the emulator (1080x2280 at 440dpi, 393x829pt), every screen in
+  light and dark: cover of Hauls 001 to 003, every new form and block kind, menu, settings, about,
+  archive, threads, thread, search with results, saved, field note. Screenshots before and after
+  are in the session scratchpad (`app-shots/before`, `app-shots/after`). `fpGeometry` is tested
+  at 312, 363 and 400pt for every sample Haul (no number, square or stem crosses another mark's,
+  year labels never meet); the first run found a lifted square crossing a number below it and
+  stems too close on a 360pt phone, both fixed. `expo export` with `EXPO_PUBLIC_USE_SEED=0` has
+  none of the sample text (24 KB smaller than with it); it also showed Metro's cache ignores the
+  flag, so `app:update` now exports with `--clear`. The runtime fingerprint is unchanged
+  (`942dd8e9…` before and after, same machine), so this ships over the air; no new dependency.
+  `npm run verify`: every workspace but `apps/desk` typechecks, 366 tests pass; `apps/desk` fails on
+  `typeLabel`/`typeSwatch` maps missing the new content types (from the shared change of
+  2026-10-24, not from this work).
+
+  Known gaps: plates in the dev samples point at Wikimedia, which refuses the app, so the mounted
+  print shows its "could not load" note in development (real Hauls copy plates to our files host).
+  Code uses the system monospace, not DM Mono, to avoid a native font change.
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress

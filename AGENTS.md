@@ -108,6 +108,12 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   icon fonts or UI kits; icons are drawn with views.
 - `src/App.tsx` (navigator + deep links in `src/nav.ts`), `src/routes.tsx` (params to data),
   `src/screens/*`, `src/ui/*` (type roles in `type.tsx`), `src/lib/data.ts` (offline-first bundles).
+  The bar is the website's nav (Latest, Threads, Archive, Search, Menu; `ui/TabBar.tsx`); Menu
+  (`screens/Menu.tsx`) reaches Saved, About and Settings. Forms in `lib/forms.ts` (the website's
+  choice), blocks in `ui/Blocks.tsx`, the fingerprint in `ui/Fingerprint.tsx` + `lib/fpGeometry.ts`,
+  edition ink via `useEdition(haul)` and `Screen edition=`. No SVG: marks are tinted PNGs in
+  `assets/marks/`. Development builds carry sample Hauls 001 to 003 (`lib/seed*.ts`); launch builds
+  (`EXPO_PUBLIC_USE_SEED=0`) carry none.
 - Fonts are embedded static cuts; use the names in `src/theme.ts` and never set fontWeight/fontStyle.
 - Build a release APK: `cd apps/mobile && npm run prebuild:android && npm run build:android`
   (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS

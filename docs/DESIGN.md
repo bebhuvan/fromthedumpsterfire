@@ -29,7 +29,10 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Screen | The one bold moment |
 |---|---|
 | Waiting page (before Haul 001) | the struck masthead: *From the* ~~Internet~~ **Dumpster Fire**, the strike in ember |
-| Haul cover | the ghost Haul number, huge, in the Haul's colour, bleeding off the right edge. On the home page the cover also carries the nameplate (the struck masthead across the page with a ruled strap line), as a magazine's front does; the header then drops its small masthead |
+| Haul cover | the title, set huge, under HAUL and its number in the edition ink, with the fingerprint below (the ghost numeral was dropped 2026-10-24). On the home page the cover also carries the nameplate (the struck masthead across the page with a ruled strap line), as a magazine's front does; the header then drops its small masthead |
+| App menu | the struck masthead, large, with its strap line; the menu below is a contents page |
+| Quotation | the words, set large and alone |
+| Letter, post, picture, book, tool | the sheet, the clipping, the mounted print, the jacket, the label |
 | Essay, post | the title, set huge (a magazine opening) |
 | Poem | the broadside sheet |
 | Rhymes | the two years facing each other |
@@ -47,6 +50,20 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
 | rabbit hole | catalogue card | a sheet in the type colour with a call number (`FDF 001.6`), the headword with its article moved to the end, the entry, the machine's note, a punch hole; the plate beside it |
 | passage | page from the book | a plate-grey page with a running head (book, author), the passage justified, the locator as the folio |
+| speech | transcript | as talks, the place in the dateline |
+| quote | epigraph | the words alone at 40–88px with hanging grey marks; the speaker in spaced sans caps over an ink rule, the occasion under |
+| letter | the letter | a sheet in the letter colour: place and date right in italic, "From … to …" in sans, the body, the signature in display italic at the foot, the holder under a hairline |
+| social | clipping | a sheet in the post colour: From (name, handle), On, Date as small sans fields over an ink rule, then the words in display serif. Never the platform's embed |
+| image | mounted print | the picture on a plate-grey mount, then a museum label under an ink rule: title, maker and date, where it is from, holder and licence |
+| book | jacket | the book set in type on a 2:3 jacket in the book colour with a faint spine (or its own cover), then the line from inside under an ink rule |
+| tool | specimen label | a ruled ink label with a band of the tool colour: type and call number, the name large, then Made by, What it is, Since, In its own words, Where |
+
+Rich media (Item.blocks), after the note in every form: a pull quote between two ink rules with
+grey hanging marks and "matched word for word against the source"; code on the plate with a
+numbered gutter, colours by role from `palette.code`, scrolling sideways inside its own box (DM Mono
+on the web, the system monospace in the app); video and podcast players on the web (the app shows
+the video's poster and opens YouTube or Vimeo, and opens Spotify or Apple episodes in their apps; it
+has no web view); audio files in the player; pictures with caption, holder and licence.
 
 Shared by every item page: the running head (Haul and title, then the form's name), a thumb tab on
 the right edge in the type colour at a height set by the item's number (7px on phones, a numbered tab
@@ -59,22 +76,56 @@ The About page uses the same forms: the title as a magazine opening, the two voi
 (B. and MACHINE in the margin), the promises as numbered house rules each with the check that keeps
 it, and a key to the forms (each type's swatch, its form and what that form looks like).
 
+## Editions and the fingerprint
+
+Each Haul has an edition ink (`editionOf(number, haul.edition)`, `editionInk[scheme]` in tokens.ts):
+a deep colour kept clear of the pale type swatches, machine blue and ember. It marks every page of
+that Haul: a band on the top edge (6px web, 4pt app), HAUL and the number on the cover, the running
+head's Haul, the fingerprint's rule and its last year, the archive's band down each edition.
+
+The fingerprint (`@fdf/shared/fingerprint`) places a Haul's objects on one line by the year each was
+made, on a square-root scale of years ago ending on the day the Haul came out: numbered squares in
+type colours on stems, labels that would touch lifted into higher lanes, round years under the line.
+Full on the cover; mini (ticks, the current item tall in its colour) in every item's running head
+and in the archive. The app turns columns into points in `apps/mobile/src/lib/fpGeometry.ts` and
+keeps stems 11.5pt apart on narrow phones.
+
 ## The cover
 
-The ghost number and title; the field note in the reading column, ending on the ember **B.** as its end mark, with the route in the margin (days in sans, the machine's step in blue, and each step citing the item it led to by its number in small raised ember, as a page cites a figure); **In this Haul** as *specimens*: each item shown as a small
+HAUL and its number in the edition ink, the date and the count, the title, the deck, then the
+fingerprint; the field note in the reading column, ending on the ember **B.** as its end mark, with the route in the margin (days in sans, the machine's step in blue, and each step citing the item it led to by its number in small raised ember, as a page cites a figure); **In this Haul** as *specimens*: each item shown as a small
 specimen of its own form (a cropped opening, a two-page spread, a transcript strip, an offprint with
 its abstract, a coral broadside, a 3×5 card with its punch hole, a book page), with the number in
 ember, the type and the first sentence of the why under it. Wide forms take seven of twelve columns,
 narrow ones four, cards six (the card carries its plate like a clipped print), across the full width under a ruled **In this Haul** head, packed densely so the table stays uneven but full; on phones they stack
 in order, each keeping its own width and side. Then the thread as a list of years, and the colophon.
-The archive lists back issues, each with its ghost number in the Haul's colour, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
+The archive lists back issues as a run of editions, each with its number in its edition ink, a band down its edge and its mini fingerprint, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
+
+## The app's navigation
+
+The bar at the thumb is the website's navigation, same words and order, with Menu in About's place:
+Latest, Threads, Archive, Search, Menu, in small sans, the current word in ink with a short ember
+rule under it. No icons. Reading pages (cover from the archive, item, field note, thread, saved,
+settings, about) open full screen above it with a back bar that names where back goes (an item's
+bar names its Haul). Top-level pages carry the small struck masthead, as the website's header does.
+
+Menu is the magazine's contents page: the masthead large with its strap, then **Reading** (the
+latest Haul, its number in edition ink with a band at the edge; every Haul; threads; search; saved)
+and **The house** (how it's made, settings, a note to the editor), each a line in the display serif
+with a serif line of what it holds and a quiet figure on the right.
+
+Settings is set as a page: groups under quiet sans labels and ink rules, each setting named in sans
+with what it does in the serif, controls drawn with views in the house style (square switches,
+appearance as three little pages drawn in their own schemes, text size as "Aa" at each size, the
+chosen one framed or underlined in ink), and a proof at the chosen size.
 
 ## Ember
 
 Ember (`#FF4F1F` light, `#FF6A3D` dark) is the brand's fire, used small and on purpose: the flame,
-the strike through "Internet", the editor's **B.**, the folio number, the current-page underline in
-the navigation, and the numbers on the About page's promises. Never body text, never machine text,
-never a fill.
+the strike through "Internet" and the proofreader's caret, the editor's **B.**, the folio number, the
+current-page underline in the navigation (the rule under the app's current tab), the cover route's
+item numbers, the fingerprint's numbers, and the numbers on the About page's promises. Never body
+text, never machine text, never a fill.
 
 ## Type
 
@@ -111,8 +162,16 @@ Defined in `packages/shared/src/tokens.ts`.
 | sky (rhymes) | #DCEBFF | #15304B |
 | mint (paper) | #D2F3E2 | #163D2D |
 | pistachio (rabbit hole) | #E6F2C8 | #2E3915 |
+| lilac (letter, book) | #ECE4FA | #33284A |
+| aqua (post, picture) | #D3EFF0 | #123B3D |
+
+Quotations take coral, speeches butter, tools mint. Edition inks and code colours are in tokens.ts.
 
 ## Brand
 
 The mark is an ember flame on ink (app icon), drawn as a teardrop. The masthead is
-*From the* ~~Internet~~ Dumpster Fire, the strike drawn in ember.
+*From the* ~~Internet~~ Dumpster Fire, set as a correction on a proof: "Internet" struck through by
+hand in ember with a proofreader's caret where "Dumpster Fire" goes in. The marks are
+`apps/web/public/marks/*.svg` (masks on the web); the app, which has no SVG runtime, uses the same
+marks pre-rendered as small white PNGs (`apps/mobile/assets/marks/`) tinted ember, the strike
+stretched over the measured word.
