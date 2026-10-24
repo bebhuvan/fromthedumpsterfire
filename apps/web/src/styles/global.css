@@ -152,7 +152,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 /* ---------- The Haul cover: the ghost number is the one loud thing. ---------- */
 /* On the home page the cover carries the nameplate, as a magazine's front does. */
 .nameplate { padding-block: clamp(20px, 4vw, 44px) 0; position: relative; z-index: 2; }
-.np-name { font: 500 clamp(44px, 12.4vw, 112px)/0.9 var(--display); letter-spacing: -0.03em; text-wrap: balance; }
+.np-name { font: 500 clamp(34px, 10.2vw, 112px)/0.95 var(--display); letter-spacing: -0.03em; text-wrap: balance; }
 .np-name .mast-line > span[aria-hidden] { white-space: normal; }
 .np-name i { font-weight: 400; letter-spacing: -0.01em; }
 .np-name s { font-weight: 400; color: var(--ink2); text-decoration-thickness: 0.07em; text-decoration-color: var(--ember); text-decoration-skip-ink: none; }
@@ -545,6 +545,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .mast-line s::after, .mast-b s::after { content: ''; position: absolute; left: -0.06em; right: -0.08em; top: 0.33em; height: 0.3em; background: var(--ember); -webkit-mask: url('/marks/strike.svg') center / 100% 100% no-repeat; mask: url('/marks/strike.svg') center / 100% 100% no-repeat; pointer-events: none; }
 .caret { display: inline-block; width: 0.3em; height: 0.24em; margin: 0 -0.1em 0 -0.02em; vertical-align: -0.12em; background: var(--ember); -webkit-mask: url('/marks/caret.svg') center / contain no-repeat; mask: url('/marks/caret.svg') center / contain no-repeat; }
 .mast-df { font-weight: inherit; }
+.mast-x { white-space: nowrap; }
 @media (forced-colors: active) { .mast-line s, .mast-b s { text-decoration: line-through; } .mast-line s::after, .mast-b s::after, .caret { display: none; } }
 
 /* ---------- Editions: each Haul's ink. ---------- */
@@ -809,3 +810,6 @@ blockquote > p + p { margin-top: 0.65em; }
 .bk-links { display: grid; gap: 10px; font-size: 18px; }
 .bk-ht { font-family: var(--display); }
 .jk-shelf { margin-top: 18px; font: 500 14px/1.4 var(--sans); }
+/* Narrow phones: the masthead (or the nameplate) is the way home, so Latest steps out of the row and
+   the five other sections and the theme switch keep to one line. */
+@media (max-width: 430px) { .top-nav .nav-latest { display: none; } .top-nav { gap: 6px 16px; } .top-nav:first-child { width: auto; } .top-home + .top-nav { width: 100%; } }

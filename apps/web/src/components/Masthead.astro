@@ -1,10 +1,11 @@
 ---
 // "From the ~~Internet~~ Dumpster Fire", set as an editor's correction on a proof: "Internet" struck
 // through by hand in ember, a proofreader's caret where "Dumpster Fire" goes in. The marks are masks
-// (public/marks), so they take the theme's ember. Screen readers hear the real name.
+// (public/marks), so they take the theme's ember. The struck word and its caret never break apart
+// (a line break between them collapsed the strike). Screen readers hear the real name.
 interface Props {
   class?: string;
 }
 const { class: cls } = Astro.props;
 ---
-<span class:list={['mast-line', cls]}><span class="sr">From the Dumpster Fire</span><span aria-hidden="true"><i>From the</i> <s>Internet</s><span class="caret"></span> <b class="mast-df">Dumpster Fire</b></span></span>
+<span class:list={['mast-line', cls]}><span class="sr">From the Dumpster Fire</span><span aria-hidden="true"><i>From the</i> <span class="mast-x"><s>Internet</s><span class="caret"></span></span> <b class="mast-df">Dumpster Fire</b></span></span>
