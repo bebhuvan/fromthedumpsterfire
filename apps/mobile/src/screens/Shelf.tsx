@@ -18,7 +18,7 @@ import { Screen } from '@/ui/screen';
 const GAP = 3;
 const PLANK = 2;
 
-export const SHELF_DECK = 'Books I am reading, and what I made of them. Not reviews.';
+export const SHELF_DECK = 'The books on the editor’s desk, being read and read. Not reviews: a few dated lines on each, in the editor’s own words.';
 
 export function Shelf() {
   const p = usePalette();

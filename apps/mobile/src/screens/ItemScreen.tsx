@@ -601,13 +601,13 @@ function OnTheShelf({ item }: { item: Item }) {
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`All my notes on this book. ${detail}`}
+      accessibilityLabel={`All the editor’s notes on this book. ${detail}`}
       onPress={() => go.book(book.id)}
       style={({ pressed }) => [styles.shelfLink, { borderTopColor: p.rule, borderBottomColor: p.rule }, pressed && { opacity: 0.6 }]}
     >
       <View style={[styles.shelfSpine, { backgroundColor: spineColours(spineOf(book), sch).cloth }]} />
       <View style={{ flex: 1 }}>
-        <Text style={[styles.shelfTitle, { color: p.ink }]}>All my notes on this book</Text>
+        <Text style={[styles.shelfTitle, { color: p.ink }]}>All the editor’s notes on this book</Text>
         <Text style={[styles.shelfDetail, { color: p.ink2 }]}>{detail}</Text>
       </View>
       <Arrow color={p.ink} />

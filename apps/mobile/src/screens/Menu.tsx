@@ -52,7 +52,7 @@ export function Menu() {
         {shelf?.books.length ? (
           <Line
             title="The shelf"
-            detail="Books I am reading, and what I made of them"
+            detail="The books on the editor’s desk, with a few dated lines on each"
             figure={String(shelf.books.length)}
             onPress={go.shelf}
           />
