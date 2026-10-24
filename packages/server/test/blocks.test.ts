@@ -4,7 +4,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { embedSrc, type Block } from '@fdf/shared/haul';
-import { addAudio, addCode, addPicture, addQuote, addVideo, BlockRefused, blocksFor, deleteBlock, parseAudioLink, parseClock, parseVideoLink, reorderBlocks, setPicturePlate, trimCode } from '../src/blocks';
+import { addAudio, addCode, addPicture, addQuote, addVideo, BlockRefused, blocksFor, deleteBlock, parseAudioLink, patchBlock, parseClock, parseVideoLink, reorderBlocks, setPicturePlate, trimCode } from '../src/blocks';
 import type { ItemRow } from '../src/db';
 import { fetchSource } from '../src/ingest';
 import { draftLimits, quoteWhole } from '../src/steps';
@@ -211,6 +211,11 @@ describe('video, audio and pictures', () => {
     ]);
     expect(rows.map((r) => r.mime)).toEqual(['image/jpeg', 'image/png']);
     for (const r of rows) expect(env.MEDIA.objects.has(r.media_key!)).toBe(true);
+
+    // Editing a picture's caption keeps its maker; clearing the maker is refused.
+    await patchBlock(env, rows[0]!, { caption: 'Punch, 1855, page 3.' });
+    expect(JSON.parse((await blocksFor(env, 'it_jevons'))[0]!.body)).toMatchObject({ caption: 'Punch, 1855, page 3.', creator: 'A maker' });
+    await refused(patchBlock(env, rows[0]!, { creator: ' ' }), /Name who made/);
 
     // Order and removal.
     await reorderBlocks(env, 'it_jevons', [rows[1]!.id, rows[0]!.id]);
