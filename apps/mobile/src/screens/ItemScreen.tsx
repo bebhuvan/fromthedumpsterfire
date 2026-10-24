@@ -28,6 +28,14 @@ const FORM: Record<ContentType, Form> = {
   rhymes: 'rhymes',
   'rabbit-hole': 'card',
   passage: 'page',
+  // Types added 2026-10-24 print in the nearest existing form until their own forms land.
+  quote: 'essay',
+  letter: 'page',
+  speech: 'transcript',
+  social: 'essay',
+  image: 'essay',
+  book: 'card',
+  tool: 'card',
 };
 
 /** Index form of a headword: "The Great Stink" becomes "Great Stink, The". */

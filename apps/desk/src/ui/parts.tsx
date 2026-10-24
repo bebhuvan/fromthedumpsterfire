@@ -50,7 +50,7 @@ export const CONTENT_TYPES = Object.keys(typeSwatch) as ContentType[];
  */
 export const deskTypeLabel: Record<ContentType, string> = {
   essay: 'Article or essay',
-  post: 'Post (X, Bluesky, a note)',
+  post: 'Blog post or newsletter',
   talk: 'Talk or lecture',
   video: 'Video',
   podcast: 'Podcast or interview',
@@ -59,12 +59,19 @@ export const deskTypeLabel: Record<ContentType, string> = {
   passage: 'Passage from a book',
   rhymes: 'Rhymes (then and now)',
   'rabbit-hole': 'Rabbit hole (Wikipedia)',
+  quote: 'Quotation (printed as an epigraph)',
+  letter: 'Letter (printed as the letter itself: dateline, salutation, close)',
+  speech: 'Speech (printed as a transcript)',
+  social: 'Post on X, Bluesky, Substack Notes… (printed as a clipping, never the platform’s embed)',
+  image: 'Picture, artwork or meme (printed as a mounted print)',
+  book: 'Book (printed as its jacket)',
+  tool: 'Tool or app (printed as a specimen label)',
 };
 
 /** How each type is printed, so the choice reads as a layout decision. */
 export const deskTypeForm: Record<ContentType, string> = {
   essay: 'Printed as a magazine opening: title, your note, the excerpt pulled out.',
-  post: 'Printed as a magazine opening, the post quoted whole.',
+  post: 'Printed as a magazine opening: title, your note, the excerpt pulled out.',
   talk: 'Printed as a transcript: the speaker, your note and the machine as turns.',
   video: 'Printed as a transcript, with a link to the video.',
   podcast: 'Printed as a transcript, with a link to the episode.',
@@ -73,6 +80,13 @@ export const deskTypeForm: Record<ContentType, string> = {
   passage: 'Printed as a page from the book.',
   rhymes: 'Printed as facing pages: then and now.',
   'rabbit-hole': 'Printed as a catalogue card.',
+  quote: 'Printed as an epigraph: the line set large, who said it and when beneath.',
+  letter: 'Printed as the letter itself: dateline and place, salutation, the text, the close. Add who it was to below.',
+  speech: 'Printed as a transcript of the speech, with where and when it was given.',
+  social: 'Printed as a clipping of the post, quoted whole with the handle and date. Never the platform’s embed.',
+  image: 'Printed as a mounted print: the picture large, its credit and licence beneath. Add the picture below.',
+  book: 'Printed as its jacket: title, author, year, your note on the flap.',
+  tool: 'Printed as a specimen label: what it is, what it does, your note.',
 };
 
 export function TypeSelect({ value, onChange, className = 'select' }: { value: ContentType; onChange: (t: ContentType) => void; className?: string }) {

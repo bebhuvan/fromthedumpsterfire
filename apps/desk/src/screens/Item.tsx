@@ -15,6 +15,7 @@ import { TrayList } from './Tray';
 import { PlatesSection } from './Plates';
 import { ItemSuggestions } from './Links';
 import { RhymeEditor } from './Rhyme';
+import { BlocksSection, PictureForm } from './Blocks';
 
 const IN_FLIGHT = /queued|fetching|reading|drafting|checking/;
 
@@ -60,6 +61,7 @@ function ItemReviewInner({ id }: { id: string }) {
   const ideas = (visible('idea') as Draft<MarginalBody>[]).sort((a, b) => at(a) - at(b));
   const notes = visible('marginal') as Draft<MarginalBody>[];
   const setAside = data.drafts.filter((d) => (d.kind === 'idea' || d.kind === 'marginal') && d.status === 'rejected').length;
+  const pictureSet = data.plates.some((p) => p.status === 'chosen' && p.id === item.plate);
   let n = 0;
   const next = () => ++n;
 
@@ -124,6 +126,7 @@ function ItemReviewInner({ id }: { id: string }) {
                 onHighlight={(s: Selection) =>
                   chosen && act('excerpt', () => api.patch(`/api/excerpts/${chosen.id}`, { highlight: { start: s.start - chosen.start, end: s.end - chosen.start } }), 'Highlight marked')
                 }
+                onPullQuote={(s: Selection) => act('block', () => api.post(`/api/items/${id}/blocks`, { kind: 'quote', start: s.start, end: s.end, text: s.text }), 'Pull quote added. Found word for word.')}
               />
             ) : (
               <div className="panel line">
@@ -145,9 +148,23 @@ function ItemReviewInner({ id }: { id: string }) {
               <WhySection key={`why-${id}`} detail={data} onSaved={reload} />
             </Step>
 
-            <Step n={next()} title="The excerpt" done={Boolean(chosen)} hint={ideas.length ? 'Optional when you include big ideas below.' : 'The passage readers get. Up to two paragraphs.'}>
-              <ExcerptSection detail={data} chosen={chosen} act={act} />
-            </Step>
+            {item.type === 'image' && (
+              <Step n={next()} title="The picture" done={pictureSet} hint="The picture itself, printed as a mounted print, with the credit and licence you state.">
+                <PictureStep detail={data} onSaved={reload} />
+              </Step>
+            )}
+
+            {TYPE_FIELDS[item.type] && (
+              <Step n={next()} title={TYPE_FIELDS[item.type]!.title} optional done={TYPE_FIELDS[item.type]!.fields.some((k) => Boolean(item[k]))} hint={TYPE_FIELDS[item.type]!.hint}>
+                <TypeFields detail={data} onPatch={patch} />
+              </Step>
+            )}
+
+            {(source || !EXCERPT_OPTIONAL.has(item.type)) && (
+              <Step n={next()} title="The excerpt" optional={EXCERPT_OPTIONAL.has(item.type)} done={Boolean(chosen)} hint={ideas.length ? 'Optional when you include big ideas below.' : 'The passage readers get. Up to two paragraphs.'}>
+                <ExcerptSection detail={data} chosen={chosen} act={act} />
+              </Step>
+            )}
 
             {ideas.length > 0 && (
               <Step n={next()} title="The big ideas" done={ideas.some(isIn)} hint="For a long piece. Tick the ones to print, in the machine's voice, each with where it is said.">
@@ -160,6 +177,10 @@ function ItemReviewInner({ id }: { id: string }) {
                 <StartHereSection detail={data} ideas={ideas} onPatch={patch} />
               </Step>
             )}
+
+            <Step n={next()} title="Add to this item" optional done={(data.blocks ?? []).length > 0} hint="Pull quotes, code, a video, a podcast or recording, pictures. Printed after your note, in this order.">
+              <BlocksSection detail={data} onChange={reload} />
+            </Step>
 
             <Step n={next()} title="Title" done={Boolean(item.title_choice)} hint={item.title_choice ? undefined : 'The original title is used unless you pick another.'}>
               <TitleSection detail={data} onPatch={patch} />
@@ -202,6 +223,80 @@ function ItemReviewInner({ id }: { id: string }) {
 }
 
 const isIn = (d: Draft) => d.status === 'kept' || d.status === 'edited';
+
+/** Types where an excerpt is not expected: a picture, a book's jacket, a tool's label. */
+const EXCERPT_OPTIONAL: ReadonlySet<string> = new Set(['image', 'book', 'tool']);
+
+type FieldKey = 'handle' | 'recipient' | 'place' | 'year';
+/** The fields a form prints, per type: a post's handle, a letter's recipient and place, a speech's place. */
+const TYPE_FIELDS: Partial<Record<ContentType, { title: string; hint: string; fields: FieldKey[] }>> = {
+  social: { title: 'The post', hint: 'Printed on the clipping with the date.', fields: ['handle', 'year'] },
+  letter: { title: 'The letter', hint: 'Printed in the dateline and the salutation.', fields: ['recipient', 'place', 'year'] },
+  speech: { title: 'The speech', hint: 'Printed with the transcript: where and when it was given.', fields: ['place', 'year'] },
+};
+
+const FIELD: Record<FieldKey, { label: string; ph: string }> = {
+  handle: { label: 'Handle', ph: '@visakanv' },
+  recipient: { label: 'Written to', ph: 'John Herschel' },
+  place: { label: 'Where', ph: 'Manchester' },
+  year: { label: 'Year', ph: '1865' },
+};
+
+function TypeFields({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: Record<string, unknown>) => Promise<void> }) {
+  const { item } = detail;
+  const toast = useToast();
+  return (
+    <div className="row" style={{ alignItems: 'flex-end' }}>
+      {(TYPE_FIELDS[item.type]?.fields ?? []).map((k) => (
+        <ItemField key={`${item.id}-${k}`} k={k} value={item[k]} onSave={(v) => onPatch({ [k]: v }).catch((e) => toast(e instanceof Error ? e.message : String(e), true))} />
+      ))}
+    </div>
+  );
+}
+
+/** One of the new item fields: text, or a whole year (empty clears it). */
+function ItemField({ k, value, onSave }: { k: FieldKey; value: string | number | null | undefined; onSave: (v: string | number | null) => void }) {
+  const { label, ph } = FIELD[k];
+  return (
+    <label className="field" style={{ flex: k === 'year' ? '0 1 110px' : '1 1 180px' }}>
+      <span className="label">{label}</span>
+      <input
+        className={`input${k === 'year' ? ' num' : ''}`}
+        inputMode={k === 'year' ? 'numeric' : undefined}
+        defaultValue={value ?? ''}
+        placeholder={ph}
+        onBlur={(e) => {
+          const v = e.target.value.trim();
+          if (v === String(value ?? '')) return;
+          if (k === 'year') {
+            if (v && !/^-?\d{1,4}$/.test(v)) return void (e.target.value = String(value ?? ''));
+            onSave(v ? Number(v) : null);
+          } else onSave(v);
+        }}
+      />
+    </label>
+  );
+}
+
+/** A Picture item's picture: the one captured, an upload or a link, with its credit and licence. */
+function PictureStep({ detail, onSaved }: { detail: ItemDetail; onSaved: () => Promise<void> }) {
+  const { item } = detail;
+  const [busy, setBusy] = useState(false);
+  const current = detail.plates.find((p) => p.status === 'chosen' && p.id === item.plate);
+  const [replacing, setReplacing] = useState(false);
+  if (current && !replacing)
+    return (
+      <div className="stack" style={{ gap: 8 }}>
+        <p className="small" style={{ margin: 0 }}>
+          The picture is set: {current.institution} · {current.licence}. Its caption is under Plate below.
+        </p>
+        <button type="button" className="btn quiet small" style={{ alignSelf: 'flex-start' }} onClick={() => setReplacing(true)}>
+          Replace the picture
+        </button>
+      </div>
+    );
+  return <PictureForm itemId={item.id} busy={busy} setBusy={setBusy} asPlate fromUpload={item.kind === 'image' && Boolean(item.file_key)} onDone={async () => (await onSaved(), setReplacing(false))} />;
+}
 
 // ---------------------------------------------------------------- steps
 
@@ -880,7 +975,8 @@ function Ready({ detail, chosen, ideasIn, busy, onRecheck }: { detail: ItemDetai
   if (IN_FLIGHT.test(item.status)) return null;
   const todo: string[] = [];
   if (!item.why_text?.trim()) todo.push("Say why it's here.");
-  if (!chosen && !ideasIn) todo.push('Choose an excerpt' + (detail.drafts.some((d) => d.kind === 'idea' && d.status !== 'rejected') ? ', or tick some big ideas.' : '.'));
+  if (item.type === 'image' && !detail.plates.some((p) => p.status === 'chosen' && p.id === item.plate)) todo.push('Add the picture, with its credit and licence.');
+  if (!chosen && !ideasIn && !EXCERPT_OPTIONAL.has(item.type)) todo.push('Choose an excerpt' + (detail.drafts.some((d) => d.kind === 'idea' && d.status !== 'rejected') ? ', or tick some big ideas.' : '.'));
   const failing = checks.filter((c: Check) => c.status === 'fail' && BLOCKING.includes(c.name));
   for (const c of failing) todo.push(`${CHECK_NAMES[c.name] ?? c.name}: ${c.detail.summary ?? 'failed'}`);
   const ready = todo.length === 0;
@@ -942,6 +1038,7 @@ function DetailsSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: 
         {field('url', 'Link to the original (https)', 'https://', 'url')}
         {field('minutes', 'Minutes', '', 'number')}
         {field('locator', 'Default locator', 'Transcript, Chapter VII')}
+        <ItemField key={`${item.id}-year`} k="year" value={item.year} onSave={(v) => void onPatch({ year: v }).catch((err) => toast(err instanceof Error ? err.message : String(err), true))} />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import { haulSlug, type Haul, type RouteStep } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
-import { typeLabel, type Swatch } from '@fdf/shared/tokens';
+import { EDITIONS, editionOf, SWATCHES, typeLabel } from '@fdf/shared/tokens';
 import { api, displayTitle, parseChecks, type HaulDetail, type HaulRecord, type Note, type PreviewResult, type PublishResult, type TrayItem } from '../api';
 import { Link, safeHref, SaveNote, useAutosave, useLoad, useToast } from '../lib/core';
 import { NoteCompare, Spinner, TextArea, VoiceNote } from '../ui/parts';
@@ -12,7 +12,6 @@ import { Preview } from './Preview';
 import { PlatesSection } from './Plates';
 import { FormatBadge } from '../ui/parts';
 
-const SWATCHES: Swatch[] = ['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio'];
 
 export function Composer({ id }: { id: string }) {
   const toast = useToast();
@@ -168,7 +167,43 @@ function Masthead({ haul, save }: { haul: HaulRecord; save: (b: Partial<HaulReco
           ))}
         </div>
       </div>
+      <EditionPicker haul={haul} save={save} />
     </section>
+  );
+}
+
+/**
+ * The Haul's edition: a deep ink on every page of it (the band on the top edge, its number, its
+ * fingerprint's rule). Left alone, it is the default for the Haul's number, so neighbours differ.
+ */
+function EditionPicker({ haul, save }: { haul: HaulRecord; save: (b: Partial<HaulRecord>) => Promise<void> }) {
+  const current = editionOf(haul.number, haul.edition ?? undefined);
+  const fallback = editionOf(haul.number);
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <div className="row">
+        <span className="label">Edition ink</span>
+        <div className="swatches editions" role="radiogroup" aria-label="Edition ink">
+          {EDITIONS.map((e) => (
+            <button
+              key={e}
+              type="button"
+              role="radio"
+              aria-checked={current === e}
+              aria-pressed={current === e}
+              aria-label={`${e}${e === fallback ? ' (the default for this number)' : ''}`}
+              title={e}
+              style={{ background: `var(--ed-${e})` }}
+              onClick={() => void save({ edition: e === fallback ? null : e })}
+            />
+          ))}
+        </div>
+      </div>
+      <p className="small muted" style={{ margin: 0 }}>
+        <span style={{ color: `var(--ed-${current})`, fontWeight: 600 }}>{current[0]!.toUpperCase() + current.slice(1)}</span>
+        {haul.edition ? '' : ', the default for Haul ' + haul.number + '.'} Marks every page of this Haul: the band on the top edge, its number, the rule of its fingerprint.
+      </p>
+    </div>
   );
 }
 
