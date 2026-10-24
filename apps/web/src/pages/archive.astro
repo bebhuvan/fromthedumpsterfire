@@ -3,6 +3,8 @@
 import { haulSlug } from '@fdf/shared/haul';
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
+import Fingerprint from '../components/Fingerprint.astro';
+import { editionOf } from '@fdf/shared/tokens';
 import { archive } from '../lib/runtime';
 import { longDate, objects, paths, titleText } from '../lib/site';
 
@@ -13,7 +15,7 @@ const { hauls } = await archive();
     <p class="m meta"><span>The archive</span><span>{objects(hauls.length).replace(/objects?/, hauls.length === 1 ? 'Haul' : 'Hauls')}</span></p>
     <div class="c">
       <Title title={{ text: 'Every', italic: 'Haul' }} as="h1" class="h-title" />
-      <p class="deck">Newest first. Each Haul keeps its own colour, so the archive reads like a run of back issues.</p>
+      <p class="deck">Newest first. Each Haul keeps its own ink and its own fingerprint: its objects on a line by the year each was made.</p>
       <form class="find-in" action={paths.search} method="get" role="search">
         <label class="sr" for="aq">Search every Haul</label>
         <input class="search-input find-in-q" id="aq" name="q" type="search" placeholder="Look for a person, a year, an idea" autocomplete="off" spellcheck="false" enterkeyhint="search" />
@@ -25,13 +27,14 @@ const { hauls } = await archive();
     {hauls.length ? (
       <ol class="mc arch" reversed>
         {hauls.map((h) => (
-          <li class={`s-${h.swatch}`}>
+          <li class={`e-${editionOf(h.number, h.edition)}`}>
             <a href={paths.haul(h.number)} aria-label={`Haul ${h.number}: ${titleText(h.title)}`}>
-              <span class="ar-num" aria-hidden="true">{haulSlug(h.number)}</span>
+              <span class="ar-num" aria-hidden="true"><span class="ar-h">Haul</span>{haulSlug(h.number)}</span>
               <span class="ar-main">
                 <span class="ar-date">{longDate(h.publishedAt)} · {objects(h.items.length).toLowerCase()}{h.version > 1 ? ` · corrected, version ${h.version}` : ''}</span>
                 <span class="ar-title">{h.title.text}{h.title.italic ? ' ' : ''}{h.title.italic ? <em>{h.title.italic}</em> : null}</span>
                 <span class="ar-deck">{h.deck}</span>
+                <Fingerprint haul={h} variant="mini" class="ar-fp" />
               </span>
             </a>
           </li>

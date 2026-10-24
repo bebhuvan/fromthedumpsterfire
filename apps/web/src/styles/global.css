@@ -272,16 +272,19 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 @media (min-width: 1000px) { .contents .sp-h, .contents .sp-list { grid-column: 1 / -1; } }
 
 .arch { display: grid; border-top: 1px solid var(--ink); }
-.arch li { border-bottom: 1px solid var(--rule); }
-.arch a { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; text-decoration: none; color: var(--ink); padding-block: 20px; position: relative; overflow: hidden; }
-.ar-num { font: 500 clamp(96px, 16vw, 200px)/0.8 var(--display); letter-spacing: -0.04em; color: var(--tint); }
+.arch li { border-bottom: 1px solid var(--rule); border-left: 6px solid var(--ed); }
+.arch a { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; text-decoration: none; color: var(--ink); padding: 22px 0 24px clamp(16px, 3vw, 32px); position: relative; }
+.ar-num { display: grid; gap: 14px; align-content: start; font: 400 clamp(56px, 7vw, 84px)/0.8 var(--display); letter-spacing: -0.03em; color: var(--ed); font-variant-numeric: lining-nums; }
+.ar-h { font: 500 12px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
+.ar-fp { margin-top: 12px; max-width: 34rem; }
+.ar-fp .fpm-t { background: var(--ink2); }
 .ar-main { display: grid; gap: 6px; }
 .ar-date { font: 400 13px var(--sans); color: var(--ink2); }
 .ar-title { font: 500 clamp(28px, 3.4vw, 40px)/1.05 var(--display); letter-spacing: -0.012em; }
 .ar-title em { font-weight: 400; }
 .ar-deck { font-size: 17px; color: var(--ink2); max-width: 34em; }
 .arch a:hover .ar-title { text-decoration: underline; text-decoration-thickness: 1px; }
-@media (min-width: 700px) { .arch a { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); column-gap: 32px; align-items: end; } }
+@media (min-width: 700px) { .arch a { grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); column-gap: 32px; align-items: start; } }
 .thread .th-t, .thread-row .th-t { font: 500 26px/1.15 var(--display); }
 .years { margin: 14px 0 12px; display: grid; gap: 4px; font-size: 16px; }
 .years li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); color: var(--ink2); }
