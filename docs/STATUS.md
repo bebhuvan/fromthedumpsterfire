@@ -628,7 +628,7 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
     Launch APK (`EXPO_PUBLIC_USE_SEED=0`, arm64, debug-signed for sideloading) carries no sample
     data and reads files.fromthedumpsterfire.com. The new icon and the shelf's /shelf intent filter moved the runtime fingerprint; the launch
     APK built at 12:59 with the shelf is `e903061b…`: over-the-air updates published from now on reach
-    only that APK, so every reader installs it (the editor's plan: one new APK for everyone).
+    only that APK; the recommendation is one new APK for every reader (awaiting the editor's yes).
 
 - **The shelf in the reader app** (2026-10-24): the editor's books, not reviews. `useShelf()` in
   `apps/mobile/src/lib/data.ts` reads `shelf/shelf.json` offline-first (disk copy at once, a check at
