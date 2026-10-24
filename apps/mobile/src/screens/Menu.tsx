@@ -1,5 +1,5 @@
 // The menu, set as a magazine's contents page: the struck masthead and its strap, then the reading
-// (the latest Haul in its edition ink, every Haul, threads, search, saved) and the house (how it's
+// (the latest Haul in its edition ink, every Haul, threads, the shelf once it has books, search, saved) and the house (how it's
 // made, settings, a note to the editor), each a line in the display serif with what it holds in the
 // text serif and a quiet figure on the right. One loud thing: the masthead.
 import type { ReactNode } from 'react';
@@ -9,7 +9,7 @@ import Constants from 'expo-constants';
 import { haulSlug } from '@fdf/shared/haul';
 import { editionInk, editionOf } from '@fdf/shared/tokens';
 import { fonts, GUTTER, usePalette, useScheme } from '@/theme';
-import { useAllHauls, useIndex } from '@/lib/data';
+import { useAllHauls, useIndex, useShelf } from '@/lib/data';
 import { useReader } from '@/lib/store';
 import { go } from '@/nav';
 import { Flame, Masthead } from '@/ui/parts';
@@ -26,6 +26,7 @@ export function Menu() {
   const index = useIndex().data;
   const hauls = useAllHauls();
   const saved = useReader((s) => s.saved.length);
+  const shelf = useShelf().data;
   const latest = index?.hauls[0];
   const threads = new Set(hauls.flatMap((h) => h.threads.map((t) => t.id))).size;
   const count = index?.hauls.length ?? 0;
@@ -48,6 +49,14 @@ export function Menu() {
         />
         <Line title="Every Haul" detail="Back issues, newest first, each in its own ink" figure={count ? String(count) : undefined} onPress={go.archive} />
         <Line title="Threads" detail="Lines that run across years and Hauls" figure={threads ? String(threads) : undefined} onPress={go.threads} />
+        {shelf?.books.length ? (
+          <Line
+            title="The shelf"
+            detail="Books I am reading, and what I made of them"
+            figure={String(shelf.books.length)}
+            onPress={go.shelf}
+          />
+        ) : null}
         <Line title="Search" detail="Every find, and an index of people, places and ideas" onPress={() => go.search()} />
         <Line title="Saved" detail={saved ? 'Kept on this phone, and nowhere else' : 'Nothing yet. Tap Save on any find'} figure={saved ? String(saved) : undefined} onPress={go.saved} />
       </Part>

@@ -73,6 +73,21 @@ export function Waiting({ status }: { status: 'loading' | 'offline' | 'ready' | 
   );
 }
 
+/** A shelf link to a book that is not on this phone's shelf (taken down, or not here yet). */
+export function NotOnShelf({ onBack }: { onBack: () => void }) {
+  const p = usePalette();
+  return (
+    <View style={[styles.waiting, { backgroundColor: p.bg }]}>
+      <PageHead />
+      <View style={{ marginTop: 56, paddingHorizontal: GUTTER }}>
+        <Title title={{ text: 'Not on the', italic: 'shelf' }} size={38} />
+        <Body style={{ marginTop: 14, color: p.ink2 }}>This book is not on the shelf on your phone. Connect to the internet once and the shelf will catch up.</Body>
+        <Action label="To the shelf" onPress={onBack} style={{ marginTop: 28 }} />
+      </View>
+    </View>
+  );
+}
+
 function NotifyWhenItLands() {
   const on = useReader((s) => s.push.on);
   const [note, setNote] = useState<string | null>(null);

@@ -8,14 +8,18 @@ import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { haulSlug, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
-import { fonts, typeColor, useEdition, usePalette, useTextScale } from '@/theme';
+import { fonts, typeColor, useEdition, usePalette, useScheme, useTextScale } from '@/theme';
 import { formName, formOf, headword, hostOf, speaker, titleText, type Form } from '@/lib/forms';
 import { joinMeta, minutes } from '@/lib/format';
 import { openSource } from '@/lib/open';
 import { shareUrl } from '@/lib/data';
 import { reader, useReader } from '@/lib/store';
 import { Highlighted, Machine, Meta, Note, Title } from '@/ui/type';
-import { Action, Apparatus, Folio, Key, RunHead, Sign, TopBar, VoiceNote } from '@/ui/parts';
+import { Jacket as BookJacket } from '@/ui/Jacket';
+import { useShelf } from '@/lib/data';
+import { statusLine } from '@/lib/shelf';
+import { spineColours, spineOf } from '@fdf/shared/shelf';
+import { Action, Apparatus, Arrow, Folio, Key, RunHead, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Blocks, Credit, Picture } from '@/ui/Blocks';
 
@@ -63,6 +67,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
         <>
           <Why item={item} />
           <Notes item={item} />
+          {item.shelf ? <OnTheShelf item={item} /> : null}
         </>
       ) : null}
       <Blocks blocks={item.blocks} source={item.source.name} />
@@ -566,24 +571,11 @@ function Print({ item }: { item: Item }) {
 /** The jacket: the book set in type (or its own cover), then the line from inside. */
 function Jacket({ item }: { item: Item }) {
   const p = usePalette();
-  const [failed, setFailed] = useState(false);
   const ex = item.excerpt;
-  const plate = item.plate;
   return (
     <View>
       <View style={{ marginTop: 26 }}>
-        {plate && !failed ? (
-          <Image source={{ uri: plate.url }} onError={() => setFailed(true)} accessible={false} resizeMode="cover" style={[styles.jkCover, { aspectRatio: plate.width / plate.height, borderColor: p.rule }]} />
-        ) : (
-          <View style={[styles.jkJacket, { backgroundColor: typeColor(p, item.type), borderColor: p.rule }]} accessible={false}>
-            <View style={[styles.jkSpine, { backgroundColor: p.ink }]} />
-            <Title title={item.title} size={28} style={{ lineHeight: 29 }} />
-            <View>
-              <Text style={[styles.jkAuthor, { color: p.ink, borderTopColor: p.rule }]}>{item.creator}</Text>
-              <Text style={[styles.jkPub, { color: p.ink2 }]}>{item.source.name.toUpperCase()}</Text>
-            </View>
-          </View>
-        )}
+        <BookJacket title={item.title} author={item.creator} publisher={item.source.name} cover={item.plate} />
       </View>
       <MetaLine item={item} />
       <Title title={item.title} size={40} style={{ marginTop: 14 }} />
@@ -595,6 +587,31 @@ function Jacket({ item }: { item: Item }) {
         </View>
       ) : null}
     </View>
+  );
+}
+
+/** A Haul's book that is also on the shelf links to all the editor's notes on it there. */
+function OnTheShelf({ item }: { item: Item }) {
+  const p = usePalette();
+  const sch = useScheme();
+  const book = useShelf().data?.books.find((b) => b.id === item.shelf);
+  if (!book) return null;
+  const notes = book.notes.length;
+  const detail = [statusLine(book), notes ? `${notes} ${notes === 1 ? 'note' : 'notes'}` : ''].filter(Boolean).join(' · ');
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={`All my notes on this book. ${detail}`}
+      onPress={() => go.book(book.id)}
+      style={({ pressed }) => [styles.shelfLink, { borderTopColor: p.rule, borderBottomColor: p.rule }, pressed && { opacity: 0.6 }]}
+    >
+      <View style={[styles.shelfSpine, { backgroundColor: spineColours(spineOf(book), sch).cloth }]} />
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.shelfTitle, { color: p.ink }]}>All my notes on this book</Text>
+        <Text style={[styles.shelfDetail, { color: p.ink2 }]}>{detail}</Text>
+      </View>
+      <Arrow color={p.ink} />
+    </Pressable>
   );
 }
 
@@ -833,11 +850,10 @@ const styles = StyleSheet.create({
   prBy: { fontFamily: fonts.text, fontSize: 18, lineHeight: 25, marginTop: 6 },
   prFrom: { fontFamily: fonts.textItalic, fontSize: 16, lineHeight: 22 },
 
-  jkJacket: { width: 200, aspectRatio: 2 / 3, paddingLeft: 26, paddingRight: 18, paddingTop: 24, paddingBottom: 16, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'space-between' },
-  jkSpine: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 7, opacity: 0.09 },
-  jkAuthor: { fontFamily: fonts.textItalic, fontSize: 16, lineHeight: 21, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
-  jkPub: { marginTop: 16, fontFamily: fonts.sansMedium, fontSize: 10.5, letterSpacing: 1.3 },
-  jkCover: { width: 200, borderWidth: StyleSheet.hairlineWidth },
+  shelfLink: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 26, paddingVertical: 14, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
+  shelfSpine: { width: 9, alignSelf: 'stretch' },
+  shelfTitle: { fontFamily: fonts.display, fontSize: 21, lineHeight: 26, includeFontPadding: false },
+  shelfDetail: { fontFamily: fonts.text, fontSize: 15, lineHeight: 21, marginTop: 3 },
   jkLine: { marginTop: 26, paddingTop: 16, borderTopWidth: 1 },
   jkLineText: { fontFamily: fonts.displayRegular, fontSize: 23, lineHeight: 31 },
 

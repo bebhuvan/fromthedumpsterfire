@@ -45,6 +45,11 @@
               "scheme": "https",
               "host": "fromthedumpsterfire.com",
               "pathPrefix": "/haul"
+            },
+            {
+              "scheme": "https",
+              "host": "fromthedumpsterfire.com",
+              "pathPrefix": "/shelf"
             }
           ],
           "category": [

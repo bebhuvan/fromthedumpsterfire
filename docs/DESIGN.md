@@ -121,13 +121,37 @@ The archive lists back issues as a run of editions, each with its number in its 
 The bar at the thumb is the website's navigation, same words and order, with Menu in About's place:
 Latest, Threads, Archive, Search, Menu, in small sans, the current word in ink with a short ember
 rule under it. No icons. Reading pages (cover from the archive, item, field note, thread, saved,
-settings, about) open full screen above it with a back bar that names where back goes (an item's
+settings, about, shelf, book) open full screen above it with a back bar that names where back goes (an item's
 bar names its Haul). Top-level pages carry the small struck masthead, as the website's header does.
 
 Menu is the magazine's contents page: the masthead large with its strap, then **Reading** (the
-latest Haul, its number in edition ink with a band at the edge; every Haul; threads; search; saved)
+latest Haul, its number in edition ink with a band at the edge; every Haul; threads; the shelf; search; saved)
 and **The house** (how it's made, settings, a note to the editor), each a line in the display serif
 with a serif line of what it holds and a quiet figure on the right.
+
+The shelf (Menu, Reading, after Threads, once the shelf has books; deep links `/shelf` and
+`/shelf/<id>`) is the editor's books, not reviews. Its page: "The shelf" with the deck *Books I am
+reading, and what I made of them. Not reviews.*, then Reading now, Read and Put down, each under a
+quiet sans label with its count. A group's books stand as cloth spines on a 2pt ink shelf rule: the
+cloth and its type from `spineColours(spineOf(book), scheme)`, a hairline band at head and foot, the
+title running down the spine in Newsreader Display (two lines on a wider spine when it is long) with
+the surnames in small spaced sans at the foot. Heights vary a little with the title (`spineSize` in
+`apps/mobile/src/lib/shelf.ts`) and a book being read stands 10pt proud; the spines wrap onto more
+shelves on a narrow phone (`packShelves`), and their type is fixed in size, so nothing clips at any
+text size. The spines are the loud thing and are hidden from screen readers; under them each book is
+a text row (its cloth at the edge, the title, author and year, the date and first words of the
+latest note in the editor's italic) that follows the reader's text size. The bottom bar does not
+gain a Shelf: it stays the website's navigation, the shelf changes over weeks, not days, and a sixth
+word would crowd the bar on a 360pt phone.
+
+A book's page: the book form's jacket (its spine edge in the book's cloth, or the editor's cover
+photograph with its credit), a status line ("Reading since 2 October", "Read from 20 September to
+12 October", "Put down at page 212" from a note's place), the title, author, publisher and year;
+**Notes** as a dated journal (the date and place in quiet sans, the note in the editor's italic, the
+ember **B.** after the newest, a voice note's player beside its date); **Lines from the book** as
+quoted passages under an ink rule with their locators; "In Haul 002" rows in the Haul's edition ink
+opening the find; and "The book, at openlibrary.org" as the page's one action. A Haul's book item
+that names its shelf entry (`Item.shelf`) carries "All my notes on this book" under its note.
 
 Settings is set as a page: groups under quiet sans labels and ink rules, each setting named in sans
 with what it does in the serif, controls drawn with views in the house style (square switches,

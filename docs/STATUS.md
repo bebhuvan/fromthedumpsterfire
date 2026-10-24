@@ -629,6 +629,22 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
     data and reads files.fromthedumpsterfire.com. The new icon moved the runtime fingerprint to
     `ae0be8e6…`: over-the-air updates published from now on reach only this APK.
 
+- **The shelf in the reader app** (2026-10-24): the editor's books, not reviews. `useShelf()` in
+  `apps/mobile/src/lib/data.ts` reads `shelf/shelf.json` offline-first (disk copy at once, a check at
+  most every 20 minutes with `If-None-Match`, nothing kept that fails `validateShelf`; a 404 means no
+  shelf yet). Development builds carry `fixtures/dev/shelf.json`; the `EXPO_PUBLIC_USE_SEED=0`
+  export has none of it (0 hits for `Sample note`, `seeing-like-a-state`, `Wengrow`). The Menu lists
+  "The shelf" under Reading once it has books; the bar is unchanged (it stays the website's
+  navigation; the shelf changes over weeks). Screens: `screens/Shelf.tsx` (groups of cloth spines on
+  shelf rules, wrapping on narrow phones, then a text row per book) and `screens/Book.tsx` (jacket,
+  status with dates, notes as a dated journal, lines from the book, "In Haul 002", the book's link).
+  Haul 002's book item links to "All my notes on this book". The jacket is now `ui/Jacket.tsx`,
+  shared with the item page. Deep links `/shelf` and `/shelf/<id>`; `app.json` adds `/shelf` to the
+  Android intent filter, so this needs the new APK (runtime `219fdff4…`), not an over-the-air update.
+  Pure logic in `lib/shelf.ts` with 11 tests. Checked on the emulator (release APK, 393pt wide) in
+  light and dark, at font scale 1.3, and at a forced 204pt width (spines wrap onto a second shelf
+  with its own rule; nothing clips). Screenshots: session scratchpad `app-shots/shelf/`.
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress

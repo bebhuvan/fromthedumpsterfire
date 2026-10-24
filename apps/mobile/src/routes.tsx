@@ -4,7 +4,9 @@ import { useEffect } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { Routes, Tabs } from './nav';
-import { prefetchHaul, useHaul, useIndex } from './lib/data';
+import { StackActions } from '@react-navigation/native';
+import { haulSlug } from '@fdf/shared/haul';
+import { prefetchHaul, useHaul, useIndex, useShelf } from './lib/data';
 import { reader } from './lib/store';
 import { Cover } from './screens/Cover';
 import { FieldNote } from './screens/FieldNote';
@@ -17,7 +19,9 @@ import { Saved } from './screens/Saved';
 import { Threads } from './screens/Threads';
 import { Settings } from './screens/Settings';
 import { Menu } from './screens/Menu';
-import { Waiting } from './ui/screen';
+import { Shelf } from './screens/Shelf';
+import { Book } from './screens/Book';
+import { NotOnShelf, Waiting } from './ui/screen';
 
 type P<K extends keyof Routes> = NativeStackScreenProps<Routes, K>;
 
@@ -76,3 +80,17 @@ export const ArchiveRoute = Archive;
 export const AboutRoute = About;
 export const SettingsRoute = Settings;
 export const MenuRoute = Menu;
+export const ShelfRoute = Shelf;
+
+/** A book on the shelf. Back names where it goes: the find it was opened from, else the shelf (also for a link opened cold). */
+export function BookRoute({ route, navigation }: P<'Book'>) {
+  const { data, status } = useShelf();
+  const state = navigation.getState();
+  const prev = state.routes[state.routes.findIndex((r) => r.key === route.key) - 1];
+  const fromItem = prev?.name === 'Item' ? (prev.params as Routes['Item']) : undefined;
+  const back = fromItem ? `Haul ${haulSlug(fromItem.n)}` : prev?.name === 'Shelf' || !prev || prev.name === 'Tabs' ? 'The shelf' : 'Back';
+  const onBack = () => (prev && prev.name !== 'Tabs' ? navigation.goBack() : navigation.dispatch(StackActions.replace('Shelf')));
+  const book = data?.books.find((b) => b.id === route.params.id);
+  if (book) return <Book book={book} back={back} onBack={onBack} />;
+  return status === 'loading' ? <Waiting status="loading" /> : <NotOnShelf onBack={onBack} />;
+}

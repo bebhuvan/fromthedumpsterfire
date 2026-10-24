@@ -122,12 +122,12 @@ export function Action({ label, onPress, external, style }: { label: string; onP
 }
 
 /** Back, with where it goes back to; a quiet word on the right (the item's place in the Haul). */
-export function TopBar({ label, right }: { label: string; right?: string }) {
+export function TopBar({ label, right, onBack = go.back }: { label: string; right?: string; onBack?: () => void }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   return (
     <View style={[st.top, { paddingTop: insets.top + 6 }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={label === 'Back' ? 'Back' : `Back to ${label}`} onPress={go.back} hitSlop={8} style={({ pressed }) => [st.back, { flexShrink: 1 }, pressed && { opacity: 0.6 }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={label === 'Back' ? 'Back' : `Back to ${label}`} onPress={onBack} hitSlop={8} style={({ pressed }) => [st.back, { flexShrink: 1 }, pressed && { opacity: 0.6 }]}>
         <Arrow color={p.ink} back />
         <Text numberOfLines={1} style={[st.backText, { color: p.ink, flexShrink: 1 }]}>{label}</Text>
       </Pressable>

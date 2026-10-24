@@ -11,6 +11,7 @@
 // are not even in the bundle (checked with `expo export`; see apps/mobile/AGENTS.md).
 
 import type { Haul, HaulIndex } from '@fdf/shared/haul';
+import { SHELF_PATH, type Shelf } from '@fdf/shared/shelf';
 
 export const INDEX_PATH = 'hauls/index.json';
 
@@ -18,6 +19,9 @@ export interface SeedData {
   index: HaulIndex;
   /** Sample bundles by their published path, e.g. "hauls/002/v1/haul.json". */
   hauls: Record<string, Haul>;
+  /** The development shelf (fixtures/dev/shelf.json). Mutable and refreshed like the index, so it sits
+   * at the real path: a published shelf replaces it as soon as one exists. */
+  shelf?: Shelf;
 }
 
 export function seedTable(data: SeedData | null): Record<string, unknown> {
@@ -31,5 +35,6 @@ export function seedTable(data: SeedData | null): Record<string, unknown> {
       return { ...h, path };
     });
   table[INDEX_PATH] = { ...data.index, hauls };
+  if (data.shelf) table[SHELF_PATH] = data.shelf;
   return table;
 }

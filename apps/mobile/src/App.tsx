@@ -20,6 +20,8 @@ import {
   SavedRoute,
   SearchRoute,
   SettingsRoute,
+  ShelfRoute,
+  BookRoute,
   ThreadRoute,
   ThreadsRoute,
 } from './routes';
@@ -64,6 +66,8 @@ export default function App() {
           <Stack.Screen name="Saved" component={SavedRoute} />
           <Stack.Screen name="About" component={AboutRoute} />
           <Stack.Screen name="Settings" component={SettingsRoute} />
+          <Stack.Screen name="Shelf" component={ShelfRoute} />
+          <Stack.Screen name="Book" component={BookRoute} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
