@@ -269,11 +269,28 @@ export function sourceAction(item: Pick<Item, 'type' | 'creator' | 'source' | 'm
   const where = item.source.name.trim();
   const titled = [item.title.text, item.title.italic].filter(Boolean).join(' ').trim();
   const place = where && where !== titled && where !== who ? where : '';
+  const url = item.media?.url ?? item.source.url;
+  // Things that are not read: a tool is visited, a picture seen, a book looked up.
+  if (item.type === 'tool') return `Visit ${titled}`;
+  if (item.type === 'image') return place ? `See it in ${place}` : 'See the original';
+  if (item.type === 'book') return place ? `The book at ${place}` : 'More on the book';
+  if (item.type === 'quote') return place ? `Where ${who || 'it'} said it: ${place}` : 'Where it comes from';
+  if (item.type === 'letter') return place ? `Read the letter at ${place}` : 'Read the whole letter';
+  if (item.type === 'social') return `Read ${who ? `${who}’s` : 'the'} post${place ? ` on ${place}` : ''}`;
   // The media label carries a duration ("Watch · 59:48"); keep it after the name.
   const dur = item.media?.label.match(/·\s*(.+)$/)?.[1];
   const media = item.media?.kind;
-  const verb = media === 'video' || item.type === 'video' || item.type === 'talk' ? 'Watch' : media === 'audio' || item.type === 'podcast' ? 'Listen to' : 'Read';
+  const host = /^https?:\/\/([^/]+)/.exec(url)?.[1]?.replace(/^www\./, '') ?? '';
+  const watchHost = /(^|\.)(youtube\.com|youtu\.be|vimeo\.com)$/.test(host);
+  const listenHost = /(^|\.)(open\.spotify\.com|podcasts\.apple\.com)$/.test(host);
+  const verb =
+    media === 'video' || item.type === 'video' || item.type === 'talk' || watchHost
+      ? 'Watch'
+      : media === 'audio' || item.type === 'podcast' || listenHost
+        ? 'Listen to'
+        : 'Read';
   const prep = verb === 'Read' ? 'in' : 'on';
   const subject = who || (verb === 'Read' ? 'the original' : 'it');
-  return [`${verb} ${subject}${place ? ` ${prep} ${place}` : ''}`, dur].filter(Boolean).join(' · ');
+  const venue = watchHost && verb === 'Watch' && !/youtube|vimeo/i.test(place) ? (host.includes('vimeo') ? 'Vimeo' : 'YouTube') : place;
+  return [`${verb} ${subject}${venue ? ` ${prep} ${venue}` : ''}`, dur].filter(Boolean).join(' · ');
 }

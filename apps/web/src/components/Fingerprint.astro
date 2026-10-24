@@ -1,0 +1,44 @@
+---
+// The Haul's fingerprint (lib/fingerprint.ts): every object on one line by the year it was made.
+// "full" on the cover: numbered marks in each type's colour, lifted into lanes so labels never touch,
+// years under the line in the Haul's edition ink. "mini" in the running head and the archive: ticks
+// only, the current item drawn tall.
+import { haulSlug, type Haul } from '@fdf/shared/haul';
+import { typeLabel } from '@fdf/shared/tokens';
+import { fingerprint, spanLine } from '../lib/fingerprint';
+import { objects, paths, titleText } from '../lib/site';
+
+interface Props {
+  haul: Haul;
+  variant?: 'full' | 'mini';
+  /** The item being read, drawn tall in the mini variant. */
+  current?: string;
+  class?: string;
+}
+const { haul, variant = 'full', current, class: cls } = Astro.props;
+const fp = fingerprint(haul);
+const label = `Haul ${haulSlug(haul.number)}: ${spanLine(fp, haul.items.length, (n) => objects(n).toLowerCase())}`;
+---
+{variant === 'full' ? (
+  <figure class:list={['fp', `lanes-${Math.min(fp.lanes, 5)}`, cls]} aria-labelledby={`fp-cap-${haul.number}`}>
+    <ol class="fp-marks">
+      {fp.marks.map((m) => (
+        <li class:list={['fp-m', `at-${m.at}`, `lane-${Math.min(m.lane, 4)}`, `t-${m.item.type}`]}>
+          <a href={paths.item(haul.number, m.item.id)} aria-label={`${m.n}. ${typeLabel[m.item.type]}, ${titleText(m.item.title)}, ${m.year}`}>
+            <span class="fp-n" aria-hidden="true">{String(m.n).padStart(2, '0')}</span>
+            <span class="fp-k" aria-hidden="true"></span>
+            <span class="fp-s" aria-hidden="true"></span>
+          </a>
+        </li>
+      ))}
+    </ol>
+    <div class="fp-axis" aria-hidden="true">
+      {fp.ticks.map((t) => <span class:list={['fp-y', `at-${t.at}`, { 'fp-end': t.at === 92 }]}>{t.year}</span>)}
+    </div>
+    <figcaption class="fp-cap" id={`fp-cap-${haul.number}`}>{spanLine(fp, haul.items.length, objects)}<span>, placed by when each was made</span></figcaption>
+  </figure>
+) : (
+  <span class:list={['fpm', cls]} role="img" aria-label={label}>
+    {fp.marks.map((m) => <span class:list={['fpm-t', `at-${m.at}`, `t-${m.item.type}`, { here: m.item.id === current }]}></span>)}
+  </span>
+)}

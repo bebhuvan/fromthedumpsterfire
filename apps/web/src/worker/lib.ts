@@ -19,6 +19,8 @@ export const CSP = [
   "media-src 'self' https:",
   "font-src 'self'",
   "connect-src 'self'",
+  // Only the players the bundle can name (embedSrc in @fdf/shared/haul).
+  'frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://embed.podcasts.apple.com',
   "manifest-src 'self'",
   "base-uri 'none'",
   "form-action 'self'",
