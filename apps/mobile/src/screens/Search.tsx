@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
 import { fonts, GUTTER, typeColor, usePalette } from '@/theme';
 import { useAllHauls } from '@/lib/data';
 import { itemsForTopic, randomFind, search, topicIndex } from '@/lib/search';
 import { go } from '@/nav';
 import { Body, Meta, Title } from '@/ui/type';
-import { Action, Divider } from '@/ui/parts';
+import { Action, Divider, PageHead } from '@/ui/parts';
 import { FindRow } from '@/ui/FindRow';
 
 export function Search({ initial }: { initial?: string }) {
   const p = usePalette();
-  const insets = useSafeAreaInsets();
   const hauls = useAllHauls();
   const [q, setQ] = useState(initial ?? '');
   const [type, setType] = useState<ContentType | null>(null);
@@ -32,7 +30,8 @@ export function Search({ initial }: { initial?: string }) {
   const query = q.trim();
 
   return (
-    <View style={{ flex: 1, backgroundColor: p.bg, paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: p.bg }}>
+      <PageHead />
       <View style={styles.head}>
         <TextInput
           value={q}
@@ -125,7 +124,7 @@ function FilterChip({ label, on, color, onPress }: { label: string; on: boolean;
 }
 
 const styles = StyleSheet.create({
-  head: { paddingHorizontal: GUTTER, paddingTop: 18 },
+  head: { paddingHorizontal: GUTTER, paddingTop: 12 },
   input: { fontFamily: fonts.display, fontSize: 30, paddingVertical: 10, borderBottomWidth: 1.5, includeFontPadding: false },
   filters: { gap: 18, paddingTop: 14 },
   filter: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, borderBottomWidth: 2 },

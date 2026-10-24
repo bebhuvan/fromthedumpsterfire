@@ -6,13 +6,18 @@ import { GUTTER, usePalette } from '@/theme';
 import { useReader } from '@/lib/store';
 import { enablePush } from '@/lib/push';
 import { Body, Meta, Title } from './type';
-import { Action, Masthead, SettingsLink } from './parts';
+import { Action, PageHead } from './parts';
+
+/** Height of the edition band on the top edge of every page of a Haul. */
+export const BAND = 4;
 
 /**
  * A scrolling page. The app draws edge to edge, so a scrim fades in under the status bar once
  * content scrolls beneath it. The fade runs on the native driver; JS does no work per frame.
+ * Pages of a Haul pass its edition ink: a band across the top edge, as on the website, so a reader
+ * knows which Haul they are in before reading a word. It stays put while the page scrolls.
  */
-export function Screen({ children, header }: { children: ReactNode; header?: ReactNode }) {
+export function Screen({ children, header, edition }: { children: ReactNode; header?: ReactNode; edition?: string }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const y = useRef(new Animated.Value(0)).current;
@@ -31,24 +36,19 @@ export function Screen({ children, header }: { children: ReactNode; header?: Rea
         <View style={styles.body}>{children}</View>
       </Animated.ScrollView>
       <Animated.View pointerEvents="none" style={[styles.scrim, { height: insets.top, backgroundColor: p.bg, opacity: scrim }]} />
+      {edition ? <View pointerEvents="none" accessible={false} style={[styles.band, { backgroundColor: edition }]} /> : null}
     </View>
   );
 }
 
-/** Loading or offline with nothing on disk yet. Settings stays reachable, and before the first Haul
- * this is where a reader turns on the one notification that says it has landed. */
+/** Loading or offline with nothing on disk yet. Before the first Haul this is where a reader turns on
+ * the one notification that says it has landed; the menu stays a tap away in the bar below. */
 export function Waiting({ status }: { status: 'loading' | 'offline' | 'ready' | 'empty' }) {
   const p = usePalette();
-  const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.waiting, { backgroundColor: p.bg, paddingTop: insets.top + 12 }]}>
-      <View style={styles.top}>
-        <View style={{ flex: 1 }}>
-          <Masthead size={16} />
-        </View>
-        <SettingsLink />
-      </View>
-      <View style={{ marginTop: 56 }}>
+    <View style={[styles.waiting, { backgroundColor: p.bg }]}>
+      <PageHead />
+      <View style={{ marginTop: 56, paddingHorizontal: GUTTER }}>
         {status === 'loading' ? (
           <ActivityIndicator color={p.ink2} />
         ) : status === 'empty' ? (
@@ -94,6 +94,6 @@ function NotifyWhenItLands() {
 const styles = StyleSheet.create({
   body: { paddingHorizontal: GUTTER },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0 },
-  waiting: { flex: 1, paddingHorizontal: GUTTER },
-  top: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  band: { position: 'absolute', top: 0, left: 0, right: 0, height: BAND },
+  waiting: { flex: 1 },
 });

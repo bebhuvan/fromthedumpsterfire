@@ -9,11 +9,13 @@ import {
 } from '@react-navigation/native';
 import { urlFrom } from './lib/push';
 
+/** The bar: the website's navigation words, in its order, with Menu in place of About. */
 export type Tabs = {
   Latest: undefined;
   Threads: undefined;
+  Archive: undefined;
   Search: { q?: string } | undefined;
-  Saved: undefined;
+  Menu: undefined;
 };
 
 /** Reading screens open full screen above the tabs. */
@@ -23,7 +25,7 @@ export type Routes = {
   Note: { n: number };
   Item: { n: number; item: string };
   Thread: { n: number; id: string };
-  Archive: undefined;
+  Saved: undefined;
   About: undefined;
   Settings: undefined;
 };
@@ -37,8 +39,8 @@ export const linking: LinkingOptions<Routes> = {
   prefixes: ['dumpsterfire://', 'https://fromthedumpsterfire.com'],
   config: {
     screens: {
-      Tabs: { screens: { Latest: '', Threads: 'threads', Search: 'search', Saved: 'saved' } },
-      Archive: 'hauls',
+      Tabs: { screens: { Latest: '', Threads: 'threads', Archive: 'hauls', Search: 'search', Menu: 'menu' } },
+      Saved: 'saved',
       About: 'about',
       Settings: 'settings',
       Haul: { path: 'haul/:n', parse: { n } },
@@ -75,7 +77,10 @@ export const go = {
   item: (n: number, item: string) => push('Item', { n, item }),
   thread: (n: number, id: string) => push('Thread', { n, id }),
   haul: (n: number) => push('Haul', { n }),
-  archive: () => push('Archive'),
+  archive: () => navRef.isReady() && navRef.navigate('Tabs', { screen: 'Archive' }),
+  threads: () => navRef.isReady() && navRef.navigate('Tabs', { screen: 'Threads' }),
+  menu: () => navRef.isReady() && navRef.navigate('Tabs', { screen: 'Menu' }),
+  saved: () => push('Saved'),
   about: () => push('About'),
   settings: () => push('Settings'),
   search: (q?: string) => navRef.isReady() && navRef.navigate('Tabs', { screen: 'Search', params: { q } }),

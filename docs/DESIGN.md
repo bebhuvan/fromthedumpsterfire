@@ -29,9 +29,10 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Screen | The one bold moment |
 |---|---|
 | Waiting page (before Haul 001) | the struck masthead: *From the* ~~Internet~~ **Dumpster Fire**, the strike in ember |
-| Haul cover | the title, set huge, beside the Haul's number in its edition ink, over the Haul's **fingerprint** (its objects on one line by the year each was made). On the home page the cover also carries the nameplate (the struck masthead across the page with a ruled strap line), as a magazine's front does; the header then drops its small masthead. (Until 2026-10-24 the loud thing was a huge pastel ghost number; the editor found the page tame and the numeral a stock gesture.) |
-| Quotation | the words alone, set large (the epigraph) |
-| Letter, post, picture, book, tool | the made thing: the letter's sheet, the clipping, the mounted print, the jacket, the specimen label |
+| Haul cover | the title, set huge, under HAUL and its number in the edition ink, with the fingerprint below (the ghost numeral was dropped 2026-10-24). On the home page the cover also carries the nameplate (the struck masthead across the page with a ruled strap line), as a magazine's front does; the header then drops its small masthead |
+| App menu | the struck masthead, large, with its strap line; the menu below is a contents page |
+| Quotation | the words, set large and alone |
+| Letter, post, picture, book, tool | the sheet, the clipping, the mounted print, the jacket, the label |
 | Essay, post | the title, set huge (a magazine opening) |
 | Poem | the broadside sheet |
 | Rhymes | the two years facing each other |
@@ -100,7 +101,10 @@ caption in italic serif; colours by role from `palette.code`, never machine blue
 italic; wide code scrolls inside its box); **video** (the platform's own player at 16:9, youtube-nocookie
 or Vimeo with dnt, title and "Watch on YouTube" under it); **podcast or audio** (Spotify's or Apple's
 player, or the browser's for an audio file, under a ruled title line); **pictures** (with caption,
-credit and licence). Players and code may run past the column into the air on wide screens.
+credit and licence). Players and code may run past the column into the air on wide screens. The app
+has no web view: it shows a video's poster and opens YouTube or Vimeo, opens Spotify and Apple episodes
+in their apps, plays audio files in its voice-note player, and sets code in the system monospace.
+It turns fingerprint columns into points in `apps/mobile/src/lib/fpGeometry.ts`.
 
 ## The cover
 
@@ -110,14 +114,33 @@ its abstract, a coral broadside, a 3×5 card with its punch hole, a book page), 
 ember, the type and the first sentence of the why under it. Wide forms take seven of twelve columns,
 narrow ones four, cards six (the card carries its plate like a clipped print), across the full width under a ruled **In this Haul** head, packed densely so the table stays uneven but full; on phones they stack
 in order, each keeping its own width and side. Then the thread as a list of years, and the colophon.
-The archive lists back issues, each with an edge, its number and its fingerprint in the Haul's edition ink, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
+The archive lists back issues as a run of editions, each with its number in its edition ink, a band down its edge and its mini fingerprint, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
+
+## The app's navigation
+
+The bar at the thumb is the website's navigation, same words and order, with Menu in About's place:
+Latest, Threads, Archive, Search, Menu, in small sans, the current word in ink with a short ember
+rule under it. No icons. Reading pages (cover from the archive, item, field note, thread, saved,
+settings, about) open full screen above it with a back bar that names where back goes (an item's
+bar names its Haul). Top-level pages carry the small struck masthead, as the website's header does.
+
+Menu is the magazine's contents page: the masthead large with its strap, then **Reading** (the
+latest Haul, its number in edition ink with a band at the edge; every Haul; threads; search; saved)
+and **The house** (how it's made, settings, a note to the editor), each a line in the display serif
+with a serif line of what it holds and a quiet figure on the right.
+
+Settings is set as a page: groups under quiet sans labels and ink rules, each setting named in sans
+with what it does in the serif, controls drawn with views in the house style (square switches,
+appearance as three little pages drawn in their own schemes, text size as "Aa" at each size, the
+chosen one framed or underlined in ink), and a proof at the chosen size.
 
 ## Ember
 
 Ember (`#FF4F1F` light, `#FF6A3D` dark) is the brand's fire, used small and on purpose: the flame,
-the strike through "Internet", the editor's **B.**, the folio number, the current-page underline in
-the navigation, and the numbers on the About page's promises. Never body text, never machine text,
-never a fill.
+the strike through "Internet" and the proofreader's caret, the editor's **B.**, the folio number, the
+current-page underline in the navigation (the rule under the app's current tab), the cover route's
+item numbers, the fingerprint's numbers, and the numbers on the About page's promises. Never body
+text, never machine text, never a fill.
 
 ## Type
 
@@ -164,4 +187,8 @@ podcast and speech share butter; paper and tool share mint; poem, passage and qu
 ## Brand
 
 The mark is an ember flame on ink (app icon), drawn as a teardrop. The masthead is
-*From the* ~~Internet~~ Dumpster Fire, the strike drawn in ember.
+*From the* ~~Internet~~ Dumpster Fire, set as a correction on a proof: "Internet" struck through by
+hand in ember with a proofreader's caret where "Dumpster Fire" goes in. The marks are
+`apps/web/public/marks/*.svg` (masks on the web); the app, which has no SVG runtime, uses the same
+marks pre-rendered as small white PNGs (`apps/mobile/assets/marks/`) tinted ember, the strike
+stretched over the measured word.

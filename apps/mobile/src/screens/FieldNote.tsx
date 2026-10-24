@@ -2,7 +2,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { haulSlug, type Haul } from '@fdf/shared/haul';
-import { fonts, typeColor, usePalette } from '@/theme';
+import { fonts, typeColor, useEdition, usePalette } from '@/theme';
 import { Highlighted, Machine, Title } from '@/ui/type';
 import { Action, Apparatus, Folio, RunHead, Sign, TopBar, VoiceNote, playable } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
@@ -13,12 +13,15 @@ export function FieldNote({ haul }: { haul: Haul }) {
   const typeOf = new Map(haul.items.map((i) => [i.id, i.type]));
   const thread = haul.threads[0];
 
+  const ed = useEdition(haul);
+
   return (
     <Screen
+      edition={ed}
       header={
         <View>
-          <TopBar label={`Haul ${haul.number}`} />
-          <RunHead left={`Haul ${haulSlug(haul.number)} · ${haul.title.text}${haul.title.italic ? ' ' + haul.title.italic : ''}`} right="Field note" />
+          <TopBar label={haul.title.text + (haul.title.italic ? ' ' + haul.title.italic : '')} />
+          <RunHead haul={haul} right="Field note" />
         </View>
       }
     >

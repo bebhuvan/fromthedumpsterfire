@@ -1,49 +1,54 @@
 // The cover's contents as specimens: each find shown as a small piece of its own printed form, so a
 // reader knows what they are holding before reading a word. Each keeps its own width and side.
-import { memo, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type DimensionValue } from 'react-native';
+import { memo, useState, type ReactNode } from 'react';
+import { Image, Pressable, StyleSheet, Text, View, type DimensionValue } from 'react-native';
 import { go } from '@/nav';
 import { haulSlug, type Item } from '@fdf/shared/haul';
-import { typeLabel, type ContentType } from '@fdf/shared/tokens';
+import { typeLabel } from '@fdf/shared/tokens';
 import { fonts, typeColor, usePalette } from '@/theme';
 import { readKey, useReader } from '@/lib/store';
+import { formOf, headword, speaker, titleText, type Form } from '@/lib/forms';
 import { Highlighted, Title } from './type';
 
 const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim();
 const yearOf = (d: string) => /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(d)?.[1] ?? d;
-const surname = (c: string) => c.split(' ').pop() ?? c;
-const headword = (t: string) => {
-  const m = /^(The|A|An) (.+)$/.exec(t);
-  return m ? { word: m[2]![0]!.toUpperCase() + m[2]!.slice(1) + ',', article: m[1]! } : { word: t, article: '' };
-};
 
 type Shape = { width: DimensionValue; align: 'flex-start' | 'center' | 'flex-end' };
-const SHAPE: Partial<Record<ContentType, Shape>> = {
-  poem: { width: '72%', align: 'flex-end' },
-  paper: { width: '84%', align: 'center' },
-  'rabbit-hole': { width: '92%', align: 'flex-start' },
-  passage: { width: '84%', align: 'flex-start' },
+const SHAPE: Partial<Record<Form, Shape>> = {
+  broadside: { width: '72%', align: 'flex-end' },
+  offprint: { width: '84%', align: 'center' },
+  card: { width: '92%', align: 'flex-start' },
+  page: { width: '84%', align: 'flex-start' },
+  letter: { width: '90%', align: 'flex-end' },
+  clipping: { width: '90%', align: 'flex-start' },
+  print: { width: '86%', align: 'flex-start' },
+  label: { width: '86%', align: 'center' },
 };
+
+/** Forms whose specimen does not show the title; the caption names it. */
+const TITLED_CAPTION = new Set<Form>(['transcript', 'broadside', 'facing', 'page', 'epigraph', 'letter', 'clipping', 'print', 'jacket']);
 
 export const Specimen = memo(function Specimen({ haul, item, n }: { haul: number; item: Item; n: number }) {
   const p = usePalette();
   const read = useReader((s) => s.read.includes(readKey(haul, item.id)));
-  const shape = SHAPE[item.type] ?? { width: '100%', align: 'flex-start' };
+  const form = formOf(item);
+  const shape = SHAPE[form] ?? { width: '100%', align: 'flex-start' };
   return (
     <View style={{ width: shape.width, alignSelf: shape.align }}>
       <Pressable
         accessibilityRole="link"
-        accessibilityLabel={`${n}, ${typeLabel[item.type]}: ${item.title.text}${item.title.italic ? ' ' + item.title.italic : ''}, ${item.creator}${read ? ', read' : ''}`}
+        accessibilityLabel={`${n}, ${typeLabel[item.type]}: ${titleText(item)}, ${item.creator}${read ? ', read' : ''}`}
         onPress={() => go.item(haul, item.id)}
         style={({ pressed }) => pressed && { opacity: 0.7 }}
       >
-        <Body item={item} haul={haul} n={n} />
+        <Body item={item} form={form} haul={haul} n={n} />
       </Pressable>
       <View style={st.cap}>
         <Text style={[st.capN, { color: p.ember }]}>{String(n).padStart(2, '0')}</Text>
         <View style={{ flex: 1 }}>
           <Text style={[st.capType, { color: p.ink2 }]}>
             {typeLabel[item.type]}
+            {TITLED_CAPTION.has(form) ? <Text style={{ color: p.ink }}>{`  ·  ${titleText(item)}`}</Text> : null}
             {read ? '  ·  Read' : ''}
           </Text>
           <Text style={[st.capWhy, { color: p.ink2 }]}>{firstSentence(item.why.text)}</Text>
@@ -53,14 +58,27 @@ export const Specimen = memo(function Specimen({ haul, item, n }: { haul: number
   );
 });
 
-function Body({ item, haul, n }: { item: Item; haul: number; n: number }): ReactNode {
+/** A small picture that leaves a quiet plate behind if it cannot load (offline, refused). */
+function SmallPlate({ uri, ratio, label }: { uri: string; ratio: number; label: string }) {
+  const p = usePalette();
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <View style={[st.platePlaceholder, { aspectRatio: ratio, borderColor: p.rule }]}>
+        <Text style={[st.placeholderText, { color: p.ink2 }]}>{label}</Text>
+      </View>
+    );
+  }
+  return <Image source={{ uri }} onError={() => setFailed(true)} resizeMode="cover" accessible={false} style={{ width: '100%', aspectRatio: ratio, backgroundColor: p.bg }} />;
+}
+
+function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n: number }): ReactNode {
   const p = usePalette();
   const tint = typeColor(p, item.type);
   const ex = item.excerpt;
-  switch (item.type) {
-    case 'rhymes': {
-      const r = item.rhyme;
-      if (!r) break;
+  switch (form) {
+    case 'facing': {
+      const r = item.rhyme!;
       return (
         <View style={[st.spread, { borderTopColor: p.ink, borderBottomColor: p.rule }]}>
           <View style={st.leaf}>
@@ -74,23 +92,17 @@ function Body({ item, haul, n }: { item: Item; haul: number; n: number }): React
         </View>
       );
     }
-    case 'talk':
-    case 'video':
-    case 'podcast':
+    case 'transcript':
       return (
         <View style={[st.strip, { borderColor: p.rule }]}>
-          <Text style={[st.who, { color: p.ink }]}>{surname(item.creator).toUpperCase()}</Text>
+          <Text style={[st.who, { color: p.ink }]}>{speaker(item.creator)}</Text>
           <View style={{ flex: 1 }}>
-            {ex ? (
-              <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.said} />
-            ) : (
-              <Title title={item.title} size={22} />
-            )}
-            <Text style={[st.small, { color: p.ink2, marginTop: 6 }]}>{item.source.name}, {item.source.date}</Text>
+            {ex ? <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.said} /> : <Title title={item.title} size={22} />}
+            <Text style={[st.small, { color: p.ink2, marginTop: 6 }]}>{item.source.name}{item.source.date ? `, ${item.source.date}` : ''}</Text>
           </View>
         </View>
       );
-    case 'paper':
+    case 'offprint':
       return (
         <View style={[st.frame, { borderColor: p.rule, paddingTop: 0, alignItems: 'center' }]}>
           <Text numberOfLines={1} style={[st.small, st.runcite, { color: p.ink2, borderBottomColor: p.rule }]}>{item.source.name} · {yearOf(item.source.date)}</Text>
@@ -104,14 +116,14 @@ function Body({ item, haul, n }: { item: Item; haul: number; n: number }): React
           ) : null}
         </View>
       );
-    case 'poem':
+    case 'broadside':
       return (
         <View style={[st.poem, { backgroundColor: tint }]}>
-          {ex ? <Text style={[st.poemText, { color: p.ink }]}>{ex.text}</Text> : <Title title={item.title} size={24} />}
+          <Text style={[st.poemText, { color: p.ink }]}>{ex!.text}</Text>
           <Text style={[st.poemFoot, { color: p.ink, borderTopColor: p.rule }]}>{item.creator}</Text>
         </View>
       );
-    case 'rabbit-hole': {
+    case 'card': {
       const hw = headword(item.title.text);
       return (
         <View style={[st.card, { backgroundColor: tint }]}>
@@ -128,25 +140,81 @@ function Body({ item, haul, n }: { item: Item; haul: number; n: number }): React
         </View>
       );
     }
-    case 'passage':
+    case 'page':
       return (
         <View style={[st.page, { backgroundColor: p.plate }]}>
           <Text style={[st.pageHead, { color: p.ink2 }]}>{item.source.name.toUpperCase()}</Text>
-          {ex ? (
-            <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.pageText} />
-          ) : (
-            <Title title={item.title} size={22} />
-          )}
+          {ex ? <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.pageText} /> : <Title title={item.title} size={22} />}
           {ex ? <Text style={[st.pageFoot, { color: p.ink2 }]}>{ex.locator}</Text> : null}
         </View>
       );
+    case 'epigraph':
+      return (
+        <View style={st.epi}>
+          <Text style={[st.epiQ, { color: p.ink }]}>
+            <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>“</Text>
+            {ex!.text}
+            <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>”</Text>
+          </Text>
+          <Text style={[st.epiWho, { color: p.ink, borderTopColor: p.ink }]}>{item.creator.toUpperCase()}</Text>
+        </View>
+      );
+    case 'letter':
+      return (
+        <View style={[st.letter, { backgroundColor: tint }]}>
+          <Text style={[st.ltDate, { color: p.ink }]}>{item.place ? `${item.place}, ` : ''}{item.source.date}</Text>
+          <Text numberOfLines={6} style={[st.ltText, { color: p.ink }]}>{ex!.text}</Text>
+          <Text style={[st.ltSign, { color: p.ink }]}>{item.creator}</Text>
+        </View>
+      );
+    case 'clipping':
+      return (
+        <View style={[st.clip, { backgroundColor: tint }]}>
+          <View style={[st.clipHead, { borderBottomColor: p.ink }]}>
+            <Text numberOfLines={1} style={[st.clipWho, { color: p.ink }]}>{item.creator}{item.handle ? <Text style={{ color: p.ink2, fontFamily: fonts.sans }}>{` ${item.handle}`}</Text> : null}</Text>
+            <Text style={[st.clipWhere, { color: p.ink2 }]}>{item.source.name}</Text>
+          </View>
+          <Text numberOfLines={5} style={[st.clipText, { color: p.ink }]}>{ex!.text}</Text>
+        </View>
+      );
+    case 'print': {
+      const pl = item.plate!;
+      return (
+        <View style={[st.mount, { backgroundColor: p.plate }]}>
+          <SmallPlate uri={pl.url} ratio={pl.width / pl.height} label={pl.caption} />
+        </View>
+      );
+    }
+    case 'jacket':
+      return (
+        <View style={[st.jacket, { backgroundColor: tint, borderColor: p.rule }]}>
+          <View style={[st.spine, { backgroundColor: p.ink }]} />
+          <Title title={item.title} size={23} style={{ lineHeight: 24 }} />
+          <Text style={[st.jkAuthor, { color: p.ink, borderTopColor: p.rule }]}>{item.creator}</Text>
+        </View>
+      );
+    case 'label':
+      return (
+        <View style={[st.label, { borderColor: p.ink, borderTopColor: tint }]}>
+          <Text style={[st.lbTitle, { color: p.ink, borderBottomColor: p.ink }]}>{titleText(item)}</Text>
+          <View style={[st.lbRow, { borderBottomColor: p.rule }]}>
+            <Text style={[st.lbKey, { color: p.ink2 }]}>MADE BY</Text>
+            <Text style={[st.lbVal, { color: p.ink }]}>{item.creator}</Text>
+          </View>
+          <View style={[st.lbRow, { borderBottomColor: p.rule }]}>
+            <Text style={[st.lbKey, { color: p.ink2 }]}>WHAT IT IS</Text>
+            <Text style={[st.lbVal, { color: p.ink }]}>{item.source.name}</Text>
+          </View>
+          {ex ? <Text style={[st.lbQ, { color: p.ink }]}>{ex.text}</Text> : null}
+        </View>
+      );
   }
-  // Essay, post, and anything else: a cropped magazine opening.
+  // Essay, post, and anything without its form's material: a cropped magazine opening.
   const len = item.title.text.length + (item.title.italic?.length ?? 0);
   const size = len <= 16 ? 46 : len <= 30 ? 36 : 30;
   return (
     <View style={[st.frame, { borderColor: p.rule }]}>
-      <Text style={[st.small, { color: p.ink2 }]}>{item.source.name} · {item.source.date}</Text>
+      <Text style={[st.small, { color: p.ink2 }]}>{[item.source.name, item.source.date].filter(Boolean).join(' · ')}</Text>
       <Title title={item.title} size={size} style={{ marginTop: 8, lineHeight: size * 0.92, letterSpacing: -size * 0.035 }} />
       <Text style={[st.by, { color: p.ink }]}>{item.creator}</Text>
       {ex ? (
@@ -198,4 +266,34 @@ const st = StyleSheet.create({
   pageHead: { fontFamily: fonts.sansMedium, fontSize: 10, letterSpacing: 1.4, textAlign: 'center', marginBottom: 10 },
   pageText: { fontFamily: fonts.text, fontSize: 15, lineHeight: 22 },
   pageFoot: { fontFamily: fonts.textItalic, fontSize: 12, textAlign: 'center', marginTop: 10 },
+
+  epi: { paddingTop: 4, paddingBottom: 6, gap: 12 },
+  epiQ: { fontFamily: fonts.display, fontSize: 30, lineHeight: 33, letterSpacing: -0.6 },
+  epiWho: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3, paddingTop: 8, borderTopWidth: 1, alignSelf: 'flex-start', minWidth: '60%' },
+
+  letter: { paddingHorizontal: 22, paddingTop: 20, paddingBottom: 18, gap: 12 },
+  ltDate: { alignSelf: 'flex-end', fontFamily: fonts.textItalic, fontSize: 13, lineHeight: 18, textAlign: 'right' },
+  ltText: { fontFamily: fonts.text, fontSize: 15, lineHeight: 23 },
+  ltSign: { alignSelf: 'flex-end', fontFamily: fonts.displayItalic, fontSize: 20, lineHeight: 24 },
+
+  clip: { paddingHorizontal: 18, paddingBottom: 18, gap: 12 },
+  clipHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingTop: 10, paddingBottom: 8, borderBottomWidth: 1 },
+  clipWho: { flex: 1, fontFamily: fonts.sansMedium, fontSize: 12, includeFontPadding: false },
+  clipWhere: { fontFamily: fonts.sans, fontSize: 12, includeFontPadding: false },
+  clipText: { fontFamily: fonts.displayRegular, fontSize: 20, lineHeight: 26 },
+
+  mount: { padding: 18 },
+  platePlaceholder: { width: '100%', borderWidth: hair, justifyContent: 'center', alignItems: 'center', padding: 16 },
+  placeholderText: { fontFamily: fonts.textItalic, fontSize: 15, lineHeight: 21, textAlign: 'center' },
+
+  jacket: { width: 176, aspectRatio: 2 / 3, paddingLeft: 22, paddingRight: 14, paddingTop: 18, paddingBottom: 12, borderWidth: hair, justifyContent: 'space-between' },
+  spine: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 6, opacity: 0.09 },
+  jkAuthor: { fontFamily: fonts.textItalic, fontSize: 13, lineHeight: 17, paddingTop: 8, borderTopWidth: hair },
+
+  label: { borderWidth: 1, borderTopWidth: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10 },
+  lbTitle: { fontFamily: fonts.display, fontSize: 34, lineHeight: 34, letterSpacing: -0.8, paddingBottom: 12, borderBottomWidth: 1, includeFontPadding: false },
+  lbRow: { flexDirection: 'row', gap: 10, paddingVertical: 7, borderBottomWidth: hair, alignItems: 'baseline' },
+  lbKey: { width: 84, fontFamily: fonts.sansMedium, fontSize: 10.5, letterSpacing: 0.8 },
+  lbVal: { flex: 1, fontFamily: fonts.text, fontSize: 14 },
+  lbQ: { paddingTop: 8, fontFamily: fonts.displayRegular, fontSize: 15, lineHeight: 21 },
 });

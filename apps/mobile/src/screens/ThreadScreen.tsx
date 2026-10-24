@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
-import type { Haul, Thread } from '@fdf/shared/haul';
-import { fonts, usePalette } from '@/theme';
+import { haulSlug, type Haul, type Thread } from '@fdf/shared/haul';
+import { fonts, useEdition, usePalette } from '@/theme';
 import { Body, Machine, Meta, Title } from '@/ui/type';
 import { Action, Divider, TopBar } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
@@ -12,8 +12,10 @@ export function ThreadScreen({ haul, thread }: { haul: Haul; thread: Thread }) {
   const last = thread.points[thread.points.length - 1]?.year;
   const span = first && last ? Number(last) - Number(first) : 0;
 
+  const ed = useEdition(haul);
+
   return (
-    <Screen header={<TopBar label={`Haul ${haul.number}`} />}>
+    <Screen edition={ed} header={<TopBar label={`Haul ${haulSlug(haul.number)}`} />}>
       <Meta style={{ marginTop: 18 }}>Thread · {thread.points.length} points{span ? ` · ${span} years` : ''}</Meta>
       <Title title={thread.title} size={44} style={{ marginTop: 10 }} />
       <Body style={{ marginTop: 12, color: p.ink2, fontSize: 17, lineHeight: 25 }}>{thread.summary}</Body>
