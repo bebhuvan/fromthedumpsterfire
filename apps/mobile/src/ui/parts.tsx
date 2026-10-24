@@ -50,10 +50,10 @@ export function Masthead({ size = 17, flame = true }: { size?: number; flame?: b
           <Flame size={size * 0.5} />
         </View>
       ) : null}
-      <Text style={[st.mastText, word, { color: p.ink, fontFamily: fonts.displayItalic, marginRight: size * 0.25 }]}>From the</Text>
+      <Text allowFontScaling={false} numberOfLines={1} style={[st.mastText, word, { color: p.ink, fontFamily: fonts.displayItalic, marginRight: size * 0.25 }]}>{'From\u00A0the'}</Text>
       <View style={st.mastWord}>
         <View>
-          <Text onLayout={(e) => setW(e.nativeEvent.layout.width)} style={[st.mastText, word, { color: p.ink2, fontFamily: fonts.displayRegular }]}>Internet</Text>
+          <Text allowFontScaling={false} numberOfLines={1} onLayout={(e) => setW(e.nativeEvent.layout.width)} style={[st.mastText, word, { color: p.ink2, fontFamily: fonts.displayRegular }]}>Internet</Text>
           <Image
             source={STRIKE}
             resizeMode="stretch"
@@ -68,7 +68,7 @@ export function Masthead({ size = 17, flame = true }: { size?: number; flame?: b
           style={{ width: size * 0.32, height: size * 0.25, marginLeft: size * 0.02, marginRight: size * 0.04, marginBottom: size * 0.15, tintColor: p.ember }}
         />
       </View>
-      <Text style={[st.mastText, word, { color: p.ink, fontFamily: fonts.displayRegular }]}>Dumpster Fire</Text>
+      <Text allowFontScaling={false} numberOfLines={1} style={[st.mastText, word, { color: p.ink, fontFamily: fonts.displayRegular }]}>{'Dumpster\u00A0Fire'}</Text>
     </View>
   );
 }
@@ -277,7 +277,9 @@ export const st = StyleSheet.create({
   keySq: { width: 9, height: 9, borderWidth: StyleSheet.hairlineWidth },
   keyText: { fontFamily: fonts.sansMedium, fontSize: 12.5, includeFontPadding: false },
   mast: { flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap' },
-  mastText: { includeFontPadding: false },
+  // A logo: it never wraps or shrinks, and ignores the phone's text size (a larger setting once pushed
+  // "the" onto a hidden second line).
+  mastText: { includeFontPadding: false, flexShrink: 0, paddingRight: 1 },
   mastWord: { flexDirection: 'row', alignItems: 'flex-end' },
   arrow: { width: 20, height: 12, justifyContent: 'center' },
   arrowShaft: { height: 1.3, width: 19 },
