@@ -29,7 +29,9 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Screen | The one bold moment |
 |---|---|
 | Waiting page (before Haul 001) | the struck masthead: *From the* ~~Internet~~ **Dumpster Fire**, the strike in ember |
-| Haul cover | the ghost Haul number, huge, in the Haul's colour, bleeding off the right edge. On the home page the cover also carries the nameplate (the struck masthead across the page with a ruled strap line), as a magazine's front does; the header then drops its small masthead |
+| Haul cover | the title, set huge, beside the Haul's number in its edition ink, over the Haul's **fingerprint** (its objects on one line by the year each was made). On the home page the cover also carries the nameplate (the struck masthead across the page with a ruled strap line), as a magazine's front does; the header then drops its small masthead. (Until 2026-10-24 the loud thing was a huge pastel ghost number; the editor found the page tame and the numeral a stock gesture.) |
+| Quotation | the words alone, set large (the epigraph) |
+| Letter, post, picture, book, tool | the made thing: the letter's sheet, the clipping, the mounted print, the jacket, the specimen label |
 | Essay, post | the title, set huge (a magazine opening) |
 | Poem | the broadside sheet |
 | Rhymes | the two years facing each other |
@@ -47,6 +49,13 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
 | rabbit hole | catalogue card | a sheet in the type colour with a call number (`FDF 001.6`), the headword with its article moved to the end, the entry, the machine's note, a punch hole; the plate beside it |
 | passage | page from the book | a plate-grey page with a running head (book, author), the passage justified, the locator as the folio |
+| speech | transcript | as a talk: the speaker in the margin |
+| quote | epigraph | the words alone in Display Medium at 40–88px, hanging quotation marks, the speaker in spaced caps over the occasion |
+| letter | the letter | a sheet in lilac: place and date ranged right, "From … to …" in sans, the body in Newsreader Text keeping its line breaks, the name it was signed with in display italic at the foot, the holder under a hairline |
+| social | clipping | a sheet in aqua headed by fields (From, with name and handle; On, the platform; Date) over a rule, the post in display at 25–36px. Never the platform's embed |
+| image | mounted print | the picture in a plate-grey mount, a museum label beside it (from 1000px) or under it: title, maker and date, where it is from, credit and licence |
+| book | jacket | the book set in type as a 2:3 jacket in lilac in the margin (or its cover, if the editor uploaded one), the title as a heading, a line from inside under a rule |
+| tool | specimen label | a ruled box with a tint strip on its top edge: the name huge, then fields (Made by, What it is, Since, In its own words, Where) |
 
 Shared by every item page: the running head (Haul and title, then the form's name), a thumb tab on
 the right edge in the type colour at a height set by the item's number (7px on phones, a numbered tab
@@ -59,15 +68,49 @@ The About page uses the same forms: the title as a magazine opening, the two voi
 (B. and MACHINE in the margin), the promises as numbered house rules each with the check that keeps
 it, and a key to the forms (each type's swatch, its form and what that form looks like).
 
+## Editions and the fingerprint
+
+Every Haul has an **edition ink** (`EDITIONS`, `editionInk`, `editionOf` in tokens.ts): oxblood, teal, ochre,
+plum, pine, umber, slate, olive, deep enough to read as text and kept clear of the pale type swatches,
+machine blue and ember. A Haul without one takes them in turn by number, so neighbours always differ.
+The ink marks every page of that Haul: a 6px band on the top edge, the Haul's number on its cover, the
+running head's link back, the fingerprint's line, text selection. A reader knows which Haul they are in
+before reading a word.
+
+The **fingerprint** (`@fdf/shared/fingerprint`) places each object on one line by the year it was made,
+from a round year before the oldest to the day the Haul came out. The scale is the square root of
+years ago (recent things spread apart, old ones still sit where they belong; the year labels show the
+scale). Marks are numbered in ember (as the route cites items), each a small square in its type's
+colour on a stem; marks whose labels would touch rise into higher lanes. On the cover it is full size;
+in every item's running head it is a row of ticks with the current item tall; in the archive each back
+issue carries its own. No two Hauls draw the same one.
+
+## The masthead
+
+*From the* ~~Internet~~ **Dumpster Fire**, set as an editor's correction on a proof: "Internet" in ink2
+struck through by a hand-drawn ember stroke, a proofreader's caret in ember where "Dumpster Fire" goes
+in. The marks are masks (`apps/web/public/marks/strike.svg`, `caret.svg`), so they take the theme's ember.
+
+## Rich media (blocks)
+
+An item may carry blocks after the note and excerpt, in every form: a **pull quote** (display type
+between two ink rules, the opening mark hanging, "matched word for word" under it); **code** (DM Mono
+on the plate with a numbered gutter, a ruled caption with the language in spaced caps and the editor's
+caption in italic serif; colours by role from `palette.code`, never machine blue or ember; comments
+italic; wide code scrolls inside its box); **video** (the platform's own player at 16:9, youtube-nocookie
+or Vimeo with dnt, title and "Watch on YouTube" under it); **podcast or audio** (Spotify's or Apple's
+player, or the browser's for an audio file, under a ruled title line); **pictures** (with caption,
+credit and licence). Players and code may run past the column into the air on wide screens.
+
 ## The cover
 
-The ghost number and title; the field note in the reading column, ending on the ember **B.** as its end mark, with the route in the margin (days in sans, the machine's step in blue, and each step citing the item it led to by its number in small raised ember, as a page cites a figure); **In this Haul** as *specimens*: each item shown as a small
+The edition number and title over the fingerprint; the field note in the reading column, ending on the ember **B.** as its end mark, with the route in the margin (days in sans, the machine's step in blue, and each step citing the item it led to by its number in small raised ember, as a page cites a figure); **In this Haul** as *specimens*: each item shown as a small
 specimen of its own form (a cropped opening, a two-page spread, a transcript strip, an offprint with
 its abstract, a coral broadside, a 3×5 card with its punch hole, a book page), with the number in
 ember, the type and the first sentence of the why under it. Wide forms take seven of twelve columns,
 narrow ones four, cards six (the card carries its plate like a clipped print), across the full width under a ruled **In this Haul** head, packed densely so the table stays uneven but full; on phones they stack
 in order, each keeping its own width and side. Then the thread as a list of years, and the colophon.
-The archive lists back issues, each with its ghost number in the Haul's colour, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
+The archive lists back issues, each with an edge, its number and its fingerprint in the Haul's edition ink, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
 
 ## Ember
 
@@ -83,6 +126,7 @@ never a fill.
 | Display, headings | Newsreader Display 500; italics at 400 for the second phrase | Bodoni was tried and rejected: hairlines vanish on phones |
 | Body, excerpts, editor notes | Newsreader Text; editor notes in italic | default numerals throughout |
 | Labels, UI, machine voice | Schibsted Grotesk 400–600 | margin labels in sentence case, 13–14px; speaker names uppercase with 0.1em tracking |
+| Code | DM Mono 400, italic for comments | code blocks only; the app uses the system monospace |
 
 React Native cannot drive the optical-size axis, so the app ships static cuts (text and display).
 
@@ -111,6 +155,11 @@ Defined in `packages/shared/src/tokens.ts`.
 | sky (rhymes) | #DCEBFF | #15304B |
 | mint (paper) | #D2F3E2 | #163D2D |
 | pistachio (rabbit hole) | #E6F2C8 | #2E3915 |
+| lilac (letter, book) | #ECE4FA | #33284A |
+| aqua (post, picture) | #D3EFF0 | #123B3D |
+
+Code colours (`palette.code`) and the eight edition inks (`editionInk`) are in tokens.ts. Talk, video,
+podcast and speech share butter; paper and tool share mint; poem, passage and quotation share coral.
 
 ## Brand
 

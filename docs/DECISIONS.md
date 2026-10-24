@@ -224,3 +224,31 @@ Dated, newest last. Don't reopen these without a new reason.
   boxes are removed, and exact furniture lines ("Share", "Subscribe", "No posts") are dropped
   from the stored text. Rejected for now: Scrapling (its value is bot-check evasion and browser
   fingerprints, which the fetch rules exclude, and it is Python with a browser, not a Worker).
+
+## 2026-10-24 (launch day: editions, the eclectic magazine, rich media)
+
+- **Every kind of artifact, each in its printed form.** The magazine carries quotations, letters,
+  speeches, social posts (X, Bluesky, Substack Notes and the like), pictures (artworks, photographs,
+  memes), books and tools, as well as essays, talks, papers, poems, passages and rabbit holes. New
+  forms: epigraph, the letter, clipping, mounted print, jacket, specimen label; a speech is set as a
+  transcript. Two swatches join (lilac, aqua) rather than one per type: types that share a family share
+  a colour.
+- **Posts are set as clippings, never the platform's embed.** Embeds load third-party script (the CSP
+  forbids it) and break when a post is deleted; the text is matched against the fetched post like any
+  excerpt.
+- **Each Haul has an edition ink and a fingerprint** so a reader knows which Haul they are in at a
+  glance. The huge pastel ghost number is gone from the cover: the editor found the home page tame and
+  the numeral a stock magazine gesture. The fingerprint is information (what the Haul holds and how
+  far back it reaches), not decoration. Square-root scale of years ago, chosen over linear (recent
+  things crushed together) and log (too much empty line for a Haul of old things).
+- **The masthead is an editor's correction**: a hand-drawn ember strike and a proofreader's caret,
+  because one editor approves every line. Masks, so the marks follow the theme.
+- **Rich media are blocks on an item**, not new item types: pull quotes and code are excerpts (verified
+  word for word against the source); video and podcast players come only from YouTube (nocookie),
+  Vimeo (dnt), Spotify and Apple, whose embed addresses code builds from the editor's link
+  (`embedSrc`); the CSP's frame-src names exactly those. Code is highlighted once at publish
+  (highlight.js, folded into ten roles), so neither the site nor the app ships a highlighter.
+- **Code is set in DM Mono** (OFL, about 15 KB a cut): quieter than the usual developer monospaces and
+  close in colour to Schibsted. The app uses the system monospace to avoid a native change.
+- **Share cards are drawn in the editor's browser at publish** (canvas), because the Workers free plan's
+  10 ms CPU rules out rendering images on the server.
