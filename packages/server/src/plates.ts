@@ -16,7 +16,7 @@ import { checkLink, USER_AGENT } from './extract/http';
 import { FatalError, newId, nowIso, parseJson, truncate } from './util';
 import { readCapped, readJsonCapped, readSlice } from './extract/stream';
 
-export type PlateProvider = 'commons' | 'aic' | 'met' | 'smithsonian' | 'rijksmuseum';
+export type PlateProvider = 'commons' | 'aic' | 'met' | 'smithsonian' | 'rijksmuseum' | 'editor';
 
 export interface PlateCandidate {
   provider: PlateProvider;
@@ -527,7 +527,7 @@ function plateHeader(item: ItemRow): string {
 // ---------------------------------------------------------------- choosing
 
 /** Resize with the Images binding if bound and the image is wider than we need; else keep the bytes. */
-async function maybeResize(env: Env, bytes: Uint8Array, width: number): Promise<{ bytes: Uint8Array; mime?: string }> {
+export async function maybeResize(env: Env, bytes: Uint8Array, width: number): Promise<{ bytes: Uint8Array; mime?: string }> {
   if (!env.IMAGES || width <= 1600) return { bytes };
   try {
     const stream = new Response(bytes).body!;
@@ -548,6 +548,16 @@ const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', '
 export async function choosePlate(env: Env, plateId: string): Promise<PlateRow> {
   const p = await env.DB.prepare('SELECT * FROM plates WHERE id = ?').bind(plateId).first<PlateRow>();
   if (!p) throw Object.assign(new Error('No such plate'), { status: 404 });
+  // The editor's own picture is already in MEDIA, measured: choosing it again only records the choice.
+  if (p.provider === 'editor' && p.r2_key) {
+    const now = nowIso();
+    await env.DB.batch([
+      env.DB.prepare(`UPDATE plates SET status = 'candidate' WHERE item_id = ? AND status = 'chosen'`).bind(p.item_id),
+      env.DB.prepare(`UPDATE plates SET status = 'chosen' WHERE id = ?`).bind(p.id),
+      env.DB.prepare('UPDATE items SET plate = ?, updated_at = ? WHERE id = ?').bind(p.id, now, p.item_id),
+    ]);
+    return (await env.DB.prepare('SELECT * FROM plates WHERE id = ?').bind(p.id).first<PlateRow>())!;
+  }
   const res = await guardedFetch(p.image_url, { headers: { 'user-agent': USER_AGENT, accept: 'image/*' }, timeoutMs: 30_000 });
   if (!res.ok) {
     await res.body?.cancel();
@@ -618,7 +628,8 @@ export function plateForBundle(p: PlateRow, url: string): Plate {
     caption: (p.caption ?? defaultCaption({ title: p.title, creator: p.creator ?? undefined, date: p.date ?? undefined })).trim(),
     credit: p.institution,
     licence: p.licence,
-    sourceUrl: p.source_url,
+    // A picture the editor uploaded may have no page of its own.
+    ...(p.source_url ? { sourceUrl: p.source_url } : {}),
     ...(p.creator ? { creator: p.creator } : {}),
     ...(p.date ? { date: p.date } : {}),
   };

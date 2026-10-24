@@ -7,9 +7,11 @@ import { z } from 'zod';
 import { checkStyle } from '@fdf/shared/style';
 import { isVerbatimAt } from '@fdf/shared/verbatim';
 import { START_AT } from '@fdf/shared/quoting';
-import { typeSwatch } from '@fdf/shared/tokens';
+import { EDITIONS, SWATCHES, typeSwatch } from '@fdf/shared/tokens';
 import {
   assembleHaul,
+  blocksFor,
+  blockView,
   defaultColophon,
   describeRoutes,
   draftQuestions,
@@ -45,6 +47,7 @@ import { AccessDenied, devBypassAllowed, KNOWN_ENVIRONMENTS, readAssertion, veri
 import { captureEntries, captureFile, entriesFromPaste, type CaptureEntry } from './capture';
 import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY_HEADERS, withHeaders } from './security';
 import { m6, platesFor } from './milestone6';
+import { blocksApi } from './blocks';
 import { assetResponse, manifestResponse } from './updates';
 
 type App = { Bindings: Env; Variables: { owner: string } };
@@ -281,7 +284,7 @@ app.get('/api/items', async (c) => {
 app.get('/api/items/:id', async (c) => {
   const id = c.req.param('id');
   const item = await itemOr404(c.env, id);
-  const [source, excerpts, drafts, wiki, checks, notes, run, haul, connections, plates, suggestions] = await Promise.all([
+  const [source, excerpts, drafts, wiki, checks, notes, run, haul, connections, plates, suggestions, blocks] = await Promise.all([
     c.env.DB.prepare('SELECT * FROM sources WHERE item_id = ?').bind(id).first<SourceRow>(),
     c.env.DB.prepare('SELECT * FROM excerpts WHERE item_id = ? ORDER BY chosen DESC, origin DESC, start').bind(id).all<ExcerptRow>(),
     c.env.DB.prepare('SELECT * FROM drafts WHERE item_id = ? ORDER BY kind, position').bind(id).all<DraftRow>(),
@@ -296,6 +299,7 @@ app.get('/api/items/:id', async (c) => {
       `SELECT s.*, a.title AS from_title, a.title_choice AS from_choice, b.title AS to_title, b.title_choice AS to_choice FROM suggestions s
        JOIN items a ON a.id = s.from_item_id JOIN items b ON b.id = s.to_item_id WHERE s.from_item_id = ? OR s.to_item_id = ? ORDER BY s.status = 'proposed' DESC, s.confidence DESC`,
     ).bind(id, id).all(),
+    blocksFor(c.env, id),
   ]);
   return c.json({
     item,
@@ -310,6 +314,7 @@ app.get('/api/items/:id', async (c) => {
     connections: connections.results,
     plates,
     suggestions: suggestions.results,
+    blocks: blocks.map(blockView),
   });
 });
 
@@ -329,6 +334,11 @@ const itemPatch = z.object({
   archived: z.boolean().optional(),
   start_at: z.string().trim().regex(START_AT, 'a time like 42:06 or 1:02:14, or a page like p. 12').or(z.literal('')).optional(),
   start_note: z.string().max(300).optional(),
+  // 0006: the year the work was made; a post's handle; a letter's recipient; where it was written or given.
+  year: z.number().int().min(-3000).max(2100).nullable().optional(),
+  handle: z.string().trim().max(100).optional(),
+  recipient: z.string().trim().max(200).optional(),
+  place: z.string().trim().max(200).optional(),
 });
 
 app.patch('/api/items/:id', async (c) => {
@@ -376,6 +386,7 @@ app.delete('/api/items/:id', async (c) => {
   const snapshot = await c.env.DB.prepare('SELECT snapshot_key, text_key FROM sources WHERE item_id = ?').bind(id).first<{ snapshot_key: string | null; text_key: string | null }>();
   const audio = (await c.env.DB.prepare('SELECT audio_key FROM notes WHERE item_id = ?').bind(id).all<{ audio_key: string }>()).results;
   const chunks = (await c.env.DB.prepare('SELECT id FROM chunks WHERE item_id = ?').bind(id).all<{ id: string }>()).results;
+  const blockFiles = (await c.env.DB.prepare('SELECT media_key FROM blocks WHERE item_id = ? AND media_key IS NOT NULL').bind(id).all<{ media_key: string }>()).results;
   await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM haul_items WHERE item_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM connections WHERE item_id = ? OR to_item_id = ?').bind(id, id),
@@ -386,7 +397,7 @@ app.delete('/api/items/:id', async (c) => {
     c.env.DB.prepare('DELETE FROM runs WHERE item_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM items WHERE id = ?').bind(id),
   ]);
-  const keys = [item.file_key, snapshot?.snapshot_key, snapshot?.text_key, ...audio.map((a) => a.audio_key)].filter((k): k is string => Boolean(k));
+  const keys = [item.file_key, snapshot?.snapshot_key, snapshot?.text_key, ...audio.map((a) => a.audio_key), ...blockFiles.map((b) => b.media_key)].filter((k): k is string => Boolean(k));
   if (keys.length) await c.env.MEDIA.delete(keys);
   if (chunks.length) await c.env.INGEST_QUEUE.send({ kind: 'purge', vectorIds: chunks.map((r) => r.id) });
   return c.json({ ok: true, files: keys.length, vectors: chunks.length });
@@ -675,7 +686,7 @@ app.get('/api/notes/:id/audio', async (c) => {
 app.get('/api/hauls', async (c) => {
   const rows = (
     await c.env.DB.prepare(
-      `SELECT h.id, h.number, h.title_text, h.title_italic, h.deck, h.swatch, h.status, h.version, h.published_at, h.updated_at,
+      `SELECT h.id, h.number, h.title_text, h.title_italic, h.deck, h.swatch, h.edition, h.status, h.version, h.published_at, h.updated_at,
               (SELECT COUNT(*) FROM haul_items hi WHERE hi.haul_id = h.id) AS item_count
        FROM hauls h ORDER BY h.number DESC`,
     ).all()
@@ -719,7 +730,9 @@ app.patch('/api/hauls/:id', async (c) => {
       title_text: z.string().max(200).optional(),
       title_italic: z.string().max(200).nullable().optional(),
       deck: z.string().max(600).optional(),
-      swatch: z.enum(['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio']).optional(),
+      swatch: z.enum(SWATCHES as [string, ...string[]]).optional(),
+      // The Haul's edition ink; null goes back to the default for its number (editionOf).
+      edition: z.enum(EDITIONS as [string, ...string[]]).nullable().optional(),
       fn_title_text: z.string().max(200).optional(),
       fn_title_italic: z.string().max(200).nullable().optional(),
       fn_body: z.string().max(40_000).optional(),
@@ -782,6 +795,7 @@ app.post('/api/hauls/:id/publish', async (c) => {
 });
 
 app.route('/', m6);
+app.route('/', blocksApi);
 
 // Stored files, behind the lock. Published paths (hauls/...) come from the public FILES bucket, so a
 // preview deployment can check its bundles (production readers get them from R2 directly); private

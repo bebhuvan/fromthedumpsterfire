@@ -155,6 +155,10 @@ describe('cross-site requests', () => {
     expect(checkCsrf(req('/api/items/it_01abc/file', { method: 'POST', headers: { ...mp, origin: 'https://evil.example' }, body: '' })).status).toBe(403);
     expect(checkCsrf(req('/api/items/it_01abc/file/x', { method: 'POST', headers: mp, body: '' })).status).toBe(415);
     expect(checkCsrf(req('/api/items/it_01abc', { method: 'PATCH', headers: mp, body: '' })).status).toBe(415);
+    // Adding a picture to an item: multipart, POST only.
+    expect(checkCsrf(req('/api/items/it_01abc/picture', { method: 'POST', headers: mp, body: '' })).ok).toBe(true);
+    expect(checkCsrf(req('/api/items/it_01abc/picture', { method: 'POST', headers: good, body: '{}' })).status).toBe(415);
+    expect(checkCsrf(req('/api/items/it_01abc/blocks', { method: 'POST', headers: mp, body: '' })).status).toBe(415);
   });
   it('lets the share target in only as a same-origin or user-initiated navigation', () => {
     const mp = { 'content-type': 'multipart/form-data; boundary=x' };

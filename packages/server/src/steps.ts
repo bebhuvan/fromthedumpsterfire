@@ -4,7 +4,7 @@
 
 import { checkStyle, describeIssues } from '@fdf/shared/style';
 import { findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
-import { countWords, excerptCap, ideaCount, isPunctuated, wantsIdeas } from '@fdf/shared/quoting';
+import { countWords, excerptCap, ideaCount, isPunctuated, QUOTED_WHOLE, wantsIdeas } from '@fdf/shared/quoting';
 import type { ContentType } from '@fdf/shared/tokens';
 import type { Env } from './env';
 import type { DraftRow, ExcerptRow, ItemRow, MarginalBody, SourceRow, WikiRow } from './db';
@@ -19,6 +19,7 @@ import { newId, nowIso, parseJson, toBase64, truncate, wordCount } from './util'
 import { pageAt } from './extract/pdf';
 import { msToClock } from './extract/youtube';
 import { rhymeQuoteRows } from './rhymes';
+import { blockQuoteRows, blocksFor } from './blocks';
 
 const D1_TEXT_LIMIT = 1_500_000;
 
@@ -58,6 +59,7 @@ export async function applyFields(env: Env, itemId: string, f: FetchOutcome['fie
        media = COALESCE(media, ?),
        canonical_url = COALESCE(?, canonical_url),
        locator = COALESCE(locator, ?),
+       handle = COALESCE(NULLIF(handle, ''), ?),
        updated_at = ?
      WHERE id = ?`,
   )
@@ -70,6 +72,7 @@ export async function applyFields(env: Env, itemId: string, f: FetchOutcome['fie
       f.media ? JSON.stringify(f.media) : null,
       f.canonical_url ?? null,
       f.locator ?? null,
+      f.handle?.trim() || null,
       nowIso(),
       itemId,
     )
@@ -243,6 +246,24 @@ export function draftLimits(item: Pick<ItemRow, 'type' | 'minutes'>, sourceWords
   return { excerptWords: excerptCap(sourceWords), ideas: wantsIdeas(item.type as ContentType, sourceWords, item.minutes) ? ideaCount(sourceWords) : 0 };
 }
 
+/** Short quotations and posts print whole: the whole captured text becomes the excerpt, unless one is chosen. */
+const WHOLE_MAX_WORDS = 400;
+export async function quoteWhole(env: Env, item: Pick<ItemRow, 'id' | 'type' | 'locator'>, src: Pick<SourceRow, 'text' | 'word_count'>): Promise<boolean> {
+  if (item.type === 'post' || !QUOTED_WHOLE.has(item.type as ContentType) || src.word_count > WHOLE_MAX_WORDS) return false;
+  if (await env.DB.prepare('SELECT 1 FROM excerpts WHERE item_id = ? AND chosen = 1').bind(item.id).first()) return false;
+  let start = 0;
+  let end = src.text.length;
+  while (start < end && /\s/.test(src.text[start]!)) start++;
+  while (end > start && /\s/.test(src.text[end - 1]!)) end--;
+  if (end <= start) return false;
+  await env.DB.prepare(
+    `INSERT INTO excerpts (id, item_id, start, end, text, locator, origin, chosen, verified, why, created_at) VALUES (?, ?, ?, ?, ?, ?, 'editor', 1, 1, ?, ?)`,
+  )
+    .bind(newId('ex_'), item.id, start, end, src.text.slice(start, end), item.locator ?? '', 'The whole of what you captured: a quotation or a post prints whole.', nowIso())
+    .run();
+  return true;
+}
+
 function failingIndexes(failures: DraftPieceFailure[], prefix: string): Set<number> {
   return new Set(failures.filter((f) => f.what.startsWith(prefix)).map((f) => Number(f.what.split(' ')[1]) - 1));
 }
@@ -252,6 +273,7 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
   const src = await getSource(env, itemId);
   if (!item || !src) throw new Error('Item or source missing');
   await setStatus(env, itemId, 'drafting');
+  await quoteWhole(env, item, src);
   const cardRow = await env.DB.prepare(`SELECT body FROM drafts WHERE item_id = ? AND kind = 'card'`).bind(itemId).first<{ body: string }>();
   const card = parseJson<Partial<ReadingCard> & { quotables?: Array<{ quote: string }> }>(cardRow?.body, {});
   const cards = (await env.DB.prepare(`SELECT * FROM wiki_cards WHERE item_id = ? AND status != 'cut' ORDER BY position`).bind(itemId).all<WikiRow>()).results;
@@ -496,6 +518,13 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
       ...(item.canonical_url || item.url ? [{ label: 'Source', url: (item.canonical_url || item.url)! }] : []),
       ...(media?.url ? [{ label: 'Media', url: media.url }] : []),
       ...cards.map((c) => ({ label: `Wikipedia: ${c.title}`, url: c.url, id: c.id })),
+      // Videos and recordings the editor added: readers follow these links too.
+      ...(await blocksFor(env, itemId)).flatMap((r) => {
+        if (r.status !== 'kept' || (r.kind !== 'video' && r.kind !== 'audio')) return [];
+        const b = parseJson<{ link?: string; url?: string; title?: string } | null>(r.body, null);
+        const url = r.kind === 'video' ? b?.link : b?.url;
+        return url ? [{ label: `${r.kind === 'video' ? 'Video' : 'Audio'}: ${b?.title ?? url}`, url }] : [];
+      }),
     ];
     const rows: CheckSummary['rows'] = [];
     for (const t of targets) {
@@ -529,6 +558,8 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
       }
       await env.DB.prepare('UPDATE excerpts SET verified = ? WHERE id = ?').bind(ok ? 1 : 0, ex.id).run();
     }
+    // Pull quotes and code blocks are excerpts too: each must still be in the source.
+    rows.push(...blockQuoteRows(await blocksFor(env, itemId), src?.text ?? null));
     results.quotes = { status: worst(rows), summary: rows[0]!.detail ?? '', rows };
   }
 

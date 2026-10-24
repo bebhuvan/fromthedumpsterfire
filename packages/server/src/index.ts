@@ -15,6 +15,7 @@ export { resolveWikiTopic, wikiSummary, firstSentence } from './wiki';
 export * from './plates';
 export * from './connect';
 export * from './rhymes';
+export * from './blocks';
 export { planAudio, fetchRange, fetchChunk, joinTranscript, stitchTranscript, MAX_SECONDS, type AudioPlan, type AudioChunk, type ChunkTranscript } from './extract/audio';
 export { browserAvailable } from './extract/browser';
 export { readCapped, readSlice, readJsonCapped, TooLargeError } from './extract/stream';

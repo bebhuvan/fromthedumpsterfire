@@ -29,6 +29,11 @@ export interface ItemRow {
   /** The editor's "start here": a time or page, and their few words (0005). */
   start_at?: string | null;
   start_note?: string | null;
+  /** The year the work was made; a post's handle; a letter's recipient; where it was written or given (0006). */
+  year?: number | null;
+  handle?: string | null;
+  recipient?: string | null;
+  place?: string | null;
   archived: number;
   captured_at: string;
   updated_at: string;
@@ -114,6 +119,8 @@ export interface HaulRow {
   fn_highlight: string | null;
   fn_note_id: string | null;
   cover_plate: string | null;
+  /** The Haul's edition colour (0006); NULL means editionOf(number). */
+  edition?: string | null;
   route: string;
   questions: string;
   colophon: string;

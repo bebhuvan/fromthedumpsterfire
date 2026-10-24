@@ -9,7 +9,8 @@
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": { "highlight.js/lib/core": ["./types/highlight.d.ts"], "highlight.js/lib/languages/*": ["./types/highlight-language.d.ts"] }
   },
   "include": ["src", "test"]
 }

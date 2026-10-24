@@ -4,7 +4,7 @@
 //
 // Two buckets: MEDIA is private (uploads, voice notes, snapshots, chosen plates); FILES is public and
 // holds only published bundles under hauls/. This module is the only writer to FILES: it copies the
-// voice notes and plates a bundle needs from MEDIA into FILES next to the bundle, then writes the
+// voice notes, plates, video posters and pictures a bundle needs from MEDIA into FILES next to the bundle, then writes the
 // bundle and the index. It never writes hauls/ to MEDIA.
 
 import type { Audio, AudioFormat, Haul, HaulIndex, HaulSummary, Item, Plate, Rhyme, RouteStep, Thread, Title } from '@fdf/shared/haul';
@@ -12,7 +12,7 @@ import { PLAYS_ON_IOS } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
 import { isVerbatimAt } from '@fdf/shared/verbatim';
 import { BUNDLE_VERSION, haulSlug } from '@fdf/shared/haul';
-import type { ContentType, Swatch } from '@fdf/shared/tokens';
+import { editionOf, type ContentType, type Swatch } from '@fdf/shared/tokens';
 import { validateHaul, type BundleIssue } from '@fdf/shared/validate';
 import type { Env } from './env';
 import type { CheckRow, DraftRow, ExcerptRow, HaulRow, ItemRow, MarginalBody, NoteRow, WikiRow } from './db';
@@ -20,6 +20,7 @@ import { dateIst, nowIso, parseJson, sha256Hex, slugify } from './util';
 import { plateForBundle, type PlateRow } from './plates';
 import { formatOfNote } from './voice';
 import { threadsForHaul } from './connect';
+import { blocksFor, blocksForBundle } from './blocks';
 import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
 
 /** Sources that are transcripts of speech, where punctuation decides whether a quote is printable. */
@@ -167,6 +168,12 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     const whyAudio = whyNote ? audioFor(whyNote, `hauls/${slug}/audio/${idFor.get(it.id)}-why`, `items[${bundleItems.length}].why.audio`, `The voice note on "${label}"`) : undefined;
     const plate = await plateFor(it.plate, `hauls/${slug}/plates/${idFor.get(it.id)}`, label, it.id);
     const rhyme = it.kind === 'rhyme' ? await rhymeFor(env, it, label, problems) : undefined;
+    if (it.type === 'image' && !plate) problems.push({ itemId: it.id, itemTitle: label, message: 'a Picture needs its picture: add it with its credit and licence' });
+    // The editor's blocks, in order: quotes and code re-verified, code highlighted, posters and
+    // pictures copied next to the bundle.
+    const bb = blocksForBundle(await blocksFor(env, it.id), src?.text ?? null, `hauls/${slug}/media/${idFor.get(it.id)}`, filesBase);
+    copies.push(...bb.copies);
+    for (const m of bb.problems) problems.push({ itemId: it.id, itemTitle: label, message: m });
 
     const title = parseJson<Title | null>(it.title_choice, null) ?? { text: it.title ?? '' };
     const item: Item = {
@@ -201,6 +208,11 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
           }
         : {}),
       ...(it.start_at?.trim() ? { startHere: startHereFor(it) } : {}),
+      ...(bb.blocks.length ? { blocks: bb.blocks } : {}),
+      ...(it.year != null ? { year: it.year } : {}),
+      ...(it.handle?.trim() ? { handle: it.handle.trim() } : {}),
+      ...(it.recipient?.trim() ? { recipient: it.recipient.trim() } : {}),
+      ...(it.place?.trim() ? { place: it.place.trim() } : {}),
       wiki: cards.map((c) => ({ title: c.title, summary: c.summary, url: c.url })),
       connections: conns.map((c) => ({
         type: c.type,
@@ -243,6 +255,8 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     deck: h.deck,
     publishedAt,
     swatch: h.swatch as Swatch,
+    // Written out even when the editor left the default, so every reader shows the same ink.
+    edition: editionOf(h.number, h.edition ?? undefined),
     ...(cover ? { cover } : {}),
     fieldNote: {
       title: h.fn_title_italic ? { text: h.fn_title_text, italic: h.fn_title_italic } : { text: h.fn_title_text },
@@ -264,6 +278,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     deck: h.deck,
     publishedAt,
     swatch: h.swatch as Swatch,
+    edition: editionOf(h.number, h.edition ?? undefined),
     itemCount: bundleItems.length,
     path: `hauls/${slug}/v${version}/haul.json`,
   };
