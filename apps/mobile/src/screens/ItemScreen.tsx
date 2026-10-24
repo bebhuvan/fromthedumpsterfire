@@ -1,12 +1,15 @@
 // One find, set in the printed form its type has always had: an essay opens like a magazine, a paper
-// is an offprint, a talk is a transcript, a poem is a broadside, rhymes are facing pages, a rabbit hole
-// is a catalogue card and a passage is a page from the book.
+// is an offprint, a talk or speech is a transcript, a poem is a broadside, rhymes are facing pages, a
+// rabbit hole is a catalogue card, a passage is a page from the book, a quotation is an epigraph, a
+// letter is the letter, a post is a clipping, a picture is a mounted print, a book is its jacket and
+// a tool is a specimen label (lib/forms.ts, the website's choice). Rich media follows (ui/Blocks.tsx).
 import { memo, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { haulSlug, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
-import { fonts, typeColor, usePalette } from '@/theme';
+import { fonts, typeColor, useEdition, usePalette, useTextScale } from '@/theme';
+import { formName, formOf, headword, hostOf, speaker, titleText, type Form } from '@/lib/forms';
 import { joinMeta, minutes } from '@/lib/format';
 import { openSource } from '@/lib/open';
 import { shareUrl } from '@/lib/data';
@@ -14,27 +17,7 @@ import { reader, useReader } from '@/lib/store';
 import { Highlighted, Machine, Meta, Note, Title } from '@/ui/type';
 import { Action, Apparatus, Folio, Key, RunHead, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
-
-type Form = 'essay' | 'paper' | 'transcript' | 'poem' | 'rhymes' | 'card' | 'page';
-
-const FORM: Record<ContentType, Form> = {
-  essay: 'essay',
-  post: 'essay',
-  paper: 'paper',
-  talk: 'transcript',
-  video: 'transcript',
-  podcast: 'transcript',
-  poem: 'poem',
-  rhymes: 'rhymes',
-  'rabbit-hole': 'card',
-  passage: 'page',
-};
-
-/** Index form of a headword: "The Great Stink" becomes "Great Stink, The". */
-const headword = (t: string) => {
-  const m = /^(The|A|An) (.+)$/.exec(t);
-  return m ? { word: m[2]![0]!.toUpperCase() + m[2]!.slice(1) + ',', article: m[1]! } : { word: t, article: '' };
-};
+import { Blocks, Picture } from '@/ui/Blocks';
 
 /** Index form of a two-word name: "Joseph Bazalgette" becomes "Bazalgette, Joseph". */
 const inverted = (n: string) => {
@@ -42,34 +25,49 @@ const inverted = (n: string) => {
   return w.length === 2 && /^[A-Z]/.test(w[1]!) ? `${w[1]}, ${w[0]}` : n;
 };
 
-const titleText = (i: Item) => i.title.text + (i.title.italic ? ' ' + i.title.italic : '');
+/** Forms that carry the editor's note under them as "Why it's here". */
+const WHY_AFTER = new Set<Form>(['epigraph', 'letter', 'clipping', 'print', 'jacket', 'label']);
 
 export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
   const at = haul.items.indexOf(item);
   const next = haul.items[at + 1];
-  const form = FORM[item.type];
+  const form = formOf(item);
+  const ed = useEdition(haul);
   const header = (
     <View>
-      <TopBar label={`Haul ${haul.number}`} right={`${at + 1} of ${haul.items.length}`} />
-      <RunHead left={`Haul ${haulSlug(haul.number)} · ${haul.title.text}${haul.title.italic ? ' ' + haul.title.italic : ''}`} right={typeLabel[item.type]} />
+      <TopBar label={titleText(haul)} right={`${at + 1} of ${haul.items.length}`} />
+      <RunHead haul={haul} current={item.id} right={formName[form]} />
     </View>
   );
 
   const body: Record<Form, ReactNode> = {
-    essay: <Essay item={item} haul={haul} />,
-    paper: <Paper item={item} haul={haul} />,
+    opening: <Essay item={item} haul={haul} />,
+    offprint: <Paper item={item} haul={haul} />,
     transcript: <Transcript item={item} haul={haul} />,
-    poem: <Poem item={item} />,
-    rhymes: <Rhymes item={item} />,
+    broadside: <Poem item={item} />,
+    facing: <Rhymes item={item} />,
     card: <Card item={item} haul={haul} n={at + 1} />,
     page: <Page item={item} haul={haul} />,
+    epigraph: <Epigraph item={item} />,
+    letter: <Letter item={item} />,
+    clipping: <Clipping item={item} />,
+    print: <Print item={item} />,
+    jacket: <Jacket item={item} />,
+    label: <Label item={item} haul={haul} n={at + 1} />,
   };
 
   return (
-    <Screen header={header}>
+    <Screen header={header} edition={ed}>
       {body[form]}
+      {WHY_AFTER.has(form) ? (
+        <>
+          <Why item={item} />
+          <Notes item={item} />
+        </>
+      ) : null}
+      <Blocks blocks={item.blocks} source={item.source.name} />
       <Ideas item={item} />
-      {form === 'paper' ? null : <SeeAlso haul={haul} item={item} />}
+      {form === 'offprint' ? null : <SeeAlso haul={haul} item={item} />}
       <Source item={item} />
       <Actions haul={haul} item={item} />
       {next ? <NextItem n={haul.number} at={at + 2} item={next} /> : <Finished haul={haul} />}
@@ -271,8 +269,9 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
 /** Transcript: the speaker in a column on the left, the moment as a line of speech. */
 function Transcript({ item, haul }: { item: Item; haul: Haul }) {
   const p = usePalette();
-  const speaker = (item.creator.split(' ').pop() ?? item.creator).toUpperCase();
-  const label = item.type === 'talk' ? 'Transcript' : item.type === 'podcast' ? 'Podcast transcript' : 'Video transcript';
+  const who = speaker(item.creator);
+  const label = item.type === 'talk' ? 'Transcript' : item.type === 'speech' ? 'Speech' : item.type === 'podcast' ? 'Podcast transcript' : 'Video transcript';
+  const dateline = [item.place, item.source.date].filter(Boolean).join(', ');
   return (
     <View>
       <MetaLine item={item} extra={label} />
@@ -281,11 +280,11 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
       <StartHereLine item={item} />
       <View style={{ marginTop: 26, gap: 20 }}>
         <View style={styles.tl}>
-          <Text style={[styles.when, { color: p.ink2 }]}>{item.source.date}</Text>
+          <Text style={[styles.when, { color: p.ink2 }]}>{dateline}</Text>
         </View>
         {item.excerpt ? (
           <View style={styles.tl}>
-            <Text style={[styles.who, { color: p.ink }]}>{speaker}</Text>
+            <Text style={[styles.who, { color: p.ink }]}>{who}</Text>
             <View style={{ flex: 1 }}>
               <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.said} />
               <ShareQuote haul={haul} item={item} />
@@ -437,6 +436,206 @@ function Page({ item, haul }: { item: Item; haul: Haul }) {
       <Why item={item} />
       {item.plate ? <PlateView item={item} /> : null}
       <Notes item={item} />
+    </View>
+  );
+}
+
+/** Epigraph: the words alone, set large, the marks hanging grey; who said them under an ink rule. */
+function Epigraph({ item }: { item: Item }) {
+  const p = usePalette();
+  const k = useTextScale();
+  const ex = item.excerpt!;
+  const len = ex.text.length;
+  const size = (len < 60 ? 40 : len < 140 ? 34 : 28) * Math.min(k, 1.1);
+  const at = ex.highlight ? ex.text.indexOf(ex.highlight) : -1;
+  return (
+    <View>
+      <MetaLine item={item} extra={item.source.date} />
+      <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
+      <Text selectable style={[styles.epiQ, { color: p.ink, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.022 }]}>
+        <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>“</Text>
+        {at >= 0 && ex.highlight ? (
+          <>
+            {ex.text.slice(0, at)}
+            <Text style={{ backgroundColor: typeColor(p, item.type) }}>{ex.highlight}</Text>
+            {ex.text.slice(at + ex.highlight.length)}
+          </>
+        ) : (
+          ex.text
+        )}
+        <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>”</Text>
+      </Text>
+      <View style={[styles.epiWho, { borderTopColor: p.ink }]}>
+        <Text style={[styles.epiName, { color: p.ink }]}>{item.creator.toUpperCase()}</Text>
+        <Text style={[styles.epiWhere, { color: p.ink2 }]}>{[item.source.name, item.source.date].filter(Boolean).join(', ')}</Text>
+      </View>
+    </View>
+  );
+}
+
+/** The letter: a sheet in the letter's colour, the dateline right, the body, signed at the foot. */
+function Letter({ item }: { item: Item }) {
+  const p = usePalette();
+  const ex = item.excerpt!;
+  return (
+    <View style={[styles.sheet, styles.letter, { backgroundColor: typeColor(p, item.type) }]}>
+      <View style={styles.ltDate}>
+        {item.place ? <Text style={[styles.ltDateText, { color: p.ink }]}>{item.place}</Text> : null}
+        <Text style={[styles.ltDateText, { color: p.ink }]}>{item.source.date}</Text>
+      </View>
+      <Text accessibilityRole="header" style={[styles.ltTo, { color: p.ink2 }]}>
+        From {item.creator}
+        {item.recipient ? ` to ${item.recipient}` : ''}
+      </Text>
+      <Highlighted text={ex.text} highlight={ex.highlight} color={p.bg + '9E'} style={styles.ltBody} />
+      <Text style={[styles.ltSign, { color: p.ink }]}>{item.creator}</Text>
+      <Text style={[styles.ltHeld, { color: p.ink2, borderTopColor: p.rule }]}>
+        {item.source.name}
+        {ex.locator ? `, ${ex.locator}` : ''}
+      </Text>
+    </View>
+  );
+}
+
+/** Clipping: who, where and when as fields under a rule, then the post's words. Never the platform's embed. */
+function Clipping({ item }: { item: Item }) {
+  const p = usePalette();
+  const ex = item.excerpt!;
+  const field = (k: string, v: ReactNode) => (
+    <View style={styles.clipField}>
+      <Text style={[styles.clipKey, { color: p.ink2 }]}>{k}</Text>
+      {typeof v === 'string' ? <Text style={[styles.clipVal, { color: p.ink }]}>{v}</Text> : v}
+    </View>
+  );
+  return (
+    <View style={[styles.sheet, styles.clip, { backgroundColor: typeColor(p, item.type) }]}>
+      <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, a post by {item.creator}</Text>
+      <View style={[styles.clipHead, { borderBottomColor: p.ink }]}>
+        {field(
+          'FROM',
+          <View>
+            <Text style={[styles.clipVal, { color: p.ink, fontFamily: fonts.sansMedium }]}>{item.creator}</Text>
+            {item.handle ? <Text style={[styles.clipVal, { color: p.ink2 }]}>{item.handle}</Text> : null}
+          </View>,
+        )}
+        <View style={styles.clipPair}>
+          {field('ON', item.source.name)}
+          {field('DATE', item.source.date)}
+        </View>
+      </View>
+      <Highlighted text={ex.text} highlight={ex.highlight} color={p.bg + '9E'} style={styles.clipText} />
+    </View>
+  );
+}
+
+/** A mounted print: the picture on its mount, then a museum label. */
+function Print({ item }: { item: Item }) {
+  const p = usePalette();
+  const plate = item.plate!;
+  const [failed, setFailed] = useState(false);
+  const licence = plate.licence.charAt(0).toUpperCase() + plate.licence.slice(1);
+  return (
+    <View style={{ marginTop: 22 }}>
+      <View style={[styles.mount, { backgroundColor: p.plate }]}>
+        {failed ? (
+          <View style={[styles.mountGone, { aspectRatio: plate.width / plate.height, borderColor: p.rule }]}>
+            <Text style={[styles.caption, { color: p.ink2, textAlign: 'center', marginTop: 0 }]}>The picture could not load. It will appear when you are online.</Text>
+          </View>
+        ) : (
+          <Image
+            source={{ uri: plate.url }}
+            onError={() => setFailed(true)}
+            accessibilityLabel={plate.caption || titleText(item)}
+            resizeMode="cover"
+            style={{ width: '100%', aspectRatio: plate.width / plate.height }}
+          />
+        )}
+      </View>
+      <View style={[styles.prLabel, { borderTopColor: p.ink }]}>
+        <Title title={item.title} size={30} style={{ lineHeight: 32 }} />
+        <Text style={[styles.prBy, { color: p.ink }]}>
+          {item.creator}
+          {item.source.date ? `, ${item.source.date}` : ''}
+        </Text>
+        <Text style={[styles.prFrom, { color: p.ink2 }]}>{item.source.name}</Text>
+        <Meta style={{ marginTop: 6 }}>
+          {plate.credit}. {licence}.
+        </Meta>
+      </View>
+    </View>
+  );
+}
+
+/** The jacket: the book set in type (or its own cover), then the line from inside. */
+function Jacket({ item }: { item: Item }) {
+  const p = usePalette();
+  const [failed, setFailed] = useState(false);
+  const ex = item.excerpt;
+  const plate = item.plate;
+  return (
+    <View>
+      <View style={{ marginTop: 26 }}>
+        {plate && !failed ? (
+          <Image source={{ uri: plate.url }} onError={() => setFailed(true)} accessible={false} resizeMode="cover" style={[styles.jkCover, { aspectRatio: plate.width / plate.height, borderColor: p.rule }]} />
+        ) : (
+          <View style={[styles.jkJacket, { backgroundColor: typeColor(p, item.type), borderColor: p.rule }]} accessible={false}>
+            <View style={[styles.jkSpine, { backgroundColor: p.ink }]} />
+            <Title title={item.title} size={28} style={{ lineHeight: 29 }} />
+            <View>
+              <Text style={[styles.jkAuthor, { color: p.ink, borderTopColor: p.rule }]}>{item.creator}</Text>
+              <Text style={[styles.jkPub, { color: p.ink2 }]}>{item.source.name.toUpperCase()}</Text>
+            </View>
+          </View>
+        )}
+      </View>
+      <MetaLine item={item} />
+      <Title title={item.title} size={40} style={{ marginTop: 14 }} />
+      <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
+      {ex ? (
+        <View style={[styles.jkLine, { borderTopColor: p.ink }]}>
+          <Highlighted text={ex.text} highlight={ex.highlight} color={typeColor(p, item.type)} style={styles.jkLineText} />
+          {ex.locator ? <Meta style={{ marginTop: 8 }}>{ex.locator}</Meta> : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Specimen label: a ruled label with a band of the type's colour, the name large, fields in sans, its own words in serif. */
+function Label({ item, haul, n }: { item: Item; haul: Haul; n: number }) {
+  const p = usePalette();
+  const host = hostOf(item.source.url);
+  const long = titleText(item).length > 14;
+  const rows: [string, ReactNode][] = [];
+  if (item.creator) rows.push(['MADE BY', item.creator]);
+  rows.push(['WHAT IT IS', item.source.name]);
+  if (item.source.date) rows.push(['SINCE', item.source.date]);
+  if (item.excerpt) rows.push(['IN ITS OWN WORDS', <Highlighted key="own" text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.labOwn} />]);
+  if (host)
+    rows.push([
+      'WHERE',
+      <Pressable key="where" accessibilityRole="link" onPress={() => openSource(item.source.url, p)} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
+        <Text style={[styles.labVal, { color: p.ink, textDecorationLine: 'underline' }]}>{host}</Text>
+      </Pressable>,
+    ]);
+  return (
+    <View style={[styles.sheet, styles.lab, { borderColor: p.ink }]}>
+      <View style={[styles.labBand, { backgroundColor: typeColor(p, item.type) }]} />
+      <View style={styles.labK}>
+        <Key type={item.type} />
+        <Text style={[styles.labCall, { color: p.ink2 }]}>
+          FDF {haulSlug(haul.number)}.{n}
+        </Text>
+      </View>
+      <Title title={item.title} size={long ? 40 : 52} style={{ marginTop: 14, marginBottom: 18, lineHeight: long ? 41 : 52, letterSpacing: long ? -1 : -1.5 }} />
+      <View style={{ borderTopWidth: 1, borderTopColor: p.ink }}>
+        {rows.map(([k, v], i) => (
+          <View key={k} style={[styles.labRow, i < rows.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: p.rule }]}>
+            <Text style={[styles.labKey, { color: p.ink2 }]}>{k}</Text>
+            {typeof v === 'string' ? <Text style={[styles.labVal, { color: p.ink }]}>{v}</Text> : v}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -609,6 +808,50 @@ const styles = StyleSheet.create({
   slipKindText: { fontFamily: fonts.sansMedium, fontSize: 12, includeFontPadding: false },
   slipTitle: { fontFamily: fonts.display, fontSize: 21, lineHeight: 25, marginTop: 6 },
   slipGloss: { fontFamily: fonts.text, fontSize: 15, lineHeight: 21, marginTop: 5 },
+
+  epiQ: { fontFamily: fonts.display, marginTop: 30 },
+  epiWho: { marginTop: 22, paddingTop: 12, borderTopWidth: 1, gap: 4, alignSelf: 'flex-start', minWidth: '70%' },
+  epiName: { fontFamily: fonts.sansBold, fontSize: 12.5, letterSpacing: 1.5 },
+  epiWhere: { fontFamily: fonts.sans, fontSize: 14.5, lineHeight: 20 },
+
+  letter: { paddingHorizontal: 22, paddingTop: 28, paddingBottom: 22 },
+  ltDate: { alignItems: 'flex-end', marginBottom: 26 },
+  ltDateText: { fontFamily: fonts.textItalic, fontSize: 16, lineHeight: 23, textAlign: 'right' },
+  ltTo: { fontFamily: fonts.sansMedium, fontSize: 13, marginBottom: 16 },
+  ltBody: { fontFamily: fonts.text, fontSize: 19, lineHeight: 30 },
+  ltSign: { marginTop: 26, textAlign: 'right', fontFamily: fonts.displayItalic, fontSize: 28, lineHeight: 32 },
+  ltHeld: { marginTop: 24, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, fontFamily: fonts.sans, fontSize: 13, lineHeight: 19 },
+
+  clip: { paddingHorizontal: 20, paddingBottom: 24 },
+  clipHead: { paddingTop: 14, paddingBottom: 12, borderBottomWidth: 1, marginBottom: 18, gap: 10 },
+  clipPair: { flexDirection: 'row', gap: 32 },
+  clipField: { gap: 2 },
+  clipKey: { fontFamily: fonts.sansMedium, fontSize: 11, letterSpacing: 1.3 },
+  clipVal: { fontFamily: fonts.sans, fontSize: 15, lineHeight: 20 },
+  clipText: { fontFamily: fonts.displayRegular, fontSize: 26, lineHeight: 34 },
+
+  mount: { padding: 20 },
+  mountGone: { width: '100%', borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  prLabel: { marginTop: 20, paddingTop: 12, borderTopWidth: 1, gap: 3 },
+  prBy: { fontFamily: fonts.text, fontSize: 18, lineHeight: 25, marginTop: 6 },
+  prFrom: { fontFamily: fonts.textItalic, fontSize: 16, lineHeight: 22 },
+
+  jkJacket: { width: 200, aspectRatio: 2 / 3, paddingLeft: 26, paddingRight: 18, paddingTop: 24, paddingBottom: 16, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'space-between' },
+  jkSpine: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 7, opacity: 0.09 },
+  jkAuthor: { fontFamily: fonts.textItalic, fontSize: 16, lineHeight: 21, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
+  jkPub: { marginTop: 16, fontFamily: fonts.sansMedium, fontSize: 10.5, letterSpacing: 1.3 },
+  jkCover: { width: 200, borderWidth: StyleSheet.hairlineWidth },
+  jkLine: { marginTop: 26, paddingTop: 16, borderTopWidth: 1 },
+  jkLineText: { fontFamily: fonts.displayRegular, fontSize: 23, lineHeight: 31 },
+
+  lab: { borderWidth: 1, paddingHorizontal: 18, paddingTop: 22, paddingBottom: 6 },
+  labBand: { position: 'absolute', left: 0, right: 0, top: 0, height: 8 },
+  labK: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  labCall: { fontFamily: fonts.sansMedium, fontSize: 12.5, fontVariant: ['tabular-nums'] },
+  labRow: { paddingVertical: 11, gap: 4 },
+  labKey: { fontFamily: fonts.sansMedium, fontSize: 11.5, letterSpacing: 1 },
+  labVal: { fontFamily: fonts.text, fontSize: 18, lineHeight: 25 },
+  labOwn: { fontFamily: fonts.displayRegular, fontSize: 21, lineHeight: 29 },
 
   actions: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 16 },
   save: { minHeight: 44, minWidth: 92, paddingHorizontal: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

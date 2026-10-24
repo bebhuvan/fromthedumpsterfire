@@ -1,12 +1,13 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import type { Audio } from '@fdf/shared/haul';
+import { haulSlug, type Audio, type Haul } from '@fdf/shared/haul';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
-import { fonts, GUTTER, typeColor, usePalette } from '@/theme';
+import { fonts, GUTTER, typeColor, useEdition, usePalette } from '@/theme';
 import { Meta } from './type';
+import { MiniFingerprint } from './Fingerprint';
 
 /** The type key: a small square of the type's colour and its name. Structure, not a badge. */
 export const Key = memo(function Key({ type, label, style }: { type: ContentType; label?: string; style?: StyleProp<ViewStyle> }) {
@@ -30,23 +31,47 @@ export function Flame({ size = 10, color }: { size?: number; color?: string }) {
   );
 }
 
+const STRIKE = require('../../assets/marks/strike.png');
+const CARET = require('../../assets/marks/caret.png');
+
 /**
- * The masthead: From the ~~Internet~~ Dumpster Fire. The strike is an ember rule drawn over the word,
- * because Android ignores textDecorationColor.
+ * The masthead, set as an editor's correction on a proof: From the ~~Internet~~ Dumpster Fire, with
+ * "Internet" struck through by hand and a proofreader's caret where "Dumpster Fire" goes in. The marks
+ * are the website's (apps/web/public/marks), pre-rendered white and tinted ember, since the app has no
+ * SVG runtime. Screen readers hear the real name.
  */
-export function Masthead({ size = 17 }: { size?: number }) {
+export function Masthead({ size = 17, flame = true }: { size?: number; flame?: boolean }) {
   const p = usePalette();
+  const word = { fontSize: size, lineHeight: Math.round(size * 1.22) };
+  // The strike is stretched over the word as drawn, so it needs the word's measured width (an Image
+  // otherwise takes its file's size).
+  const [w, setW] = useState(size * 3.9);
   return (
     <View accessible accessibilityRole="header" accessibilityLabel="From the Dumpster Fire" style={st.mast}>
-      <View style={{ marginRight: size * 0.45 }}>
-        <Flame size={size * 0.5} />
+      {flame ? (
+        <View style={{ marginRight: size * 0.42, alignSelf: 'center' }}>
+          <Flame size={size * 0.5} />
+        </View>
+      ) : null}
+      <Text style={[st.mastText, word, { color: p.ink, fontFamily: fonts.displayItalic, marginRight: size * 0.25 }]}>From the</Text>
+      <View style={st.mastWord}>
+        <View>
+          <Text onLayout={(e) => setW(e.nativeEvent.layout.width)} style={[st.mastText, word, { color: p.ink2, fontFamily: fonts.displayRegular }]}>Internet</Text>
+          <Image
+            source={STRIKE}
+            resizeMode="stretch"
+            accessible={false}
+            style={{ position: 'absolute', left: -size * 0.06, top: size * 0.43, width: w + size * 0.14, height: size * 0.3, tintColor: p.ember }}
+          />
+        </View>
+        <Image
+          source={CARET}
+          resizeMode="contain"
+          accessible={false}
+          style={{ width: size * 0.32, height: size * 0.25, marginLeft: size * 0.02, marginRight: size * 0.04, marginBottom: size * 0.15, tintColor: p.ember }}
+        />
       </View>
-      <Text style={[st.mastText, { fontSize: size, color: p.ink, fontFamily: fonts.displayItalic }]}>From the </Text>
-      <View>
-        <Text style={[st.mastText, { fontSize: size, color: p.ink2, fontFamily: fonts.displayRegular }]}>Internet</Text>
-        <View style={[st.strike, { backgroundColor: p.ember, height: Math.max(1.5, size * 0.09), top: size * 0.33 }]} />
-      </View>
-      <Text style={[st.mastText, { fontSize: size, color: p.ink, fontFamily: fonts.displayRegular }]}> Dumpster Fire</Text>
+      <Text style={[st.mastText, word, { color: p.ink, fontFamily: fonts.displayRegular }]}>Dumpster Fire</Text>
     </View>
   );
 }
@@ -99,37 +124,46 @@ export function Action({ label, onPress, external, style }: { label: string; onP
   );
 }
 
-export function TopBar({ label, right, tint }: { label: string; right?: string; tint?: string }) {
+/** Back, with where it goes back to; a quiet word on the right (the item's place in the Haul). */
+export function TopBar({ label, right }: { label: string; right?: string }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   return (
-    <View style={[st.top, { paddingTop: insets.top + 6, backgroundColor: tint }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={go.back} hitSlop={8} style={st.back}>
+    <View style={[st.top, { paddingTop: insets.top + 6 }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={label === 'Back' ? 'Back' : `Back to ${label}`} onPress={go.back} hitSlop={8} style={({ pressed }) => [st.back, { flexShrink: 1 }, pressed && { opacity: 0.6 }]}>
         <Arrow color={p.ink} back />
-        <Text style={[st.backText, { color: p.ink }]}>{label}</Text>
+        <Text numberOfLines={1} style={[st.backText, { color: p.ink, flexShrink: 1 }]}>{label}</Text>
       </Pressable>
       {right ? <Meta style={{ color: p.ink2, fontVariant: ['tabular-nums'] }}>{right}</Meta> : null}
     </View>
   );
 }
 
-/** A plain word link to Settings, for the top of the cover and the waiting page. */
-export function SettingsLink() {
-  const p = usePalette();
+/** The page head of a top-level screen: the small masthead, as the website's header carries it. */
+export function PageHead() {
+  const insets = useSafeAreaInsets();
   return (
-    <Pressable accessibilityRole="link" onPress={go.settings} hitSlop={10} style={({ pressed }) => [st.back, { opacity: pressed ? 0.6 : 1 }]}>
-      <Text style={[st.backText, { color: p.ink2 }]}>Settings</Text>
-    </Pressable>
+    <View style={[st.pageHead, { paddingTop: insets.top + 14 }]}>
+      <Masthead size={16} />
+    </View>
   );
 }
 
-/** The running head, as in a book: where you are on the left, what you are holding on the right. */
-export function RunHead({ left, right }: { left: string; right?: string }) {
+/**
+ * The running head, as in a book: the Haul on the left in its edition ink, its fingerprint with this
+ * item drawn tall, and the form the item is set in on the right. (The Haul's title rides in the bar
+ * above, as the way back to its cover, so nothing here has to be cut short.)
+ */
+export function RunHead({ haul, right, current }: { haul: Haul; right?: string; current?: string }) {
   const p = usePalette();
+  const ed = useEdition(haul);
   return (
     <View style={[st.runhead, { borderTopColor: p.rule }]}>
-      <Text numberOfLines={1} style={[st.runText, { color: p.ink2, flex: 1 }]}>{left}</Text>
-      {right ? <Text style={[st.runText, { color: p.ink2 }]}>{right}</Text> : null}
+      <Text style={[st.runText, { color: ed, fontFamily: fonts.sansMedium }]}>Haul {haulSlug(haul.number)}</Text>
+      <View style={{ flex: 1 }}>
+        <MiniFingerprint haul={haul} current={current} width={88} />
+      </View>
+      {right ? <Text numberOfLines={1} style={[st.runText, { color: p.ink2 }]}>{right}</Text> : null}
     </View>
   );
 }
@@ -175,13 +209,13 @@ const mmss = (sec: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-/**
- * The editor's voice. The native player is only created on first tap, so a screen full of
- * voice notes costs nothing until someone listens.
- */
 // iOS cannot play WebM or Ogg; the Desk marks such notes with their format, and on iOS they are left out.
 export const playable = (a: Audio) => !(Platform.OS === 'ios' && (a.format === 'webm' || a.format === 'ogg'));
 
+/**
+ * The editor's voice (and any audio file an item carries). The native player is only created on first
+ * tap, so a screen full of voice notes costs nothing until someone listens.
+ */
 export function VoiceNote({ audio, label, compact }: { audio: Audio; label: string; compact?: boolean }) {
   const [active, setActive] = useState(false);
   if (!playable(audio)) return null;
@@ -206,20 +240,22 @@ function ActiveVoice({ audio, label, compact }: { audio: Audio; label: string; c
   };
   // At the end the player can report a position just past the duration; a finished note shows its full length again.
   const duration = status.duration > 0 ? status.duration : audio.seconds;
-  const finished = status.didJustFinish || (!status.playing && status.currentTime >= duration - 0.2);
+  const finished = status.didJustFinish || (!status.playing && duration > 0 && status.currentTime >= duration - 0.2);
   const at = finished ? 0 : Math.min(Math.max(status.currentTime, 0), duration);
-  return <VoiceButton playing={status.playing} label={label} seconds={duration - at} compact={compact} onPress={toggle} progress={at / duration} />;
+  return <VoiceButton playing={status.playing} label={label} seconds={duration - at} compact={compact} onPress={toggle} progress={duration > 0 ? at / duration : 0} />;
 }
 
 /** A square ink key with the glyph, the label in the editor's italic, and a hairline that fills as it plays. */
 function VoiceButton({ playing, label, seconds, compact, onPress, progress = 0 }: { playing: boolean; label: string; seconds: number; compact?: boolean; onPress: () => void; progress?: number }) {
   const p = usePalette();
-  const a11y = `${playing ? 'Pause' : 'Play'} ${label}, ${mmss(seconds)}`;
+  // Audio of unknown length shows no clock until the player knows it.
+  const time = seconds > 0 ? mmss(seconds) : '';
+  const a11y = `${playing ? 'Pause' : 'Play'} ${label}${time ? `, ${time}` : ''}`;
   if (compact) {
     return (
       <Pressable accessibilityRole="button" accessibilityLabel={a11y} onPress={onPress} hitSlop={10} style={st.voiceCompact}>
         <View style={[st.voiceSqSmall, { borderColor: p.ink }]}>{playing ? <PauseGlyph color={p.ink} size={7} /> : <PlayGlyph color={p.ink} size={7} />}</View>
-        <Meta style={{ fontVariant: ['tabular-nums'] }}>{mmss(seconds)}</Meta>
+        {time ? <Meta style={{ fontVariant: ['tabular-nums'] }}>{time}</Meta> : null}
       </Pressable>
     );
   }
@@ -229,7 +265,7 @@ function VoiceButton({ playing, label, seconds, compact, onPress, progress = 0 }
       <View style={{ flex: 1 }}>
         <View style={st.voiceHead}>
           <Text style={[st.voiceLabel, { color: p.ink }]}>{label}</Text>
-          <Meta style={{ fontVariant: ['tabular-nums'] }}>{mmss(seconds)}</Meta>
+          {time ? <Meta style={{ fontVariant: ['tabular-nums'] }}>{time}</Meta> : null}
         </View>
         <View style={[st.track, { backgroundColor: p.rule }]}>
           <View style={{ width: `${Math.round(progress * 100)}%`, height: 1.5, backgroundColor: p.ink }} />
@@ -243,19 +279,20 @@ export const st = StyleSheet.create({
   key: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   keySq: { width: 9, height: 9, borderWidth: StyleSheet.hairlineWidth },
   keyText: { fontFamily: fonts.sansMedium, fontSize: 12.5, includeFontPadding: false },
-  mast: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  mast: { flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap' },
   mastText: { includeFontPadding: false },
-  strike: { position: 'absolute', left: -1, right: -1 },
+  mastWord: { flexDirection: 'row', alignItems: 'flex-end' },
   arrow: { width: 20, height: 12, justifyContent: 'center' },
   arrowShaft: { height: 1.3, width: 19 },
   arrowHead: { position: 'absolute', right: 1, width: 8, height: 8, borderTopWidth: 1.3, borderRightWidth: 1.3, transform: [{ rotate: '45deg' }] },
   action: { minHeight: 56, borderTopWidth: 1, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
-  actionText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 20, includeFontPadding: false },
+  actionText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 20, lineHeight: 26, paddingVertical: 12, includeFontPadding: false },
   actionExt: { fontFamily: fonts.sansMedium, fontSize: 16 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingBottom: 2 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
   backText: { fontFamily: fonts.sansMedium, fontSize: 13.5, includeFontPadding: false },
-  runhead: { flexDirection: 'row', gap: 16, marginHorizontal: GUTTER, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  pageHead: { paddingHorizontal: GUTTER, paddingBottom: 4, minHeight: 36, justifyContent: 'center' },
+  runhead: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: GUTTER, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
   runText: { fontFamily: fonts.sans, fontSize: 12.5, includeFontPadding: false },
   folio: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 44 },
   folioN: { fontFamily: fonts.displayRegular, fontSize: 26, includeFontPadding: false, fontVariant: ['lining-nums'] },
