@@ -5,7 +5,7 @@
 // its item pages and the archive. Positions are classes on a 100-column grid (the CSP allows no inline
 // styles); marks whose labels would touch are lifted into higher lanes.
 
-import { itemYear, type Haul, type Item } from '@fdf/shared/haul';
+import { itemYear, type Haul, type Item } from './haul';
 
 export interface Mark {
   item: Item;

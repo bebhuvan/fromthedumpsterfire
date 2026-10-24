@@ -246,6 +246,11 @@ export interface Haul {
   swatch: Swatch;
   /** The Haul's edition colour (tokens.ts). Absent: editionOf(number). */
   edition?: Edition;
+  /**
+   * The Haul's share card (1200x630 PNG): its number, title and fingerprint, drawn by the Desk in the
+   * editor's browser at publish and copied next to the bundle. Link previews use it (added 2026-10-24).
+   */
+  card?: { url: string; width: number; height: number };
   /** A public-domain cover plate (optional). */
   cover?: Plate;
   fieldNote: FieldNote;

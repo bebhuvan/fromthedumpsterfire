@@ -275,6 +275,12 @@ export function validateHaul(haul: Haul, index?: HaulIndex, opts: ValidateOption
   if (haul.edition !== undefined && !EDITIONS.includes(haul.edition)) c.err('edition', 'shape', `one of ${EDITIONS.join(', ')}`);
   c.str(haul.colophon, 'colophon');
   c.plate(haul.cover, 'cover');
+  if (c.obj(haul.card, 'card', true)) {
+    c.https(haul.card.url, 'card.url');
+    c.hosted(haul.card.url, 'card.url');
+    c.num(haul.card.width, 'card.width');
+    c.num(haul.card.height, 'card.height');
+  }
 
   // Field note.
   const fn = haul.fieldNote;

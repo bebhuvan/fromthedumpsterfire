@@ -67,6 +67,8 @@ export function findItemAcrossHauls(
 
 /** Public-domain plate for a Haul's OpenGraph/social image: cover plate first, else first item plate. */
 export function haulCoverImage(h: Haul): { url: string; width: number; height: number; alt: string } | undefined {
+  const card = h.card && safeHref(h.card.url);
+  if (card && h.card) return { url: card, width: h.card.width, height: h.card.height, alt: `Haul ${haulSlug(h.number)}: ${titleText(h.title)}` };
   const plate = h.cover ?? h.items.find((i) => i.plate)?.plate;
   if (!plate) return undefined;
   const url = safeHref(plate.url);
