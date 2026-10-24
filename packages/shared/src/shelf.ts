@@ -132,6 +132,7 @@ export function validateShelf(s: Shelf, opts: { filesBase?: string } = {}): stri
         if (!str(n.text)) e(`${p}.notes[${j}].text`, 'empty');
         if (!ISO.test(n.date ?? '')) e(`${p}.notes[${j}].date`, 'an ISO date');
         if (n.audio && (!https(n.audio.url) || (n.audio.format && !AUDIO_FORMATS.includes(n.audio.format)))) e(`${p}.notes[${j}].audio`, 'an https audio file');
+        else if (n.audio && opts.filesBase && !n.audio.url.startsWith(`${opts.filesBase.replace(/\/$/, '')}/`)) e(`${p}.notes[${j}].audio`, `must be published under ${opts.filesBase.replace(/\/$/, '')}/`);
       });
     if (!Array.isArray(b.lines)) e(`${p}.lines`, 'must be an array');
     else b.lines.forEach((l, j) => !str(l.text) && e(`${p}.lines[${j}].text`, 'empty'));
