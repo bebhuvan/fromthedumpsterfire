@@ -10,11 +10,12 @@ import { Flame, TopBar } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 
 const RULES = [
+  { rule: 'Every work names the person who made it.', how: "This magazine exists to send readers to other people's work. Every piece, quotation, post and picture carries its maker's name and a link back to where it came from; every picture also says who holds it and under what licence. The Desk will not publish without them." },
   { rule: 'Every quotation is matched word for word against its source.', how: 'Each excerpt is compared with the text of the source as fetched. If it does not match, it does not ship.' },
   { rule: 'Every link is fetched and working when a Haul ships.', how: 'Machines never write links. Code finds each one in a real source and fetches it before publishing.' },
   { rule: 'Every note from the machine names its source.', how: 'Each note is checked against the source it cites. A note that fails the check is dropped.' },
   { rule: "The editor's words are never rewritten.", how: 'Voice notes are cleaned only by deleting fillers and fixing punctuation. The code allows nothing else.' },
-  { rule: 'No generated images.', how: 'Plates come from public-domain archives, with the licence printed under each one.' },
+  { rule: 'No generated images.', how: 'Pictures come from public-domain archives, or are shown for commentary, with who made them, who holds them and the licence under each one.' },
 ];
 
 function Head({ children }: { children: string }) {
@@ -31,7 +32,7 @@ export function About() {
   const p = usePalette();
   return (
     <Screen header={<TopBar label="Back" />}>
-      <Meta style={{ marginTop: 18 }}>About · Five house rules</Meta>
+      <Meta style={{ marginTop: 18 }}>About · Six house rules</Meta>
       <Title title={{ text: "How it's", italic: 'made' }} size={52} style={{ marginTop: 10, lineHeight: 52, letterSpacing: -1.4 }} />
       <Body style={{ marginTop: 16 }}>
         From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays and talks, letters and speeches, poems, papers, podcasts, posts, pictures, passages from books, tools worth knowing and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.

@@ -252,3 +252,11 @@ Dated, newest last. Don't reopen these without a new reason.
   close in colour to Schibsted. The app uses the system monospace to avoid a native change.
 - **Share cards are drawn in the editor's browser at publish** (canvas), because the Workers free plan's
   10 ms CPU rules out rendering images on the server.
+- **Credit is a house rule, enforced in code** (the editor: "Full credit, always name the people…
+  the entire driving philosophy … is to highlight the work of other people"). Every picture names who
+  made it ("Unknown" only when nobody can say) and, for an upload, where it was found; a credit line
+  (maker, holder, licence, a link back) prints under every picture on the site and in the app. It is
+  the first of the About page's house rules. Memes and other copyrighted pictures are shown for
+  commentary with that line.
+- **The mark is the internet on fire**: one ember flame with the globe cut out of it (the editor's
+  pick, G4, from comps of the caret, the struck word, the name alone and the globe).
