@@ -5,7 +5,9 @@
 import { describe, expect, it } from 'vitest';
 import { validateHaul } from '@fdf/shared/validate';
 import type { Haul, HaulIndex } from '@fdf/shared/haul';
-import { publishHaul, assembleHaul } from '../src/publish';
+import { publishHaul, assembleHaul, assembleShelf, publishShelf } from '../src/publish';
+import { addBookLine, addBookNote, createBook, deleteBook, linkItemToBook, patchBook, setBookCover } from '../src/shelf';
+import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 import { approveSuggestion } from '../src/connect';
 import { setEndQuote, setEndSource, createRhyme, patchRhyme } from '../src/rhymes';
 import { addAudio, addCode, addPicture, addQuote, addVideo, blocksFor, reorderBlocks, setPicturePlate } from '../src/blocks';
@@ -359,5 +361,121 @@ describe('a new reading replaces unticked Wikipedia cards', () => {
     await resolveWiki(env, 'it_jevons', [], 4);
     const left = (await env.DB.prepare(`SELECT id FROM wiki_cards WHERE item_id = 'it_jevons' ORDER BY id`).all<{ id: string }>()).results.map((r) => r.id);
     expect(left).toEqual(['wk_cited', 'wk_kept']);
+  });
+});
+
+describe('the shelf', () => {
+  const item = async (env: TestEnv, id: string) => (await env.DB.prepare('SELECT * FROM items WHERE id = ?').bind(id).first<ItemRow>())!;
+  const read = async <T,>(env: TestEnv, key: string) => (await (await env.FILES.get(key))!.json()) as T;
+
+  it('a Haul publish writes Item.shelf; the shelf publish writes a valid shelf.json with covers and recordings copied, in order, linked to its Hauls', async () => {
+    const env = await seedHaul(makeEnv());
+    // Haul 1 carries a Book item that points to its shelf book.
+    await env.DB.prepare(`UPDATE items SET type = 'book' WHERE id = 'it_jevons'`).run();
+    const coal = await createBook(env, { title: { text: 'The Coal', italic: 'Question' }, author: 'William Stanley Jevons', year: 1865, url: 'https://en.wikisource.org/wiki/The_Coal_Question', status: 'read', started: '2026-09-20', finished: '2026-10-12' });
+    expect(coal.id).toBe('the-coal-question');
+    await linkItemToBook(env, await item(env, 'it_jevons'), coal.id);
+    await expect(linkItemToBook(env, await item(env, 'it_nadella'), coal.id)).rejects.toThrow(/Only a Book item/);
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const hr = await publishHaul(env, 'hl_1');
+    expect(hr.problems).toEqual([]);
+    expect(hr.ok).toBe(true);
+    // The shelf is not published yet, so the Haul says the link will not land until it is.
+    expect(hr.warnings.filter((w) => w.rule === 'shelf').map((w) => w.message)).toEqual([expect.stringMatching(/Publish the shelf/)]);
+    const haul = await read<Haul>(env, 'hauls/001/v1/haul.json');
+    expect(haul.items[0]!.shelf).toBe('the-coal-question');
+    expect(validateHaul(haul, await read<HaulIndex>(env, 'hauls/index.json'), { filesBase: env.FILES_BASE }).errors).toEqual([]);
+    // A deleted book would orphan the published link: refused.
+    await expect(deleteBook(env, coal)).rejects.toThrow(/published Haul 1/);
+
+    // A book being read: a cover, a typed note, a dictated note published with its recording, a line.
+    const seeing = await createBook(env, { title: { text: 'Seeing Like', italic: 'a State' }, author: 'James C. Scott', year: 1998, status: 'reading', started: '2026-10-02' });
+    await setBookCover(env, seeing, { bytes: fakeJpeg(600, 900), credit: 'Yale University Press', licence: '© the publisher, shown for commentary', creator: 'Yale University Press', sourceUrl: 'https://yalebooks.yale.edu/book/9780300078152/seeing-like-a-state/' });
+    await addBookNote(env, seeing, { text: 'Starts with forestry in Prussia, and it is about every dashboard I have built.', date: '2026-10-09', at: 'chapter 1' });
+    await seedNote(env, 'vn_book', 'm4a', 'audio/mp4');
+    await addBookNote(env, seeing, { text: 'The chapter on city planning is the one I keep thinking about.', date: '2026-10-21', at: 'chapter 3', noteId: 'vn_book', publishAudio: true });
+    await addBookLine(env, seeing, { text: 'Certain forms of knowledge and control require a narrowing of vision.', locator: 'chapter 1' });
+    const pynchon = await createBook(env, { title: { text: "Gravity's Rainbow" }, author: 'Thomas Pynchon', status: 'put-down', started: '2026-07-01' });
+    await addBookNote(env, pynchon, { text: 'Put down at page 212, not for good.', date: '2026-07-29', at: 'p. 212' });
+
+    env.FILES.writes.length = 0;
+    env.MEDIA.writes.length = 0;
+    const r = await publishShelf(env);
+    expect(r.problems).toEqual([]);
+    expect(r.warnings).toEqual([]);
+    expect(r.ok).toBe(true);
+    expect(r.changes).toEqual(['The first publish of the shelf: 3 books.']);
+    // FILES gets only shelf/ (a cover, a recording, the shelf), MEDIA gets nothing.
+    expect(env.FILES.writes.length).toBe(3);
+    for (const k of env.FILES.writes) expect(k.startsWith('shelf/')).toBe(true);
+    expect(env.MEDIA.writes).toEqual([]);
+
+    const shelf = await read<Shelf>(env, SHELF_PATH);
+    expect(validateShelf(shelf, { filesBase: env.FILES_BASE })).toEqual([]);
+    expect(Date.now() - new Date(shelf.updatedAt).getTime()).toBeLessThan(60_000);
+    // Reading first, then the most recently touched.
+    expect(shelf.books.map((b) => b.id)).toEqual(['seeing-like-a-state', 'the-coal-question', 'gravitys-rainbow']);
+    const s0 = shelf.books[0]!;
+    expect(s0.title).toEqual({ text: 'Seeing Like', italic: 'a State' });
+    expect(s0.notes.map((n) => [n.date, n.at])).toEqual([
+      ['2026-10-21', 'chapter 3'],
+      ['2026-10-09', 'chapter 1'],
+    ]);
+    expect(s0.notes[0]!.audio).toEqual({ url: 'https://files.example.org/shelf/audio/seeing-like-a-state-vn_book.m4a', seconds: 12, format: 'm4a' });
+    expect(s0.notes[1]!.audio).toBeUndefined();
+    expect(env.FILES.objects.has('shelf/audio/seeing-like-a-state-vn_book.m4a')).toBe(true);
+    expect(s0.cover).toMatchObject({ width: 600, height: 900, caption: '', credit: 'Yale University Press', licence: '© the publisher, shown for commentary', creator: 'Yale University Press', sourceUrl: 'https://yalebooks.yale.edu/book/9780300078152/seeing-like-a-state/' });
+    expect(s0.cover!.url).toMatch(/^https:\/\/files\.example\.org\/shelf\/covers\/seeing-like-a-state-cover-[0-9a-z]+\.jpg$/);
+    expect(env.FILES.objects.get(s0.cover!.url.replace('https://files.example.org/', ''))?.httpMetadata?.contentType).toBe('image/jpeg');
+    expect(s0.lines).toEqual([{ text: 'Certain forms of knowledge and control require a narrowing of vision.', locator: 'chapter 1' }]);
+    expect(s0.hauls).toBeUndefined();
+    expect(shelf.books[1]).toMatchObject({ status: 'read', started: '2026-09-20', finished: '2026-10-12', year: 1865, hauls: [{ number: 1, itemId: 'the-coal-question' }] });
+    expect(await env.DB.prepare('SELECT version, books FROM shelf_versions').all()).toMatchObject({ results: [{ version: 1, books: 3 }] });
+
+    // The next publish says what changed, and copies nothing it already has.
+    await addBookNote(env, pynchon, { text: 'Back to it in the winter.', date: '2026-10-20' });
+    await patchBook(env, pynchon, { status: 'reading' });
+    env.FILES.writes.length = 0;
+    const r2 = await publishShelf(env);
+    expect(r2.changes).toEqual(["Gravity's Rainbow: put down → reading now; 1 new note."]);
+    expect(env.FILES.writes).toEqual([SHELF_PATH]);
+  });
+
+  it('refuses with plain messages and writes nothing: a cover without its credit, a missing file, a book without its author', async () => {
+    const env = makeEnv();
+    const b = await createBook(env, { title: { text: 'The Coal', italic: 'Question' }, author: 'William Stanley Jevons' });
+    await setBookCover(env, b, { bytes: fakeJpeg(), credit: 'Wikisource', licence: 'Public domain', creator: 'Macmillan', sourceUrl: 'https://en.wikisource.org/wiki/The_Coal_Question' });
+    await env.DB.prepare(`UPDATE books SET cover_credit = '' WHERE id = ?`).bind(b.id).run();
+    const r = await publishShelf(env);
+    expect([r.ok, r.problems]).toEqual([false, ['The Coal Question: the cover is missing its size, credit or licence; add it again']]);
+    expect(env.FILES.writes).toEqual([]);
+
+    await env.DB.prepare(`UPDATE books SET cover_credit = 'Wikisource' WHERE id = ?`).bind(b.id).run();
+    const key = (await env.DB.prepare('SELECT cover_key FROM books WHERE id = ?').bind(b.id).first<{ cover_key: string }>())!.cover_key;
+    await env.MEDIA.delete(key);
+    const r2 = await publishShelf(env);
+    expect([r2.ok, r2.problems]).toEqual([false, [expect.stringMatching(/missing from storage/)]]);
+    expect(env.FILES.objects.has(SHELF_PATH)).toBe(false);
+
+    await env.DB.prepare(`UPDATE books SET author = ' ', cover_key = NULL WHERE id = ?`).bind(b.id).run();
+    expect((await assembleShelf(env)).problems).toEqual(['The Coal Question: author: name the author']);
+  });
+
+  it('finds a Book item linked after its Haul was published in the published bundle, and warns when the bundle cannot show it', async () => {
+    const env = await seedHaul(makeEnv());
+    await env.DB.prepare(`UPDATE items SET type = 'book' WHERE id IN ('it_jevons', 'it_bush')`).run();
+    await env.DB.batch(['it_jevons', 'it_bush'].map((id, i) => env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, ?)').bind('hl_1', id, i)));
+    expect((await publishHaul(env, 'hl_1')).ok).toBe(true);
+    const coal = await createBook(env, { title: { text: 'The Coal', italic: 'Question' }, author: 'William Stanley Jevons' });
+    const bush = await createBook(env, { title: { text: 'As We May Think' }, author: 'Vannevar Bush' });
+    await linkItemToBook(env, await item(env, 'it_jevons'), coal.id);
+    await linkItemToBook(env, await item(env, 'it_bush'), bush.id);
+    // The editor renames the second item after publishing: the bundle no longer shows it by that id.
+    await env.DB.prepare(`UPDATE items SET title = 'Memex' WHERE id = 'it_bush'`).run();
+    const a = await assembleShelf(env);
+    expect(a.problems).toEqual([]);
+    expect(a.shelf.books.find((b) => b.id === 'the-coal-question')!.hauls).toEqual([{ number: 1, itemId: 'the-coal-question' }]);
+    expect(a.shelf.books.find((b) => b.id === 'as-we-may-think')!.hauls).toBeUndefined();
+    expect(a.warnings).toEqual([expect.stringMatching(/"Memex" in Haul 1 points to a shelf book, but the published Haul does not show it/)]);
   });
 });
