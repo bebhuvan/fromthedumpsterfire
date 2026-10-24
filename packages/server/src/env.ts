@@ -54,6 +54,8 @@ export interface Env {
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
   OWNER_EMAIL?: string;
+  ACCESS_SERVICE_CLIENT_IDS?: string;
+  ACCESS_SERVICE_PUBLISH_CLIENT_IDS?: string;
   /** Local wrangler dev only; refused on any non-localhost host and in production. */
   DEV_AUTH_BYPASS?: string;
 

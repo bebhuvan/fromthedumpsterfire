@@ -43,7 +43,7 @@ import {
   type SourceRow,
   type WikiRow,
 } from '@fdf/server';
-import { AccessDenied, devBypassAllowed, KNOWN_ENVIRONMENTS, readAssertion, verifyOwner } from './access';
+import { AccessDenied, devBypassAllowed, KNOWN_ENVIRONMENTS, readAssertion, verifyEditor, serviceRequestAllowed } from './access';
 import { captureEntries, captureFile, entriesFromPaste, type CaptureEntry } from './capture';
 import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY_HEADERS, withHeaders } from './security';
 import { m6, platesFor } from './milestone6';
@@ -51,7 +51,7 @@ import { blocksApi } from './blocks';
 import { shelfApi } from './shelf';
 import { assetResponse, manifestResponse } from './updates';
 
-type App = { Bindings: Env; Variables: { owner: string } };
+type App = { Bindings: Env; Variables: { owner: string; canPublish: boolean; ownerLogin: boolean } };
 const app = new Hono<App>();
 
 
@@ -78,15 +78,22 @@ app.use('*', async (c, next) => {
   if (!csrf.ok) return c.json({ error: 'Refused', reason: csrf.reason }, csrf.status ?? 403);
   if (devBypassAllowed(c.env, url)) {
     c.set('owner', 'local-dev');
+    c.set('canPublish', true);
+    c.set('ownerLogin', true);
     return next();
   }
   try {
-    const { email } = await verifyOwner(readAssertion(c.req.raw.headers), {
+    const identity = await verifyEditor(readAssertion(c.req.raw.headers), {
       teamDomain: c.env.ACCESS_TEAM_DOMAIN,
       audience: c.env.ACCESS_AUD,
       ownerEmail: c.env.OWNER_EMAIL,
+      serviceClientIds: c.env.ACCESS_SERVICE_CLIENT_IDS,
+      servicePublishClientIds: c.env.ACCESS_SERVICE_PUBLISH_CLIENT_IDS,
     });
-    c.set('owner', email);
+    if (!serviceRequestAllowed(identity, c.req.method, url.pathname)) return c.json({ error: 'This service client cannot perform that action' }, 403);
+    c.set('owner', identity.kind === 'owner' ? identity.id : `service:${identity.id}`);
+    c.set('canPublish', identity.canPublish);
+    c.set('ownerLogin', identity.kind === 'owner');
     return next();
   } catch (e) {
     const reason = e instanceof AccessDenied ? e.message : 'Access check failed';
@@ -174,7 +181,7 @@ function secretsPresent(env: Env) {
 // ------------------------------------------------------------------ me, settings
 
 app.get('/api/me', async (c) => {
-  return c.json({ owner: c.get('owner'), environment: c.env.ENVIRONMENT, spend: await spendStatus(c.env) });
+  return c.json({ owner: c.get('owner'), environment: c.env.ENVIRONMENT, capabilities: { publish: c.get('canPublish'), delete: c.get('ownerLogin') }, spend: await spendStatus(c.env) });
 });
 
 app.get('/api/settings', async (c) => {
