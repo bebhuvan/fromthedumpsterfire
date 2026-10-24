@@ -1,7 +1,7 @@
 // The published Haul bundle: the only contract between the publisher and the readers' app and site.
 // Bundles are static JSON on R2, so every field here is final, verified copy.
 
-import type { ContentType, Swatch } from './tokens';
+import type { CodeRole, ContentType, Edition, Swatch } from './tokens';
 
 export const BUNDLE_VERSION = 1;
 
@@ -29,6 +29,7 @@ export interface HaulSummary {
   deck: string;
   publishedAt: string; // ISO date
   swatch: Swatch;
+  edition?: Edition;
   itemCount: number;
   /** Path relative to the files base, e.g. "hauls/001/v1/haul.json". */
   path: string;
@@ -134,6 +135,50 @@ export interface Media {
   label: string;
 }
 
+/** One run of highlighted code: its role ('' for plain) and its exact text. Joined, they are the code. */
+export type CodeToken = [role: CodeRole | '', text: string];
+
+/**
+ * Rich media the editor adds to an item, printed after the note and the excerpt in every form.
+ * Quotes and code are excerpts too: each is matched word for word against the stored source text
+ * before it can ship. Video and podcast embeds are resolved from the editor's link by code, never by
+ * a model. Optional; older bundles have none (added 2026-10-24).
+ */
+export type Block =
+  | { kind: 'quote'; text: string; locator?: string }
+  | { kind: 'code'; code: string; lang?: string; caption?: string; tokens?: CodeToken[] }
+  | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { url: string; width: number; height: number } }
+  | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number; seconds?: number }
+  | { kind: 'image'; plate: Plate };
+export type BlockKind = Block['kind'];
+export const BLOCK_KINDS: readonly BlockKind[] = ['quote', 'code', 'video', 'audio', 'image'];
+
+/** The player's address for an embed: youtube-nocookie, Vimeo's player, Spotify's or Apple's embed. */
+export function embedSrc(b: Extract<Block, { kind: 'video' | 'audio' }>): string | undefined {
+  if (b.kind === 'video') {
+    if (!/^[\w-]{6,20}$/.test(b.id)) return undefined;
+    const t = b.start ? Math.floor(b.start) : 0;
+    return b.provider === 'youtube'
+      ? `https://www.youtube-nocookie.com/embed/${b.id}?rel=0${t ? `&start=${t}` : ''}`
+      : `https://player.vimeo.com/video/${b.id}?dnt=1${t ? `#t=${t}s` : ''}`;
+  }
+  if (b.provider === 'spotify') {
+    const m = /^https:\/\/open\.spotify\.com\/(episode|show)\/([A-Za-z0-9]{10,30})/.exec(b.url);
+    return m ? `https://open.spotify.com/embed/${m[1]}/${m[2]}` : undefined;
+  }
+  if (b.provider === 'apple') {
+    const m = /^https:\/\/podcasts\.apple\.com\/([a-z]{2}\/podcast\/[^?#\s]+)(\?i=\d+)?/.exec(b.url);
+    return m ? `https://embed.podcasts.apple.com/${m[1]}${m[2] ?? ''}` : undefined;
+  }
+  return undefined;
+}
+
+/** The link to watch a video on its own site, at its start time. */
+export function videoHref(b: Extract<Block, { kind: 'video' }>): string {
+  const t = b.start ? Math.floor(b.start) : 0;
+  return b.provider === 'youtube' ? `https://www.youtube.com/watch?v=${b.id}${t ? `&t=${t}s` : ''}` : `https://vimeo.com/${b.id}${t ? `#t=${t}s` : ''}`;
+}
+
 export interface Item {
   id: string;
   type: ContentType;
@@ -153,6 +198,25 @@ export interface Item {
   startHere?: StartHere;
   wiki: WikiCard[];
   connections: Connection[];
+  /** Rich media: pull quotes, code, video, podcast and audio embeds, pictures (added 2026-10-24). */
+  blocks?: Block[];
+  /** The year the work was made, when source.date does not say it (the Haul's fingerprint uses it). */
+  year?: number;
+  /** A post's handle on its platform, e.g. "@visakanv" (social posts). */
+  handle?: string;
+  /** Who a letter was written to. */
+  recipient?: string;
+  /** Where a letter was written or a speech given. */
+  place?: string;
+}
+
+/** The year a work comes from: its own year if given, else the first year in its date, else the rhyme's "then". */
+export function itemYear(item: Pick<Item, 'year' | 'source' | 'rhyme'>, fallback?: number): number | undefined {
+  if (item.year && Number.isInteger(item.year)) return item.year;
+  const m = /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(item.source?.date ?? '');
+  if (m) return Number(m[1]);
+  const r = /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(item.rhyme?.now.year ?? '');
+  return r ? Number(r[1]) : fallback;
 }
 
 export interface ThreadPoint {
@@ -180,6 +244,8 @@ export interface Haul {
   deck: string;
   publishedAt: string;
   swatch: Swatch;
+  /** The Haul's edition colour (tokens.ts). Absent: editionOf(number). */
+  edition?: Edition;
   /** A public-domain cover plate (optional). */
   cover?: Plate;
   fieldNote: FieldNote;

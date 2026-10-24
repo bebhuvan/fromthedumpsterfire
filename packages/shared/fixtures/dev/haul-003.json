@@ -1,0 +1,224 @@
+{
+ "bundleVersion": 1,
+ "number": 3,
+ "version": 1,
+ "title": {
+  "text": "The machine",
+  "italic": "in the garden"
+ },
+ "deck": "A short essay with code in it, a poem, a Wikipedia oddity, and the print that started it.",
+ "publishedAt": "2026-10-24",
+ "swatch": "mint",
+ "fieldNote": {
+  "title": {
+   "text": "Another sample,",
+   "italic": "smaller"
+  },
+  "paragraphs": [
+   "A second sample Haul, so two editions can be compared side by side."
+  ],
+  "route": []
+ },
+ "items": [
+  {
+   "id": "worse-is-better",
+   "type": "essay",
+   "title": {
+    "text": "Worse is",
+    "italic": "better"
+   },
+   "creator": "Richard P. Gabriel",
+   "source": {
+    "name": "dreamsongs.com",
+    "date": "1989",
+    "url": "https://www.dreamsongs.com/WorseIsBetter.html"
+   },
+   "why": {
+    "text": "Sample note. The argument that simple and slightly wrong beats right and complicated, from a man who preferred right."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "excerpt": {
+    "text": "Simplicity: the design must be simple, both in implementation and interface.",
+    "highlight": "the design must be simple",
+    "locator": "The rise of worse is better"
+   },
+   "blocks": [
+    {
+     "kind": "quote",
+     "text": "It is more important for the implementation to be simple than the interface.",
+     "locator": "The rise of worse is better"
+    },
+    {
+     "kind": "code",
+     "lang": "c",
+     "caption": "The PC-loser-ing problem, in miniature",
+     "code": "/* A system call interrupted by a signal returns early. */\nwhile ((n = read(fd, buf, len)) == -1 && errno == EINTR)\n    ;  /* the caller retries */\n",
+     "tokens": [
+      [
+       "c",
+       "/* A system call interrupted by a signal returns early. */"
+      ],
+      [
+       "",
+       "\n"
+      ],
+      [
+       "k",
+       "while"
+      ],
+      [
+       "",
+       " ((n = read(fd, buf, len)) == "
+      ],
+      [
+       "n",
+       "-1"
+      ],
+      [
+       "",
+       " && errno == EINTR)\n    ;  "
+      ],
+      [
+       "c",
+       "/* the caller retries */"
+      ],
+      [
+       "",
+       "\n"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "wave2",
+   "type": "image",
+   "title": {
+    "text": "The great wave, again"
+   },
+   "creator": "Katsushika Hokusai",
+   "source": {
+    "name": "Thirty-six Views of Mount Fuji",
+    "date": "about 1831",
+    "url": "https://en.wikipedia.org/wiki/The_Great_Wave_off_Kanagawa"
+   },
+   "why": {
+    "text": "Sample note. A picture on its own, as the object of the item."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "year": 1831,
+   "plate": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/1280px-Tsunami_by_hokusai_19th_century.jpg",
+    "width": 1280,
+    "height": 860,
+    "caption": "Under the Wave off Kanagawa, about 1831.",
+    "credit": "Katsushika Hokusai, via Wikimedia Commons",
+    "licence": "public domain"
+   }
+  },
+  {
+   "id": "leaves",
+   "type": "poem",
+   "title": {
+    "text": "Leaves of Grass"
+   },
+   "creator": "Walt Whitman",
+   "source": {
+    "name": "Leaves of Grass",
+    "date": "1855",
+    "url": "https://en.wikipedia.org/wiki/Leaves_of_Grass"
+   },
+   "why": {
+    "text": "Sample note. A poem as a broadside."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "excerpt": {
+    "text": "I celebrate myself, and sing myself,\nAnd what I assume you shall assume,\nFor every atom belonging to me as good belongs to you.",
+    "locator": ""
+   }
+  },
+  {
+   "id": "emu-war",
+   "type": "rabbit-hole",
+   "title": {
+    "text": "The Emu War"
+   },
+   "creator": "Wikipedia",
+   "source": {
+    "name": "Wikipedia",
+    "date": "1932",
+    "url": "https://en.wikipedia.org/wiki/Emu_War"
+   },
+   "why": {
+    "text": "Sample note. The Australian army against a flock of birds. The birds won."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": []
+  },
+  {
+   "id": "ideas-talk",
+   "type": "talk",
+   "title": {
+    "text": "The computer revolution hasn't happened yet"
+   },
+   "creator": "Alan Kay",
+   "source": {
+    "name": "OOPSLA",
+    "date": "1997",
+    "url": "https://www.youtube.com/watch?v=oKg1hTOQXoY"
+   },
+   "why": {
+    "text": "Sample note. A talk with its video set inside the transcript."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "minutes": 64,
+   "blocks": [
+    {
+     "kind": "video",
+     "provider": "youtube",
+     "id": "oKg1hTOQXoY",
+     "title": "The computer revolution hasn't happened yet",
+     "poster": {
+      "url": "https://i.ytimg.com/vi/oKg1hTOQXoY/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     }
+    }
+   ]
+  },
+  {
+   "id": "victorian",
+   "type": "passage",
+   "title": {
+    "text": "The Machine in the Garden"
+   },
+   "creator": "Leo Marx",
+   "source": {
+    "name": "Oxford University Press",
+    "date": "1964",
+    "url": "https://en.wikipedia.org/wiki/The_Machine_in_the_Garden"
+   },
+   "why": {
+    "text": "Sample note. A passage as a page from the book."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "excerpt": {
+    "text": "A sample passage set as a page from the book, justified, under its running head, with its page as the folio.",
+    "locator": "p. 15"
+   }
+  }
+ ],
+ "threads": [],
+ "colophon": "A development sample."
+}

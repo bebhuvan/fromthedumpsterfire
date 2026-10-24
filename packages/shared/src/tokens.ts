@@ -3,7 +3,8 @@
 export type Scheme = 'light' | 'dark';
 
 // Warm swatches lead (the name is a fire); cool ones are relief.
-export type Swatch = 'apricot' | 'coral' | 'butter' | 'sky' | 'mint' | 'pistachio';
+export type Swatch = 'apricot' | 'coral' | 'butter' | 'sky' | 'mint' | 'pistachio' | 'lilac' | 'aqua';
+export const SWATCHES: readonly Swatch[] = ['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio', 'lilac', 'aqua'];
 
 export interface Palette {
   bg: string;
@@ -17,7 +18,16 @@ export interface Palette {
   invBg: string;
   invInk: string;
   swatch: Record<Swatch, string>;
+  /** Syntax colours for code blocks, by role (CodeRole in haul.ts). Never machine blue, never ember. */
+  code: Record<CodeRole, string>;
 }
+
+/**
+ * Roles a code token can take: keyword, string, comment, number or literal, function or title, type
+ * or class, attribute or property, meta (tags, decorators, preprocessor), deletion, insertion.
+ */
+export type CodeRole = 'k' | 's' | 'c' | 'n' | 'f' | 't' | 'a' | 'm' | 'd' | 'i';
+export const CODE_ROLES: readonly CodeRole[] = ['k', 's', 'c', 'n', 'f', 't', 'a', 'm', 'd', 'i'];
 
 export const palettes: Record<Scheme, Palette> = {
   light: {
@@ -37,7 +47,10 @@ export const palettes: Record<Scheme, Palette> = {
       sky: '#DCEBFF',
       mint: '#D2F3E2',
       pistachio: '#E6F2C8',
+      lilac: '#ECE4FA',
+      aqua: '#D3EFF0',
     },
+    code: { k: '#8A2A55', s: '#2F6B3A', c: '#6E6E76', n: '#9A5B00', f: '#141416', t: '#0F5F63', a: '#7A4A12', m: '#6B3FA0', d: '#A3232E', i: '#2F6B3A' },
   },
   dark: {
     bg: '#0F0F12',
@@ -56,7 +69,10 @@ export const palettes: Record<Scheme, Palette> = {
       sky: '#15304B',
       mint: '#163D2D',
       pistachio: '#2E3915',
+      lilac: '#33284A',
+      aqua: '#123B3D',
     },
+    code: { k: '#F09CC0', s: '#9ED39A', c: '#8E8E98', n: '#F2BE6E', f: '#F3F3F1', t: '#7FD3D0', a: '#E8B98A', m: '#C9A8F2', d: '#F08A92', i: '#9ED39A' },
   },
 };
 
@@ -72,13 +88,20 @@ export const typeSwatch = {
   passage: 'coral',
   rhymes: 'sky',
   'rabbit-hole': 'pistachio',
+  quote: 'coral',
+  letter: 'lilac',
+  speech: 'butter',
+  social: 'aqua',
+  image: 'aqua',
+  book: 'lilac',
+  tool: 'mint',
 } as const satisfies Record<string, Swatch>;
 
 export type ContentType = keyof typeof typeSwatch;
 
 export const typeLabel: Record<ContentType, string> = {
   essay: 'Essay',
-  post: 'Post',
+  post: 'Blog post',
   talk: 'Talk',
   video: 'Video',
   podcast: 'Podcast',
@@ -87,4 +110,26 @@ export const typeLabel: Record<ContentType, string> = {
   passage: 'Passage',
   rhymes: 'Rhymes',
   'rabbit-hole': 'Rabbit hole',
+  quote: 'Quotation',
+  letter: 'Letter',
+  speech: 'Speech',
+  social: 'Post',
+  image: 'Picture',
+  book: 'Book',
+  tool: 'Tool',
 };
+
+/**
+ * Each Haul's edition colour: a deep ink that marks every page of that Haul (the band on the top edge,
+ * its number, its fingerprint's rule), so a reader knows which Haul they are in at a glance. Kept
+ * clear of the type swatches (pale), machine blue and ember. Hauls without one take
+ * editionOf(number), so neighbouring Hauls always differ.
+ */
+export type Edition = 'oxblood' | 'teal' | 'ochre' | 'plum' | 'pine' | 'umber' | 'slate' | 'olive';
+export const EDITIONS: readonly Edition[] = ['oxblood', 'teal', 'ochre', 'plum', 'pine', 'umber', 'slate', 'olive'];
+export const editionInk: Record<Scheme, Record<Edition, string>> = {
+  light: { oxblood: '#8C2333', teal: '#0E6461', ochre: '#94650C', plum: '#6A2C61', pine: '#24573F', umber: '#7A4A2A', slate: '#465661', olive: '#5E6214' },
+  dark: { oxblood: '#EE8E99', teal: '#6FD0CB', ochre: '#E6B65E', plum: '#D99CD0', pine: '#86C9A6', umber: '#D9A783', slate: '#A9BAC6', olive: '#C7C96E' },
+};
+export const editionOf = (n: number, chosen?: string): Edition =>
+  chosen && (EDITIONS as readonly string[]).includes(chosen) ? (chosen as Edition) : EDITIONS[(Math.max(1, n) - 1) % EDITIONS.length]!;

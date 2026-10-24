@@ -13,10 +13,15 @@
     "./cleanup": "./src/cleanup.ts",
     "./detect": "./src/detect.ts",
     "./quoting": "./src/quoting.ts",
+    "./highlight": "./src/highlight.ts",
     "./fixtures/haul-001.json": "./fixtures/haul-001.json",
-    "./fixtures/index.json": "./fixtures/index.json"
+    "./fixtures/index.json": "./fixtures/index.json",
+    "./fixtures/dev/*": "./fixtures/dev/*"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1"
   }
 }

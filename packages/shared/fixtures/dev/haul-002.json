@@ -1,0 +1,361 @@
+{
+ "bundleVersion": 1,
+ "number": 2,
+ "version": 1,
+ "title": {
+  "text": "Letters to",
+  "italic": "the next people"
+ },
+ "deck": "A president's condolence, a commencement speech, a print of a wave, and a tool for keeping data where others can find it.",
+ "publishedAt": "2026-10-22",
+ "swatch": "lilac",
+ "fieldNote": {
+  "title": {
+   "text": "Sample Haul,",
+   "italic": "for the layout"
+  },
+  "paragraphs": [
+   "This is a development sample. It holds one of every kind of thing the magazine can carry, so the pages can be checked before real Hauls arrive.",
+   "Each object here is set in its own printed form, and each carries the rich media a Haul can hold: code, a video, a podcast, a pull quote and a picture."
+  ],
+  "highlight": "one of every kind of thing the magazine can carry",
+  "route": [
+   {
+    "day": "Mon",
+    "text": "A letter from 1864, still read aloud.",
+    "by": "editor",
+    "itemId": "bixby"
+   },
+   {
+    "day": "Wed",
+    "text": "A tool for publishing data, with its one command.",
+    "by": "editor",
+    "itemId": "datasette"
+   },
+   {
+    "day": "Fri",
+    "text": "Both are about leaving something for strangers.",
+    "by": "machine"
+   },
+   {
+    "day": "Sat",
+    "text": "A speech at Stanford, 2005.",
+    "by": "editor",
+    "itemId": "stanford"
+   }
+  ]
+ },
+ "items": [
+  {
+   "id": "bixby",
+   "type": "letter",
+   "title": {
+    "text": "Letter to Mrs. Bixby"
+   },
+   "creator": "Abraham Lincoln",
+   "source": {
+    "name": "Library of Congress",
+    "date": "21 November 1864",
+    "url": "https://en.wikipedia.org/wiki/Bixby_letter"
+   },
+   "why": {
+    "text": "Sample note. A letter of five sentences that is still read at funerals. The form matters: a dateline, a salutation, the body, the close."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "recipient": "Mrs. Lydia Bixby",
+   "place": "Executive Mansion, Washington",
+   "excerpt": {
+    "text": "Dear Madam,\nI have been shown in the files of the War Department a statement of the Adjutant General of Massachusetts that you are the mother of five sons who have died gloriously on the field of battle.",
+    "highlight": "the mother of five sons who have died gloriously on the field of battle",
+    "locator": ""
+   }
+  },
+  {
+   "id": "sample-post",
+   "type": "social",
+   "title": {
+    "text": "On keeping a commonplace book"
+   },
+   "creator": "Sample Writer",
+   "source": {
+    "name": "X",
+    "date": "3 October 2026",
+    "url": "https://x.com/"
+   },
+   "why": {
+    "text": "Sample note. A post set as a clipping, with the handle and the date, never the platform's embed."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "handle": "@samplewriter",
+   "excerpt": {
+    "text": "Keep a commonplace book. Not for anyone else. Copy out the lines that stop you. In ten years it will be the best book you own.",
+    "highlight": "Copy out the lines that stop you.",
+    "locator": ""
+   }
+  },
+  {
+   "id": "datasette",
+   "type": "tool",
+   "title": {
+    "text": "Datasette"
+   },
+   "creator": "Simon Willison",
+   "source": {
+    "name": "Open source, Python",
+    "date": "2017",
+    "url": "https://datasette.io/"
+   },
+   "why": {
+    "text": "Sample note. One command turns a SQLite file into a website and an API. I use it to keep the magazine's own data browsable."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "excerpt": {
+    "text": "An open source multi-tool for exploring and publishing data",
+    "locator": "datasette.io"
+   },
+   "blocks": [
+    {
+     "kind": "code",
+     "lang": "bash",
+     "caption": "Install it and serve a database",
+     "code": "pip install datasette\ndatasette serve hauls.db --open",
+     "tokens": [
+      [
+       "",
+       "pip install datasette\ndatasette serve hauls.db --open"
+      ]
+     ]
+    },
+    {
+     "kind": "code",
+     "lang": "python",
+     "caption": "Or load rows from Python first",
+     "code": "import sqlite_utils\n\n# One table per Haul, one row per object\ndb = sqlite_utils.Database(\"hauls.db\")\ndb[\"items\"].insert_all(rows, pk=\"id\")\nprint(db[\"items\"].count, \"objects\")\n",
+     "tokens": [
+      [
+       "k",
+       "import"
+      ],
+      [
+       "",
+       " sqlite_utils\n\n"
+      ],
+      [
+       "c",
+       "# One table per Haul, one row per object"
+      ],
+      [
+       "",
+       "\ndb = sqlite_utils.Database("
+      ],
+      [
+       "s",
+       "\"hauls.db\""
+      ],
+      [
+       "",
+       ")\ndb["
+      ],
+      [
+       "s",
+       "\"items\""
+      ],
+      [
+       "",
+       "].insert_all(rows, pk="
+      ],
+      [
+       "s",
+       "\"id\""
+      ],
+      [
+       "",
+       ")\n"
+      ],
+      [
+       "k",
+       "print"
+      ],
+      [
+       "",
+       "(db["
+      ],
+      [
+       "s",
+       "\"items\""
+      ],
+      [
+       "",
+       "].count, "
+      ],
+      [
+       "s",
+       "\"objects\""
+      ],
+      [
+       "",
+       ")\n"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stanford",
+   "type": "speech",
+   "title": {
+    "text": "Commencement address"
+   },
+   "creator": "Steve Jobs",
+   "source": {
+    "name": "Stanford University",
+    "date": "12 June 2005",
+    "url": "https://www.youtube.com/watch?v=UF8uR6Z6KLc"
+   },
+   "why": {
+    "text": "Sample note. Everyone remembers the last line. The middle, about getting fired, is the better part."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "place": "Stanford, California",
+   "minutes": 15,
+   "excerpt": {
+    "text": "Stay hungry. Stay foolish.",
+    "highlight": "Stay hungry.",
+    "locator": "14:33"
+   },
+   "blocks": [
+    {
+     "kind": "video",
+     "provider": "youtube",
+     "id": "UF8uR6Z6KLc",
+     "title": "Steve Jobs' 2005 Stanford Commencement Address",
+     "start": 0,
+     "poster": {
+      "url": "https://i.ytimg.com/vi/UF8uR6Z6KLc/hqdefault.jpg",
+      "width": 480,
+      "height": 360
+     }
+    }
+   ]
+  },
+  {
+   "id": "kay",
+   "type": "quote",
+   "title": {
+    "text": "Predicting the future"
+   },
+   "creator": "Alan Kay",
+   "source": {
+    "name": "Xerox PARC meeting",
+    "date": "1971",
+    "url": "https://en.wikipedia.org/wiki/Alan_Kay"
+   },
+   "why": {
+    "text": "Sample note. Said in a planning meeting at Xerox PARC, where they were asked to forecast."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "excerpt": {
+    "text": "The best way to predict the future is to invent it.",
+    "locator": ""
+   }
+  },
+  {
+   "id": "wave",
+   "type": "image",
+   "title": {
+    "text": "Under the Wave",
+    "italic": "off Kanagawa"
+   },
+   "creator": "Katsushika Hokusai",
+   "source": {
+    "name": "Thirty-six Views of Mount Fuji",
+    "date": "about 1831",
+    "url": "https://en.wikipedia.org/wiki/The_Great_Wave_off_Kanagawa"
+   },
+   "why": {
+    "text": "Sample note. The most copied print in the world. Look at the boats before the wave."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "year": 1831,
+   "plate": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/1280px-Tsunami_by_hokusai_19th_century.jpg",
+    "width": 1280,
+    "height": 860,
+    "caption": "Under the Wave off Kanagawa, about 1831.",
+    "credit": "Katsushika Hokusai, via Wikimedia Commons",
+    "licence": "public domain"
+   }
+  },
+  {
+   "id": "seeing-state",
+   "type": "book",
+   "title": {
+    "text": "Seeing Like",
+    "italic": "a State"
+   },
+   "creator": "James C. Scott",
+   "source": {
+    "name": "Yale University Press",
+    "date": "1998",
+    "url": "https://en.wikipedia.org/wiki/Seeing_Like_a_State"
+   },
+   "why": {
+    "text": "Sample note. On my desk for a month. Every chapter is a case of a plan that could only see what it could count."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "excerpt": {
+    "text": "Certain forms of knowledge and control require a narrowing of vision.",
+    "locator": "Chapter 1"
+   }
+  },
+  {
+   "id": "sample-pod",
+   "type": "podcast",
+   "title": {
+    "text": "A podcast episode"
+   },
+   "creator": "Sample Host",
+   "source": {
+    "name": "Spotify",
+    "date": "2026",
+    "url": "https://open.spotify.com/show/2MAi0BvDc6GTFvKFPXnkCL"
+   },
+   "why": {
+    "text": "Sample note. A podcast with its official player, and an audio file played by the browser."
+   },
+   "marginalia": [],
+   "wiki": [],
+   "connections": [],
+   "minutes": 95,
+   "blocks": [
+    {
+     "kind": "audio",
+     "provider": "spotify",
+     "url": "https://open.spotify.com/show/2MAi0BvDc6GTFvKFPXnkCL",
+     "title": "The show on Spotify"
+    },
+    {
+     "kind": "quote",
+     "text": "A pull quote from the episode, matched word for word against its transcript.",
+     "locator": "41:10"
+    }
+   ]
+  }
+ ],
+ "threads": [],
+ "colophon": "A development sample. Chosen and annotated by nobody; it exists to test the layout."
+}

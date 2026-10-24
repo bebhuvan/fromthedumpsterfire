@@ -1,0 +1,42 @@
+{
+ "bundleVersion": 1,
+ "updatedAt": "2026-10-24T12:00:00Z",
+ "hauls": [
+  {
+   "number": 3,
+   "title": {
+    "text": "The machine",
+    "italic": "in the garden"
+   },
+   "deck": "A short essay with code in it, a poem, a Wikipedia oddity, and the print that started it.",
+   "publishedAt": "2026-10-24",
+   "swatch": "mint",
+   "itemCount": 6,
+   "path": "hauls/003/v1/haul.json"
+  },
+  {
+   "number": 2,
+   "title": {
+    "text": "Letters to",
+    "italic": "the next people"
+   },
+   "deck": "A president's condolence, a commencement speech, a print of a wave, and a tool for keeping data where others can find it.",
+   "publishedAt": "2026-10-22",
+   "swatch": "lilac",
+   "itemCount": 8,
+   "path": "hauls/002/v1/haul.json"
+  },
+  {
+   "number": 1,
+   "title": {
+    "text": "What cheap things",
+    "italic": "cost"
+   },
+   "deck": "Coal, attention, memory machines, and a London summer that smelled so bad Parliament finally paid for sewers.",
+   "publishedAt": "2026-10-15",
+   "swatch": "apricot",
+   "itemCount": 6,
+   "path": "hauls/001/v1/haul.json"
+  }
+ ]
+}

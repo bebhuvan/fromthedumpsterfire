@@ -2,9 +2,9 @@
 // It checks the shape (bundles are JSON assembled from a database, so types alone prove nothing)
 // and the invariants in test/fixtures.test.ts, plus the house rules that apply to published copy.
 
-import type { Haul, HaulIndex, Item, Title } from './haul';
-import { AUDIO_FORMATS, BUNDLE_VERSION, haulSlug } from './haul';
-import { typeSwatch } from './tokens';
+import type { Block, Haul, HaulIndex, Item, Title } from './haul';
+import { AUDIO_FORMATS, BLOCK_KINDS, BUNDLE_VERSION, embedSrc, haulSlug } from './haul';
+import { CODE_ROLES, EDITIONS, SWATCHES as SWATCH_LIST, typeSwatch } from './tokens';
 import { checkStyle } from './style';
 
 export interface BundleIssue {
@@ -20,7 +20,7 @@ export interface BundleReport {
   warnings: BundleIssue[];
 }
 
-const SWATCHES = new Set(['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio']);
+const SWATCHES = new Set<string>(SWATCH_LIST);
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:?\d{2})?)?$/;
 
 export interface ValidateOptions {
@@ -209,6 +209,55 @@ function checkItem(c: Collector, item: Item, p: string) {
     });
   }
   c.arr(item.connections, `${p}.connections`);
+  if (item.year !== undefined && (!Number.isInteger(item.year) || item.year < -3000 || item.year > 2100)) c.err(`${p}.year`, 'shape', 'a whole year');
+  c.str(item.handle, `${p}.handle`, { optional: true });
+  c.str(item.recipient, `${p}.recipient`, { optional: true });
+  c.str(item.place, `${p}.place`, { optional: true });
+  if (item.blocks !== undefined && c.arr(item.blocks, `${p}.blocks`)) item.blocks.forEach((b, k) => checkBlock(c, b, `${p}.blocks[${k}]`));
+}
+
+function checkBlock(c: Collector, b: Block, p: string) {
+  if (!c.obj(b, p)) return;
+  if (!BLOCK_KINDS.includes(b.kind)) return c.err(`${p}.kind`, 'shape', `one of ${BLOCK_KINDS.join(', ')}`);
+  switch (b.kind) {
+    case 'quote':
+      c.str(b.text, `${p}.text`);
+      c.str(b.locator, `${p}.locator`, { optional: true, nonEmpty: false });
+      break;
+    case 'code':
+      c.str(b.code, `${p}.code`);
+      c.str(b.lang, `${p}.lang`, { optional: true });
+      c.str(b.caption, `${p}.caption`, { optional: true });
+      if (b.tokens !== undefined && c.arr(b.tokens, `${p}.tokens`)) {
+        const ok = b.tokens.every((t) => Array.isArray(t) && t.length === 2 && (t[0] === '' || CODE_ROLES.includes(t[0])) && typeof t[1] === 'string');
+        if (!ok) c.err(`${p}.tokens`, 'shape', 'pairs of [role, text]');
+        else if (b.tokens.map((t) => t[1]).join('') !== b.code) c.err(`${p}.tokens`, 'tokens', 'the highlighted tokens must join to the code exactly');
+      }
+      break;
+    case 'video':
+      if (b.provider !== 'youtube' && b.provider !== 'vimeo') c.err(`${p}.provider`, 'shape', 'youtube or vimeo');
+      c.str(b.title, `${p}.title`);
+      if (c.str(b.id, `${p}.id`) && !embedSrc(b)) c.err(`${p}.id`, 'embed', 'not a video id');
+      c.num(b.start, `${p}.start`, true);
+      if (c.obj(b.poster, `${p}.poster`, true)) {
+        c.https(b.poster.url, `${p}.poster.url`);
+        c.hosted(b.poster.url, `${p}.poster.url`);
+        c.num(b.poster.width, `${p}.poster.width`);
+        c.num(b.poster.height, `${p}.poster.height`);
+      }
+      break;
+    case 'audio':
+      if (!['file', 'spotify', 'apple'].includes(b.provider)) c.err(`${p}.provider`, 'shape', 'file, spotify or apple');
+      c.https(b.url, `${p}.url`);
+      c.str(b.title, `${p}.title`);
+      if (b.provider !== 'file' && typeof b.url === 'string' && !embedSrc(b)) c.err(`${p}.url`, 'embed', `not a ${b.provider} episode or show link`);
+      c.num(b.start, `${p}.start`, true);
+      c.num(b.seconds, `${p}.seconds`, true);
+      break;
+    case 'image':
+      if (c.obj(b.plate, `${p}.plate`)) c.plate(b.plate, `${p}.plate`);
+      break;
+  }
 }
 
 /** Validate a bundle (and, if given, the index that will point to it). */
@@ -223,6 +272,7 @@ export function validateHaul(haul: Haul, index?: HaulIndex, opts: ValidateOption
   c.str(haul.deck, 'deck');
   if (c.str(haul.publishedAt, 'publishedAt') && !ISO_DATE.test(haul.publishedAt)) c.err('publishedAt', 'shape', 'an ISO date');
   if (!SWATCHES.has(haul.swatch)) c.err('swatch', 'shape', 'a known swatch');
+  if (haul.edition !== undefined && !EDITIONS.includes(haul.edition)) c.err('edition', 'shape', `one of ${EDITIONS.join(', ')}`);
   c.str(haul.colophon, 'colophon');
   c.plate(haul.cover, 'cover');
 

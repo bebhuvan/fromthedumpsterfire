@@ -11,8 +11,20 @@ let store: Store | undefined;
 let seeded: Promise<Bucket> | undefined;
 
 async function seedBucket(): Promise<Bucket> {
-  const [index, haul] = await Promise.all([import('@fdf/shared/fixtures/index.json'), import('@fdf/shared/fixtures/haul-001.json')]);
-  return memoryBucket({ 'hauls/index.json': index.default, 'hauls/001/v1/haul.json': haul.default });
+  // Hauls 002 and 003 are development samples (fixtures/dev) that carry every content type, every
+  // block kind and a second and third edition colour.
+  const [index, h1, h2, h3] = await Promise.all([
+    import('@fdf/shared/fixtures/dev/index.json'),
+    import('@fdf/shared/fixtures/haul-001.json'),
+    import('@fdf/shared/fixtures/dev/haul-002.json'),
+    import('@fdf/shared/fixtures/dev/haul-003.json'),
+  ]);
+  return memoryBucket({
+    'hauls/index.json': index.default,
+    'hauls/001/v1/haul.json': h1.default,
+    'hauls/002/v1/haul.json': h2.default,
+    'hauls/003/v1/haul.json': h3.default,
+  });
 }
 
 function bucket(): Bucket {
