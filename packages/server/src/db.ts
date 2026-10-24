@@ -34,6 +34,8 @@ export interface ItemRow {
   handle?: string | null;
   recipient?: string | null;
   place?: string | null;
+  /** A Book item's shelf book (books.id), written to the bundle as Item.shelf (0007). */
+  shelf_id?: string | null;
   archived: number;
   captured_at: string;
   updated_at: string;

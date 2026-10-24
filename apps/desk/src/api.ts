@@ -4,6 +4,7 @@ import type { Haul, RouteStep, Title } from '@fdf/shared/haul';
 import type { ContentType, Edition, Swatch } from '@fdf/shared/tokens';
 import type { BundleIssue } from '@fdf/shared/validate';
 import type { StyleResult } from '@fdf/shared/style';
+import type { BookStatus, Spine } from '@fdf/shared/shelf';
 
 export class ApiError extends Error {
   constructor(
@@ -104,6 +105,8 @@ export interface Item {
   handle?: string | null;
   recipient?: string | null;
   place?: string | null;
+  /** A Book item's shelf book (books.id). */
+  shelf_id?: string | null;
   archived: number;
   captured_at: string;
   updated_at: string;
@@ -415,6 +418,81 @@ export interface Spend {
   warnUsd: number;
   ceilingUsd: number;
   state: 'ok' | 'warn' | 'ceiling';
+}
+
+// ---------------------------------------------------------------- the shelf
+
+export interface BookUi {
+  id: string;
+  title: Title;
+  title_text: string;
+  title_italic: string | null;
+  author: string;
+  year: number | null;
+  publisher: string | null;
+  url: string | null;
+  status: BookStatus;
+  started: string | null;
+  finished: string | null;
+  spine: Spine | null;
+  /** The cover, served by the Desk from private storage. */
+  cover: string | null;
+  cover_width: number | null;
+  cover_height: number | null;
+  cover_caption: string | null;
+  cover_credit: string | null;
+  cover_licence: string | null;
+  cover_creator: string | null;
+  cover_source_url: string | null;
+  cover_date: string | null;
+  updated_at: string;
+}
+
+export interface BookListRow extends BookUi {
+  note_count: number;
+  line_count: number;
+  last_note: string | null;
+  item_count: number;
+}
+
+export interface BookNoteUi {
+  id: string;
+  book_id: string;
+  date: string;
+  at: string | null;
+  text: string;
+  note_id: string | null;
+  format: string | null;
+  seconds: number | null;
+  publish_audio: number;
+  /** The recording, through the Desk. */
+  audio: string | null;
+}
+
+export interface BookLineUi {
+  id: string;
+  text: string;
+  locator: string | null;
+  position: number;
+  /** Past about 60 words a line is flagged, never refused. */
+  warning: string | null;
+}
+
+export interface BookDetail {
+  book: BookUi;
+  notes: BookNoteUi[];
+  lines: BookLineUi[];
+  items: Array<{ id: string; type: ContentType; title: string | null; title_choice: string | null; haul_id: string | null; haul_number: number | null; haul_status: string | null }>;
+}
+
+export interface ShelfCheck {
+  problems: string[];
+  warnings: string[];
+  changes: string[];
+  last?: { version: number; published_at: string; books: number } | null;
+  ok?: boolean;
+  version?: number;
+  url?: string;
 }
 
 export type { Title, StyleResult };

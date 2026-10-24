@@ -48,6 +48,7 @@ import { captureEntries, captureFile, entriesFromPaste, type CaptureEntry } from
 import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY_HEADERS, withHeaders } from './security';
 import { m6, platesFor } from './milestone6';
 import { blocksApi } from './blocks';
+import { shelfApi } from './shelf';
 import { assetResponse, manifestResponse } from './updates';
 
 type App = { Bindings: Env; Variables: { owner: string } };
@@ -803,15 +804,16 @@ app.post('/api/hauls/:id/publish', async (c) => {
 
 app.route('/', m6);
 app.route('/', blocksApi);
+app.route('/', shelfApi);
 
-// Stored files, behind the lock. Published paths (hauls/...) come from the public FILES bucket, so a
+// Stored files, behind the lock. Published paths (hauls/..., shelf/...) come from the public FILES bucket, so a
 // preview deployment can check its bundles (production readers get them from R2 directly); private
 // material (chosen plates, voice notes) comes from MEDIA. Uploads and snapshots have their own routes.
 const PRIVATE_PREFIXES = ['plates/', 'notes/'];
 app.get('/files/*', async (c) => {
   const key = decodeURIComponent(new URL(c.req.url).pathname.replace(/^\/files\//, ''));
   if (key.includes('..') || key.startsWith('/')) throw notFound();
-  const bucket = key.startsWith('hauls/') ? c.env.FILES : PRIVATE_PREFIXES.some((p) => key.startsWith(p)) ? c.env.MEDIA : null;
+  const bucket = key.startsWith('hauls/') || key.startsWith('shelf/') ? c.env.FILES : PRIVATE_PREFIXES.some((p) => key.startsWith(p)) ? c.env.MEDIA : null;
   if (!bucket) throw notFound();
   const obj = await bucket.get(key);
   if (!obj) throw notFound();

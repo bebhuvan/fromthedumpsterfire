@@ -7,7 +7,10 @@ export const MULTIPART_ROUTES = new Set(['/api/capture/file', '/api/notes', '/sh
 const ITEM_FILE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/file$/;
 /** Adding a picture to an item (an upload, or a link the server fetches). POST only. */
 const ITEM_PICTURE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/picture$/;
-export const isMultipartRoute = (method: string, pathname: string) => MULTIPART_ROUTES.has(pathname) || (method === 'POST' && (ITEM_FILE.test(pathname) || ITEM_PICTURE.test(pathname)));
+/** A shelf book's cover (an upload, or a link the server fetches). POST only. */
+const BOOK_COVER = /^\/api\/books\/[a-z0-9-]{1,81}\/cover$/;
+export const isMultipartRoute = (method: string, pathname: string) =>
+  MULTIPART_ROUTES.has(pathname) || (method === 'POST' && (ITEM_FILE.test(pathname) || ITEM_PICTURE.test(pathname) || BOOK_COVER.test(pathname)));
 
 export const CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";

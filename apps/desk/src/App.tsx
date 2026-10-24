@@ -12,6 +12,8 @@ import { Hauls } from './screens/Hauls';
 import { Composer } from './screens/Composer';
 import { Settings } from './screens/Settings';
 import { Links } from './screens/Links';
+import { Shelf } from './screens/Shelf';
+import { BookPage } from './screens/Book';
 
 export function App() {
   return (
@@ -63,12 +65,15 @@ function Shell() {
     }
   }, [toast]);
 
-  const section = path.startsWith('/haul') ? 'hauls' : path.startsWith('/settings') ? 'settings' : path.startsWith('/links') ? 'links' : 'tray';
+  const section = path.startsWith('/haul') ? 'hauls' : path.startsWith('/shelf') ? 'shelf' : path.startsWith('/settings') ? 'settings' : path.startsWith('/links') ? 'links' : 'tray';
   let screen;
   const item = /^\/item\/([\w-]+)/.exec(path);
   const haul = /^\/haul\/([\w-]+)/.exec(path);
+  const book = /^\/shelf\/([a-z0-9-]+)/.exec(path);
   if (item) screen = <ItemReview id={item[1]!} />;
   else if (haul) screen = <Composer id={haul[1]!} />;
+  else if (book) screen = <BookPage id={book[1]!} />;
+  else if (path === '/shelf') screen = <Shelf />;
   else if (path === '/hauls') screen = <Hauls />;
   else if (path === '/settings') screen = <Settings />;
   else if (path === '/links') screen = <Links />;
@@ -91,6 +96,9 @@ function Shell() {
             </Link>
             <Link to="/hauls" aria-current={section === 'hauls' ? 'page' : undefined}>
               Hauls
+            </Link>
+            <Link to="/shelf" aria-current={section === 'shelf' ? 'page' : undefined}>
+              Shelf
             </Link>
             <Link to="/settings" aria-current={section === 'settings' ? 'page' : undefined}>
               Settings

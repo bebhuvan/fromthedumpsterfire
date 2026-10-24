@@ -2,13 +2,14 @@
 // invariants (packages/shared/src/validate.ts), then write hauls/NNN/vN/haul.json and the index to
 // R2. A correction is a new version with a corrections entry; versions are never overwritten.
 //
-// Two buckets: MEDIA is private (uploads, voice notes, snapshots, chosen plates); FILES is public and
-// holds only published bundles under hauls/. This module is the only writer to FILES: it copies the
-// voice notes, plates, video posters and pictures a bundle needs from MEDIA into FILES next to the bundle, then writes the
-// bundle and the index. It never writes hauls/ to MEDIA.
+// Two buckets: MEDIA is private (uploads, voice notes, snapshots, chosen plates, book covers); FILES is
+// public and holds only published bundles under hauls/ and the shelf under shelf/. This module is the
+// only writer to FILES: it copies the voice notes, plates, video posters, pictures and covers a bundle
+// needs from MEDIA into FILES next to it, then writes the bundle and the index (or shelf/shelf.json).
+// It never writes hauls/ or shelf/ to MEDIA.
 
 import type { Audio, AudioFormat, Haul, HaulIndex, HaulSummary, Item, Plate, Rhyme, RouteStep, Thread, Title } from '@fdf/shared/haul';
-import { PLAYS_ON_IOS } from '@fdf/shared/haul';
+import { AUDIO_FORMATS, PLAYS_ON_IOS } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
 import { isVerbatimAt } from '@fdf/shared/verbatim';
 import { BUNDLE_VERSION, haulSlug } from '@fdf/shared/haul';
@@ -22,6 +23,8 @@ import { formatOfNote } from './voice';
 import { threadsForHaul } from './connect';
 import { blocksFor, blocksForBundle } from './blocks';
 import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
+import { SHELF_PATH, SHELF_VERSION, shelfOrder, validateShelf, type BookNote, type Shelf, type ShelfBook } from '@fdf/shared/shelf';
+import { bookTitle, bookTitleText, linesFor, notesFor, shelfChanges, type BookRow } from './shelf';
 
 /** Sources that are transcripts of speech, where punctuation decides whether a quote is printable. */
 const TRANSCRIPTS = new Set(['captions-auto', 'captions', 'transcript', 'whisper']);
@@ -66,8 +69,12 @@ export const defaultColophon = () => DEFAULT_COLOPHON;
 
 const IMAGE_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
-/** A path in the public bucket. Only hauls/ is ever written there. */
-export const isPublicPath = (key: string) => key.startsWith('hauls/') && !key.includes('..');
+/** A path a Haul publish may write in the public bucket: only under hauls/. */
+export const isHaulPath = (key: string) => key.startsWith('hauls/') && !key.includes('..');
+/** A path a shelf publish may write in the public bucket: only under shelf/. */
+export const isShelfPath = (key: string) => key.startsWith('shelf/') && !key.includes('..');
+/** A path in the public bucket. Only hauls/ and shelf/ are ever written there. */
+export const isPublicPath = (key: string) => isHaulPath(key) || isShelfPath(key);
 
 function citeLabel(b: MarginalBody, item: ItemRow): string {
   if (b.cite.kind === 'wiki') return `Wikipedia: ${b.cite.title}`;
@@ -80,6 +87,24 @@ export async function readIndex(env: Env): Promise<HaulIndex> {
   return (await obj.json()) as HaulIndex;
 }
 
+async function haulItemRows(env: Env, haulId: string): Promise<ItemRow[]> {
+  return (await env.DB.prepare('SELECT i.* FROM haul_items hi JOIN items i ON i.id = hi.item_id WHERE hi.haul_id = ? ORDER BY hi.position').bind(haulId).all<ItemRow>()).results;
+}
+
+/** Each item's id in the bundle: a slug of its title, unique in the Haul, never a reserved word. */
+export function bundleItemIds(items: Pick<ItemRow, 'id' | 'title' | 'title_choice'>[]): Map<string, string> {
+  const idFor = new Map<string, string>();
+  const used = new Set<string>();
+  for (const it of items) {
+    const t = parseJson<Title | null>(it.title_choice, null)?.text ?? it.title ?? 'item';
+    let s = itemSlug(t);
+    for (let k = 2; used.has(s); k++) s = `${slugify(t, 44)}-${k}`;
+    used.add(s);
+    idFor.set(it.id, s);
+  }
+  return idFor;
+}
+
 export async function assembleHaul(env: Env, haulId: string, opts: { correction?: string; card?: Uint8Array } = {}): Promise<Assembled> {
   const h = await env.DB.prepare('SELECT * FROM hauls WHERE id = ?').bind(haulId).first<HaulRow>();
   if (!h) throw new Error('No such Haul');
@@ -90,18 +115,11 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
   const slug = haulSlug(h.number);
   const filesBase = env.FILES_BASE.replace(/\/$/, '');
 
-  const items = (
-    await env.DB.prepare('SELECT i.* FROM haul_items hi JOIN items i ON i.id = hi.item_id WHERE hi.haul_id = ? ORDER BY hi.position').bind(haulId).all<ItemRow>()
-  ).results;
-  const idFor = new Map<string, string>();
-  const used = new Set<string>();
-  for (const it of items) {
-    const t = parseJson<Title | null>(it.title_choice, null)?.text ?? it.title ?? 'item';
-    let s = itemSlug(t);
-    for (let k = 2; used.has(s); k++) s = `${slugify(t, 44)}-${k}`;
-    used.add(s);
-    idFor.set(it.id, s);
-  }
+  const items = await haulItemRows(env, haulId);
+  const idFor = bundleItemIds(items);
+  // A Book item's shelf link is written as Item.shelf; the book must exist, and should be on the
+  // published shelf so the reader's link lands (a warning only: publish the shelf after).
+  const published = await readShelf(env);
 
   const noteById = async (id: string | null) => (id ? env.DB.prepare('SELECT * FROM notes WHERE id = ?').bind(id).first<NoteRow>() : null);
 
@@ -181,6 +199,17 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     copies.push(...bb.copies);
     for (const m of bb.problems) problems.push({ itemId: it.id, itemTitle: label, message: m });
 
+    let shelf: string | undefined;
+    if (it.type === 'book' && it.shelf_id) {
+      const book = await env.DB.prepare('SELECT id FROM books WHERE id = ?').bind(it.shelf_id).first<{ id: string }>();
+      if (!book) problems.push({ itemId: it.id, itemTitle: label, message: 'this book points to a shelf book that is gone; link it again or unlink it' });
+      else {
+        shelf = book.id;
+        if (!published?.books.some((b) => b.id === book.id))
+          warnings.push({ path: `items[${bundleItems.length}].shelf`, rule: 'shelf', message: `"${label}" points to the shelf, but the published shelf does not have this book yet. Publish the shelf so the link lands.` });
+      }
+    }
+
     const title = parseJson<Title | null>(it.title_choice, null) ?? { text: it.title ?? '' };
     const item: Item = {
       id: idFor.get(it.id)!,
@@ -219,6 +248,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       ...(it.handle?.trim() ? { handle: it.handle.trim() } : {}),
       ...(it.recipient?.trim() ? { recipient: it.recipient.trim() } : {}),
       ...(it.place?.trim() ? { place: it.place.trim() } : {}),
+      ...(shelf ? { shelf } : {}),
       wiki: cards.map((c) => ({ title: c.title, summary: c.summary, url: c.url })),
       connections: conns.map((c) => ({
         type: c.type,
@@ -329,13 +359,13 @@ export async function publishHaul(env: Env, haulId: string, opts: { correction?:
 
   // Copy every asset first; a missing one stops the publish before the bundle points at it.
   for (const [from, to] of a.copies) {
-    if (!isPublicPath(to)) throw new Error(`Refusing to publish outside hauls/: ${to}`);
+    if (!isHaulPath(to)) throw new Error(`Refusing to publish outside hauls/: ${to}`);
     const obj = await env.MEDIA.get(from);
     if (!obj) return { ok: false, ...base, problems: [{ message: `A file the bundle needs is missing from storage (${from})` }] };
     await env.FILES.put(to, obj.body, { httpMetadata: { contentType: obj.httpMetadata?.contentType, cacheControl: 'public, max-age=31536000, immutable' } });
   }
   if (a.card) {
-    if (!isPublicPath(a.card.key)) throw new Error(`Refusing to publish outside hauls/: ${a.card.key}`);
+    if (!isHaulPath(a.card.key)) throw new Error(`Refusing to publish outside hauls/: ${a.card.key}`);
     await env.FILES.put(a.card.key, a.card.bytes, { httpMetadata: { contentType: 'image/png', cacheControl: 'public, max-age=31536000, immutable' } });
   }
   const body = JSON.stringify(a.haul, null, 2);
@@ -418,4 +448,184 @@ export function startHereFor(it: Pick<ItemRow, 'start_at' | 'start_note' | 'medi
     url = u.toString();
   }
   return { at, ...(note ? { note } : {}), ...(url ? { url } : {}) };
+}
+
+// ---------------------------------------------------------------- the shelf
+
+/** The published shelf, or null before the first publish (or if it cannot be read). */
+export async function readShelf(env: Env): Promise<Shelf | null> {
+  const obj = await env.FILES.get(SHELF_PATH);
+  if (!obj) return null;
+  try {
+    return (await obj.json()) as Shelf;
+  } catch {
+    return null;
+  }
+}
+
+export interface ShelfAssembled {
+  shelf: Shelf;
+  /** Plain messages; any one stops the publish. */
+  problems: string[];
+  warnings: string[];
+  /** What this publish changes against the published shelf. */
+  changes: string[];
+  /** Files to copy: [private MEDIA key, public FILES key under shelf/]. */
+  copies: Array<[string, string]>;
+}
+
+const IMMUTABLE = 'public, max-age=31536000, immutable';
+
+/** A validateShelf message with the book's title in place of its index: "The Coal Question: author: name the author". */
+export function plainShelfError(shelf: Shelf, e: string): string {
+  const m = /^books\[(\d+)\](?:\.([^:]*))?: (.*)$/.exec(e);
+  if (!m) return e;
+  const b = shelf.books[Number(m[1])];
+  const name = (b?.title && [b.title.text, b.title.italic].filter(Boolean).join(' ')) || b?.id || `Book ${Number(m[1]) + 1}`;
+  const where = (m[2] ?? '').replace(/(notes|lines|hauls)\[(\d+)\]/g, (_, k: string, j: string) => `${k.slice(0, -1)} ${Number(j) + 1}`).replace(/\./g, ' ');
+  return `${name}: ${where ? `${where}: ` : ''}${m[3]}`;
+}
+
+/**
+ * Where each shelf book appeared in a published Haul, from the published bundles themselves: an
+ * item's Item.shelf, or (for a link made after that Haul was published) the linked item found in the
+ * bundle by its id. A link the bundle does not show is a warning, never invented.
+ */
+async function shelfHauls(env: Env, bookIds: Set<string>, warnings: string[]): Promise<Map<string, { number: number; itemId: string }[]>> {
+  const out = new Map<string, { number: number; itemId: string }[]>();
+  const add = (bookId: string, number: number, itemId: string) => {
+    const list = out.get(bookId) ?? [];
+    if (!list.some((x) => x.number === number && x.itemId === itemId)) list.push({ number, itemId });
+    out.set(bookId, list);
+  };
+  const hauls = (await env.DB.prepare(`SELECT id, number FROM hauls WHERE status = 'published' ORDER BY number`).all<{ id: string; number: number }>()).results;
+  for (const h of hauls) {
+    const v = await env.DB.prepare('SELECT path FROM haul_versions WHERE haul_id = ? ORDER BY version DESC LIMIT 1').bind(h.id).first<{ path: string }>();
+    const obj = v ? await env.FILES.get(v.path) : null;
+    const bundle = obj ? ((await obj.json().catch(() => null)) as Haul | null) : null;
+    if (!bundle?.items) {
+      warnings.push(`Haul ${h.number}'s published bundle could not be read, so its books are not linked from the shelf.`);
+      continue;
+    }
+    for (const it of bundle.items) {
+      if (!it.shelf) continue;
+      if (bookIds.has(it.shelf)) add(it.shelf, h.number, it.id);
+      else warnings.push(`Haul ${h.number}'s "${it.title.text}" points to the shelf book "${it.shelf}", which is not on the shelf; its link will not land.`);
+    }
+    const rows = await haulItemRows(env, h.id);
+    const idFor = bundleItemIds(rows);
+    for (const r of rows) {
+      if (!r.shelf_id || !bookIds.has(r.shelf_id)) continue;
+      const found = bundle.items.find((i) => i.id === idFor.get(r.id));
+      if (found?.shelf && found.shelf !== r.shelf_id) continue; // the bundle names another book; it stands until a correction
+      if (found && found.type === 'book') add(r.shelf_id, h.number, found.id);
+      else warnings.push(`"${r.title ?? r.id}" in Haul ${h.number} points to a shelf book, but the published Haul does not show it as that book; publish a correction of Haul ${h.number}.`);
+    }
+  }
+  for (const list of out.values()) list.sort((a, b) => a.number - b.number || a.itemId.localeCompare(b.itemId));
+  return out;
+}
+
+/**
+ * Build the shelf from D1: every book with its notes (newest first) and lines, covers and published
+ * recordings pointed at their FILES copies under shelf/, the Hauls each book appeared in, ordered with
+ * shelfOrder and checked with validateShelf against FILES_BASE.
+ */
+export async function assembleShelf(env: Env): Promise<ShelfAssembled> {
+  const filesBase = env.FILES_BASE.replace(/\/$/, '');
+  const problems: string[] = [];
+  const warnings: string[] = [];
+  const copies: Array<[string, string]> = [];
+  const rows = (await env.DB.prepare('SELECT * FROM books').all<BookRow>()).results;
+  const hauls = await shelfHauls(env, new Set(rows.map((r) => r.id)), warnings);
+  const books: ShelfBook[] = [];
+  for (const b of rows) {
+    const name = bookTitleText(b);
+    const notes: BookNote[] = [];
+    for (const n of await notesFor(env, b.id)) {
+      let audio: Audio | undefined;
+      if (n.publish_audio && n.audio_key && n.note_id) {
+        const format: AudioFormat = (AUDIO_FORMATS as readonly string[]).includes(n.format ?? '') ? (n.format as AudioFormat) : 'webm';
+        const key = `shelf/audio/${b.id}-${n.note_id.toLowerCase()}.${format}`;
+        copies.push([n.audio_key, key]);
+        if (!PLAYS_ON_IOS.has(format)) warnings.push(`${name}: the recording with the note of ${n.date} is ${format}, which plays on Android only. Re-record it in Safari or upload an m4a or mp3 for iOS readers.`);
+        audio = { url: `${filesBase}/${key}`, seconds: Math.round(n.seconds ?? 0), format };
+      }
+      notes.push({ date: n.date, ...(n.at ? { at: n.at } : {}), text: n.text, ...(audio ? { audio } : {}) });
+    }
+    const lines = (await linesFor(env, b.id)).map((l) => ({ text: l.text, ...(l.locator ? { locator: l.locator } : {}) }));
+    let cover: Plate | undefined;
+    if (b.cover_key) {
+      if (!b.cover_width || !b.cover_height || !b.cover_credit?.trim() || !b.cover_licence?.trim()) problems.push(`${name}: the cover is missing its size, credit or licence; add it again`);
+      else {
+        const stem = (b.cover_key.split('/').pop() ?? 'cover').replace(/\.[a-z0-9]+$/i, '').toLowerCase();
+        const key = `shelf/covers/${b.id}-${stem}.${IMAGE_EXT[b.cover_mime ?? ''] ?? 'jpg'}`;
+        copies.push([b.cover_key, key]);
+        cover = {
+          url: `${filesBase}/${key}`,
+          width: b.cover_width,
+          height: b.cover_height,
+          caption: b.cover_caption ?? '',
+          credit: b.cover_credit,
+          licence: b.cover_licence,
+          ...(b.cover_source_url ? { sourceUrl: b.cover_source_url } : {}),
+          ...(b.cover_creator ? { creator: b.cover_creator } : {}),
+          ...(b.cover_date ? { date: b.cover_date } : {}),
+        };
+      }
+    }
+    const inHauls = hauls.get(b.id) ?? [];
+    books.push({
+      id: b.id,
+      title: bookTitle(b),
+      author: b.author,
+      ...(b.year != null ? { year: b.year } : {}),
+      ...(b.publisher ? { publisher: b.publisher } : {}),
+      ...(b.url ? { url: b.url } : {}),
+      status: b.status,
+      ...(b.started ? { started: b.started } : {}),
+      ...(b.finished ? { finished: b.finished } : {}),
+      ...(cover ? { cover } : {}),
+      ...(b.spine ? { spine: b.spine } : {}),
+      notes,
+      lines,
+      ...(inHauls.length ? { hauls: inHauls } : {}),
+    });
+  }
+  const shelf: Shelf = { bundleVersion: SHELF_VERSION, updatedAt: nowIso(), books: shelfOrder(books) };
+  for (const e of validateShelf(shelf, { filesBase })) problems.push(plainShelfError(shelf, e));
+  return { shelf, problems, warnings, changes: shelfChanges(await readShelf(env), shelf), copies };
+}
+
+export interface ShelfPublishResult {
+  ok: boolean;
+  version?: number;
+  path?: string;
+  url?: string;
+  books: number;
+  problems: string[];
+  warnings: string[];
+  changes: string[];
+}
+
+/** Publish the shelf: copy covers and recordings to FILES under shelf/, then write shelf/shelf.json. */
+export async function publishShelf(env: Env, opts: { dryRun?: boolean } = {}): Promise<ShelfPublishResult> {
+  const a = await assembleShelf(env);
+  const base = { books: a.shelf.books.length, problems: a.problems, warnings: a.warnings, changes: a.changes };
+  if (a.problems.length || opts.dryRun) return { ok: !a.problems.length, ...base };
+  // Copy every file first; a missing one stops the publish before the shelf points at it. Names are
+  // unique per file (a new cover or recording gets a new name), so a copy already there is the same.
+  for (const [from, to] of a.copies) {
+    if (!isShelfPath(to)) throw new Error(`Refusing to publish outside shelf/: ${to}`);
+    if (await env.FILES.head(to)) continue;
+    const obj = await env.MEDIA.get(from);
+    if (!obj) return { ok: false, ...base, problems: [`A file the shelf needs is missing from storage (${from}); add it again.`] };
+    await env.FILES.put(to, obj.body, { httpMetadata: { contentType: obj.httpMetadata?.contentType, cacheControl: IMMUTABLE } });
+  }
+  const body = JSON.stringify(a.shelf, null, 2);
+  await env.FILES.put(SHELF_PATH, body, { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=60' } });
+  const last = await env.DB.prepare('SELECT MAX(version) AS v FROM shelf_versions').first<{ v: number | null }>();
+  const version = (last?.v ?? 0) + 1;
+  await env.DB.prepare('INSERT INTO shelf_versions (version, sha256, books, published_at) VALUES (?, ?, ?, ?)').bind(version, await sha256Hex(body), a.shelf.books.length, nowIso()).run();
+  return { ok: true, version, path: SHELF_PATH, url: `${env.FILES_BASE.replace(/\/$/, '')}/${SHELF_PATH}`, ...base };
 }

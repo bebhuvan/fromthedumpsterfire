@@ -566,6 +566,40 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   Known gaps: plates in the dev samples point at Wikimedia, which refuses the app, so the mounted
   print shows its "could not load" note in development (real Hauls copy plates to our files host).
   Code uses the system monospace, not DM Mono, to avoid a native font change.
+- **The shelf's publishing flow on the Desk** (2026-10-24): the books the editor is reading, with
+  his dated notes, published apart from the Hauls as `shelf/shelf.json` (the `Shelf` contract in
+  `packages/shared/src/shelf.ts`, unchanged in meaning). Migration `0007_shelf.sql` (additive:
+  `books`, `book_notes`, `book_lines`, `shelf_versions`, `items.shelf_id`). Server rules in
+  `packages/server/src/shelf.ts`, Publish the shelf in `publish.ts` (ARCHITECTURE "The shelf"), zod
+  routes in `workers/api/src/shelf.ts`, and a Shelf section on the Desk (nav and phone bar): the
+  list by Reading now, Read, Put down; a book page with a status switch and dates, notes newest
+  first with Add note (typed or dictated; both versions shown, the recording publishable), lines
+  with the long-line flag and ordering, the cover with its credit, details and spine, and the Haul
+  items pointing to it; Publish the shelf with what changed since the last publish and the check
+  result. A Book item's page has On the shelf (link, unlink, or put the item on the shelf). A Haul
+  publish writes `Item.shelf` and warns until the shelf has the book. FILES now holds `hauls/` and
+  `shelf/`. Also fixed: editing a picture block was always refused (`patchBlock` checked the credit
+  rule without the stored maker). `validateShelf` now also refuses a note's recording off the files
+  base (optional `filesBase`, like covers).
+  - **Verified.** `npm run verify`: type checks clean, 413 tests (new: `packages/server/test/shelf.test.ts`
+    for slugs, status dates, real dates, the cover credit rule, the long-line flag, the change
+    summary and a dictated note through `processNote` with a rewording cleanup refused by the token
+    diff; a shelf section in the SQLite publish test with the real migrations: a Haul publish
+    writing `Item.shelf`, a valid shelf.json with the cover and a recording copied under `shelf/`,
+    the order, notes newest first, Haul links from the published bundle, refusals with the book's
+    title and no writes; `workers/api/test/shelf.test.ts` for every route's validation, the voice
+    path through `/api/notes`, the multipart cover, the item picker and a publish). Locally
+    (`wrangler dev` of the Desk Worker alone with local D1 and R2, AI binding removed, so no model
+    calls): migration 0007 applied, four books, notes, lines (a 64-word line flagged and kept), an
+    uploaded cover, a Book item captured and linked, the shelf published (v1, no problems), then a
+    change summarised as "Gravity's Rainbow: put down → reading now; 1 new note."; the served
+    shelf.json passed `validateShelf` against the preview files base and its cover came back from
+    FILES as image/jpeg. Headless Chrome at 390 px and 1280 px, light and dark, on the shelf, a book
+    page and a Book item's page (linked and unlinked): no horizontal overflow.
+  - **Not done / for the editor.** Dictation was not tried live (it needs Workers AI); the tests
+    cover it with a mocked Whisper. Not deployed and migration 0007 not applied to preview or
+    production. The website and the app read `shelf/shelf.json` from their own branches. Covers and
+    recordings left behind by a replaced cover stay in FILES (immutable names; harmless).
 
 - **Launch day, the website and the brand** (2026-10-24, branch `launch-2026-10-24`, not yet deployed):
   - *Editions and the fingerprint*: each Haul's edition ink (a band on the top edge, its number, its

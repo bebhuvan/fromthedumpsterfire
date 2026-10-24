@@ -353,8 +353,8 @@ export interface PictureMeta {
   date?: string;
 }
 
-/** Measure and store a picture's bytes (upload or fetched link) in MEDIA; resized when huge. */
-async function storePicture(env: Env, key: (ext: string) => string, bytes: Uint8Array, source?: string): Promise<{ key: string; mime: string; width: number; height: number; bytes: number }> {
+/** Measure and store a picture's bytes (upload or fetched link) in MEDIA; resized when huge. Also used for shelf covers. */
+export async function storePicture(env: Env, key: (ext: string) => string, bytes: Uint8Array, source?: string): Promise<{ key: string; mime: string; width: number; height: number; bytes: number }> {
   let size = imageSize(bytes);
   if (!size || !EXT[size.mime]) refuse('That file is not a JPEG, PNG, WebP or GIF we can read. (HEIC from an iPhone: share it as JPEG.)', 415);
   const resized = await maybeResize(env, bytes, size!.width);
@@ -371,13 +371,14 @@ async function storePicture(env: Env, key: (ext: string) => string, bytes: Uint8
 }
 
 /** Where the picture came from: the editor's page link, else the image link it was fetched from. An upload must say. */
-function sourced(m: PictureMeta, input: { bytes?: Uint8Array; url?: string }): PictureMeta {
+export function sourced(m: PictureMeta, input: { bytes?: Uint8Array; url?: string }): PictureMeta {
   if (m.sourceUrl?.trim()) return m;
   if (!input.bytes && input.url?.trim()) return { ...m, sourceUrl: input.url.trim() };
   return refuse('Say where you found the picture (a link to its page or post), so readers can follow it to the person who made it.', 400);
 }
 
-function checkPictureMeta(m: PictureMeta): Required<Pick<PictureMeta, 'credit' | 'licence'>> & PictureMeta {
+/** The credit rule for every picture (blocks, a Picture item's plate, a shelf book's cover). */
+export function checkPictureMeta(m: PictureMeta): Required<Pick<PictureMeta, 'credit' | 'licence'>> & PictureMeta {
   const credit = m.credit?.trim();
   const licence = m.licence?.trim();
   if (!credit) refuse('Say whose picture it is (the credit): the artist, photographer or holder.', 400);
@@ -503,7 +504,7 @@ export async function patchBlock(env: Env, row: BlockRow, p: BlockPatch): Promis
     next.start = s || undefined;
   }
   if (next.kind === 'image') {
-    const m = checkPictureMeta({ credit: p.credit ?? next.credit, licence: p.licence ?? next.licence, sourceUrl: p.sourceUrl ?? next.sourceUrl });
+    const m = checkPictureMeta({ credit: p.credit ?? next.credit, licence: p.licence ?? next.licence, sourceUrl: p.sourceUrl ?? next.sourceUrl, creator: p.creator ?? next.creator });
     next.credit = m.credit;
     next.licence = m.licence;
     if (p.caption !== undefined) next.caption = p.caption.trim();

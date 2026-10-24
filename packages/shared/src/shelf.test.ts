@@ -23,4 +23,10 @@ describe('shelf', () => {
     const b = { ...shelf.books[0]!, cover: { url: 'https://upload.wikimedia.org/x.jpg', width: 1, height: 1, caption: '', credit: '', licence: '' } };
     expect(validateShelf({ ...shelf, books: [b] }, { filesBase: 'https://files.example.org' }).join(' ')).toMatch(/credit.*published under|published under.*credit/s);
   });
+  it('refuses a recording hosted anywhere but the files base', () => {
+    const note = { date: '2026-10-20', text: 'Said aloud.', audio: { url: 'https://cdn.example.org/a.m4a', seconds: 4, format: 'm4a' as const } };
+    const b = { ...shelf.books[0]!, notes: [note] };
+    expect(validateShelf({ ...shelf, books: [b] }, { filesBase: 'https://files.example.org' })).toEqual(['books[0].notes[0].audio: must be published under https://files.example.org/']);
+    expect(validateShelf({ ...shelf, books: [b] })).toEqual([]);
+  });
 });

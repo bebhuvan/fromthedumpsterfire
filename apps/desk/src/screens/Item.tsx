@@ -16,6 +16,7 @@ import { PlatesSection } from './Plates';
 import { ItemSuggestions } from './Links';
 import { RhymeEditor } from './Rhyme';
 import { BlocksSection, PictureForm } from './Blocks';
+import { ShelfLink } from './Shelf';
 
 const IN_FLIGHT = /queued|fetching|reading|drafting|checking/;
 
@@ -151,6 +152,12 @@ function ItemReviewInner({ id }: { id: string }) {
             {item.type === 'image' && (
               <Step n={next()} title="The picture" done={pictureSet} hint="The picture itself, printed as a mounted print, with the credit and licence you state.">
                 <PictureStep detail={data} onSaved={reload} />
+              </Step>
+            )}
+
+            {item.type === 'book' && (
+              <Step n={next()} title="On the shelf" optional done={Boolean(item.shelf_id)} hint="Point this book to its page on the shelf, where your notes on it live. Readers follow it from the Haul.">
+                <ShelfLink detail={data} onChange={reload} />
               </Step>
             )}
 

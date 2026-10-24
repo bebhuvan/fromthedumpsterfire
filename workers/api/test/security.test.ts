@@ -159,6 +159,11 @@ describe('cross-site requests', () => {
     expect(checkCsrf(req('/api/items/it_01abc/picture', { method: 'POST', headers: mp, body: '' })).ok).toBe(true);
     expect(checkCsrf(req('/api/items/it_01abc/picture', { method: 'POST', headers: good, body: '{}' })).status).toBe(415);
     expect(checkCsrf(req('/api/items/it_01abc/blocks', { method: 'POST', headers: mp, body: '' })).status).toBe(415);
+    // A shelf book's cover: multipart, POST only; its edits are JSON.
+    expect(checkCsrf(req('/api/books/the-coal-question/cover', { method: 'POST', headers: mp, body: '' })).ok).toBe(true);
+    expect(checkCsrf(req('/api/books/the-coal-question/cover', { method: 'POST', headers: good, body: '{}' })).status).toBe(415);
+    expect(checkCsrf(req('/api/books/the-coal-question/cover', { method: 'PATCH', headers: mp, body: '' })).status).toBe(415);
+    expect(checkCsrf(req('/api/books/the-coal-question/notes', { method: 'POST', headers: mp, body: '' })).status).toBe(415);
   });
   it('lets the share target in only as a same-origin or user-initiated navigation', () => {
     const mp = { 'content-type': 'multipart/form-data; boundary=x' };

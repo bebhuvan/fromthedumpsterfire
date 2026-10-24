@@ -38,7 +38,7 @@
       "d1_databases": [
         { "binding": "DB", "database_name": "fdf-desk-preview", "database_id": "8da223f8-d555-450b-8e44-62bbae0015e7", "migrations_dir": "../../migrations" }
       ],
-      // MEDIA is private Desk material; FILES holds only published bundles (hauls/), written by publish.
+      // MEDIA is private Desk material; FILES holds only what publish writes: Hauls (hauls/) and the shelf (shelf/).
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "fdf-files-preview" },
         { "binding": "FILES", "bucket_name": "fdf-public-preview" }
