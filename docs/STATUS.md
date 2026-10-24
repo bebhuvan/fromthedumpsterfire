@@ -692,3 +692,49 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   `extract/http.ts`) because some publishers serve a stub to unknown agents. The new routes use the
   Desk's own agent. Switch the page fetch to the Desk's agent too? It is more honest, but a few
   sites that work today may then need the Wayback route.
+
+## Agent editorial client (2026-10-24)
+
+- `npm run editorial -- ...`: Codex, Claude Code and terminal editing through the existing Desk API.
+  Capture links/batches/passages/files/audio, inspect/wait/edit/check items, order and edit Hauls,
+  preview, explicitly publish, and use the general JSON/multipart command for existing block,
+  connection, plate and shelf routes. `docs/EDITORIAL.md` is the operating guide; linked from both
+  AGENTS.md and CLAUDE.md. Private working payloads live in gitignored `.editorial/`.
+- Service-token support in the existing Worker lock: exact signed client allowlist, separate
+  publish scope, no settings/UI/files/permanent DELETE access. Owner login and localhost-only
+  development bypass unchanged. No public routes or database migrations added by this feature.
+- `npm run editorial:setup`: read-only plan by default; explicit apply creates a 90-day Access
+  credential and dedicated Service Auth policy, writes mode-600 config and receipt, attempts
+  rollback on known failure. Needs Access admin API permissions; remote editors need only the
+  resulting narrow service pair.
+- **Activated (2026-10-24).** The authenticated **cf** CLI (separate from Wrangler) refreshed
+  its OAuth login and successfully managed the existing Desk Access apps. Setup now supports
+  `--cf-auth`, so no separate admin token is needed on this trusted machine. Created distinct
+  draft-only Access service credentials for production and preview, valid until **2027-01-22**,
+  saved mode 600 under `~/.config/fdf/editorial/{production,preview}.env` with private receipts.
+  The Client IDs are allowlisted in the matching Worker environments; publishing remains disabled.
+- Deployed **only auth/identity changes on the deployed-era source (`325134c`)**, preserving the
+  old API and avoiding unrelated launch work/migrations. Production Desk version
+  `620fc6f6-e4ce-4b1f-b67a-fba1cf6172f6`; preview `964c1cb8-df37-4ef8-92cd-398d4910b975`.
+  Pipeline, website and app were not redeployed. The newer block/shelf APIs still await their launch
+  deployment, so those client commands require that deployment before they work live.
+- **Live verified:** production CLI status identifies the production service with publish/delete
+  false; invalid capture is rejected by normal API validation, publishing/settings/DELETE refuse
+  the credential, anonymous API requests fail and the Desk UI redirects to Access. Both original
+  owner policies were compared and preserved. On preview, a new draft Haul was created, edited
+  and read back through the CLI; publishing was denied. The disposable preview draft was removed
+  through a guarded exact-ID cleanup. No production content was edited and no Haul was published.
+  Private evidence, deployed source snapshot/patch and rollback version IDs are retained under
+  `.wrangler/editorial-activation/`; the temporary build checkout was removed.
+- The isolated deployed-era API typechecked and passed 20 security/service-auth tests with the
+  correct workspace dependencies. The newer development tree is verified separately below.
+- **Verified:** `npm run verify` on Node 22.22.3: all workspaces typecheck and **439 tests pass**.
+  Client/auth/provisioning tests cover the real Worker routes, SQLite migrations, R2 stand-ins,
+  raw audio transcription preservation, quotation refusal, draft/publish permissions, setup planning
+  and rollback. A real local Wrangler Worker on an isolated database additionally accepted CLI
+  status, capture, commentary edit and readback, Haul creation/order, and a preview that correctly
+  reported incomplete content; no production content or public bundle was written. Local evidence
+  (gitignored): `.wrangler/editorial-smoke/evidence.json`.
+
+  Desk assets build and production Worker `wrangler deploy --dry-run` also pass. The isolated local
+  smoke Worker was stopped after verification; its private fixture data remains gitignored.

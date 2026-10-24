@@ -26,7 +26,9 @@
     "deploy:web": "npm run deploy:production -w @fdf/web",
     "db:migrate:production": "wrangler d1 migrations apply DB --remote -c workers/api/wrangler.jsonc --env production",
     "deploy:production": "npm run desk:build && wrangler deploy -c workers/pipeline/wrangler.jsonc --env production && wrangler deploy -c workers/api/wrangler.jsonc --env production",
-    "app:update": "node --experimental-strip-types scripts/publish-app-update.ts"
+    "app:update": "node --experimental-strip-types scripts/publish-app-update.ts",
+    "editorial": "node scripts/editorial.mjs",
+    "editorial:setup": "node scripts/editorial/setup.mjs"
   },
   "devDependencies": {
     "typescript": "~6.0.3",

@@ -14,6 +14,9 @@ Read these before working:
 - `docs/STATUS.md`: what's built and what's next. Update it as you go.
 - `docs/MODELS.md`: each model provider's capabilities, limits, prices and sources, and the chain
   per task with its reasoning and cost.
+- `docs/EDITORIAL.md`: agent/terminal editing from Codex or Claude Code, credentials, remote sessions,
+  payloads and the shared Desk workflow. Use `npm run editorial -- --help`; never bypass the API
+  with ad-hoc database writes or public-bucket uploads.
 - `docs/VOICE.md`: the editor's measured writing voice and the AI patterns to keep out of machine
   drafts. Machine-usable form in `packages/shared/src/voice.ts`.
 
@@ -21,6 +24,9 @@ Read these before working:
 
 - **The editor's words are never reworded.** Voice-note cleanup may only delete fillers and fix
   punctuation; code enforces deletion-only.
+- When the editor explicitly requests proofreading of dictation, save minimal grammar/garble repairs
+  in editable commentary and retain the raw transcript. This does not relax automatic deletion-only
+  cleanup or authorise expanding the editor's opinions. See `docs/EDITORIAL.md`.
 - **Models never emit URLs.** They emit queries; code resolves them against real sources and fetches
   each link before it can ship.
 - **Every excerpt is matched verbatim** against the fetched source text. No match, no ship.

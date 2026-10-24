@@ -94,8 +94,8 @@ reader app ─► POST /v1/devices, GET /v1/updates(/asset) (public)
 guards the UI's assets too. Public routes are exact method + path: `POST /v1/devices` (JSON only,
 shape-checked, rate limited), `GET /v1/health`, and the read-only update routes `GET /v1/updates`
 and `GET /v1/updates/asset`. Everything else needs a Cloudflare Access JWT
-verified against the team's certs (RS256 only; issuer, AUD, `exp`/`iat`/`email` required; email must
-be `OWNER_EMAIL`). With `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` empty, or `ENVIRONMENT` unknown, the
+verified against the team's certs (RS256 only; issuer, AUD, `exp`/`iat`/`email` required for the owner; email must
+be `OWNER_EMAIL`; allowlisted service assertions instead require the signed client identity described below). With `ACCESS_TEAM_DOMAIN` or `ACCESS_AUD` empty, or `ENVIRONMENT` unknown, the
 Desk refuses every request. Writes also need an exact same-origin `Origin`, the `x-desk: 1` header
 and a JSON body (multipart only on uploads and the share target, which instead must be a
 `Sec-Fetch-Site: none|same-origin` navigation). Responses carry a strict CSP; stored files are served
@@ -443,3 +443,24 @@ Prerendered: `/about`, 404, `/503`, `/tokens.css` (from `packages/shared/src/tok
 `dist/server/wrangler.json` for that env), then `wrangler deploy` from `apps/web`; the root scripts
 `deploy:web:preview` and `deploy:web` do both. Worker size: 776 KiB, 202 KiB gzipped. Measured CPU: 0 to
 1 ms per rendered page.
+
+## Agent and terminal editing (2026-10-24)
+
+`npm run editorial -- ...` is a Node client of the same private API as the Desk UI. No parallel
+D1 writer or publisher. Codex and Claude Code can capture, review, edit, preview and explicitly
+publish from this machine or a remote checkout. Owner login uses cloudflared's application JWT;
+remote sessions use Access service credentials. Access still signs a per-application assertion;
+the Worker verifies RS256, issuer, audience, expiry and the service's signed `common_name`.
+`ACCESS_SERVICE_CLIENT_IDS` enables exact clients; `ACCESS_SERVICE_PUBLISH_CLIENT_IDS` is a subset
+with publishing permission. Unset means no machine access. Services cannot read settings/UI/files
+or call DELETE; draft clients cannot call any publishing route. Existing CSRF and content-type
+checks apply unchanged, with Origin and x-desk set by the client. No public routes were added.
+
+Read-only client requests retry at most twice; writes never auto-retry because completion may be
+unknown after disconnection. Credentials remain in private env/config files, redirects are refused,
+responses are capped, and errors scrub configured credentials. The setup helper creates a dedicated
+90-day Access service token and its Service Auth policy, preserves the owner policies, and saves
+the secret privately; allowlisting and API deployment are separate activation steps. Setup may
+use the separately authenticated cf CLI (`--cf-auth`), which refreshes its own OAuth login;
+Wrangler login alone does not establish Access-management permissions. Instructions,
+payloads, remote provisioning, rotation and revocation: `docs/EDITORIAL.md`.
