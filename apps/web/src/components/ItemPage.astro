@@ -244,6 +244,7 @@ const ogImage =
               {item.excerpt.locator ? <figcaption>{item.excerpt.locator}</figcaption> : null}
             </figure>
           ) : null}
+          {item.shelf ? <p class="jk-shelf"><a href={paths.book(item.shelf)}>All the editor’s notes on this book, on the shelf</a></p> : null}
         </div>
       </header>
     ) : null}

@@ -1,0 +1,103 @@
+---
+// One book on the shelf: its jacket in the margin, title and author, the reading dates, the lines the
+// editor copied out, then the editor's notes as a dated journal (their words, verbatim, signed), the
+// Hauls it appeared in, and where to find the book.
+import Base from '../../layouts/Base.astro';
+import Title from '../../components/Title.astro';
+import Credit from '../../components/Credit.astro';
+import { bookStatusLabel, shelfOrder, spineOf } from '@fdf/shared/shelf';
+import { haulSlug } from '@fdf/shared/haul';
+import { shelf as loadShelf, archive } from '../../lib/runtime';
+import { longDate, paths, safeHref, titleText } from '../../lib/site';
+
+const { id } = Astro.params;
+const shelf = await loadShelf();
+const books = shelfOrder(shelf?.books ?? []);
+const at = books.findIndex((b) => b.id === id);
+if (at < 0) return new Response(null, { status: 404 });
+const book = books[at]!;
+const next = books[at + 1] ?? books[0];
+const { hauls } = await archive();
+const appeared = (book.hauls ?? [])
+  .map((h) => {
+    const haul = hauls.find((x) => x.number === h.number);
+    const item = haul?.items.find((i) => i.id === h.itemId);
+    return haul && item ? { haul, item } : null;
+  })
+  .filter((x): x is NonNullable<typeof x> => Boolean(x));
+const link = safeHref(book.url);
+const cover = book.cover && safeHref(book.cover.url);
+const when =
+  book.status === 'reading'
+    ? book.started ? `Reading since ${longDate(book.started)}` : 'Reading now'
+    : book.status === 'read'
+      ? book.started && book.finished ? `Read from ${longDate(book.started)} to ${longDate(book.finished)}` : book.finished ? `Finished ${longDate(book.finished)}` : 'Read'
+      : book.started ? `Started ${longDate(book.started)}, put down for now` : 'Put down for now';
+const desc = book.notes[0]?.text ?? `${titleText(book.title)}, ${book.author}, on the editor's shelf.`;
+---
+<Base
+  title={`${titleText(book.title)}, ${book.author}`}
+  description={desc.length > 200 ? desc.slice(0, desc.lastIndexOf(' ', 197)) + '…' : desc}
+  path={paths.book(book.id)}
+  type="article"
+  section="shelf"
+  runhead={{ href: paths.shelf, left: 'The shelf', right: bookStatusLabel[book.status] }}
+  author={book.author}
+>
+  <header class:list={['wrap', 'g', 'jk', 'bk-head', `spine-${spineOf(book)}`]}>
+    <div class="m jk-book" aria-hidden="true">
+      {cover && book.cover ? (
+        <img class="jk-cover" src={cover} width={book.cover.width} height={book.cover.height} alt="" decoding="async" />
+      ) : (
+        <span class="jk-jacket bk-jacket"><span class="jk-jt"><Title title={book.title} as="span" /></span><span class="jk-ja">{book.author}</span>{book.publisher ? <span class="jk-jp">{book.publisher}</span> : null}</span>
+      )}
+    </div>
+    <div class="c jk-c">
+      <p class="meta jk-meta"><span>{when}</span>{book.notes.length ? <span>{book.notes.length === 1 ? 'One note' : `${book.notes.length} notes`}</span> : null}</p>
+      <Title title={book.title} as="h1" class="h-item jk-t" />
+      <p class="byline">{book.author}</p>
+      <p class="bk-pub">{[book.publisher, book.year].filter(Boolean).join(', ')}</p>
+      {book.lines.map((l) => (
+        <figure class="jk-line">
+          <blockquote><p>{l.text}</p></blockquote>
+          <figcaption>{l.locator ? `${l.locator}, ` : ''}copied out by the editor</figcaption>
+        </figure>
+      ))}
+      {cover && book.cover ? <p class="plate-cap bk-cr"><Credit plate={book.cover} noCaption /></p> : null}
+    </div>
+  </header>
+
+  {book.notes.length ? (
+    <section class="wrap journal" aria-labelledby="notes-h">
+      <h2 class="sr" id="notes-h">The editor's notes</h2>
+      {book.notes.map((n) => (
+        <article class="g jn">
+          <p class="m jn-d"><time datetime={n.date.slice(0, 10)}>{longDate(n.date)}</time>{n.at ? <span>{n.at}</span> : null}</p>
+          <div class="c">
+            <p class="ed jn-t">{n.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+            {n.audio ? <audio class="jn-a" controls preload="none" src={n.audio.url}></audio> : null}
+          </div>
+        </article>
+      ))}
+    </section>
+  ) : null}
+
+  {appeared.length || link ? (
+    <section class="wrap g row bk-more">
+      <h2 class="m mh">Elsewhere</h2>
+      <div class="c bk-links">
+        {appeared.map(({ haul, item }) => (
+          <a class={`e-ed bk-haul`} href={paths.item(haul.number, item.id)}>In Haul {haulSlug(haul.number)}: <Title title={haul.title} as="span" class="bk-ht" /></a>
+        ))}
+        {link ? <a href={link} rel="noopener noreferrer" target="_blank">Find the book{book.publisher ? ` (${book.publisher})` : ''}<span class="sr"> (opens in a new tab)</span></a> : null}
+      </div>
+    </section>
+  ) : null}
+
+  {next && next.id !== book.id ? (
+    <nav class="wrap g row next" aria-label="Next on the shelf">
+      <p class="m mh">Next on the shelf</p>
+      <a class="c next-a" href={paths.book(next.id)}><span class="next-k">{bookStatusLabel[next.status]} · {next.author}</span><Title title={next.title} as="span" class="next-t" /></a>
+    </nav>
+  ) : null}
+</Base>

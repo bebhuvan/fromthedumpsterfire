@@ -3,11 +3,13 @@
 // picked a theme with the toggle (stored as data-theme on <html>).
 
 import { EDITIONS, editionInk, palettes, typeSwatch, type Palette, type Scheme } from '@fdf/shared/tokens';
+import { SPINES, spineColours } from '@fdf/shared/shelf';
 
 const vars = (p: Palette, scheme: Scheme) =>
   [
     ...Object.entries(p.code).map(([k, v]) => `--code-${k}:${v}`),
     ...EDITIONS.map((e) => `--ed-${e}:${editionInk[scheme][e]}`),
+    ...SPINES.flatMap((sp) => { const c = spineColours(sp, scheme); return [`--cloth-${sp}:${c.cloth}`, `--stamp-${sp}:${c.type}`]; }),
     `--bg:${p.bg}`,
     `--ink:${p.ink}`,
     `--ink2:${p.ink2}`,
@@ -33,5 +35,7 @@ export function tokensCss(): string {
     ...Object.keys(palettes.light.swatch).map((s) => `.s-${s}{--tint:var(--${s})}`),
     // Each Haul's edition ink, set on <body> (and on archive rows) as .e-<edition>.
     ...EDITIONS.map((e) => `.e-${e}{--ed:var(--ed-${e})}`),
+    // Each book's spine on the shelf: its cloth and the colour of the type stamped on it.
+    ...SPINES.map((sp) => `.spine-${sp}{--cloth:var(--cloth-${sp});--stamp:var(--stamp-${sp})}`),
   ].join('\n');
 }

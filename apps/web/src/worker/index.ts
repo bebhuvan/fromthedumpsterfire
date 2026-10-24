@@ -80,6 +80,8 @@ export default {
     let updatedAt: string;
     try {
       updatedAt = (await getStore().getIndex()).updatedAt;
+      // Shelf pages also change when the shelf is published.
+      if (url.pathname === '/shelf' || url.pathname.startsWith('/shelf/') || url.pathname === '/sitemap.xml') updatedAt += `|${(await getStore().getShelf())?.updatedAt ?? 'none'}`;
     } catch (err) {
       if (err instanceof IndexUnavailable) return unavailable(url, env, head);
       console.error('[fdf] index read failed', err);

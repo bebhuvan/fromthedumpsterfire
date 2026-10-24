@@ -19,7 +19,7 @@ interface Props {
   type?: 'website' | 'article';
   image?: { url: string; width: number; height: number; alt: string };
   /** Which top-level section is current, for aria-current in the nav. */
-  section?: 'latest' | 'threads' | 'archive' | 'search' | 'about';
+  section?: 'latest' | 'threads' | 'archive' | 'shelf' | 'search' | 'about';
   noindex?: boolean;
   /** Running head under the header: left links back to the Haul, right names the form. */
   runhead?: { href: string; left: string; right?: string };
@@ -70,6 +70,7 @@ const nav = [
   { key: 'latest', href: paths.home, label: 'Latest' },
   { key: 'threads', href: paths.threads, label: 'Threads' },
   { key: 'archive', href: paths.archive, label: 'Archive' },
+  { key: 'shelf', href: paths.shelf, label: 'Shelf' },
   { key: 'search', href: paths.search, label: 'Search' },
   { key: 'about', href: paths.about, label: 'About' },
 ] as const;
@@ -171,6 +172,7 @@ const nav = [
       <nav class="c foot-nav" aria-label="More">
         <a href={paths.archive}>Every Haul</a>
         <a href={paths.threads}>Threads</a>
+        <a href={paths.shelf}>The shelf</a>
         <a href={paths.about}>How it's made</a>
         <a href={paths.feed}>RSS</a>
       </nav>

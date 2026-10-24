@@ -1,0 +1,75 @@
+---
+// The shelf: the books the editor is reading and has read, each with a few dated notes in their own
+// words (@fdf/shared/shelf). Not reviews. Books stand as spines on a shelf rule, grouped Reading now,
+// Read, Put down, with a plain list under each shelf so every book can be read about without the
+// spines. Published by the Desk apart from the Hauls (shelf/shelf.json).
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import { BOOK_STATUSES, bookStatusLabel, bookUpdated, shelfOrder, spineOf, type ShelfBook } from '@fdf/shared/shelf';
+import { shelf as loadShelf } from '../lib/runtime';
+import { firstSentence, longDate, paths, titleText } from '../lib/site';
+
+const shelf = await loadShelf();
+const books = shelfOrder(shelf?.books ?? []);
+const groups = BOOK_STATUSES.map((status) => ({ status, books: books.filter((b) => b.status === status) })).filter((g) => g.books.length);
+// Spines vary in height with the title's length, and a little by id, as real books do.
+// Every spine is tall enough for its whole title: one line up to 22 characters, two lines past that.
+const tall = (b: ShelfBook) => {
+  const n = titleText(b.title).length;
+  const lines = n > 22 ? Math.ceil(n / 2) + 3 : n;
+  let h = 0;
+  for (const ch of b.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return Math.min(4, (lines > 19 ? 3 : lines > 14 ? 2 : 1) + (h % 2));
+};
+const wide = (b: ShelfBook) => {
+  let h = 7;
+  for (const ch of b.author) h = (h * 33 + ch.charCodeAt(0)) >>> 0;
+  return 1 + (h % 3);
+};
+const surname = (a: string) => a.split(/\s+and\s+|,\s*/)[0]!.trim().split(/\s+/).pop() ?? a;
+const count = books.length;
+---
+<Base title="The shelf" description="The books on the editor's desk, being read and read, each with a few dated lines in the editor's own words. Not reviews." path={paths.shelf} section="shelf">
+  <section class="wrap g page-head">
+    <p class="m meta"><span>The shelf</span><span>{count === 1 ? 'One book' : `${count} books`}</span>{shelf ? <span>Updated {longDate(shelf.updatedAt)}</span> : null}</p>
+    <div class="c">
+      <Title title={{ text: 'The', italic: 'shelf' }} as="h1" class="h-title" />
+      <p class="deck">The books on the editor’s desk, being read and read. Not reviews: a few dated lines on each, in the editor’s own words, kept as the reading goes.</p>
+    </div>
+  </section>
+
+  {groups.length ? groups.map((g) => (
+    <section class="wrap g row shelf" aria-labelledby={`sh-${g.status}`}>
+      <h2 class="m mh" id={`sh-${g.status}`}>{bookStatusLabel[g.status]}</h2>
+      <div class="mc shelf-c">
+        <ol class="spines" aria-hidden="true">
+          {g.books.map((b) => (
+            <li class:list={['spn', `spine-${spineOf(b)}`, `spn-h${tall(b)}`, `spn-w${wide(b)}`, { 'spn-proud': b.status === 'reading', 'spn-long': titleText(b.title).length > 22 }]}>
+              <a href={paths.book(b.id)} tabindex="-1"><span class="spn-t">{b.title.text}{b.title.italic ? ' ' : ''}{b.title.italic ? <em>{b.title.italic}</em> : null}</span><span class="spn-a">{surname(b.author)}</span></a>
+            </li>
+          ))}
+        </ol>
+        <ol class="books">
+          {g.books.map((b) => {
+            const note = b.notes[0];
+            return (
+              <li class={`spine-${spineOf(b)}`}>
+                <a href={paths.book(b.id)}>
+                  <span class="bk-k" aria-hidden="true"></span>
+                  <span class="bk-main">
+                    <Title title={b.title} as="span" class="bk-t" />
+                    <span class="bk-by">{b.author}{b.year ? `, ${b.year}` : ''}</span>
+                    {note ? <span class="bk-n">{firstSentence(note.text)}</span> : null}
+                  </span>
+                  <span class="bk-d">{bookUpdated(b) ? longDate(bookUpdated(b)) : ''}{b.notes.length ? ` · ${b.notes.length === 1 ? 'one note' : `${b.notes.length} notes`}` : ''}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </section>
+  )) : (
+    <section class="wrap g row"><p class="c">The shelf is being stocked. The first books arrive soon.</p></section>
+  )}
+</Base>

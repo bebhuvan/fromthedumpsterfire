@@ -2,6 +2,7 @@
 
 import { haulSlug, type Haul } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
+import { bookUpdated, type Shelf } from '@fdf/shared/shelf';
 import {
   absolute,
   EDITOR_NAME,
@@ -144,7 +145,7 @@ ${items}
 `;
 }
 
-export function sitemap(hauls: Haul[]): string {
+export function sitemap(hauls: Haul[], shelf?: Shelf | null): string {
   const latestMod = hauls.length
     ? hauls.map(haulLastmod).sort().at(-1)
     : undefined;
@@ -157,6 +158,10 @@ export function sitemap(hauls: Haul[]): string {
     { loc: absolute(paths.llms), lastmod: latestMod },
     { loc: absolute(paths.llmsFull), lastmod: latestMod },
   ];
+  if (shelf?.books.length) {
+    urls.push({ loc: absolute(paths.shelf), lastmod: shelf.updatedAt.slice(0, 10) });
+    for (const b of shelf.books) urls.push({ loc: absolute(paths.book(b.id)), lastmod: (bookUpdated(b) || shelf.updatedAt).slice(0, 10) });
+  }
   for (const h of hauls) {
     const lastmod = haulLastmod(h);
     urls.push({ loc: absolute(paths.haul(h.number)), lastmod });

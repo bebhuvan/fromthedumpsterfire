@@ -31,6 +31,8 @@ export const paths = {
   thread: (n: number, id: string) => `/haul/${n}/thread/${id}`,
   threadMd: (n: number, id: string) => `/haul/${n}/thread/${id}.md`,
   threads: '/threads',
+  shelf: '/shelf',
+  book: (id: string) => `/shelf/${id}`,
   archive: '/archive',
   about: '/about',
   search: '/search',

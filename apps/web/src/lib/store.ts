@@ -8,6 +8,7 @@
 
 import { BUNDLE_VERSION, type Haul, type HaulIndex, type Thread } from '@fdf/shared/haul';
 import { validateHaul } from '@fdf/shared/validate';
+import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 
 /** The subset of an R2 bucket this module uses, so tests can pass a fake. */
 export interface Bucket {
@@ -156,7 +157,39 @@ export function createStore(bucket: Bucket, opts: { now?: () => number; log?: Lo
     return { hauls: [...byNumber.values()].sort((a, b) => b.number - a.number), index: ix, failed };
   }
 
-  return { getIndex, archive };
+  // The shelf (shelf/shelf.json): one file, re-read at most every INDEX_TTL_MS. A shelf that fails
+  // validation is logged and the last good one kept; with none, the shelf page says it is empty.
+  let shelf: { value: Shelf | null; at: number; etag?: string } | null = null;
+  let inflightShelf: Promise<Shelf | null> | null = null;
+  async function readShelf(): Promise<Shelf | null> {
+    try {
+      const obj = await bucket.get(SHELF_PATH);
+      if (!obj) return null;
+      if (shelf?.etag === obj.etag) return shelf.value;
+      const parsed = JSON.parse(await obj.text()) as Shelf;
+      const errs = validateShelf(parsed);
+      if (errs.length) throw new Error(`shelf rejected: ${errs.slice(0, 5).join('; ')}`);
+      shelf = { value: parsed, at: now(), etag: obj.etag };
+      return parsed;
+    } catch (err) {
+      log(`${SHELF_PATH}: ${err instanceof Error ? err.message : String(err)}; keeping the last good shelf`);
+      return shelf?.value ?? null;
+    }
+  }
+  async function getShelf(): Promise<Shelf | null> {
+    if (shelf && now() - shelf.at < INDEX_TTL_MS) return shelf.value;
+    inflightShelf ??= readShelf()
+      .then((value) => {
+        shelf = { value, at: now(), etag: shelf?.etag };
+        return value;
+      })
+      .finally(() => {
+        inflightShelf = null;
+      });
+    return inflightShelf;
+  }
+
+  return { getIndex, archive, getShelf };
 }
 
 export type Store = ReturnType<typeof createStore>;
