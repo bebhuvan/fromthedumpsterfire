@@ -28,6 +28,8 @@ export type Routes = {
   Saved: undefined;
   About: undefined;
   Settings: undefined;
+  Shelf: undefined;
+  Book: { id: string };
 };
 
 export const navRef = createNavigationContainerRef<Routes>();
@@ -43,6 +45,8 @@ export const linking: LinkingOptions<Routes> = {
       Saved: 'saved',
       About: 'about',
       Settings: 'settings',
+      Shelf: 'shelf',
+      Book: 'shelf/:id',
       Haul: { path: 'haul/:n', parse: { n } },
       Note: { path: 'haul/:n/note', parse: { n } },
       Thread: { path: 'haul/:n/thread/:id', parse: { n } },
@@ -83,9 +87,17 @@ export const go = {
   saved: () => push('Saved'),
   about: () => push('About'),
   settings: () => push('Settings'),
+  shelf: () => push('Shelf'),
+  book: (id: string) => push('Book', { id }),
   search: (q?: string) => navRef.isReady() && navRef.navigate('Tabs', { screen: 'Search', params: { q } }),
   /** Swap the current item for the next, so Back returns to the cover, not through every item. */
   nextItem: (n: number, item: string) => navRef.isReady() && navRef.dispatch(StackActions.replace('Item', { n, item })),
+  /** Back from a page the Menu opens; from a link opened cold, to the Menu itself. */
+  backToMenu: () => {
+    if (!navRef.isReady()) return;
+    if (navRef.canGoBack()) navRef.goBack();
+    else navRef.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Tabs', params: { screen: 'Menu' } }] }));
+  },
   back: () => {
     if (!navRef.isReady()) return;
     if (navRef.canGoBack()) navRef.goBack();

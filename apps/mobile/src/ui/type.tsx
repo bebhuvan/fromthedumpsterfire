@@ -14,11 +14,12 @@ function useScaled(base: TextStyle, style?: StyleProp<TextStyle>): TextStyle {
 }
 
 /** Display heading; the italic tail is set in the display italic cut. */
-export const Title = memo(function Title({ title, size, style }: { title: TitleData; size: number; style?: StyleProp<TextStyle> }) {
+export const Title = memo(function Title({ title, size, style, maxScale }: { title: TitleData; size: number; style?: StyleProp<TextStyle>; maxScale?: number }) {
   const p = usePalette();
   return (
     <Text
       accessibilityRole="header"
+      maxFontSizeMultiplier={maxScale}
       style={[s.base, { fontFamily: fonts.display, fontSize: size, lineHeight: size * 1.04, letterSpacing: -size * 0.018, color: p.ink }, style]}
     >
       {title.text}
