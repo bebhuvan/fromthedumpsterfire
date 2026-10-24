@@ -560,13 +560,40 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   none of the sample text (24 KB smaller than with it); it also showed Metro's cache ignores the
   flag, so `app:update` now exports with `--clear`. The runtime fingerprint is unchanged
   (`942dd8e9…` before and after, same machine), so this ships over the air; no new dependency.
-  `npm run verify`: every workspace but `apps/desk` typechecks, 366 tests pass; `apps/desk` fails on
-  `typeLabel`/`typeSwatch` maps missing the new content types (from the shared change of
-  2026-10-24, not from this work).
+  `npm run verify` on the merged branch: every workspace typechecks, 393 tests pass (the Desk's
+  type maps for the new types came with the Desk work).
 
   Known gaps: plates in the dev samples point at Wikimedia, which refuses the app, so the mounted
   print shows its "could not load" note in development (real Hauls copy plates to our files host).
   Code uses the system monospace, not DM Mono, to avoid a native font change.
+
+- **Launch day, the website and the brand** (2026-10-24, branch `launch-2026-10-24`, not yet deployed):
+  - *Editions and the fingerprint*: each Haul's edition ink (a band on the top edge, its number, its
+    marks) and its fingerprint (objects on one line by year, square-root scale of years ago, lanes so
+    labels never touch; `@fdf/shared/fingerprint`) on the cover, in every item's running head and in
+    the archive. The cover's pastel ghost numeral is gone.
+  - *Masthead* as a proof correction (hand-drawn ember strike, proofreader's caret; masks in
+    `apps/web/public/marks`). *Brand mark*: the internet on fire (a flame with the globe cut out),
+    the editor's pick; app icon, Android adaptive and monochrome icons, splash, notification icon,
+    favicon, apple-touch-icon and the header marks, from `docs/brand/mark.py`.
+  - *New forms*: epigraph (quotation), the letter, clipping (social post), mounted print (picture),
+    jacket (book), specimen label (tool); speech as a transcript; specimens of each on the cover.
+  - *Rich media*: pull quotes, code (DM Mono, tokens highlighted at publish), YouTube/Vimeo/Spotify/
+    Apple players (frame-src names only those), audio files, pictures. *Credit*: every picture prints
+    who made it, who holds it, the licence and a link back; the Desk refuses a picture without the
+    maker (and, for an upload, where it was found). About's first house rule says so.
+  - *The shelf* (`/shelf`, `/shelf/<id>`, `@fdf/shared/shelf`, published as `shelf/shelf.json`):
+    spines on a shelf rule (titles never cut), the editor's dated notes as a journal, lines copied
+    out, the Hauls a book appeared in. The edge cache keys shelf pages on the shelf's `updatedAt`.
+  - Default share image redrawn with the corrected masthead; Hauls get a share card drawn by the Desk.
+  - Development samples: Hauls 002 and 003 and a shelf in `packages/shared/fixtures/dev` (local only).
+  - Verified locally (`wrangler dev` on the built Worker, seed on): every page at 1280 and 390 px,
+    light and dark, no horizontal scroll; the fingerprint's spacing is tested; `npm run verify`
+    passes. App: the masthead lost "the" on the editor's phone (a larger system text size wrapped it
+    onto a hidden line); it is now one line that ignores text size, checked on the emulator at 130%.
+    Launch APK (`EXPO_PUBLIC_USE_SEED=0`, arm64, debug-signed for sideloading) carries no sample
+    data and reads files.fromthedumpsterfire.com. The new icon moved the runtime fingerprint to
+    `ae0be8e6…`: over-the-air updates published from now on reach only this APK.
 
 ## Milestones
 

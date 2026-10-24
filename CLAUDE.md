@@ -27,6 +27,8 @@ Read these before working:
 - **Every machine margin note cites a source** and passes a check against it.
 - **Human vs machine is always visible:** serif is the editor, the blue sans is the machine.
 - **No AI-generated images.** Plates are public domain, with licence recorded.
+- **Every work names the person who made it.** Pictures carry maker, holder, licence and a link back
+  (`creditLine`); the Desk refuses a picture without its maker.
 - **Model prose passes the style check** in `packages/shared` (no em-dash chains, no "not X but Y",
   banned-word list) before the editor sees it.
 - Secrets live in `.dev.vars` / `wrangler secret`, never in code, config or commands.
@@ -44,7 +46,8 @@ workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
                   threads (connect.ts), rhymes, blocks, publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
-                  validator, quoting (excerpt length guide, when to draw out big ideas)
+                  validator, quoting (excerpt length guide, when to draw out big ideas), highlight
+                  (code tokens at publish), fingerprint, shelf
 migrations/       D1 migrations
 scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts,
                   publish-app-update.ts (signed over-the-air app updates)
@@ -96,20 +99,28 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - Astro server output on the `fdf-web` Worker. Pages render per request from the R2 binding `FILES`
   (`fdf-files` / `fdf-public-preview`, read only), so a Desk publish needs no deploy. The wrapper in
   `src/worker/index.ts` does redirects, the 405 rule, the edge cache (key: deploy version + index
-  `updatedAt` + path) and all security headers; the data layer is `src/lib/store.ts`.
+  `updatedAt` (+ the shelf's `updatedAt` on `/shelf` pages) + path) and all security headers; the
+  data layer is `src/lib/store.ts` (Hauls and `shelf/shelf.json`, each validated before rendering).
 - Every bundle passes `validateHaul` before it renders; a failing bundle falls back to an earlier
   version or a 503, never a crash. URL shapes in `src/lib/site.ts` match the app's deep links
   (`/haul/<n>`, `/haul/<n>/<item>`, `/haul/<n>/thread/<id>`).
 - Never `set:html`; bundle text is always escaped, italic title tails render as `<em>`, external
   links go through `safeHref` (http/https only). No inline scripts or styles: the CSP in
-  `src/worker/lib.ts` is `script-src 'self'; style-src 'self'`.
+  `src/worker/lib.ts` is `script-src 'self'; style-src 'self'`, and `frame-src` names only the players
+  `embedSrc` in `@fdf/shared/haul` can build (youtube-nocookie, Vimeo, Spotify, Apple Podcasts).
+  Positions (the fingerprint) are classes on a 100-column grid, never inline styles.
 - Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
   sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.
 - Design is Salvage (`docs/DESIGN.md`): each item renders in its printed form, chosen in
-  `src/lib/forms.ts`; one loud thing per screen; no pills, chips or rounded cards. Comps and the
+  `src/lib/forms.ts`; blocks in `Blocks.astro`; every picture's credit through `Credit.astro`; each
+  Haul's edition ink on `<body>` (`.e-<edition>`) and its fingerprint (`Fingerprint.astro`); marks
+  (strike, caret, flame) are CSS masks from `public/marks/`; one loud thing per screen; no pills, chips
+  or rounded cards. Comps and the
   screenshot script (`docs/design-comps/_shared/shoot.mjs`, takes a URL) are in `docs/design-comps/`.
 - Client JS is only the theme toggle and search. `npm run web:dev` (put `FDF_USE_SEED=1` in
-  `apps/web/.dev.vars` for sample data), `npm run deploy:web:preview`, `npm run deploy:web`.
+  `apps/web/.dev.vars` for sample data: Haul 001 plus the development Hauls 002 and 003 and a shelf
+  from `packages/shared/fixtures/dev`; the Astro dev server fights the CSP, so check pages on the built
+  Worker: `astro build` then `wrangler dev -c dist/server/wrangler.json` with `.dev.vars` copied in), `npm run deploy:web:preview`, `npm run deploy:web`.
   `npm run size -w @fdf/web` measures the Worker bundle.
 
 ## The reader app (apps/mobile)
