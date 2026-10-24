@@ -266,6 +266,21 @@ back to WebM/Ogg Opus. The server sniffs the real container and codec from the b
 Android only. Such notes still publish, with a warning and an "Android only" badge on the Desk, and
 the bundle's `Audio.format` lets the reader app skip them on iOS.
 
+**Blocks** (2026-10-24; `packages/server/src/blocks.ts`, routes in `workers/api/src/blocks.ts`,
+table `blocks`). What the editor adds to an item, printed in order after the note and the excerpt
+(`Item.blocks`): `quote` and `code` are excerpts, checked against `sources.text` when added (a quote
+by `findVerbatim` or the selection's offsets, stored as the source's own characters; code by
+`findCode`, whitespace runs collapsed, the editor's paste printed) and again by the Quotes check and
+at publish; an item without source text takes neither. `video` (YouTube, Vimeo) and `audio`
+(Spotify, Apple Podcasts, an https audio file) are parsed from the editor's link by code
+(`parseVideoLink`, `parseAudioLink`); titles from oEmbed or the editor; a video's poster (YouTube
+hqdefault, Vimeo's oEmbed thumbnail) and every picture are fetched with `guardedFetch` and a byte
+cap (or uploaded), measured with `imageSize`, and kept in MEDIA under `blocks/<id>/`; pictures need
+the editor's credit and licence. A Picture item's picture is its chosen plate (`provider 'editor'`).
+`POST /api/items/:id/blocks` (JSON, per-kind zod schemas), `POST /api/items/:id/picture`
+(multipart), `PUT /api/items/:id/blocks/order`, `PATCH|DELETE /api/blocks/:id`,
+`GET /api/blocks/:id/media` (the poster or picture, served from MEDIA to the Desk).
+
 **Publish.** `assembleHaul` builds the bundle from D1, maps internal ids to slugs (never `note` or
 `thread`, which the website routes use), and lists the voice notes and chosen plates to copy next to
 the bundle. It publishes only the notes, ideas and Wikipedia cards the editor ticked (unticked ones are left
@@ -274,10 +289,14 @@ its source, a kept idea whose passage no longer matches, a Rhyme whose quotes no
 `validateHaul` error; `validateHaul(haul, index, { filesBase })` also refuses any plate or audio URL
 not under `FILES_BASE`, so nothing hotlinks an archive (Wikimedia refuses app image loaders).
 There are two buckets: MEDIA (private) and FILES (public, only `hauls/`). `publishHaul` is the only
-writer to FILES: it copies the assets from MEDIA into `hauls/NNN/audio/` and `hauls/NNN/plates/`,
-then writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never overwritten) and
+writer to FILES: it copies the assets from MEDIA into `hauls/NNN/audio/`, `hauls/NNN/plates/` and
+`hauls/NNN/media/` (video posters and block pictures, `<item>-<n>[-poster].<ext>`), writes the share
+card the Desk drew in the editor's browser (`hauls/NNN/vN/card.png`, kept only if it is a 1200 x 630
+PNG; `Haul.card`), then writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never overwritten) and
 `hauls/index.json`, records `haul_versions`, and for v1 only queues one push. A correction is a new
-version with a `corrections` entry. Push uses FCM HTTP v1 with an OAuth assertion signed by
+version with a `corrections` entry. Blocks are written in order with code `tokens` from
+`highlightCode` (the readers only print them); year, handle, recipient and place go on the item, and
+the edition (the editor's, else `editionOf(number)`) on the bundle and its index entry. Push uses FCM HTTP v1 with an OAuth assertion signed by
 WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 `url: https://fromthedumpsterfire.com/haul/<n>`; unregistered tokens are disabled.
 

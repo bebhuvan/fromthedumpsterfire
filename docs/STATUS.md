@@ -476,6 +476,61 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   The Hindu's date shows as 16 October: the page says 00:16 IST on the 17th, and `yearOrDate`
   reads it in UTC.
 
+- 2026-10-24: **the Desk publishes the new bundle: blocks, seven new types, editions, the share card.**
+  - **Blocks** (migration `0006_blocks.sql`, additive; `packages/server/src/blocks.ts`, routes in
+    `workers/api/src/blocks.ts`). On the item page, "Add to this item": pull quotes (select a line in
+    the reader and choose Pull quote, or paste), code (paste, language from `CODE_LANGS`, live
+    `highlightCode` preview), video (YouTube watch, youtu.be, Shorts, embed, live, with t= or start=;
+    Vimeo, channel, group and player links; unlisted Vimeo refused), podcast or audio (Spotify
+    episode or show, Apple Podcasts show or episode, or an https audio file that answers a guarded
+    HEAD or ranged GET with an audio type) and pictures (upload or link, images only, 15 MB cap,
+    credit and licence required). Rows move up, down, or go. Quotes and code are excerpts: a quote
+    prints the source's own characters; code matches with whitespace runs collapsed and the
+    editor's paste prints. **An item with no stored source text takes no quotes or code** (the
+    refusal says to paste the text first): there would be nothing to check them against. Titles come
+    from oEmbed (YouTube, Vimeo, Spotify) or the editor (Apple, audio files); YouTube's hqdefault and
+    Vimeo's thumbnail are kept in MEDIA as posters. Pull quotes and code join the Quotes check; video
+    and audio links join the Links check.
+  - **Types.** Quotation, letter, speech, post (social), picture, book, tool in the type select with
+    their printed forms. Capture types x.com/twitter.com status links, Bluesky posts, Substack Notes,
+    Threads and Mastodon-style `/@user/<id>` posts as `social` (an X post used to be `post`, which now
+    means a blog post), Spotify episode links as podcasts. Posts and letters and speeches get their
+    handle, recipient and place; every item a year. A **Picture** item's picture becomes its chosen
+    plate (`plates.provider = 'editor'`, the editor's credit and licence) and an uploaded Picture is
+    not transcribed (the pipeline skips reading and drafting; checks still run). Short quotations and
+    posts print whole (the captured text becomes the excerpt). Quotations, posts, pictures and tools
+    get no big ideas; a speech reads as long form.
+  - **Publish** writes blocks in order (code with tokens), copies posters and pictures to
+    `hauls/NNN/media/`, writes year, handle, recipient, place, and the edition (always written:
+    the editor's, else `editionOf(number)`) into the bundle and the index entry. A Picture without
+    its picture, or a quote or code block that no longer matches its source, stops the publish.
+  - **The Haul composer** has an edition ink picker (eight inks, default by number) and the two new
+    cover swatches. **The share card** (Haul.card, 1200 x 630 PNG) is drawn by the Desk in the
+    editor's browser with canvas (`apps/desk/src/lib/card.ts`), shown in the preview and sent with the
+    publish; `publish.ts` keeps it only if it is a PNG of that size under 2 MB and writes
+    `hauls/NNN/vN/card.png`. If the canvas or fonts fail, the Haul publishes without one.
+  - highlight.js's types pull in the DOM library, which breaks the Workers' fetch types, so the
+    Worker projects type-check against a stub (`packages/server/types/highlight.d.ts`, tsconfig
+    `paths`). The reader app maps the seven new types to its nearest existing forms until its own
+    forms land.
+  - **Verified.** `npm run verify`: type checks clean, 356 tests (new: `packages/server/test/blocks.test.ts`
+    for every link shape, verbatim refusals, oEmbed, posters, audio checks and pictures with the
+    network stubbed; `workers/api/test/blocks.test.ts` for the routes, the multipart picture upload,
+    the new fields, the edition and a publish with a card; the publish end-to-end test on SQLite
+    with the real migrations now covers blocks, tokens, FILES copies, a Picture's plate, the edition
+    and the card). Locally (`wrangler dev` of the Desk Worker alone, local D1 and R2, no pipeline and
+    no model calls): a pasted item took a pull quote, code, a YouTube video and a Vimeo video (real
+    oEmbed titles and posters), a Spotify show, and an uploaded picture; a misquote, foreign code, an
+    HTML page as audio and a removed Vimeo video were refused with their messages. The Haul was
+    published from the composer in headless Chrome (the card drawn in the browser and sent);
+    `scripts/verify-bundle.ts` said VALID, and the card, both posters and the picture were served
+    from FILES with their image types. Screens checked at 390 px and 1280 px.
+  - **Not done.** The Desk shows no per-block edit form yet (the API takes edits: locator, caption,
+    language, code, title, start, credit and licence; the editor removes and re-adds meanwhile).
+    Bluesky, Threads and Substack Notes are fetched as pages (no platform API yet); when a page gives
+    nothing, paste the post's text. The publish preview's phone frame is wider than a 390 px screen
+    (it was before this change).
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress

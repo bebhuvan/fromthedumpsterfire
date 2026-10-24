@@ -42,7 +42,7 @@ workers/api       the Desk Worker: UI assets, capture, review, publish; public P
 workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate, embed, connect, draft,
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
-                  threads (connect.ts), rhymes, publish, FCM
+                  threads (connect.ts), rhymes, blocks, publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator, quoting (excerpt length guide, when to draw out big ideas)
 migrations/       D1 migrations
@@ -72,6 +72,11 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   copy, else Save Page Now) after a refusal. Free content only: a paid preview fails the fetch and
   is never stored as the piece. The item keeps the original link; `sources.meta.via` says where the
   text came from. No paid scrapers, proxies, bot-check evasion or disguised user agents.
+- Item blocks (pull quotes, code, video, audio, pictures; `packages/server/src/blocks.ts`) follow the
+  same rules: quotes and code verified against the stored source (none on an item without source
+  text), embeds parsed from the editor's link by code, posters and pictures fetched through
+  `guardedFetch` with a byte cap and kept in MEDIA, pictures only with the editor's credit and
+  licence. `publish.ts` copies them to FILES, with the share card the Desk draws in the browser.
 - Machine-suggested connections, rhyme quotes and plate metadata follow the same rules as excerpts:
   quotes verified verbatim against stored source text at both ends, licences as the institution
   states them. A kept connection's published note is the editor's own words.
@@ -132,4 +137,5 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - npm workspaces, TypeScript everywhere, Node >= 22. Scripts run with `node --experimental-strip-types`.
 - `wrangler.jsonc` per worker with `preview` and `production` envs; spend ceilings as vars.
 - Tests: vitest. Run `npm run verify` before calling anything done.
+- highlight.js types load the DOM library; Worker tsconfigs map it to `packages/server/types/highlight.d.ts`.
 - Keep `docs/STATUS.md` and this file current when the shape of the code changes.

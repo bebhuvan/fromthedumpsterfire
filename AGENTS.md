@@ -37,21 +37,23 @@ Read these before working:
 apps/web          public website: Astro on the fdf-web Worker, rendering published bundles from R2 per request
 apps/desk         the Desk UI: Vite + React SPA, served by workers/api (private, behind Access)
 apps/mobile       Expo reader app
-workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices
+workers/api       the Desk Worker: UI assets, capture, review, publish; public POST /v1/devices and
+                  GET /v1/updates(/asset)
 workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate, embed, connect, draft,
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
-                  threads (connect.ts), rhymes, publish, FCM
+                  threads (connect.ts), rhymes, blocks, publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator, quoting (excerpt length guide, when to draw out big ideas)
 migrations/       D1 migrations
-scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts
+scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts,
+                  publish-app-update.ts (signed over-the-air app updates)
 ```
 
 ## The Desk (apps/desk, workers/*, packages/server)
 
 - Every request runs the Worker first; the in-Worker Access check is fail-closed. Public routes are
-  exact method + path (`POST /v1/devices`, `GET /v1/health`). Never add a route that skips the lock
+  exact method + path (`POST /v1/devices`, `GET /v1/health`, `GET /v1/updates`, `GET /v1/updates/asset`). Never add a route that skips the lock
   without adding it to `isPublicRoute` and a test. UI writes send `x-desk: 1` and JSON.
 - Every fetch of a URL that came from the editor or a source goes through `guardedFetch` (SSRF),
   and every untrusted body is read with a byte cap on what is actually streamed
@@ -65,6 +67,16 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/`. Only
   `publish.ts` writes to FILES; published plates and voice notes are copied there (never hotlinked),
   and `validateHaul(…, { filesBase })` enforces it.
+- Articles are fetched in a fixed order (ARCHITECTURE "Article fetch order"): platform routes
+  (Substack API and feed, WordPress REST, Medium RSS) before the page, the Wayback Machine (latest
+  copy, else Save Page Now) after a refusal. Free content only: a paid preview fails the fetch and
+  is never stored as the piece. The item keeps the original link; `sources.meta.via` says where the
+  text came from. No paid scrapers, proxies, bot-check evasion or disguised user agents.
+- Item blocks (pull quotes, code, video, audio, pictures; `packages/server/src/blocks.ts`) follow the
+  same rules: quotes and code verified against the stored source (none on an item without source
+  text), embeds parsed from the editor's link by code, posters and pictures fetched through
+  `guardedFetch` with a byte cap and kept in MEDIA, pictures only with the editor's credit and
+  licence. `publish.ts` copies them to FILES, with the share card the Desk draws in the browser.
 - Machine-suggested connections, rhyme quotes and plate metadata follow the same rules as excerpts:
   quotes verified verbatim against stored source text at both ends, licences as the institution
   states them. A kept connection's published note is the editor's own words.
@@ -113,6 +125,10 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS
   bundle to rebuild: Gradle's up-to-date check only watches apps/mobile, so edits in
   packages/shared would otherwise ship a stale bundle.
+- JS-only changes ship over the air: `npm run app:update` (signed with the key in
+  `~/.config/fdf/app-updates/`, served by `/v1/updates` on the Desk Worker; `-- --rollback` undoes).
+  Native changes (new modules, `app.json` plugins, Firebase, even `apps/mobile/.gitignore`) change the
+  fingerprint and need a new APK; the script prints the runtime it targets (`assets/fingerprint` in the APK).
 - Plates and voice notes must be served from our files host. Archives such as Wikimedia refuse the
   app's image requests (403 even with a descriptive User-Agent), so never hotlink them.
 
@@ -121,4 +137,5 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - npm workspaces, TypeScript everywhere, Node >= 22. Scripts run with `node --experimental-strip-types`.
 - `wrangler.jsonc` per worker with `preview` and `production` envs; spend ceilings as vars.
 - Tests: vitest. Run `npm run verify` before calling anything done.
+- highlight.js types load the DOM library; Worker tsconfigs map it to `packages/server/types/highlight.d.ts`.
 - Keep `docs/STATUS.md` and this file current when the shape of the code changes.
