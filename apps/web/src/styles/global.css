@@ -755,3 +755,4 @@ blockquote > p + p { margin-top: 0.65em; }
   .sp-print { grid-column: span 6; }
   .sp-jacket { grid-column: span 3; }
 }
+.has-ed .sp-h { border-top-color: var(--ed); }

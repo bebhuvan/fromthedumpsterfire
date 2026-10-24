@@ -1,33 +1,31 @@
 <!doctype html>
-<!-- Source of public/og.png, the default share image (1200x630). Rendered with:
-     google-chrome --headless --hide-scrollbars --window-size=1200,630 --screenshot=public/og.png scripts/og.html
-     (run from apps/web). Type and colours only; no generated imagery. -->
+<!-- Source of public/og.png, the default share image (1200x630), used when a page has no Haul card or
+     plate. Rendered with (from apps/web):
+     google-chrome --headless=new --hide-scrollbars --allow-file-access-from-files --window-size=1200,630 --screenshot=public/og.png scripts/og.html
+     Type, the masthead's marks and the type swatches only; no generated imagery. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
 @font-face { font-family: 'ND'; src: url('../public/fonts/NewsreaderDisplay-Medium.woff2'); font-weight: 500; }
+@font-face { font-family: 'ND'; src: url('../public/fonts/NewsreaderDisplay-Regular.woff2'); font-weight: 400; }
 @font-face { font-family: 'ND'; src: url('../public/fonts/NewsreaderDisplay-Italic.woff2'); font-weight: 400; font-style: italic; }
-@font-face { font-family: 'SG'; src: url('../public/fonts/Schibsted-SemiBold.woff2'); font-weight: 600; }
+@font-face { font-family: 'SG'; src: url('../public/fonts/Schibsted-Medium.woff2'); font-weight: 500; }
 html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
-body { background: #FFFFFF; color: #141416; font-family: 'ND', serif; display: grid; grid-template-columns: 420px 1fr; }
-.left { background: #141416; display: flex; align-items: center; justify-content: center; }
-.right { padding: 72px 72px 64px; display: flex; flex-direction: column; justify-content: space-between; }
-.label { font-family: 'SG', sans-serif; font-weight: 600; font-size: 18px; letter-spacing: 0.12em; text-transform: uppercase; }
-h1 { margin: 0; font-weight: 500; font-size: 96px; line-height: 0.98; letter-spacing: -0.03em; }
-h1 em { font-weight: 400; }
-.swatches { display: flex; gap: 12px; }
-.swatches span { width: 44px; height: 44px; border-radius: 50%; }
+body { background: #FFFFFF; color: #141416; font-family: 'ND', serif; padding: 0 72px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; position: relative; }
+.mast { font-weight: 500; font-size: 112px; line-height: 0.98; letter-spacing: -0.03em; }
+.mast i { font-weight: 400; letter-spacing: -0.01em; }
+.mast s { text-decoration: none; position: relative; color: #55555C; font-weight: 400; }
+.mast s::after { content: ''; position: absolute; left: -0.06em; right: -0.08em; top: 0.33em; height: 0.3em; background: #FF4F1F; -webkit-mask: url('../public/marks/strike.svg') center / 100% 100% no-repeat; }
+.caret { display: inline-block; width: 0.3em; height: 0.24em; margin: 0 -0.1em 0 -0.02em; vertical-align: -0.12em; background: #FF4F1F; -webkit-mask: url('../public/marks/caret.svg') center / contain no-repeat; }
+.strap { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 14px; border-top: 2px solid #141416; font-family: 'SG', sans-serif; font-weight: 500; font-size: 22px; color: #55555C; }
+.keys { position: absolute; left: 72px; right: 72px; bottom: 56px; display: flex; gap: 10px; }
+.keys span { flex: 1; height: 10px; }
 </style>
 </head>
 <body>
-<div class="left">
-  <svg width="220" height="300" viewBox="20 14 24 44" aria-hidden="true"><path d="M33.4 16.6C32 22 23 34 23 46c0 5.5 3.5 9 7.6 9 4.9 0 9.1-4 9.1-11.5 0-10.5-5.7-19.5-6.3-26.9Z" fill="#FF4F1F"/><path d="M33 33.8c-.7 4.2-4 9.2-4 14.7 0 2.5 1.5 3.7 3.3 3.7 2.2 0 3.7-2.2 3.7-5.2 0-5-2.6-9.5-3-13.2Z" fill="#141416"/></svg>
-</div>
-<div class="right">
-  <div class="label">fromthedumpsterfire.com</div>
-  <h1>From the <em>Dumpster Fire</em></h1>
-  <div class="swatches"><span style="background:#FFE0C2"></span><span style="background:#FFD8D0"></span><span style="background:#FFF0A6"></span><span style="background:#DCEBFF"></span><span style="background:#D2F3E2"></span><span style="background:#E6F2C8"></span></div>
-</div>
+<div class="mast"><i>From the</i> <s>Internet</s><span class="caret"></span><br>Dumpster Fire</div>
+<div class="strap"><span>Things worth salvaging from the internet and the archive</span><span>fromthedumpsterfire.com</span></div>
+<div class="keys"><span style="background:#FFE0C2"></span><span style="background:#FFD8D0"></span><span style="background:#FFF0A6"></span><span style="background:#DCEBFF"></span><span style="background:#D2F3E2"></span><span style="background:#E6F2C8"></span><span style="background:#ECE4FA"></span><span style="background:#D3EFF0"></span></div>
 </body>
 </html>
