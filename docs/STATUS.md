@@ -647,6 +647,11 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   light and dark, at font scale 1.3, and at a forced 204pt width (spines wrap onto a second shelf
   with its own rule; nothing clips). Screenshots: session scratchpad `app-shots/shelf/`.
 
+- **Over-the-air update published** (2026-10-24, the editor's go): update `33f49845…` for runtime
+  `e903061b…` (the launch APK): the shelf always in the Menu, Search as a page with a real field, the
+  note to the editor going to bhuvan@bebhuvan.com. The live route served a manifest whose signature
+  verified and every asset matched its hash. Undo: `npm run app:update -- --rollback`.
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress
