@@ -284,7 +284,31 @@ const LICENCES = ['Public domain', 'CC0', 'CC BY 4.0', 'CC BY-SA 4.0', '© the c
  * A picture, uploaded or linked, with the credit and licence the editor states. `asPlate` makes it
  * the item's own picture (a Picture item prints as it); otherwise it is added as a block.
  */
-export function PictureForm({ itemId, busy, setBusy, onDone, asPlate = false, fromUpload = false }: { itemId: string; busy: boolean; setBusy: (b: boolean) => void; onDone: () => Promise<void> | void; asPlate?: boolean; fromUpload?: boolean }) {
+/**
+ * A picture with its credit: upload or link, then who made it, where it was found and the licence.
+ * Posts to an item's picture route by default; `endpoint` sends it elsewhere (a shelf book's cover).
+ */
+export function PictureForm({
+  itemId,
+  busy,
+  setBusy,
+  onDone,
+  asPlate = false,
+  fromUpload = false,
+  endpoint,
+  submitLabel,
+  doneToast,
+}: {
+  itemId?: string;
+  busy: boolean;
+  setBusy: (b: boolean) => void;
+  onDone: () => Promise<void> | void;
+  asPlate?: boolean;
+  fromUpload?: boolean;
+  endpoint?: string;
+  submitLabel?: string;
+  doneToast?: string;
+}) {
   const toast = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [useCaptured, setUseCaptured] = useState(fromUpload);
@@ -304,8 +328,8 @@ export function PictureForm({ itemId, busy, setBusy, onDone, asPlate = false, fr
       else fd.append('url', url.trim());
       for (const [k, v] of Object.entries(f)) if (v.trim()) fd.append(k, v.trim());
       if (asPlate) fd.append('as', 'plate');
-      await api.post(`/api/items/${itemId}/picture`, fd);
-      toast(asPlate ? 'The picture is set, with its credit and licence' : 'Picture added');
+      await api.post(endpoint ?? `/api/items/${itemId}/picture`, fd);
+      toast(doneToast ?? (asPlate ? 'The picture is set, with its credit and licence' : 'Picture added'));
       await onDone();
     } catch (e) {
       toast(e instanceof Error ? e.message : String(e), true);
@@ -381,7 +405,7 @@ export function PictureForm({ itemId, busy, setBusy, onDone, asPlate = false, fr
       </div>
       <div className="row">
         <button type="button" className="btn primary small" disabled={busy || !ready} onClick={() => void submit()}>
-          {busy ? 'Copying…' : asPlate ? 'Use this picture' : 'Add picture'}
+          {busy ? 'Copying…' : (submitLabel ?? (asPlate ? 'Use this picture' : 'Add picture'))}
         </button>
         {!ready && <span className="small muted">{hasPicture ? 'Add the credit and the licence.' : 'Choose a picture first.'}</span>}
       </div>

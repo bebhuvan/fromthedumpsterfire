@@ -392,3 +392,54 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
   .blocks li { padding-left: 12px; }
 }
 .card-preview img { width: 100%; height: auto; display: block; border: 1px solid var(--rule); border-radius: 8px; }
+
+/* ---- the shelf (2026-10-24): books as spines, a page per book ---- */
+.shelf-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr); gap: 36px; align-items: start; }
+.shelf-publish { position: sticky; top: 76px; }
+.shelf-publish.is-ready { background: var(--mint); }
+.shelf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.shelf-list li + li { border-top: 1px solid var(--rule); }
+.book-row { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 14px; align-items: stretch; padding: 12px 10px 12px 4px; text-decoration: none; border-radius: 4px; }
+.book-row:hover { background: var(--plate); }
+.book-row-text { display: flex; flex-direction: column; min-width: 0; }
+.book-row .tray-title { font-size: 19px; }
+.spine { display: block; width: 10px; min-height: 44px; border-radius: 1px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent); }
+.spine.small-spine { min-height: 28px; width: 7px; }
+.spine.tall { width: 14px; min-height: 0; align-self: stretch; }
+.changes { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg .btn[aria-pressed='true'] { background: var(--inv-bg); color: var(--inv-ink); border-color: var(--inv-bg); }
+.book-head { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 18px; }
+.book-head .label { text-decoration: none; }
+.book-head h1 { margin: 8px 0 0; font-size: clamp(32px, 4.4vw, 46px); }
+.book-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 40px; align-items: start; margin-top: 28px; }
+.book-cols > .steps > .section + .section { margin-top: 36px; }
+.book-notes, .book-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.book-note, .book-line { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--rule); }
+.book-note:last-child, .book-line:last-child { border-bottom: 1px solid var(--rule); }
+.book-note-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.book-note-text { margin: 0; font: italic 18px/1.55 var(--serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+.book-line-text { margin: 0; font: 18px/1.5 var(--serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+.book-line-text::before { content: '“'; }
+.book-line-text::after { content: '”'; }
+.add-note .area { min-height: 96px; }
+.cover-figure { margin: 0; display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.cover-figure img { width: 100%; height: auto; display: block; border-radius: 2px; background: var(--plate); box-shadow: 0 1px 0 var(--rule); }
+.cover-figure figcaption { min-width: 0; overflow-wrap: anywhere; }
+.swatches.spines button { width: 22px; height: 36px; border-radius: 2px; }
+@media (max-width: 1100px) {
+  .book-cols { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .shelf-grid { grid-template-columns: minmax(0, 1fr); }
+  .shelf-publish { position: static; }
+}
+@media (max-width: 760px) {
+  .book-row .tray-title { font-size: 18px; }
+  .book-head h1 { font-size: clamp(26px, 7.4vw, 34px); line-height: 1.12; }
+  .book-line .row.between { align-items: flex-start; }
+  .nav a { font-size: 13.5px; }
+}
+@media (max-width: 420px) {
+  .cover-figure { grid-template-columns: minmax(0, 110px) minmax(0, 1fr); }
+}
