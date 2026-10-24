@@ -42,9 +42,10 @@ workers/api       the Desk Worker: UI assets, capture, review, publish; public P
 workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate, embed, connect, draft,
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
-                  threads (connect.ts), rhymes, blocks, publish, FCM
+                  threads (connect.ts), rhymes, blocks, the shelf (shelf.ts), publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
-                  validator, quoting (excerpt length guide, when to draw out big ideas)
+                  validator, quoting (excerpt length guide, when to draw out big ideas), shelf (the
+                  books the editor is reading: Shelf, validateShelf, shelfOrder)
 migrations/       D1 migrations
 scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts,
                   publish-app-update.ts (signed over-the-air app updates)
@@ -64,9 +65,15 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   adapters in `models/providers/`; retries in `models/http.ts`; ledger and ceiling in `spend.ts`).
   Prompts and schemas in `prompts.ts`. Provider facts, dated, in `docs/MODELS.md`: re-check the
   provider's docs before changing a model id, price or parameter. Never send a provider key in a URL.
-- Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/`. Only
-  `publish.ts` writes to FILES; published plates and voice notes are copied there (never hotlinked),
-  and `validateHaul(…, { filesBase })` enforces it.
+- Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/` and
+  `shelf/`. Only `publish.ts` writes to FILES (a Haul publish only under `hauls/`, the shelf publish
+  only under `shelf/`); published plates, covers and voice notes are copied there (never hotlinked),
+  and `validateHaul(…, { filesBase })` and `validateShelf(…, { filesBase })` enforce it.
+- The shelf (books being read, read or put down) is published apart from the Hauls as
+  `shelf/shelf.json` by "Publish the shelf" (`publishShelf`). Book notes are the editor's words, typed
+  or dictated through the voice-note path (deletion-only cleanup), never reworded; a cover follows the
+  picture credit rule in `blocks.ts`; a book's id is its title slug and never changes. A Haul's Book
+  item points to its shelf book (`items.shelf_id`, written as `Item.shelf`).
 - Articles are fetched in a fixed order (ARCHITECTURE "Article fetch order"): platform routes
   (Substack API and feed, WordPress REST, Medium RSS) before the page, the Wayback Machine (latest
   copy, else Save Page Now) after a refusal. Free content only: a paid preview fails the fetch and

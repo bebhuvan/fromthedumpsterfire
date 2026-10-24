@@ -81,8 +81,9 @@ detection, bundle validator) are in `packages/shared`.
 browser (Access) ─► fdf-desk ── D1 (items, sources, excerpts, drafts, wiki_cards, checks, notes, plates,
    │                 │           chunks, suggestions, judged_pairs, threads, rhymes, hauls, haul_items,
    │                 │           haul_versions, connections, model_calls, runs, devices)
-   │                 ├─ R2 MEDIA, private (uploads/, notes/, snapshots/, plates/)
-   │                 ├─ R2 FILES, public (hauls/NNN/vN/haul.json, hauls/NNN/audio|plates/, hauls/index.json)
+   │                 ├─ R2 MEDIA, private (uploads/, notes/, snapshots/, plates/, blocks/, books/)
+   │                 ├─ R2 FILES, public (hauls/NNN/vN/haul.json, hauls/NNN/audio|plates/, hauls/index.json,
+   │                 │                    shelf/shelf.json, shelf/covers/, shelf/audio/)
    │                 └─ Queue fdf-ingest ─► fdf-pipeline ─► ItemWorkflow (one per item)
 reader app ─► POST /v1/devices, GET /v1/updates(/asset) (public)
                                                      ├─ Vectorize VECTORS (fdf-chunks-*), Browser Rendering BROWSER
@@ -288,7 +289,7 @@ out, never a blocker), and refuses on any failing item check, any kept note or i
 its source, a kept idea whose passage no longer matches, a Rhyme whose quotes no longer match, a missing chosen plate, or any
 `validateHaul` error; `validateHaul(haul, index, { filesBase })` also refuses any plate or audio URL
 not under `FILES_BASE`, so nothing hotlinks an archive (Wikimedia refuses app image loaders).
-There are two buckets: MEDIA (private) and FILES (public, only `hauls/`). `publishHaul` is the only
+There are two buckets: MEDIA (private) and FILES (public, only `hauls/` and `shelf/`). `publishHaul` is the only
 writer to FILES: it copies the assets from MEDIA into `hauls/NNN/audio/`, `hauls/NNN/plates/` and
 `hauls/NNN/media/` (video posters and block pictures, `<item>-<n>[-poster].<ext>`), writes the share
 card the Desk drew in the editor's browser (`hauls/NNN/vN/card.png`, kept only if it is a 1200 x 630
@@ -299,6 +300,45 @@ version with a `corrections` entry. Blocks are written in order with code `token
 the edition (the editor's, else `editionOf(number)`) on the bundle and its index entry. Push uses FCM HTTP v1 with an OAuth assertion signed by
 WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 `url: https://fromthedumpsterfire.com/haul/<n>`; unregistered tokens are disabled.
+A Book item linked to the shelf (`items.shelf_id`) is written with `Item.shelf`; the publish warns
+(never refuses) when the published shelf does not have that book yet.
+
+**The shelf** (2026-10-24; `packages/server/src/shelf.ts`, publish in `publish.ts`, routes in
+`workers/api/src/shelf.ts`, screens `apps/desk/src/screens/Shelf.tsx` and `Book.tsx`, migration
+`0007_shelf.sql`; the contract is `Shelf` in `packages/shared/src/shelf.ts`). The books the editor is
+reading, has read or put down, published apart from the Hauls because a book takes weeks. Tables:
+`books` (the id is a slug of the title, unique, made once and never changed: it is the public address
+`/shelf/<id>`; title text and italic, author, year, publisher, https url, status, started, finished,
+spine, and the cover's MEDIA key, size and credit fields), `book_notes` (date, where in the book, the
+editor's text, and for a dictated note its `notes` row, MEDIA key, format, seconds and whether to
+publish the recording), `book_lines` (text, locator, position), `shelf_versions`, and
+`items.shelf_id`. Rules, enforced on the server: notes are stored as the editor gives them; a
+dictated note goes through `POST /api/notes` (Whisper, then the deletion-only cleanup) and the Desk
+sends the words the editor accepted with the note's id. A status switch fills the obvious date
+(read: finished today unless given; reading again: finish cleared); dates must be real and a finish
+cannot precede a start. Lines are typed from the page; past 60 words a line is flagged, never
+refused. A cover is uploaded or fetched through `guardedFetch` with a byte cap, measured, kept in
+MEDIA under `books/<id>/cover-<id>.<ext>`, and follows the picture credit rule (`checkPictureMeta`,
+`sourced`: credit, licence, maker, and for an upload where it was found). Only a Book item links to
+a shelf book; a book a published Haul links to cannot be deleted.
+
+**Publish the shelf.** `assembleShelf` builds the `Shelf` from D1: every book, notes newest first
+(date, then when added), lines in order, ordered with `shelfOrder`; the cover and each recording the
+editor chose to publish point at copies under `shelf/covers/<book>-cover-<id>.<ext>` and
+`shelf/audio/<book>-<note>.<format>` (names unique per file, so copies are immutable and skipped when
+present); `ShelfBook.hauls` comes from the published bundles themselves (an item's `Item.shelf`, or a
+Book item linked after its Haul was published, found in the bundle by its id; a link the bundle
+cannot show is a warning). `validateShelf(shelf, { filesBase })` runs last (covers and recordings
+must sit under `FILES_BASE`), and its paths are rewritten with the book's title ("The Coal Question:
+author: name the author"). `publishShelf` refuses on any problem, copies missing files from MEDIA,
+writes `shelf/shelf.json` (fresh `updatedAt`, `max-age=60`) and records `shelf_versions`.
+`shelfChanges` compares the next shelf with the published one ("Gravity's Rainbow: put down →
+reading now; 1 new note.") for the Desk. Routes: `GET|POST /api/books`, `GET|PATCH|DELETE
+/api/books/:id`, `POST /api/books/:id/notes`, `PATCH|DELETE /api/book-notes/:id`,
+`POST /api/books/:id/lines`, `PUT /api/books/:id/lines/order`, `PATCH|DELETE /api/book-lines/:id`,
+`POST` (multipart) `|PATCH|DELETE|GET /api/books/:id/cover`, `PUT /api/items/:id/shelf` (link or
+unlink), `POST /api/items/:id/shelf` (make a shelf book from the item), `GET /api/shelf/preview`,
+`POST /api/shelf/publish`.
 
 ### Over-the-air app updates
 
