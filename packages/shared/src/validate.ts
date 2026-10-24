@@ -213,6 +213,7 @@ function checkItem(c: Collector, item: Item, p: string) {
   c.str(item.handle, `${p}.handle`, { optional: true });
   c.str(item.recipient, `${p}.recipient`, { optional: true });
   c.str(item.place, `${p}.place`, { optional: true });
+  if (c.str(item.shelf, `${p}.shelf`, { optional: true }) && !/^[a-z0-9][a-z0-9-]{0,80}$/.test(item.shelf)) c.err(`${p}.shelf`, 'shape', 'a shelf id');
   if (item.type === 'image' && typeof item.creator === 'string' && !item.creator.trim()) c.err(`${p}.creator`, 'credit', 'a picture names who made it');
   if (item.blocks !== undefined && c.arr(item.blocks, `${p}.blocks`)) item.blocks.forEach((b, k) => checkBlock(c, b, `${p}.blocks[${k}]`));
 }

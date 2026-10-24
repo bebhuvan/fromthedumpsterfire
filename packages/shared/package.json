@@ -15,6 +15,7 @@
     "./quoting": "./src/quoting.ts",
     "./highlight": "./src/highlight.ts",
     "./fingerprint": "./src/fingerprint.ts",
+    "./shelf": "./src/shelf.ts",
     "./fixtures/haul-001.json": "./fixtures/haul-001.json",
     "./fixtures/index.json": "./fixtures/index.json",
     "./fixtures/dev/*": "./fixtures/dev/*"

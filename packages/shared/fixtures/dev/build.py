@@ -42,7 +42,7 @@ h2 = {
        "Sample note. The most copied print in the world. Look at the boats before the wave.", year=1831, plate=WAVE),
   item("seeing-state", "book", {"text": "Seeing Like", "italic": "a State"}, "James C. Scott", "Yale University Press", "1998", "https://en.wikipedia.org/wiki/Seeing_Like_a_State",
        "Sample note. On my desk for a month. Every chapter is a case of a plan that could only see what it could count.",
-       excerpt={"text": "Certain forms of knowledge and control require a narrowing of vision.", "locator": "Chapter 1"}),
+       excerpt={"text": "Certain forms of knowledge and control require a narrowing of vision.", "locator": "Chapter 1"}, shelf="seeing-like-a-state"),
   item("sample-pod", "podcast", "A podcast episode", "Sample Host", "Spotify", "2026", "https://open.spotify.com/show/2MAi0BvDc6GTFvKFPXnkCL",
        "Sample note. A podcast with its official player, and an audio file played by the browser.", minutes=95,
        blocks=[{"kind": "audio", "provider": "spotify", "url": "https://open.spotify.com/show/2MAi0BvDc6GTFvKFPXnkCL", "title": "The show on Spotify"},

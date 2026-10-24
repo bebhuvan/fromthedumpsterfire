@@ -1,0 +1,44 @@
+{
+ "bundleVersion": 1,
+ "updatedAt": "2026-10-24T12:00:00Z",
+ "books": [
+  {
+   "id": "seeing-like-a-state", "title": { "text": "Seeing Like", "italic": "a State" }, "author": "James C. Scott", "year": 1998,
+   "publisher": "Yale University Press", "url": "https://openlibrary.org/works/OL2010879W", "status": "reading", "started": "2026-10-02",
+   "notes": [
+    { "date": "2026-10-21", "at": "chapter 3", "text": "Sample note. The chapter on city planning is the one I keep thinking about. Brasília looks perfect from the air and nobody wants to walk in it." },
+    { "date": "2026-10-09", "at": "chapter 1", "text": "Sample note. Starts with forestry in eighteenth-century Prussia, and somehow it is about every dashboard I have ever built." }
+   ],
+   "lines": [ { "text": "Certain forms of knowledge and control require a narrowing of vision.", "locator": "chapter 1" } ],
+   "hauls": [ { "number": 2, "itemId": "seeing-state" } ]
+  },
+  {
+   "id": "the-dawn-of-everything", "title": { "text": "The Dawn of", "italic": "Everything" }, "author": "David Graeber and David Wengrow", "year": 2021,
+   "publisher": "Farrar, Straus and Giroux", "status": "reading", "started": "2026-10-15",
+   "notes": [ { "date": "2026-10-19", "text": "Sample note. Long, argumentative and fun. Reading it a chapter a night." } ], "lines": []
+  },
+  {
+   "id": "the-coal-question", "title": { "text": "The Coal", "italic": "Question" }, "author": "William Stanley Jevons", "year": 1865,
+   "publisher": "Macmillan", "url": "https://en.wikisource.org/wiki/The_Coal_Question", "status": "read", "started": "2026-09-20", "finished": "2026-10-12", "spine": "ink",
+   "notes": [
+    { "date": "2026-10-12", "text": "Sample note. Finished. The paradox is a few pages; the rest is a Victorian worrying about running out, which reads differently now." },
+    { "date": "2026-09-28", "at": "chapter VII", "text": "Sample note. Here it is: efficiency does not save coal, it spends more of it." }
+   ],
+   "lines": [ { "text": "It is wholly a confusion of ideas to suppose that the economical use of fuel is equivalent to a diminished consumption.", "locator": "chapter VII" } ]
+  },
+  {
+   "id": "the-art-of-doing-science", "title": { "text": "The Art of Doing Science", "italic": "and Engineering" }, "author": "Richard Hamming", "year": 1997,
+   "publisher": "Stripe Press", "status": "read", "started": "2026-08-30", "finished": "2026-09-18",
+   "notes": [ { "date": "2026-09-18", "text": "Sample note. The last chapter is the talk, written out. The rest is a man explaining how he thinks." } ], "lines": []
+  },
+  {
+   "id": "the-machine-in-the-garden", "title": { "text": "The Machine", "italic": "in the Garden" }, "author": "Leo Marx", "year": 1964,
+   "publisher": "Oxford University Press", "status": "read", "finished": "2026-08-20", "notes": [], "lines": []
+  },
+  {
+   "id": "gravitys-rainbow", "title": { "text": "Gravity's Rainbow" }, "author": "Thomas Pynchon", "year": 1973,
+   "publisher": "Viking", "status": "put-down", "started": "2026-07-01",
+   "notes": [ { "date": "2026-07-29", "at": "p. 212", "text": "Sample note. Put down at page 212, not for good. I will come back to it in the winter." } ], "lines": []
+  }
+ ]
+}

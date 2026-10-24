@@ -208,6 +208,8 @@ export interface Item {
   recipient?: string;
   /** Where a letter was written or a speech given. */
   place?: string;
+  /** For a book: its id on the shelf (shelf.ts), where the editor's notes on it live. */
+  shelf?: string;
 }
 
 /** The year a work comes from: its own year if given, else the first year in its date, else the rhyme's "then". */
