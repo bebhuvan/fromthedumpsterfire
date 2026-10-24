@@ -1,5 +1,5 @@
 // The menu, set as a magazine's contents page: the struck masthead and its strap, then the reading
-// (the latest Haul in its edition ink, every Haul, threads, the shelf once it has books, search, saved) and the house (how it's
+// (the latest Haul in its edition ink, every Haul, threads, the shelf (always listed; empty until the first books are published), search, saved) and the house (how it's
 // made, settings, a note to the editor), each a line in the display serif with what it holds in the
 // text serif and a quiet figure on the right. One loud thing: the masthead.
 import type { ReactNode } from 'react';
@@ -49,14 +49,12 @@ export function Menu() {
         />
         <Line title="Every Haul" detail="Back issues, newest first, each in its own ink" figure={count ? String(count) : undefined} onPress={go.archive} />
         <Line title="Threads" detail="Lines that run across years and Hauls" figure={threads ? String(threads) : undefined} onPress={go.threads} />
-        {shelf?.books.length ? (
-          <Line
-            title="The shelf"
-            detail="The books on the editor’s desk, with a few dated lines on each"
-            figure={String(shelf.books.length)}
-            onPress={go.shelf}
-          />
-        ) : null}
+        <Line
+          title="The shelf"
+          detail={shelf?.books.length ? 'The books on the editor’s desk, with a few dated lines on each' : 'The books on the editor’s desk. The first go up soon'}
+          figure={shelf?.books.length ? String(shelf.books.length) : undefined}
+          onPress={go.shelf}
+        />
         <Line title="Search" detail="Every find, and an index of people, places and ideas" onPress={() => go.search()} />
         <Line title="Saved" detail={saved ? 'Kept on this phone, and nowhere else' : 'Nothing yet. Tap Save on any find'} figure={saved ? String(saved) : undefined} onPress={go.saved} />
       </Part>

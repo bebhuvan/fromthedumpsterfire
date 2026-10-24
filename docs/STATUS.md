@@ -635,7 +635,7 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   most every 20 minutes with `If-None-Match`, nothing kept that fails `validateShelf`; a 404 means no
   shelf yet). Development builds carry `fixtures/dev/shelf.json`; the `EXPO_PUBLIC_USE_SEED=0`
   export has none of it (0 hits for `Sample note`, `seeing-like-a-state`, `Wengrow`). The Menu lists
-  "The shelf" under Reading once it has books; the bar is unchanged (it stays the website's
+  "The shelf" under Reading, always listed (changed the same day: the editor could not find it before the first publish); the bar is unchanged (it stays the website's
   navigation; the shelf changes over weeks). Screens: `screens/Shelf.tsx` (groups of cloth spines on
   shelf rules, wrapping on narrow phones, then a text row per book) and `screens/Book.tsx` (jacket,
   status with dates, notes as a dated journal, lines from the book, "In Haul 002", the book's link).

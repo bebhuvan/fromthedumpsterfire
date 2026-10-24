@@ -33,8 +33,8 @@ Native API, read the major version of `expo` in `package.json` and fetch the mat
   book's page; sizing, packing, status lines and groups are pure in `lib/shelf.ts` (tested). The
   jacket both the book form and the book page use is `ui/Jacket.tsx`. `useShelf()` in `lib/data.ts`
   reads `shelf/shelf.json` offline-first: the copy on disk at once, a check every 20 minutes at most
-  with `If-None-Match`, and nothing kept that fails `validateShelf`. The Menu lists the shelf only
-  once it has books.
+  with `If-None-Match`, and nothing kept that fails `validateShelf`. The Menu always lists the shelf;
+  before the first publish it opens on "The shelf is being stocked".
 - `ui/Fingerprint.tsx` (full and mini) from `@fdf/shared/fingerprint`, points in `lib/fpGeometry.ts`.
 - `ui/screen.tsx` `Screen` (pass `edition` for the band on a Haul's pages), `Waiting`.
 - `lib/data.ts` offline-first bundles; `lib/seed.ts` + `lib/seedData.ts` the development samples

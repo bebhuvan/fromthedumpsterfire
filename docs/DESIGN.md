@@ -129,7 +129,7 @@ latest Haul, its number in edition ink with a band at the edge; every Haul; thre
 and **The house** (how it's made, settings, a note to the editor), each a line in the display serif
 with a serif line of what it holds and a quiet figure on the right.
 
-The shelf (Menu, Reading, after Threads, once the shelf has books; deep links `/shelf` and
+The shelf (Menu, Reading, after Threads, always listed (empty until the first books are published); deep links `/shelf` and
 `/shelf/<id>`) is the editor's books, not reviews. Its page: "The shelf" with the deck *Books I am
 reading, and what I made of them. Not reviews.*, then Reading now, Read and Put down, each under a
 quiet sans label with its count. A group's books stand as cloth spines on a 2pt ink shelf rule: the

@@ -33,7 +33,7 @@ export function Shelf() {
         <ActivityIndicator color={p.ink2} style={{ marginTop: 48 }} />
       ) : (
         <View style={{ marginTop: 34 }}>
-          <Text style={[styles.emptyTitle, { color: p.ink }]}>{status === 'empty' ? 'The shelf is empty for now' : 'The shelf has not reached this phone'}</Text>
+          <Text style={[styles.emptyTitle, { color: p.ink }]}>{status === 'empty' ? 'The shelf is being stocked' : 'The shelf has not reached this phone'}</Text>
           <Body style={{ marginTop: 8, fontSize: 16.5, lineHeight: 24, color: p.ink2 }}>
             {status === 'empty' ? 'The first books go up soon.' : 'Connect to the internet once and it will stay here for offline reading.'}
           </Body>
