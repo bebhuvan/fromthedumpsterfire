@@ -186,9 +186,10 @@ podcast and speech share butter; paper and tool share mint; poem, passage and qu
 
 ## Brand
 
-The mark is an ember flame on ink (app icon), drawn as a teardrop. The masthead is
-*From the* ~~Internet~~ Dumpster Fire, set as a correction on a proof: "Internet" struck through by
-hand in ember with a proofreader's caret where "Dumpster Fire" goes in. The marks are
-`apps/web/public/marks/*.svg` (masks on the web); the app, which has no SVG runtime, uses the same
-marks pre-rendered as small white PNGs (`apps/mobile/assets/marks/`) tinted ember, the strike
-stretched over the measured word.
+The mark is **one ember flame with the globe cut out of it**: the internet, on fire (chosen by the
+editor 2026-10-24 from a dozen comps; it replaced the plain teardrop). App icon: the mark on ink.
+Favicon: the same on an ink rounded square. On the site the small mark in the header and footer is a
+mask (`apps/web/public/marks/flame.svg`) painted ember; in the app it is a white PNG
+(`apps/mobile/assets/marks/flame.png`) tinted ember. Sources and every size are generated from one
+drawing (see STATUS for the files). The masthead is *From the* ~~Internet~~ Dumpster Fire, the strike
+and caret drawn in ember.

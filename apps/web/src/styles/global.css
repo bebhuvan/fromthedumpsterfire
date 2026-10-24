@@ -92,7 +92,9 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 @media (max-width: 400px) { .mast-s { font-size: 16px; } .top-home { gap: 8px; } }
 @media (max-width: 760px) { .top-nav { order: 3; width: 100%; gap: 8px 18px; font-size: 13px; padding-top: 4px; } }
 @media (max-width: 760px) { .top-nav:first-child { order: 0; width: auto; padding-top: 0; } }
-.flame { width: 9px; height: 9px; background: var(--ember); border-radius: 0 50% 50% 50%; transform: rotate(45deg); display: inline-block; flex: none; }
+/* The mark: one ember flame with the globe cut out of it (public/marks/flame.svg, a mask). */
+.flame { width: 12px; height: 22px; background: var(--ember); display: inline-block; flex: none; -webkit-mask: url('/marks/flame.svg') center / contain no-repeat; mask: url('/marks/flame.svg') center / contain no-repeat; }
+@media (forced-colors: active) { .flame { background: CanvasText; } }
 .tog { width: 28px; height: 28px; border: 0; background: none; padding: 0; display: grid; place-items: center; cursor: pointer; }
 .tog span { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--ink); overflow: hidden; position: relative; }
 .tog span::after { content: ''; position: absolute; inset: 0 50% 0 0; background: var(--ink); }

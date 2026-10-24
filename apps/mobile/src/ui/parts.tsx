@@ -20,15 +20,12 @@ export const Key = memo(function Key({ type, label, style }: { type: ContentType
   );
 });
 
-/** The brand flame: a teardrop made from one rotated, three-cornered square. */
+/** The brand mark: one ember flame with the globe cut out of it (the internet, on fire). A white PNG tinted ember. */
+const FLAME = require('../../assets/marks/flame.png');
 export function Flame({ size = 10, color }: { size?: number; color?: string }) {
   const p = usePalette();
-  return (
-    <View
-      accessible={false}
-      style={{ width: size, height: size, backgroundColor: color ?? p.ember, borderRadius: size / 2, borderTopRightRadius: 0, transform: [{ rotate: '-45deg' }], marginTop: size * 0.25 }}
-    />
-  );
+  const h = Math.round(size * 1.9);
+  return <Image source={FLAME} accessible={false} resizeMode="contain" style={{ height: h, width: Math.round(h * (55 / 107)), tintColor: color ?? p.ember }} />;
 }
 
 const STRIKE = require('../../assets/marks/strike.png');

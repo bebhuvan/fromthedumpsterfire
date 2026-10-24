@@ -16,7 +16,7 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "none",
     // Fonts and hashed CSS/JS are served straight from assets (headers from public/_headers).
-    "run_worker_first": ["/*", "!/_astro/*", "!/fonts/*", "!/favicon.svg", "!/og.png", "!/theme-init.js", "!/marks/*", "!/robots.txt"]
+    "run_worker_first": ["/*", "!/_astro/*", "!/fonts/*", "!/favicon.svg", "!/apple-touch-icon.png", "!/og.png", "!/theme-init.js", "!/marks/*", "!/robots.txt"]
   },
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
 
