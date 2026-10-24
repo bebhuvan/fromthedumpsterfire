@@ -240,6 +240,35 @@ describe('blocks, new fields and the edition', () => {
   });
 });
 
+describe('the share card', () => {
+  const png = (w: number, h: number) => {
+    const b = new Uint8Array(64);
+    b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+    new DataView(b.buffer).setUint32(16, w);
+    new DataView(b.buffer).setUint32(20, h);
+    return b;
+  };
+
+  it('writes the card next to the bundle and into it; a wrong one publishes without', async () => {
+    const env = await seedHaul(makeEnv());
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const wrong = await assembleHaul(env, 'hl_1', { card: png(800, 600) });
+    expect(wrong.haul.card).toBeUndefined();
+    expect(wrong.warnings.map((w) => w.rule)).toContain('card');
+    expect((await assembleHaul(env, 'hl_1', { card: fakeJpeg(1200, 630) })).haul.card).toBeUndefined();
+
+    const r = await publishHaul(env, 'hl_1', { card: png(1200, 630) });
+    expect(r.ok).toBe(true);
+    const haul = (await (await env.FILES.get('hauls/001/v1/haul.json'))!.json()) as Haul;
+    expect(haul.card).toEqual({ url: 'https://files.example.org/hauls/001/v1/card.png', width: 1200, height: 630 });
+    expect(env.FILES.objects.get('hauls/001/v1/card.png')?.httpMetadata?.contentType).toBe('image/png');
+    expect(validateHaul(haul, undefined, { filesBase: env.FILES_BASE }).errors).toEqual([]);
+    // Without a card, the bundle simply has none.
+    const b = await assembleHaul(env, 'hl_1', { correction: 'Fixed a date.' });
+    expect(b.haul.card).toBeUndefined();
+  });
+});
+
 describe('item ids', () => {
   it('never uses the route words note or thread', async () => {
     const { itemSlug } = await import('../src/publish');

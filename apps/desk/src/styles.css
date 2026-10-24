@@ -180,7 +180,7 @@ blockquote.excerpt mark { background: var(--type); color: inherit; padding: 0 2p
 .order li { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; padding: 9px 10px; border-radius: 12px; background: var(--plate); }
 .order li .n { font: 500 13px var(--sans); color: var(--ink2); text-align: right; }
 .order li .t { font: 15.5px/1.3 var(--serif); }
-.swatches { display: flex; gap: 8px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .swatches button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--rule); cursor: pointer; }
 .swatches button[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 2px; }
 .q { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--rule); display: flex; flex-direction: column; gap: 10px; }
@@ -391,3 +391,4 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
   .code-area, .code-preview { font-size: 14px; }
   .blocks li { padding-left: 12px; }
 }
+.card-preview img { width: 100%; height: auto; display: block; border: 1px solid var(--rule); border-radius: 8px; }

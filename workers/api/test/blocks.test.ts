@@ -101,4 +101,17 @@ describe('block routes', () => {
     expect(h.body.haul).toMatchObject({ edition: 'teal', swatch: 'lilac' });
     expect((await call(env, '/api/hauls/hl_1', json('PATCH', { edition: null }))).body.haul).toMatchObject({ edition: null });
   });
+
+  it('publishes with the share card the Desk drew (base64 PNG in the JSON body)', async () => {
+    const env = await deskEnv();
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const png = new Uint8Array(64);
+    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+    new DataView(png.buffer).setUint32(16, 1200);
+    new DataView(png.buffer).setUint32(20, 630);
+    expect((await call(env, '/api/hauls/hl_1/publish', json('POST', { confirm: true, card: 'not base64!' }))).status).toBe(400);
+    const r = await call(env, '/api/hauls/hl_1/publish', json('POST', { confirm: true, card: btoa(String.fromCharCode(...png)) }));
+    expect(r.status).toBe(200);
+    expect(env.FILES.objects.has('hauls/001/v1/card.png')).toBe(true);
+  });
 });

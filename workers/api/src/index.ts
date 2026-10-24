@@ -789,8 +789,15 @@ app.get('/api/hauls/:id/preview', async (c) => {
 });
 
 app.post('/api/hauls/:id/publish', async (c) => {
-  const b = await body(c, z.object({ correction: z.string().max(1000).optional(), confirm: z.literal(true) }));
-  const r = await publishHaul(c.env, c.req.param('id'), { correction: b.correction });
+  // `card`: the share card the Desk drew in the editor's browser, a base64 PNG (checked in publish.ts).
+  const b = await body(c, z.object({ correction: z.string().max(1000).optional(), confirm: z.literal(true), card: z.string().max(3_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/).optional() }));
+  let card: Uint8Array | undefined;
+  try {
+    card = b.card ? Uint8Array.from(atob(b.card), (ch) => ch.charCodeAt(0)) : undefined;
+  } catch {
+    card = undefined;
+  }
+  const r = await publishHaul(c.env, c.req.param('id'), { correction: b.correction, card });
   return c.json(r, r.ok ? 200 : 422);
 });
 
