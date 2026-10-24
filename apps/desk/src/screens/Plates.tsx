@@ -13,6 +13,7 @@ const PROVIDER: Record<PlateCandidate['provider'], string> = {
   met: 'The Met',
   smithsonian: 'Smithsonian',
   rijksmuseum: 'Rijksmuseum',
+  editor: 'Your own picture',
 };
 
 type Target = { kind: 'item'; id: string } | { kind: 'haul'; id: string };
@@ -143,7 +144,7 @@ function PlateCard({ plate: p, onChoose, onSetAside, busy, chooseLabel = 'Use th
       </span>
       <span className="row" style={{ gap: 4 }}>
         <span className="licence">{p.licence}</span>
-        <span className="m" title={`Found for “${p.query}”`}>{p.query_by === 'machine' ? 'machine search' : 'your search'}</span>
+        <span className="m" title={`Found for “${p.query}”`}>{p.provider === 'editor' ? 'credit and licence as you stated them' : p.query_by === 'machine' ? 'machine search' : 'your search'}</span>
       </span>
       <span className="row" style={{ gap: 4 }}>
         <button type="button" className="btn small" disabled={busy} onClick={onChoose}>

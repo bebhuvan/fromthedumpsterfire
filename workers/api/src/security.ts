@@ -5,7 +5,9 @@
 export const MULTIPART_ROUTES = new Set(['/api/capture/file', '/api/notes', '/share']);
 /** Uploading a PDF to an item already captured (a paper whose download is blocked). POST only. */
 const ITEM_FILE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/file$/;
-export const isMultipartRoute = (method: string, pathname: string) => MULTIPART_ROUTES.has(pathname) || (method === 'POST' && ITEM_FILE.test(pathname));
+/** Adding a picture to an item (an upload, or a link the server fetches). POST only. */
+const ITEM_PICTURE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/picture$/;
+export const isMultipartRoute = (method: string, pathname: string) => MULTIPART_ROUTES.has(pathname) || (method === 'POST' && (ITEM_FILE.test(pathname) || ITEM_PICTURE.test(pathname)));
 
 export const CSP =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";

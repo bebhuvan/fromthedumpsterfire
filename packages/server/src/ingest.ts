@@ -47,6 +47,8 @@ export interface ItemFields {
   media?: Media;
   canonical_url?: string;
   locator?: string;
+  /** A social post's handle on its platform, e.g. "@visakanv". */
+  handle?: string;
 }
 
 export interface Snapshot {
@@ -57,7 +59,9 @@ export interface Snapshot {
 
 export type FetchOutcome =
   | { kind: 'text'; text: string; extractor: string; meta: SourceMeta; fields: ItemFields; snapshot?: Snapshot }
-  | { kind: 'audio'; plan: AudioPlan; extractor: string; meta: SourceMeta; fields: ItemFields; preface?: string };
+  | { kind: 'audio'; plan: AudioPlan; extractor: string; meta: SourceMeta; fields: ItemFields; preface?: string }
+  /** Nothing to read: a picture (artwork, photo, meme) prints as itself; reading and drafting are skipped. */
+  | { kind: 'none'; reason: string; extractor: 'none'; meta: SourceMeta; fields: ItemFields };
 
 export interface CapturedItem {
   id: string;
@@ -409,6 +413,9 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
 
     case 'image': {
       if (!item.file_key) throw new FatalError('No image was uploaded');
+      // A Picture is printed as itself, not transcribed: there is no text to read or quote. The
+      // editor adds it as the item's picture, with its credit and licence, on the Desk.
+      if (item.type === 'image') return { kind: 'none', reason: 'A picture: nothing to read', extractor: 'none', meta: {}, fields: {} };
       const obj = await env.MEDIA.get(item.file_key);
       if (!obj) throw new FatalError('The uploaded image is missing from storage');
       const bytes = new Uint8Array(await obj.arrayBuffer());
@@ -517,6 +524,7 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
           minutes: 1,
           canonical_url: post.url,
           locator: post.handle ? `@${post.handle}` : 'Post',
+          ...(post.handle ? { handle: `@${post.handle.replace(/^@/, '')}` } : {}),
         },
       };
     }

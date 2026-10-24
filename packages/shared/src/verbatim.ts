@@ -36,7 +36,7 @@ const FOLD: Record<string, string> = {
  * Normalise for matching and keep a map from each normalised character back to its source index.
  * Runs of whitespace collapse to one space; typographic quotes and dashes fold to ASCII; case folds.
  */
-function normaliseWithMap(s: string): { text: string; map: number[] } {
+function normaliseWithMap(s: string, keepCase = false): { text: string; map: number[] } {
   let out = '';
   const map: number[] = [];
   let lastSpace = false;
@@ -51,7 +51,7 @@ function normaliseWithMap(s: string): { text: string; map: number[] } {
       continue;
     }
     lastSpace = false;
-    const folded = (FOLD[ch] ?? ch).toLowerCase();
+    const folded = keepCase ? (FOLD[ch] ?? ch) : (FOLD[ch] ?? ch).toLowerCase();
     for (const f of folded) {
       out += f;
       map.push(i);
@@ -81,6 +81,27 @@ export function findVerbatim(source: string, quote: string): (Span & { text: str
   const start = src.map[at]!;
   const lastSrcIndex = src.map[at + q.length - 1]!;
   const end = lastSrcIndex + 1;
+  return { start, end, text: source.slice(start, end) };
+}
+
+/**
+ * Find a piece of code in the source. Extraction mangles indentation and line breaks, so runs of
+ * whitespace count as one space (and typographic quotes and dashes fold to ASCII, as a blog engine
+ * may have curled them); everything else, case included, must match. Nothing is stripped from the
+ * ends: code may begin or end with a quotation mark. Returns the source span, or null.
+ */
+export function findCode(source: string, code: string): (Span & { text: string }) | null {
+  const trimmed = code.trim();
+  if (trimmed.length < 2) return null;
+  const exact = source.indexOf(trimmed);
+  if (exact >= 0) return { start: exact, end: exact + trimmed.length, text: trimmed };
+  const src = normaliseWithMap(source, true);
+  const q = normaliseWithMap(trimmed, true).text;
+  if (!q) return null;
+  const at = src.text.indexOf(q);
+  if (at < 0) return null;
+  const start = src.map[at]!;
+  const end = src.map[at + q.length - 1]! + 1;
   return { start, end, text: source.slice(start, end) };
 }
 

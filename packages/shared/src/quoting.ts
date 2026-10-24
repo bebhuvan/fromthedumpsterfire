@@ -36,12 +36,15 @@ export interface ExcerptAdvice {
   message: string;
 }
 
-/** What the Desk says beside an excerpt. Posts are quoted whole (as an embed would show them). */
+/** Types printed whole: a quotation is its own excerpt, a social post is quoted as a clipping. */
+export const QUOTED_WHOLE: ReadonlySet<ContentType> = new Set(['quote', 'social', 'post']);
+
+/** What the Desk says beside an excerpt. Posts and quotations are quoted whole (as an embed would show them). */
 export function excerptAdvice(excerpt: string, sourceWords: number, type?: ContentType): ExcerptAdvice {
   const words = countWords(excerpt);
   const cap = excerptCap(sourceWords);
   const share = sourceWords ? words / sourceWords : 0;
-  const over = type !== 'post' && words > cap;
+  const over = !(type && QUOTED_WHOLE.has(type)) && words > cap;
   const pct = `${Math.round(share * 100)}% of the piece`;
   const message = over
     ? `${words} words, ${pct}. The guide is ${cap} for a piece this long; quote less unless the text is in the public domain.`
@@ -50,11 +53,13 @@ export function excerptAdvice(excerpt: string, sourceWords: number, type?: Conte
 }
 
 /** Types that are heard or read at length, where one excerpt cannot stand for the piece. */
-const LONG_FORM: ReadonlySet<ContentType> = new Set(['talk', 'video', 'podcast', 'paper']);
+const LONG_FORM: ReadonlySet<ContentType> = new Set(['talk', 'video', 'podcast', 'paper', 'speech']);
+/** Types that never get big ideas: a line, a post, a picture, a tool are not arguments to summarise. */
+const NO_IDEAS: ReadonlySet<ContentType> = new Set(['quote', 'social', 'image', 'tool']);
 
 /** Draw out the big ideas for long talks, podcasts, videos and papers, or any very long text. */
 export function wantsIdeas(type: ContentType, sourceWords: number, minutes?: number | null): boolean {
-  if (sourceWords < 1500) return false;
+  if (sourceWords < 1500 || NO_IDEAS.has(type)) return false;
   if (LONG_FORM.has(type)) return (minutes ?? 0) >= 20 || sourceWords >= 3000;
   return sourceWords >= 6000;
 }

@@ -13,6 +13,8 @@ describe('excerpt guide', () => {
     expect(excerptAdvice(`${para} ${para} ${para}`, 1000).over).toBe(true);
     expect(excerptAdvice(`${para} ${para} ${para}`, 1000).message).toMatch(/180 words, 18% of the piece/);
     expect(excerptAdvice(`${para} ${para}`, 150, 'post').over).toBe(false);
+    expect(excerptAdvice(`${para} ${para}`, 150, 'social').over).toBe(false);
+    expect(excerptAdvice(`${para} ${para}`, 150, 'quote').over).toBe(false);
   });
   it('counts words the way a reader would', () => {
     expect(countWords("It's 3.3 per cent — of 79 million birds.")).toBe(8);
@@ -26,6 +28,9 @@ describe('big ideas', () => {
     expect(wantsIdeas('talk', 2500, 12)).toBe(false);
     expect(wantsIdeas('paper', 9000)).toBe(true);
     expect(wantsIdeas('essay', 1587)).toBe(false);
+    // A speech reads like a talk; a quotation, a post, a picture or a tool never gets big ideas.
+    expect(wantsIdeas('speech', 4000, 25)).toBe(true);
+    for (const t of ['quote', 'social', 'image', 'tool'] as const) expect(wantsIdeas(t, 9000, 60)).toBe(false);
     expect(wantsIdeas('essay', 8000)).toBe(true);
   });
   it('are about one per fifteen minutes, from three to twelve', () => {

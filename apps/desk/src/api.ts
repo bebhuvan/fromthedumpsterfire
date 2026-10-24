@@ -1,7 +1,7 @@
 // The Desk's API client and the shapes it returns.
 
 import type { Haul, RouteStep, Title } from '@fdf/shared/haul';
-import type { ContentType, Swatch } from '@fdf/shared/tokens';
+import type { ContentType, Edition, Swatch } from '@fdf/shared/tokens';
 import type { BundleIssue } from '@fdf/shared/validate';
 import type { StyleResult } from '@fdf/shared/style';
 
@@ -99,9 +99,33 @@ export interface Item {
   locator: string | null;
   start_at?: string | null;
   start_note?: string | null;
+  /** The year the work was made; a post's handle; a letter's recipient; where written or given. */
+  year?: number | null;
+  handle?: string | null;
+  recipient?: string | null;
+  place?: string | null;
   archived: number;
   captured_at: string;
   updated_at: string;
+}
+
+/** A block as stored (Desk side): the bundle Block without public URLs, plus where a quote sits. */
+export type BlockBody =
+  | { kind: 'quote'; text: string; locator?: string; start: number; end: number }
+  | { kind: 'code'; code: string; lang?: string; caption?: string; start: number; end: number }
+  | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { width: number; height: number }; link: string }
+  | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number }
+  | { kind: 'image'; caption: string; credit: string; licence: string; sourceUrl?: string; creator?: string; date?: string; width: number; height: number };
+
+export interface BlockUi {
+  id: string;
+  item_id: string;
+  kind: BlockBody['kind'];
+  body: BlockBody | null;
+  status: 'kept' | 'cut';
+  position: number;
+  /** The poster or picture, served by the Desk from private storage. */
+  image: string | null;
 }
 
 export interface SourceMeta {
@@ -222,13 +246,14 @@ export interface ItemDetail {
   connections: Array<{ id: string; to_item_id: string; to_title: string | null; type: string; note: string; suggestion_id?: string | null }>;
   plates: PlateCandidate[];
   suggestions: Suggestion[];
+  blocks: BlockUi[];
 }
 
 export interface PlateCandidate {
   id: string;
   item_id: string | null;
   haul_id: string | null;
-  provider: 'commons' | 'aic' | 'met' | 'smithsonian' | 'rijksmuseum';
+  provider: 'commons' | 'aic' | 'met' | 'smithsonian' | 'rijksmuseum' | 'editor';
   query: string;
   query_by: 'machine' | 'editor';
   title: string;
@@ -333,6 +358,7 @@ export interface HaulListRow {
   title_italic: string | null;
   deck: string;
   swatch: Swatch;
+  edition: Edition | null;
   status: string;
   version: number;
   published_at: string | null;
@@ -346,6 +372,8 @@ export interface HaulRecord {
   title_italic: string | null;
   deck: string;
   swatch: Swatch;
+  /** The edition ink; null means the default for the Haul's number (editionOf). */
+  edition: Edition | null;
   fn_title_text: string;
   fn_title_italic: string | null;
   fn_body: string;

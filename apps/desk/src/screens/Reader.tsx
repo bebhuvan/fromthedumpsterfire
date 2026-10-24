@@ -81,7 +81,7 @@ export interface Selection {
   text: string;
 }
 
-export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, busy, actionLabel = 'Make excerpt', allowHighlight = true, sticky = true }: { source: Source; chosen: Excerpt | null; candidates: Excerpt[]; onExcerpt: (s: Selection) => void; onHighlight: (s: Selection) => void; busy?: boolean; actionLabel?: string; allowHighlight?: boolean; sticky?: boolean }) {
+export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, onPullQuote, busy, actionLabel = 'Make excerpt', allowHighlight = true, sticky = true }: { source: Source; chosen: Excerpt | null; candidates: Excerpt[]; onExcerpt: (s: Selection) => void; onHighlight: (s: Selection) => void; onPullQuote?: (s: Selection) => void; busy?: boolean; actionLabel?: string; allowHighlight?: boolean; sticky?: boolean }) {
   const body = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<(Selection & { x: number; y: number; inside: boolean }) | null>(null);
   const bl = useMemo(() => blocks(source.text), [source.text]);
@@ -176,6 +176,11 @@ export function Reader({ source, chosen, candidates, onExcerpt, onHighlight, bus
           <button type="button" className="btn small" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => (onExcerpt(sel), setSel(null), window.getSelection()?.removeAllRanges())}>
             {actionLabel}
           </button>
+          {onPullQuote && (
+            <button type="button" className="btn small" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => (onPullQuote(sel), setSel(null), window.getSelection()?.removeAllRanges())}>
+              Pull quote
+            </button>
+          )}
           {sel.inside && allowHighlight && (
             <button type="button" className="btn small" disabled={busy} onMouseDown={(e) => e.preventDefault()} onClick={() => (onHighlight(sel), setSel(null), window.getSelection()?.removeAllRanges())}>
               Mark highlight

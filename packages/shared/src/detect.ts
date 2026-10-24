@@ -65,7 +65,7 @@ export function detectUrl(raw: string): Detected {
   }
   if (
     host === 'podcasts.apple.com' ||
-    host === 'open.spotify.com' && path.startsWith('/episode') ||
+    (host === 'open.spotify.com' && /^\/(intl-[a-z-]+\/)?episode\//.test(path)) ||
     host === 'overcast.fm' ||
     host === 'pca.st' ||
     host === 'pocketcasts.com' ||
@@ -77,8 +77,9 @@ export function detectUrl(raw: string): Detected {
   if (/\.(mp3|m4a|aac|ogg|oga|opus|wav|flac)$/.test(path)) return { kind: 'audio', type: 'podcast', url: href };
   if (/\.(mp4|webm|mov|m4v)$/.test(path)) return { kind: 'video', type: 'video', url: href };
   if ((host === 'x.com' || host === 'twitter.com' || host === 'nitter.net') && /\/status\/\d+/.test(path)) {
-    return { kind: 'x', type: 'post', url: href };
+    return { kind: 'x', type: 'social', url: href };
   }
+  if (isSocialPost(host, path)) return { kind: 'article', type: 'social', url: href };
   if (host === 'arxiv.org' || host === 'export.arxiv.org') return { kind: 'arxiv', type: 'paper', url: href };
   if (host === 'doi.org' || host === 'dx.doi.org') return { kind: 'doi', type: 'paper', url: href };
   if (/\.pdf$/.test(path) || path.endsWith('/pdf')) {
@@ -92,6 +93,19 @@ export function detectUrl(raw: string): Detected {
     return { kind: 'article', type: 'essay', url: href };
   }
   return { kind: 'article', type: 'essay', url: href };
+}
+
+/**
+ * A single post on a social platform (not a profile or a feed): Bluesky (bsky.app/profile/<h>/post/<id>),
+ * Substack Notes (substack.com/@<user>/note/<id>, or /note/c-<id>), Threads (threads.net or
+ * threads.com /@<user>/post/<id>) and Mastodon-style servers (/@<user>/<numeric id>).
+ */
+function isSocialPost(host: string, path: string): boolean {
+  if (host === 'bsky.app') return /^\/profile\/[^/]+\/post\/[a-z0-9]+\/?$/.test(path);
+  if (host === 'substack.com' || host.endsWith('.substack.com')) return /^\/(@[^/]+\/)?note\/c?-?[\w-]+\/?$/.test(path);
+  if (host === 'threads.net' || host === 'threads.com') return /^\/@[^/]+\/post\/[\w-]+\/?$/.test(path);
+  // Mastodon and its kin: any server, a user's post is /@user/<id> (ids are long numbers).
+  return /^\/@[\w.-]+(@[\w.-]+)?\/\d{6,}\/?$/.test(path);
 }
 
 /** A pasted passage: short, broken lines read as a poem; anything else is a passage. */

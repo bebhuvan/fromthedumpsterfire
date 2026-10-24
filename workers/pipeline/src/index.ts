@@ -76,16 +76,35 @@ export class ItemWorkflow extends WorkflowEntrypoint<Env, ItemWorkflowParams> {
             const outcome = await fetchSource(env, item as never);
             if (outcome.kind === 'text') {
               const r = await storeSource(env, itemId, outcome);
-              return { audio: null as null | { plan: AudioPlan; meta: SourceMeta }, words: r.words };
+              return { audio: null as null | { plan: AudioPlan; meta: SourceMeta }, words: r.words, none: false };
+            }
+            if (outcome.kind === 'none') {
+              await applyFields(env, itemId, outcome.fields);
+              return { audio: null, words: 0, none: true };
             }
             await applyFields(env, itemId, outcome.fields);
             // The whole job's estimated cost must fit under the ceiling before the first chunk.
             const minutes = (outcome.plan.seconds || outcome.plan.chunks.length * 3 * 60) / 60;
             await assertAffordable(env, minutes * loadRoutes(env).transcribe.usdPerAudioMinute * 1.1, `transcribing about ${Math.round(minutes)} minutes of audio`);
             await setStatus(env, itemId, 'fetching', `Transcribing ${outcome.plan.chunks.length} part${outcome.plan.chunks.length === 1 ? '' : 's'} of audio`);
-            return { audio: { plan: outcome.plan, meta: outcome.meta }, words: 0 };
+            return { audio: { plan: outcome.plan, meta: outcome.meta }, words: 0, none: false };
           }),
         );
+
+        if (fetched.none) {
+          // Nothing to read (a picture): no reading, drafting or connections; the checks still run.
+          await step.do('check', RETRY, async () => {
+            await mark('check');
+            const r = await runChecks(env, itemId);
+            return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v.status]));
+          });
+          await step.do('finish', ONCE, async () => {
+            await setStatus(env, itemId, 'ready');
+            await env.DB.prepare(`UPDATE runs SET status = 'done', step = 'done', finished_at = ? WHERE id = ?`).bind(nowIso(), runId).run();
+            return true;
+          });
+          return;
+        }
 
         if (fetched.audio) {
           const { plan, meta } = fetched.audio;

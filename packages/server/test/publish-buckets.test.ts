@@ -8,6 +8,10 @@ import type { Haul, HaulIndex } from '@fdf/shared/haul';
 import { publishHaul, assembleHaul } from '../src/publish';
 import { approveSuggestion } from '../src/connect';
 import { setEndQuote, setEndSource, createRhyme, patchRhyme } from '../src/rhymes';
+import { addAudio, addCode, addPicture, addQuote, addVideo, blocksFor, reorderBlocks, setPicturePlate } from '../src/blocks';
+import type { ItemRow } from '../src/db';
+import { highlightCode } from '@fdf/shared/highlight';
+import { afterEach, vi } from 'vitest';
 import { makeEnv, type TestEnv } from './fake-env';
 import { fakeJpeg, JEVONS, NADELLA, NOW, seedHaul } from './seed';
 
@@ -147,6 +151,121 @@ describe('publish writes only hauls/ to the public bucket', () => {
     await expect(setEndQuote(env, rid, 'then', { quote: 'Efficiency always lowers consumption.' })).rejects.toThrow(/word for word/);
     await expect(setEndQuote(env, rid, 'then', { start: 0, end: 10, text: 'Not this at all' })).rejects.toThrow(/word for word/);
     await expect(patchRhyme(env, rid, { bridge: "It's not about coal, it's about compute." })).rejects.toThrow(/house style/);
+  });
+});
+
+describe('blocks, new fields and the edition', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const row = async (env: TestEnv, id: string) => (await env.DB.prepare('SELECT * FROM items WHERE id = ?').bind(id).first<ItemRow>())!;
+
+  it('writes blocks in order with code tokens and FILES copies, a Picture’s own plate, year, handle, recipient, place and the edition', async () => {
+    const env = await seedHaul(makeEnv());
+    vi.stubGlobal('fetch', async (input: string | URL) => {
+      const url = String(input);
+      if (url.startsWith('https://cloudflare-dns.com/')) return Response.json({ Answer: new URL(url).searchParams.get('type') === 'A' ? [{ type: 1, data: '93.184.216.34' }] : [] });
+      if (url.startsWith('https://www.youtube.com/oembed?')) return Response.json({ title: 'Jevons in ten minutes' });
+      if (url.startsWith('https://i.ytimg.com/vi/')) return new Response(fakeJpeg(480, 360), { headers: { 'content-type': 'image/jpeg' } });
+      return new Response('nope', { status: 404 });
+    });
+    const code = 'def burn(coal):\n    return coal * 2';
+    await env.DB.prepare(`UPDATE sources SET text = ? WHERE item_id = 'it_jevons'`).bind(`${JEVONS} In code: def burn(coal): return coal * 2`).run();
+    const jev = await row(env, 'it_jevons');
+    await addQuote(env, jev, { text: 'The very contrary is the truth.' });
+    await addCode(env, jev, { code, lang: 'python' });
+    await addVideo(env, jev, { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1m' });
+    await addAudio(env, jev, { url: 'https://open.spotify.com/episode/4rOoJ6Egrf8K2IrywzwOMk', title: 'The Coal Question, read aloud' });
+    await addPicture(env, jev, { bytes: fakeJpeg(900, 600), caption: 'A colliery, 1860s.', credit: 'Science Museum Group', licence: 'CC BY-NC-SA 4.0', sourceUrl: 'https://collection.sciencemuseumgroup.org.uk/objects/co1' });
+    // A cut block stays on the Desk and never prints.
+    await addQuote(env, jev, { text: 'As a rule, new modes of economy will lead to an increase of consumption.' });
+    const ids = (await blocksFor(env, 'it_jevons')).map((b) => b.id);
+    await env.DB.prepare(`UPDATE blocks SET status = 'cut' WHERE id = ?`).bind(ids[5]).run();
+    // The editor moves the video to the top.
+    await reorderBlocks(env, 'it_jevons', [ids[2]!, ids[0]!, ids[1]!, ids[3]!, ids[4]!, ids[5]!]);
+    await env.DB.prepare(`UPDATE items SET type = 'letter', year = 1865, recipient = 'John Herschel', place = 'Manchester' WHERE id = 'it_jevons'`).run();
+
+    // A post on X, and a Picture whose picture is its plate.
+    await env.DB.prepare(`UPDATE items SET type = 'social', handle = '@satyanadella' WHERE id = 'it_nadella'`).run();
+    await env.DB.prepare(`UPDATE items SET type = 'image', archived = 0 WHERE id = 'it_bush'`).run();
+    await env.DB.prepare(`UPDATE hauls SET edition = 'plum' WHERE id = 'hl_1'`).run();
+    await env.DB.batch(['it_jevons', 'it_nadella', 'it_bush'].map((id, i) => env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, ?)').bind('hl_1', id, i)));
+
+    // Without its picture, a Picture cannot publish.
+    expect((await assembleHaul(env, 'hl_1')).problems.map((p) => p.message)).toEqual([expect.stringMatching(/Picture needs its picture/)]);
+    await setPicturePlate(env, await row(env, 'it_bush'), { bytes: fakeJpeg(1280, 860), caption: 'A memex, drawn for Life, 1945.', credit: 'Life magazine', licence: '© Time Inc., shown for commentary' });
+
+    const r = await publishHaul(env, 'hl_1');
+    expect(r.problems).toEqual([]);
+    expect(r.bundleErrors).toEqual([]);
+    expect(r.ok).toBe(true);
+    for (const k of env.FILES.writes) expect(k.startsWith('hauls/')).toBe(true);
+
+    const haul = (await (await env.FILES.get('hauls/001/v1/haul.json'))!.json()) as Haul;
+    const index = (await (await env.FILES.get('hauls/index.json'))!.json()) as HaulIndex;
+    expect(validateHaul(haul, index, { filesBase: env.FILES_BASE }).errors).toEqual([]);
+    expect(haul.edition).toBe('plum');
+    expect(index.hauls[0]!.edition).toBe('plum');
+
+    const letter = haul.items[0]!;
+    expect(letter).toMatchObject({ type: 'letter', year: 1865, recipient: 'John Herschel', place: 'Manchester' });
+    expect(letter.blocks!.map((b) => b.kind)).toEqual(['video', 'quote', 'code', 'audio', 'image']);
+    const [video, quote, codeBlock, audio, image] = letter.blocks!;
+    expect(video).toEqual({ kind: 'video', provider: 'youtube', id: 'dQw4w9WgXcQ', title: 'Jevons in ten minutes', start: 60, poster: { url: 'https://files.example.org/hauls/001/media/the-coal-question-1-poster.jpg', width: 480, height: 360 } });
+    expect(quote).toEqual({ kind: 'quote', text: 'The very contrary is the truth.' });
+    expect(codeBlock).toMatchObject({ kind: 'code', code, lang: 'python' });
+    expect(codeBlock?.kind === 'code' && codeBlock.tokens).toEqual(highlightCode(code, 'python'));
+    expect(codeBlock?.kind === 'code' && codeBlock.tokens!.some(([role]) => role === 'k')).toBe(true);
+    expect(audio).toEqual({ kind: 'audio', provider: 'spotify', url: 'https://open.spotify.com/episode/4rOoJ6Egrf8K2IrywzwOMk', title: 'The Coal Question, read aloud' });
+    expect(image).toEqual({
+      kind: 'image',
+      plate: { url: 'https://files.example.org/hauls/001/media/the-coal-question-5.jpg', width: 900, height: 600, caption: 'A colliery, 1860s.', credit: 'Science Museum Group', licence: 'CC BY-NC-SA 4.0', sourceUrl: 'https://collection.sciencemuseumgroup.org.uk/objects/co1' },
+    });
+    for (const k of ['hauls/001/media/the-coal-question-1-poster.jpg', 'hauls/001/media/the-coal-question-5.jpg']) expect(env.FILES.objects.has(k)).toBe(true);
+
+    expect(haul.items[1]).toMatchObject({ type: 'social', handle: '@satyanadella' });
+    expect(haul.items[1]!.blocks).toBeUndefined();
+    const pic = haul.items[2]!;
+    expect(pic.type).toBe('image');
+    expect(pic.plate).toEqual({ url: expect.stringMatching(/^https:\/\/files\.example\.org\/hauls\/001\/plates\/as-we-may-think\.jpg$/), width: 1280, height: 860, caption: 'A memex, drawn for Life, 1945.', credit: 'Life magazine', licence: '© Time Inc., shown for commentary' });
+  });
+
+  it('refuses a pull quote or code that no longer matches the source, and defaults the edition by number', async () => {
+    const env = await seedHaul(makeEnv());
+    const jev = await row(env, 'it_jevons');
+    await addQuote(env, jev, { text: 'The very contrary is the truth.' });
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    expect((await assembleHaul(env, 'hl_1')).haul.edition).toBe('oxblood');
+    await env.DB.prepare(`UPDATE sources SET text = 'Something else entirely, for this test.' WHERE item_id = 'it_jevons'`).run();
+    const a = await assembleHaul(env, 'hl_1');
+    expect(a.problems.map((p) => p.message)).toEqual([expect.stringMatching(/pull quote no longer matches the source/)]);
+  });
+});
+
+describe('the share card', () => {
+  const png = (w: number, h: number) => {
+    const b = new Uint8Array(64);
+    b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+    new DataView(b.buffer).setUint32(16, w);
+    new DataView(b.buffer).setUint32(20, h);
+    return b;
+  };
+
+  it('writes the card next to the bundle and into it; a wrong one publishes without', async () => {
+    const env = await seedHaul(makeEnv());
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const wrong = await assembleHaul(env, 'hl_1', { card: png(800, 600) });
+    expect(wrong.haul.card).toBeUndefined();
+    expect(wrong.warnings.map((w) => w.rule)).toContain('card');
+    expect((await assembleHaul(env, 'hl_1', { card: fakeJpeg(1200, 630) })).haul.card).toBeUndefined();
+
+    const r = await publishHaul(env, 'hl_1', { card: png(1200, 630) });
+    expect(r.ok).toBe(true);
+    const haul = (await (await env.FILES.get('hauls/001/v1/haul.json'))!.json()) as Haul;
+    expect(haul.card).toEqual({ url: 'https://files.example.org/hauls/001/v1/card.png', width: 1200, height: 630 });
+    expect(env.FILES.objects.get('hauls/001/v1/card.png')?.httpMetadata?.contentType).toBe('image/png');
+    expect(validateHaul(haul, undefined, { filesBase: env.FILES_BASE }).errors).toEqual([]);
+    // Without a card, the bundle simply has none.
+    const b = await assembleHaul(env, 'hl_1', { correction: 'Fixed a date.' });
+    expect(b.haul.card).toBeUndefined();
   });
 });
 

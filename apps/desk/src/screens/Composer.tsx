@@ -4,15 +4,15 @@
 import { useMemo, useState } from 'react';
 import { haulSlug, type Haul, type RouteStep } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
-import { typeLabel, type Swatch } from '@fdf/shared/tokens';
+import { EDITIONS, editionOf, SWATCHES, typeLabel } from '@fdf/shared/tokens';
 import { api, displayTitle, parseChecks, type HaulDetail, type HaulRecord, type Note, type PreviewResult, type PublishResult, type TrayItem } from '../api';
 import { Link, safeHref, SaveNote, useAutosave, useLoad, useToast } from '../lib/core';
 import { NoteCompare, Spinner, TextArea, VoiceNote } from '../ui/parts';
 import { Preview } from './Preview';
 import { PlatesSection } from './Plates';
 import { FormatBadge } from '../ui/parts';
+import { drawCard } from '../lib/card';
 
-const SWATCHES: Swatch[] = ['apricot', 'coral', 'butter', 'sky', 'mint', 'pistachio'];
 
 export function Composer({ id }: { id: string }) {
   const toast = useToast();
@@ -168,7 +168,43 @@ function Masthead({ haul, save }: { haul: HaulRecord; save: (b: Partial<HaulReco
           ))}
         </div>
       </div>
+      <EditionPicker haul={haul} save={save} />
     </section>
+  );
+}
+
+/**
+ * The Haul's edition: a deep ink on every page of it (the band on the top edge, its number, its
+ * fingerprint's rule). Left alone, it is the default for the Haul's number, so neighbours differ.
+ */
+function EditionPicker({ haul, save }: { haul: HaulRecord; save: (b: Partial<HaulRecord>) => Promise<void> }) {
+  const current = editionOf(haul.number, haul.edition ?? undefined);
+  const fallback = editionOf(haul.number);
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <div className="row">
+        <span className="label">Edition ink</span>
+        <div className="swatches editions" role="radiogroup" aria-label="Edition ink">
+          {EDITIONS.map((e) => (
+            <button
+              key={e}
+              type="button"
+              role="radio"
+              aria-checked={current === e}
+              aria-pressed={current === e}
+              aria-label={`${e}${e === fallback ? ' (the default for this number)' : ''}`}
+              title={e}
+              style={{ background: `var(--ed-${e})` }}
+              onClick={() => void save({ edition: e === fallback ? null : e })}
+            />
+          ))}
+        </div>
+      </div>
+      <p className="small muted" style={{ margin: 0 }}>
+        <span style={{ color: `var(--ed-${current})`, fontWeight: 600 }}>{current[0]!.toUpperCase() + current.slice(1)}</span>
+        {haul.edition ? '.' : `, the default for Haul ${haul.number}.`} Marks every page of this Haul: the band on the top edge, its number, the rule of its fingerprint.
+      </p>
+    </div>
   );
 }
 
@@ -386,7 +422,12 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
       if (dry) setCheck(await api.get<PreviewResult>(`/api/hauls/${haulId}/preview${published && correction ? `?correction=${encodeURIComponent(correction)}` : ''}`));
       else {
         if (!confirm(published ? `Publish version ${haul.version + 1} with this correction?` : `Publish Haul ${haulSlug(haul.number)} to the app and the web? Readers with notifications on will get one.`)) return;
-        const r = await api.post<PublishResult>(`/api/hauls/${haulId}/publish`, { confirm: true, ...(published ? { correction } : {}) }).catch((e) => (e as { body?: PublishResult }).body ?? Promise.reject(e));
+        // The share card is drawn here, from the bundle as it will be published; without it the Haul
+        // still publishes (link previews fall back to a plate or the default image).
+        const pv = await api.get<PreviewResult>(`/api/hauls/${haulId}/preview${published && correction ? `?correction=${encodeURIComponent(correction)}` : ''}`).catch(() => null);
+        const card = pv ? await drawCard(pv.haul as Haul) : null;
+        if (!card) toast('The share card could not be drawn; publishing without it', true);
+        const r = await api.post<PublishResult>(`/api/hauls/${haulId}/publish`, { confirm: true, ...(published ? { correction } : {}), ...(card ? { card: card.base64 } : {}) }).catch((e) => (e as { body?: PublishResult }).body ?? Promise.reject(e));
         setCheck(r);
         if (r.ok) {
           toast(`Published v${r.version}`);
@@ -466,5 +507,23 @@ function PreviewLoader({ haulId }: { haulId: string }) {
   const { data, error } = useLoad(() => api.get<PreviewResult>(`/api/hauls/${haulId}/preview`), [haulId]);
   if (error) return <p className="small bad">{error}</p>;
   if (!data) return <Spinner text="Assembling the bundle…" />;
-  return <Preview haul={data.haul as Haul} />;
+  return (
+    <div className="stack" style={{ gap: 16 }}>
+      <CardPreview haul={data.haul as Haul} />
+      <Preview haul={data.haul as Haul} />
+    </div>
+  );
+}
+
+/** The share card as it will be published (drawn in this browser), for link previews. */
+function CardPreview({ haul }: { haul: Haul }) {
+  // Wrapped so "not drawn yet" (null) and "could not be drawn" ({ card: null }) differ.
+  const { data: drawn, error } = useLoad(() => drawCard(haul).then((card) => ({ card })), [haul]);
+  const data = drawn?.card;
+  return (
+    <figure className="card-preview" style={{ margin: 0 }}>
+      <div className="label" style={{ marginBottom: 6 }}>Share card · link previews</div>
+      {data ? <img src={data.dataUrl} width={1200} height={630} alt={`The share card for Haul ${haulSlug(haul.number)}`} /> : error || drawn ? <p className="small warn">The card could not be drawn here; the Haul publishes without one.</p> : <Spinner text="Drawing the card…" />}
+    </figure>
+  );
 }
