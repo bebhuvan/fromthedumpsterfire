@@ -96,11 +96,38 @@ describe('capture detection', () => {
     expect(detectUrl('https://www.youtube.com/watch?v=a1Y73sPHKxw').kind).toBe('youtube');
     expect(detectUrl('https://youtu.be/a1Y73sPHKxw').kind).toBe('youtube');
     expect(detectUrl('https://arxiv.org/abs/1706.03762').type).toBe('paper');
-    expect(detectUrl('https://x.com/someone/status/12345').type).toBe('post');
+    // A post on X is a social post (printed as a clipping); "post" is now a blog post.
+    expect(detectUrl('https://x.com/someone/status/12345')).toMatchObject({ kind: 'x', type: 'social' });
     expect(detectUrl('https://podcasts.apple.com/us/podcast/x/id1?i=2').kind).toBe('podcast');
     expect(detectUrl('https://example.org/report.pdf').kind).toBe('pdf');
     expect(detectUrl('https://someone.substack.com/p/thing').type).toBe('essay');
     expect(detectUrl('https://en.wikipedia.org/wiki/Great_Stink').type).toBe('rabbit-hole');
+  });
+  it('types single posts on social platforms as social, and profiles and feeds not', () => {
+    const social = (u: string) => detectUrl(u).type === 'social';
+    expect(social('https://twitter.com/visakanv/status/1712345678901234567')).toBe(true);
+    expect(social('https://mobile.twitter.com/visakanv/status/1712345678901234567?s=20')).toBe(true);
+    expect(social('https://x.com/visakanv')).toBe(false);
+    expect(social('https://bsky.app/profile/pfrazee.com/post/3l6oveex3ii2l')).toBe(true);
+    expect(social('https://bsky.app/profile/pfrazee.com')).toBe(false);
+    expect(social('https://substack.com/@noahpinion/note/c-71942857')).toBe(true);
+    expect(social('https://substack.com/note/c-71942857')).toBe(true);
+    expect(social('https://www.threads.net/@zuck/post/C8n3d7xS9fA')).toBe(true);
+    expect(social('https://www.threads.com/@zuck/post/C8n3d7xS9fA')).toBe(true);
+    expect(social('https://mastodon.social/@Gargron/113150745621987654')).toBe(true);
+    expect(social('https://hachyderm.io/@someone/112345678901234567')).toBe(true);
+    expect(social('https://mastodon.social/@Gargron')).toBe(false);
+    // A Medium story under a handle is an article, not a post.
+    expect(detectUrl('https://medium.com/@someone/why-coal-got-cheaper-1a2b3c4d5e6f').type).toBe('essay');
+    expect(detectUrl('https://someone.substack.com/p/thing').type).toBe('essay');
+  });
+  it('types Apple Podcasts and Spotify episode links as podcasts', () => {
+    expect(detectUrl('https://podcasts.apple.com/in/podcast/the-seen-and-the-unseen/id1229657208?i=1000654321098')).toMatchObject({ kind: 'podcast', type: 'podcast' });
+    expect(detectUrl('https://podcasts.apple.com/us/podcast/the-seen-and-the-unseen/id1229657208')).toMatchObject({ kind: 'podcast', type: 'podcast' });
+    expect(detectUrl('https://open.spotify.com/episode/4rOoJ6Egrf8K2IrywzwOMk?si=abc')).toMatchObject({ kind: 'podcast', type: 'podcast' });
+    expect(detectUrl('https://open.spotify.com/intl-de/episode/4rOoJ6Egrf8K2IrywzwOMk')).toMatchObject({ kind: 'podcast', type: 'podcast' });
+    // A song or a playlist is not a podcast.
+    expect(detectUrl('https://open.spotify.com/track/4rOoJ6Egrf8K2IrywzwOMk').type).not.toBe('podcast');
   });
   it('pulls many URLs from a paste', () => {
     const text = 'https://a.com/x, https://b.org/y.\n- https://a.com/x';
