@@ -1,19 +1,23 @@
+// Settings, set as a page: groups under quiet sans labels and ink rules, each setting named in sans
+// with what it does in the serif, controls drawn in the house style. Everything here stays on the phone.
 import { useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
-import { fonts, usePalette } from '@/theme';
+import { fonts, TEXT_SCALE, usePalette } from '@/theme';
 import { reader, useReader, type TextSize, type ThemePref } from '@/lib/store';
 import { clearDownloads, storageUsed } from '@/lib/data';
 import { disablePush, enablePush } from '@/lib/push';
 import { go } from '@/nav';
 import { Body, Meta, Note, Title } from '@/ui/type';
-import { Section, TopBar } from '@/ui/parts';
-import { Row, Segmented, Toggle } from '@/ui/controls';
+import { Flame, TopBar } from '@/ui/parts';
+import { AppearanceChoice, Group, Setting, SizeChoice, TextButton, Toggle } from '@/ui/controls';
 import { Screen } from '@/ui/screen';
 
-const EDITOR = 'editor@fromthedumpsterfire.com';
+export const EDITOR = 'editor@fromthedumpsterfire.com';
 
 const kb = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
+
+export const mailEditor = () => Linking.openURL(`mailto:${EDITOR}?subject=${encodeURIComponent('For the Dumpster Fire')}`);
 
 export function Settings() {
   const p = usePalette();
@@ -46,85 +50,91 @@ export function Settings() {
     ]);
 
   return (
-    <Screen header={<TopBar label="Back" />}>
-      <Title title={{ text: 'Settings' }} size={44} style={{ marginTop: 16 }} />
+    <Screen header={<TopBar label="Menu" />}>
+      <Title title={{ text: 'Settings' }} size={44} style={{ marginTop: 18 }} />
+      <Body style={{ marginTop: 10, color: p.ink2, fontSize: 17, lineHeight: 25 }}>Everything you choose here stays on this phone.</Body>
 
-      <Section title="Notifications">
-        <View style={{ marginTop: 10 }}>
-          <Row
-            title="When a new Haul arrives"
-            detail={push.on ? (push.registered ? 'One notification per Haul, nothing else.' : 'On. Connecting to the server…') : 'One notification per Haul, nothing else.'}
-            right={<Toggle label="New Haul notifications" value={push.on} onChange={togglePush} />}
-          />
-          {pushNote ? <Meta style={{ marginTop: 4 }}>{pushNote}</Meta> : null}
-        </View>
-      </Section>
-
-      <Section title="Reading">
-        <Meta style={{ marginTop: 16, marginBottom: 4 }}>Appearance</Meta>
-        <Segmented<ThemePref>
-          label="Appearance"
-          value={theme}
-          onChange={reader.setTheme}
-          options={[
-            { value: 'system', label: 'System' },
-            { value: 'light', label: 'Light' },
-            { value: 'dark', label: 'Dark' },
-          ]}
+      <Group label="Reading">
+        <Setting
+          first
+          title="Appearance"
+          detail="Follow the phone, or keep the page light or dark."
+          below={
+            <AppearanceChoice<ThemePref>
+              value={theme}
+              onChange={reader.setTheme}
+              options={[
+                { value: 'system', label: 'System' },
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+              ]}
+            />
+          }
         />
-        <Meta style={{ marginTop: 24, marginBottom: 4 }}>Text size</Meta>
-        <Segmented<TextSize>
-          label="Text size"
-          value={textSize}
-          onChange={reader.setTextSize}
-          options={[
-            { value: 'small', label: 'Small' },
-            { value: 'regular', label: 'Regular' },
-            { value: 'large', label: 'Large' },
-            { value: 'larger', label: 'Larger' },
-          ]}
+        <Setting
+          title="Text size"
+          detail="For the reading text, on top of your phone's own size."
+          below={
+            <SizeChoice<TextSize>
+              value={textSize}
+              onChange={reader.setTextSize}
+              options={(['small', 'regular', 'large', 'larger'] as const).map((v) => ({ value: v, label: v[0]!.toUpperCase() + v.slice(1), scale: TEXT_SCALE[v] }))}
+            />
+          }
         />
-        <View style={[styles.preview, { borderColor: p.rule }]}>
-          <Note>Everyone cites the memex and almost nobody reads the essay.</Note>
+        <View style={[styles.proof, { borderColor: p.rule }]}>
+          <Text style={[styles.proofLabel, { color: p.ink2 }]}>A proof at this size</Text>
+          <Note style={{ marginTop: 10 }}>Everyone cites the memex and almost nobody reads the essay.</Note>
           <Body style={{ marginTop: 8 }}>The summation of human experience is being expanded at a prodigious rate.</Body>
         </View>
-      </Section>
+      </Group>
 
-      <Section title="Offline">
-        <View style={{ marginTop: 10 }}>
-          <Row
-            title="Keep every Haul on this phone"
-            detail="Lets search and threads work offline. Hauls are small."
-            right={<Toggle label="Keep every Haul offline" value={keepAll} onChange={reader.setKeepAll} />}
-          />
-          <Row
-            title="Downloaded Hauls"
-            detail={storage.count ? `${storage.count} ${storage.count === 1 ? 'Haul' : 'Hauls'} · ${kb(storage.bytes)}` : 'Nothing downloaded beyond what ships with the app'}
-            onPress={storage.count ? clear : undefined}
-            right={storage.count ? <Meta>Remove</Meta> : undefined}
-          />
-        </View>
-      </Section>
+      <Group label="Notifications">
+        <Setting
+          first
+          title="When a new Haul arrives"
+          detail={push.on && !push.registered ? 'On. Connecting to the server…' : 'One notification per Haul, and nothing else.'}
+          right={<Toggle label="New Haul notifications" value={push.on} onChange={togglePush} />}
+        />
+        {pushNote ? <Meta style={{ marginTop: -4, marginBottom: 8 }}>{pushNote}</Meta> : null}
+      </Group>
 
-      <Section title="The editor">
-        <View style={{ marginTop: 10 }}>
-          <Row title="Send a find or a note" detail={EDITOR} onPress={() => Linking.openURL(`mailto:${EDITOR}?subject=${encodeURIComponent('For the Dumpster Fire')}`)} right={<Text style={[styles.ext, { color: p.ink2 }]}>↗</Text>} />
-          <Row title="How it's made" detail="Two voices, and what we promise" onPress={go.about} right={<Text style={[styles.ext, { color: p.ink2 }]}>→</Text>} />
-        </View>
-      </Section>
+      <Group label="Offline">
+        <Setting
+          first
+          title="Keep every Haul on this phone"
+          detail="Search and threads then work without a connection. Hauls are small."
+          right={<Toggle label="Keep every Haul offline" value={keepAll} onChange={reader.setKeepAll} />}
+        />
+        <Setting
+          title="Downloaded Hauls"
+          detail={storage.count ? `${storage.count} ${storage.count === 1 ? 'Haul' : 'Hauls'}, ${kb(storage.bytes)}` : 'Nothing beyond what came with the app.'}
+          right={storage.count ? <TextButton label="Remove" onPress={clear} /> : undefined}
+        />
+      </Group>
 
-      <Section title="Privacy">
-        <Body style={{ marginTop: 10, fontSize: 16.5, lineHeight: 24 }}>
-          No accounts and no tracking. What you save and read stays on this phone. If you turn on notifications, we store only a device token so we can tell you when a Haul arrives.
+      <Group label="The editor">
+        <Setting first title="Send a find or a note" detail={EDITOR} onPress={mailEditor} accessibilityRole="link" right={<Text style={[styles.ext, { color: p.ink2 }]}>↗</Text>} />
+        <Setting title="How it's made" detail="Two voices, and what we promise." onPress={go.about} accessibilityRole="link" right={<Text style={[styles.ext, { color: p.ink2 }]}>→</Text>} />
+      </Group>
+
+      <Group label="Privacy">
+        <Body style={{ marginTop: 14, fontSize: 16.5, lineHeight: 25 }}>
+          No accounts and no tracking. What you save and read stays on this phone. If you turn on notifications, we keep only a device token so we can tell you when a Haul arrives.
         </Body>
-      </Section>
+      </Group>
 
-      <Meta style={{ marginTop: 36 }}>Version {Constants.expoConfig?.version ?? '0'} · fromthedumpsterfire.com</Meta>
+      <View style={[styles.colophon, { borderTopColor: p.rule }]}>
+        <Flame size={8} />
+        <Meta>Version {Constants.expoConfig?.version ?? '0'} · fromthedumpsterfire.com</Meta>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  preview: { marginTop: 18, paddingVertical: 16, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
-  ext: { fontFamily: fonts.sansMedium, fontSize: 15 },
+  proof: { marginTop: 4, paddingVertical: 18, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
+  proofLabel: { fontFamily: fonts.sansMedium, fontSize: 12, includeFontPadding: false },
+  ext: { fontFamily: fonts.sansMedium, fontSize: 16 },
+  colophon: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 44, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
 });

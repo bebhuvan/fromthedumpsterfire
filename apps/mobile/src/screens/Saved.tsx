@@ -1,21 +1,19 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fonts, usePalette } from '@/theme';
 import { reader, useReader } from '@/lib/store';
 import { go } from '@/nav';
 import { Body, Title } from '@/ui/type';
-import { Action, Divider } from '@/ui/parts';
+import { Action, Divider, TopBar } from '@/ui/parts';
 import { FindRow } from '@/ui/FindRow';
 import { Screen } from '@/ui/screen';
 
 export function Saved() {
   const p = usePalette();
-  const insets = useSafeAreaInsets();
   const saved = useReader((s) => s.saved);
 
   return (
-    <Screen header={<View style={{ height: insets.top + 18 }} />}>
-      <Title title={{ text: 'Saved' }} size={44} />
+    <Screen header={<TopBar label="Menu" />}>
+      <Title title={{ text: 'Saved' }} size={44} style={{ marginTop: 18 }} />
       <Body style={{ marginTop: 10, color: p.ink2, fontSize: 17 }}>Kept on this phone, and nowhere else.</Body>
       {saved.length ? (
         <View style={{ marginTop: 18 }}>

@@ -15,6 +15,7 @@ import {
   HaulRoute,
   ItemRoute,
   LatestRoute,
+  MenuRoute,
   NoteRoute,
   SavedRoute,
   SearchRoute,
@@ -31,8 +32,9 @@ function TabsScreen() {
     <Tab.Navigator tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false, lazy: true }}>
       <Tab.Screen name="Latest" component={LatestRoute} />
       <Tab.Screen name="Threads" component={ThreadsRoute} />
+      <Tab.Screen name="Archive" component={ArchiveRoute} />
       <Tab.Screen name="Search" component={SearchRoute} />
-      <Tab.Screen name="Saved" component={SavedRoute} />
+      <Tab.Screen name="Menu" component={MenuRoute} />
     </Tab.Navigator>
   );
 }
@@ -59,7 +61,7 @@ export default function App() {
           <Stack.Screen name="Note" component={NoteRoute} />
           <Stack.Screen name="Item" component={ItemRoute} />
           <Stack.Screen name="Thread" component={ThreadRoute} />
-          <Stack.Screen name="Archive" component={ArchiveRoute} />
+          <Stack.Screen name="Saved" component={SavedRoute} />
           <Stack.Screen name="About" component={AboutRoute} />
           <Stack.Screen name="Settings" component={SettingsRoute} />
         </Stack.Navigator>

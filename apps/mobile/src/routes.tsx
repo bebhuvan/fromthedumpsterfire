@@ -16,6 +16,7 @@ import { Search } from './screens/Search';
 import { Saved } from './screens/Saved';
 import { Threads } from './screens/Threads';
 import { Settings } from './screens/Settings';
+import { Menu } from './screens/Menu';
 import { Waiting } from './ui/screen';
 
 type P<K extends keyof Routes> = NativeStackScreenProps<Routes, K>;
@@ -33,7 +34,7 @@ export function LatestRoute() {
 
 export function HaulRoute({ route }: P<'Haul'>) {
   const { data, status } = useHaul(route.params.n);
-  return data ? <Cover haul={data} /> : <Waiting status={status} />;
+  return data ? <Cover haul={data} back /> : <Waiting status={status} />;
 }
 
 export function NoteRoute({ route }: P<'Note'>) {
@@ -74,3 +75,4 @@ export const SavedRoute = Saved;
 export const ArchiveRoute = Archive;
 export const AboutRoute = About;
 export const SettingsRoute = Settings;
+export const MenuRoute = Menu;

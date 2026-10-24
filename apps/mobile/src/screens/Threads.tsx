@@ -1,11 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Haul, Thread } from '@fdf/shared/haul';
 import { fonts, usePalette } from '@/theme';
 import { useAllHauls } from '@/lib/data';
 import { go } from '@/nav';
 import { Body, Meta, Title } from '@/ui/type';
-import { Divider } from '@/ui/parts';
+import { Divider, PageHead } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 
 /** Every thread in the archive. A thread can grow across Hauls; the newest telling wins. */
@@ -17,12 +16,11 @@ function collect(hauls: Haul[]) {
 
 export function Threads() {
   const p = usePalette();
-  const insets = useSafeAreaInsets();
   const threads = collect(useAllHauls());
 
   return (
-    <Screen header={<View style={{ height: insets.top + 18 }} />}>
-      <Title title={{ text: 'Threads' }} size={44} />
+    <Screen header={<PageHead />}>
+      <Title title={{ text: 'Threads' }} size={44} style={{ marginTop: 18 }} />
       <Body style={{ marginTop: 10, color: p.ink2, fontSize: 17, lineHeight: 25 }}>
         Lines that run through the archive, across years and Hauls. Each link between pieces cites a passage at both ends.
       </Body>
