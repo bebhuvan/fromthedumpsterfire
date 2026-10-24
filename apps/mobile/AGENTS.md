@@ -29,13 +29,19 @@ Native API, read the major version of `expo` in `package.json` and fetch the mat
 - `src/screens/Menu.tsx` the contents page (Saved, About, Settings, the editor); `Settings.tsx`.
 - `src/screens/ItemScreen.tsx` every printed form (choice in `lib/forms.ts`, the website's);
   `ui/Specimen.tsx` the cover's specimens; `ui/Blocks.tsx` pull quotes, code, video, audio, pictures.
+- `src/screens/Shelf.tsx` the shelf (spines on shelf rules, then a text row per book) and `Book.tsx` a
+  book's page; sizing, packing, status lines and groups are pure in `lib/shelf.ts` (tested). The
+  jacket both the book form and the book page use is `ui/Jacket.tsx`. `useShelf()` in `lib/data.ts`
+  reads `shelf/shelf.json` offline-first: the copy on disk at once, a check every 20 minutes at most
+  with `If-None-Match`, and nothing kept that fails `validateShelf`. The Menu lists the shelf only
+  once it has books.
 - `ui/Fingerprint.tsx` (full and mini) from `@fdf/shared/fingerprint`, points in `lib/fpGeometry.ts`.
 - `ui/screen.tsx` `Screen` (pass `edition` for the band on a Haul's pages), `Waiting`.
 - `lib/data.ts` offline-first bundles; `lib/seed.ts` + `lib/seedData.ts` the development samples
-  (Hauls 001 to 003, every type and block kind). `seedData` is only required behind
+  (Hauls 001 to 003, every type and block kind, and the dev shelf). `seedData` is only required behind
   `EXPO_PUBLIC_USE_SEED`, so launch bundles do not contain it: verify with
   `EXPO_PUBLIC_USE_SEED=0 npx expo export --clear --no-bytecode --platform android` and grep the
-  bundle for `samplewriter` (0 hits). Always `--clear`: Metro's cache ignores EXPO_PUBLIC_ values.
+  bundle for `samplewriter` and `Sample note` (0 hits each). Always `--clear`: Metro's cache ignores EXPO_PUBLIC_ values.
 
 ## Commands
 
@@ -45,6 +51,7 @@ npm run prebuild:android                  # regenerate android/ (after native co
 ARCH=x86_64 npm run build:android         # release APK for the emulator (AVD writing_desk_t9)
 adb install -r android/app/build/outputs/apk/release/app-release.apk
 adb shell am start -a android.intent.action.VIEW -d dumpsterfire://haul/2/datasette   # open a screen
+adb shell am start -a android.intent.action.VIEW -d dumpsterfire://shelf/the-coal-question
 adb shell cmd uimode night yes            # dark mode (the app follows the system by default)
 adb exec-out screencap -p > shot.png
 ```
