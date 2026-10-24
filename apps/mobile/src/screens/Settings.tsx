@@ -13,7 +13,7 @@ import { Flame, TopBar } from '@/ui/parts';
 import { AppearanceChoice, Group, Setting, SizeChoice, TextButton, Toggle } from '@/ui/controls';
 import { Screen } from '@/ui/screen';
 
-export const EDITOR = 'editor@fromthedumpsterfire.com';
+export const EDITOR = 'bhuvan@bebhuvan.com';
 
 const kb = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
 

@@ -130,8 +130,9 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
    `FCM_SERVICE_ACCOUNT` set on production `fdf-pipeline`, `apps/mobile/google-services.json` in place
    (gitignored). Install the 0.3.0 push APK and allow notifications so the phone registers
    (`devices` was empty when set). Not yet on preview. iOS needs FCM tokens on iOS or an APNs sender.
-2. **editor@fromthedumpsterfire.com:** the domain's mail is Proton Mail, so create the address in
-   Proton. Cloudflare Email Routing would replace the Proton MX records.
+2. **Editor's email:** the app's Settings and Menu now write to bhuvan@bebhuvan.com (the editor's choice,
+   2026-10-24), so editor@fromthedumpsterfire.com is no longer needed. (Earlier note: the domain's mail is Proton Mail, so create the address in
+   Proton. Cloudflare Email Routing would replace the Proton MX records.)
 3. Optional: `SMITHSONIAN_API_KEY`, `RIJKSMUSEUM_API_KEY`, `BROWSER_FALLBACK=on`, an `IMAGES` binding.
 4. Optional: an R2 lifecycle rule on `fdf-media` to abort incomplete multipart uploads.
 

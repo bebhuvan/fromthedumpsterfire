@@ -15,6 +15,7 @@ export function Search({ initial }: { initial?: string }) {
   const [q, setQ] = useState(initial ?? '');
   const [type, setType] = useState<ContentType | null>(null);
   const [topic, setTopic] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     if (initial !== undefined) setQ(initial);
@@ -32,21 +33,33 @@ export function Search({ initial }: { initial?: string }) {
   return (
     <View style={{ flex: 1, backgroundColor: p.bg }}>
       <PageHead />
+      {/* A page title like every other section's, then a field that looks like one: set on the plate
+          with an ink rule under it (ember while typing), the hint in the editor's italic. */}
       <View style={styles.head}>
-        <TextInput
-          value={q}
-          onChangeText={(t) => {
-            setQ(t);
-            setTopic(null);
-          }}
-          placeholder="Search every Haul"
-          placeholderTextColor={p.ink2}
-          returnKeyType="search"
-          autoCorrect={false}
-          clearButtonMode="while-editing"
-          accessibilityLabel="Search every Haul"
-          style={[styles.input, { color: p.ink, borderBottomColor: p.ink }]}
-        />
+        <Text accessibilityRole="header" style={[styles.pageTitle, { color: p.ink }]}>Search</Text>
+        <View style={[styles.field, { backgroundColor: p.plate, borderBottomColor: focused ? p.ember : p.ink }]}>
+          <TextInput
+            value={q}
+            onChangeText={(t) => {
+              setQ(t);
+              setTopic(null);
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder="A person, a place, a year, an idea"
+            placeholderTextColor={p.ink2}
+            returnKeyType="search"
+            autoCorrect={false}
+            accessibilityLabel="Search every Haul"
+            style={[styles.input, { color: p.ink, fontFamily: q ? fonts.displayRegular : fonts.textItalic }]}
+          />
+          {q ? (
+            <Pressable accessibilityRole="button" accessibilityLabel="Clear the search" hitSlop={10} onPress={() => setQ('')} style={styles.clear}>
+              <Meta style={{ color: p.ink }}>Clear</Meta>
+            </Pressable>
+          ) : null}
+        </View>
+        <Meta style={{ marginTop: 8 }}>Every Haul, every find, every note.</Meta>
       </View>
 
       <ScrollView keyboardShouldPersistTaps="handled" onScrollBeginDrag={Keyboard.dismiss} contentContainerStyle={{ paddingHorizontal: GUTTER, paddingBottom: 40 }}>
@@ -86,7 +99,7 @@ export function Search({ initial }: { initial?: string }) {
                 const f = randomFind(hauls);
                 if (f) go.item(f.n, f.item.id);
               }}
-              style={{ marginTop: 22 }}
+              style={{ marginTop: 26, borderTopWidth: 0 }}
             />
             <Text accessibilityRole="header" style={[styles.indexTitle, { color: p.ink }]}>The index</Text>
             <Meta style={{ marginBottom: 10 }}>People, places and ideas across every Haul</Meta>
@@ -125,7 +138,10 @@ function FilterChip({ label, on, color, onPress }: { label: string; on: boolean;
 
 const styles = StyleSheet.create({
   head: { paddingHorizontal: GUTTER, paddingTop: 12 },
-  input: { fontFamily: fonts.display, fontSize: 30, paddingVertical: 10, borderBottomWidth: 1.5, includeFontPadding: false },
+  pageTitle: { fontFamily: fonts.display, fontSize: 38, lineHeight: 44, marginBottom: 14 },
+  field: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1.5, paddingHorizontal: 14 },
+  input: { flex: 1, fontSize: 21, paddingVertical: 14, includeFontPadding: false },
+  clear: { minHeight: 44, justifyContent: 'center', paddingLeft: 12 },
   filters: { gap: 18, paddingTop: 14 },
   filter: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, borderBottomWidth: 2 },
   filterKey: { width: 8, height: 8, borderWidth: StyleSheet.hairlineWidth },
