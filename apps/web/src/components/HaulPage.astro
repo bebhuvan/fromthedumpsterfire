@@ -3,12 +3,14 @@
 // column with the route in the margin; the contents show each item as a small specimen of its own
 // printed form (Specimen.astro). Mirrors the app's Cover screen.
 import { haulSlug, type Haul } from '@fdf/shared/haul';
+import { editionOf } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
 import Highlighted from './Highlighted.astro';
 import Voice from './Voice.astro';
 import Specimen from './Specimen.astro';
 import Masthead from './Masthead.astro';
+import Fingerprint from './Fingerprint.astro';
 import {
   absolute,
   EDITOR_NAME,
@@ -20,6 +22,7 @@ import {
   paths,
   SITE_DESCRIPTION,
   SITE_NAME,
+  safeHref,
   titleText,
 } from '../lib/site';
 
@@ -37,6 +40,8 @@ const slug = haulSlug(haul.number);
 const issueTitle = `Haul ${haul.number}: ${titleText(haul.title)}`;
 const coverImage = haulCoverImage(haul);
 const lastmod = haulLastmod(haul);
+const coverPlate = haul.cover;
+const coverSrc = coverPlate ? safeHref(coverPlate.url) : undefined;
 const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))];
 ---
 <Base
@@ -52,6 +57,7 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
   articleSection={`Haul ${slug}`}
   tags={tags}
   markdownPath={paths.haulMd(haul.number)}
+  edition={editionOf(haul.number, haul.edition)}
 >
   {home ? (
     <section class="wrap nameplate" aria-label="From the Dumpster Fire">
@@ -60,7 +66,7 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
     </section>
   ) : null}
   <section
-    class:list={['ghost', `s-${haul.swatch}`, { 'ghost-home': home }]}
+    class:list={['cover', { 'with-plate': coverPlate }]}
     aria-labelledby="haul-title"
     itemscope
     itemtype="https://schema.org/PublicationIssue"
@@ -77,12 +83,20 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
       <meta itemprop="name" content={SITE_NAME} />
       <link itemprop="url" href={absolute(paths.home)} />
     </span>
-    <div class="wrap ghost-in">
-      <span class="numeral" aria-hidden="true">{slug}</span>
-      <p class="gmeta">Haul {slug} · <time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time> · {objects(haul.items.length).toLowerCase()}</p>
-      <h1 class="cover-title display" id="haul-title" itemprop="name headline"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>
-      <p class="cover-deck" itemprop="description">{haul.deck}</p>
+    <div class="wrap g cv">
+      <p class="m cv-no"><span class="cv-h">Haul</span><span class="cv-n" aria-hidden="true">{slug}</span><span><time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time></span><span>{objects(haul.items.length)}</span></p>
+      <div class="cv-c">
+        <h1 class="cv-t display" id="haul-title" itemprop="name headline"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>
+        <p class="cv-deck" itemprop="description">{haul.deck}</p>
+      </div>
+      {coverPlate && coverSrc ? (
+        <figure class="cv-plate">
+          <img src={coverSrc} width={coverPlate.width} height={coverPlate.height} alt={coverPlate.caption || ''} decoding="async" />
+          <figcaption>{coverPlate.caption} {coverPlate.credit}.</figcaption>
+        </figure>
+      ) : null}
     </div>
+    <div class="wrap"><Fingerprint haul={haul} /></div>
   </section>
 
   <section class="wrap g fn" id="field-note" aria-labelledby="fn-title">

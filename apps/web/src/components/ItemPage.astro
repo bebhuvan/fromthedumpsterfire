@@ -4,13 +4,14 @@
 // margin (meta, the machine's notes, speakers, section numbers), the running head, the thumb tab and
 // the folio. Mirrors apps/mobile/src/screens/ItemScreen.tsx.
 import { haulSlug, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
-import { typeLabel } from '@fdf/shared/tokens';
+import { editionOf, typeLabel } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
 import Highlighted from './Highlighted.astro';
 import Voice from './Voice.astro';
 import Notes from './Notes.astro';
 import Ideas from './Ideas.astro';
+import Blocks from './Blocks.astro';
 import StartHere from './StartHere.astro';
 import SeeAlso from './SeeAlso.astro';
 import { formName, formOf, headword, speaker } from '../lib/forms';
@@ -64,6 +65,8 @@ const ogImage =
   articleSection={typeLabel[item.type]}
   tags={item.wiki.map((w) => w.title)}
   markdownPath={paths.itemMd(haul.number, item.id)}
+  edition={editionOf(haul.number, haul.edition)}
+  fingerprint={{ haul, current: item.id }}
 >
   <nav slot="edge" class="tabs" aria-label={`Item ${n} of ${haul.items.length}`}>
     <a class:list={['tab', 'here', `n${Math.min(n, 20)}`, `t-${item.type}`]} href={paths.haul(haul.number)} aria-label={`Item ${n} of ${haul.items.length}. Back to the contents`}>{n}</a>
@@ -171,6 +174,96 @@ const ogImage =
       </div>
     ) : null}
 
+    {form === 'epigraph' && item.excerpt ? (
+      <header class="wrap g epi">
+        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.date}</span></p>
+        <figure class="epi-f">
+          <h1 class="sr" id="item-title">{titleText(item.title)}, {item.creator}</h1>
+          <blockquote class="epi-q" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+          <figcaption class="epi-who"><span class="epi-name">{item.creator}</span><span>{[item.source.name, item.source.date].filter(Boolean).join(', ')}</span></figcaption>
+        </figure>
+      </header>
+    ) : null}
+
+    {form === 'letter' && item.excerpt ? (
+      <div class="wrap g">
+        <article class="mc letter" aria-labelledby="item-title">
+          <p class="lt-date">{item.place ? <span>{item.place}</span> : null}<span>{item.source.date}</span></p>
+          <h1 class="lt-to" id="item-title"><span class="sr">{titleText(item.title)}. </span>From {item.creator}{item.recipient ? <> to {item.recipient}</> : null}</h1>
+          <blockquote class="lt-body" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+          <p class="lt-sign">{item.creator}</p>
+          <p class="lt-held">{item.source.name}{item.excerpt.locator ? `, ${item.excerpt.locator}` : ''}</p>
+        </article>
+      </div>
+    ) : null}
+
+    {form === 'clipping' && item.excerpt ? (
+      <div class="wrap g">
+        <article class="mc clip" aria-labelledby="item-title">
+          <h1 class="sr" id="item-title">{titleText(item.title)}, a post by {item.creator}</h1>
+          <dl class="clip-head">
+            <div><dt>From</dt><dd><span class="clip-name">{item.creator}</span>{item.handle ? <span class="clip-handle">{item.handle}</span> : null}</dd></div>
+            <div><dt>On</dt><dd>{item.source.name}</dd></div>
+            <div><dt>Date</dt><dd>{item.source.date}</dd></div>
+          </dl>
+          <blockquote class="clip-text" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+        </article>
+      </div>
+    ) : null}
+
+    {form === 'print' && item.plate && plateSrc ? (
+      <div class="wrap g prt">
+        <figure class="mc prt-f">
+          <div class="prt-mount"><img src={plateSrc} width={item.plate.width} height={item.plate.height} alt={item.plate.caption || titleText(item.title)} decoding="async" /></div>
+          <figcaption class="prt-label">
+            <h1 class="prt-t display" id="item-title"><Title title={item.title} as="span" /></h1>
+            <span class="prt-by">{item.creator}{item.source.date ? `, ${item.source.date}` : ''}</span>
+            <span class="prt-from"><i>{item.source.name}</i></span>
+            <span class="prt-cr">{item.plate.credit}. {licence}.</span>
+          </figcaption>
+        </figure>
+      </div>
+    ) : null}
+
+    {form === 'jacket' ? (
+      <header class="wrap g jk">
+        <div class="m jk-book" aria-hidden="true">
+          {item.plate && plateSrc ? (
+            <img class="jk-cover" src={plateSrc} width={item.plate.width} height={item.plate.height} alt="" decoding="async" />
+          ) : (
+            <span class="jk-jacket"><span class="jk-jt"><Title title={item.title} as="span" /></span><span class="jk-ja">{item.creator}</span><span class="jk-jp">{item.source.name}</span></span>
+          )}
+        </div>
+        <div class="c jk-c">
+          <p class="meta jk-meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.name}, {item.source.date}</span></p>
+          <Title title={item.title} as="h1" class="h-item jk-t" id="item-title" />
+          <p class="byline">{item.creator}</p>
+          {item.excerpt ? (
+            <figure class="jk-line">
+              <blockquote cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+              {item.excerpt.locator ? <figcaption>{item.excerpt.locator}</figcaption> : null}
+            </figure>
+          ) : null}
+        </div>
+      </header>
+    ) : null}
+
+    {form === 'label' ? (
+      <div class="wrap g">
+        <article class="mc lab" aria-labelledby="item-title">
+          <p class="lab-k"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>FDF {haulSlug(haul.number)}.{n}</span></p>
+          <Title title={item.title} as="h1" class="lab-t" id="item-title" />
+          <dl class="lab-dl">
+            {item.creator ? <div><dt>Made by</dt><dd>{item.creator}</dd></div> : null}
+            <div><dt>What it is</dt><dd>{item.source.name}</dd></div>
+            {item.source.date ? <div><dt>Since</dt><dd>{item.source.date}</dd></div> : null}
+            {item.excerpt ? <div class="lab-own"><dt>In its own words</dt><dd><blockquote cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote></dd></div> : null}
+            {source ? <div><dt>Where</dt><dd><a href={source} rel="noopener noreferrer" target="_blank">{new URL(source).hostname.replace(/^www\./, '')}<span class="sr"> (opens in a new tab)</span></a></dd></div> : null}
+          </dl>
+        </article>
+      </div>
+    ) : null}
+
     {form === 'facing' && item.rhyme ? (
       <div class="wrap">
         <div class="spread">
@@ -191,7 +284,7 @@ const ogImage =
       </div>
     ) : null}
 
-    {form === 'opening' || form === 'broadside' || form === 'page' ? (
+    {['opening', 'broadside', 'page', 'epigraph', 'letter', 'clipping', 'print', 'jacket', 'label'].includes(form) ? (
       <section class="wrap g why" aria-labelledby="why-title">
         <div class="m">
           <h2 class="mh" id="why-title">Why it's here</h2>
@@ -299,9 +392,11 @@ const ogImage =
       <div class="wrap g row"><p class="m mh">Notes</p><div class="c"><Notes notes={item.marginalia} /></div></div>
     ) : null}
 
+    <Blocks blocks={item.blocks ?? []} source={item.source.name} />
+
     <Ideas ideas={item.ideas ?? []} />
 
-    {item.plate && plateSrc && form !== 'card' ? (
+    {item.plate && plateSrc && form !== 'card' && form !== 'print' && form !== 'jacket' ? (
       <div class="wrap g">
         <figure class="c plate">
           <img src={plateSrc} width={item.plate.width} height={item.plate.height} alt={item.plate.caption || `Plate for ${titleText(item.title)}`} loading="lazy" decoding="async" />

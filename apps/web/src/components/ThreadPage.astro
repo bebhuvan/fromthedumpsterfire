@@ -2,6 +2,7 @@
 // A thread, set as a chronology: the year in the margin, the point in the column, the machine's
 // name for each link in blue. Mirrors apps/mobile/src/screens/ThreadScreen.tsx.
 import { haulSlug, type Haul, type Thread } from '@fdf/shared/haul';
+import { editionOf } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
 import {
@@ -38,6 +39,7 @@ const title = `${titleText(thread.title)}, a thread`;
   modifiedAt={lastmod}
   articleSection="Thread"
   markdownPath={paths.threadMd(haul.number, thread.id)}
+  edition={editionOf(haul.number, haul.edition)}
 >
   <section class="wrap g page-head" itemscope itemtype="https://schema.org/Article">
     <meta itemprop="headline" content={title} />

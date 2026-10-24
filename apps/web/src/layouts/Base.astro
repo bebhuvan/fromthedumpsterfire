@@ -6,6 +6,9 @@ import { palettes } from '@fdf/shared/tokens';
 import { absolute, EDITOR_NAME, paths, SITE_DESCRIPTION, SITE_NAME } from '../lib/site';
 import { markdownMirrorFor } from '../worker/lib';
 import Masthead from '../components/Masthead.astro';
+import Fingerprint from '../components/Fingerprint.astro';
+import type { Edition } from '@fdf/shared/tokens';
+import type { Haul } from '@fdf/shared/haul';
 
 interface Props {
   /** Page title without the site name; omit on the home page. */
@@ -30,6 +33,10 @@ interface Props {
   author?: string;
   articleSection?: string;
   tags?: string[];
+  /** The Haul's edition ink: a band on the top edge and the Haul's marks in its colour. */
+  edition?: Edition;
+  /** In the running head, the Haul's mini fingerprint with this item drawn tall. */
+  fingerprint?: { haul: Haul; current?: string };
   /** Optional path to the Markdown mirror of this page (e.g. "/haul/1.md" or "/llms.txt"). */
   markdownPath?: string;
 }
@@ -51,6 +58,8 @@ const {
   articleSection,
   tags,
   markdownPath = markdownMirrorFor(path) ?? undefined,
+  edition,
+  fingerprint,
 } = Astro.props;
 const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
 const socialTitle = title ?? SITE_NAME;
@@ -111,7 +120,7 @@ const nav = [
     <script is:inline src="/theme-init.js"></script>
     <slot name="head" />
   </head>
-  <body>
+  <body class:list={edition ? ['has-ed', `e-${edition}`] : undefined}>
     <a class="skip" href="#main">Skip to content</a>
     <header class="wrap top">
       {bigMast ? null : (
@@ -132,6 +141,7 @@ const nav = [
             <a itemprop="item" href={runhead.href}><span itemprop="name">{runhead.left}</span></a>
             <meta itemprop="position" content="1" />
           </span>
+          {fingerprint ? <Fingerprint haul={fingerprint.haul} variant="mini" current={fingerprint.current} /> : null}
           {runhead.right ? (
             <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
               <link itemprop="item" href={canonical} />

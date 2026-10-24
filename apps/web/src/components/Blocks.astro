@@ -1,0 +1,119 @@
+---
+// The rich media an editor adds to an item (Block in @fdf/shared/haul), in the order given: pull
+// quotes (verified against the source), code (tokens highlighted at publish), video and podcast
+// players from the platform's own embed, audio files in the browser's player, and pictures with their
+// credit and licence. Each is set in the reading column; players and code may run into the air.
+import { embedSrc, videoHref, type Block } from '@fdf/shared/haul';
+import { CODE_LANGS_SHORT } from '../lib/forms';
+import { safeHref } from '../lib/site';
+
+interface Props {
+  blocks: Block[];
+  /** Name of the source, for the line under a pull quote. */
+  source?: string;
+}
+const { blocks, source } = Astro.props;
+const clock = (s?: number) => {
+  if (!s) return '';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = Math.floor(s % 60);
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
+};
+const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
+---
+{blocks.length ? (
+  <div class="wrap blocks">
+    {blocks.map((b) => {
+      if (b.kind === 'quote') {
+        return (
+          <figure class="g blk blk-quote">
+            <blockquote class="c pq"><p>{b.text}</p></blockquote>
+            <figcaption class="c pq-cap">{[b.locator, source].filter(Boolean).join(', ')}{b.locator || source ? ' · ' : ''}matched word for word against the source</figcaption>
+          </figure>
+        );
+      }
+      if (b.kind === 'code') {
+        const n = lines(b.code);
+        return (
+          <figure class="g blk blk-code">
+            <figcaption class="c code-cap">
+              <span class="code-lang">{(b.lang && CODE_LANGS_SHORT[b.lang]) || b.lang || 'Code'}</span>
+              {b.caption ? <span class="code-what">{b.caption}</span> : null}
+            </figcaption>
+            <div class="c code-wrap" tabindex="0" role="region" aria-label={b.caption ? `Code: ${b.caption}` : 'Code'}>
+              <span class="code-gut" aria-hidden="true">{Array.from({ length: n }, (_, i) => <span>{i + 1}</span>)}</span>
+              <pre class="code"><code>{(b.tokens ?? [['', b.code]]).map(([role, text]) => (role ? <span class={`k-${role}`}>{text}</span> : text))}</code></pre>
+            </div>
+          </figure>
+        );
+      }
+      if (b.kind === 'video') {
+        const src = embedSrc(b);
+        return (
+          <figure class="g blk blk-video">
+            <div class="c player player-16x9">
+              {src ? (
+                <iframe
+                  src={src}
+                  title={b.title}
+                  loading="lazy"
+                  allow="encrypted-media; picture-in-picture; fullscreen"
+                  allowfullscreen
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                ></iframe>
+              ) : null}
+            </div>
+            <figcaption class="c player-cap">
+              <span class="player-t">{b.title}</span>
+              <a href={videoHref(b)} rel="noopener noreferrer" target="_blank">Watch on {b.provider === 'youtube' ? 'YouTube' : 'Vimeo'}{b.start ? ` from ${clock(b.start)}` : ''}<span class="sr"> (opens in a new tab)</span></a>
+            </figcaption>
+          </figure>
+        );
+      }
+      if (b.kind === 'audio') {
+        const src = b.provider === 'file' ? safeHref(b.url) : embedSrc(b);
+        const page = safeHref(b.url);
+        return (
+          <figure class="g blk blk-audio">
+            <figcaption class="c player-cap player-cap-top">
+              <span class="player-t">{b.title}</span>
+              {b.seconds || b.start ? <span class="player-meta">{[b.seconds ? clock(b.seconds) : '', b.start ? `start at ${clock(b.start)}` : ''].filter(Boolean).join(' · ')}</span> : null}
+            </figcaption>
+            <div class:list={['c', 'player', `player-${b.provider}`]}>
+              {b.provider === 'file' && src ? (
+                <audio controls preload="none" src={b.start ? `${src}#t=${Math.floor(b.start)}` : src}>
+                  <a href={src}>Download the audio</a>
+                </audio>
+              ) : src ? (
+                <iframe
+                  src={src}
+                  title={b.title}
+                  loading="lazy"
+                  allow="encrypted-media; clipboard-write"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                ></iframe>
+              ) : null}
+            </div>
+            {b.provider !== 'file' && page ? (
+              <p class="c player-cap"><a href={page} rel="noopener noreferrer" target="_blank">Open in {b.provider === 'spotify' ? 'Spotify' : 'Apple Podcasts'}<span class="sr"> (opens in a new tab)</span></a></p>
+            ) : null}
+          </figure>
+        );
+      }
+      if (b.kind === 'image') {
+        const src = safeHref(b.plate.url);
+        const licence = b.plate.licence.charAt(0).toUpperCase() + b.plate.licence.slice(1);
+        return src ? (
+          <figure class="g blk blk-image">
+            <img class="c" src={src} width={b.plate.width} height={b.plate.height} alt={b.plate.caption || ''} loading="lazy" decoding="async" />
+            <figcaption class="c plate-cap"><span>{b.plate.caption}</span><span class="cr">{b.plate.credit}. {licence}.</span></figcaption>
+          </figure>
+        ) : null;
+      }
+      return null;
+    })}
+  </div>
+) : null}
