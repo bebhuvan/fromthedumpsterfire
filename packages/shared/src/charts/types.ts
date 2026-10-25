@@ -136,6 +136,12 @@ export interface Chart {
   sourceSpan?: { from: string; to: string };
   sources: ChartSource[];
   measure: ChartMeasure;
+  /**
+   * How code derived the rows from the source, when it did (a temperature band's normals and
+   * records, monthly means from daily values). Written by code, never by a model; printed in the
+   * machine's voice under the chart.
+   */
+  method?: string;
   data: ChartData;
   encode: ChartEncode;
   scale?: { y?: ChartScale; x?: ChartScale };

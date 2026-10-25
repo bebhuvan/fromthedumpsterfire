@@ -2,6 +2,7 @@
 // Bundles are static JSON on R2, so every field here is final, verified copy.
 
 import type { CodeRole, ContentType, Edition, Swatch } from './tokens';
+import type { Chart } from './charts/types';
 
 export const BUNDLE_VERSION = 1;
 
@@ -142,16 +143,28 @@ export type CodeToken = [role: CodeRole | '', text: string];
  * Rich media the editor adds to an item, printed after the note and the excerpt in every form.
  * Quotes and code are excerpts too: each is matched word for word against the stored source text
  * before it can ship. Video and podcast embeds are resolved from the editor's link by code, never by
- * a model. Optional; older bundles have none (added 2026-10-24).
+ * a model. Optional; older bundles have none (added 2026-10-24). A chart carries its data rows and is
+ * drawn from them; its rules are in charts/validate.ts (added 2026-10-25).
  */
 export type Block =
   | { kind: 'quote'; text: string; locator?: string }
   | { kind: 'code'; code: string; lang?: string; caption?: string; tokens?: CodeToken[] }
   | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { url: string; width: number; height: number } }
   | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number; seconds?: number }
-  | { kind: 'image'; plate: Plate };
+  | { kind: 'image'; plate: Plate }
+  | { kind: 'chart'; chart: Chart; images?: ChartImages };
 export type BlockKind = Block['kind'];
-export const BLOCK_KINDS: readonly BlockKind[] = ['quote', 'code', 'video', 'audio', 'image'];
+export const BLOCK_KINDS: readonly BlockKind[] = ['quote', 'code', 'video', 'audio', 'image', 'chart'];
+
+/**
+ * A chart's pictures for the app, which has no SVG: the phone figure drawn from the same scene as the
+ * website's SVG, at three times its size, once per theme, copied next to the bundle at publish.
+ * The website draws the chart itself from the rows (added 2026-10-25).
+ */
+export interface ChartImages {
+  light: { url: string; width: number; height: number };
+  dark: { url: string; width: number; height: number };
+}
 
 /** The player's address for an embed: youtube-nocookie, Vimeo's player, Spotify's or Apple's embed. */
 export function embedSrc(b: Extract<Block, { kind: 'video' | 'audio' }>): string | undefined {
@@ -198,7 +211,7 @@ export interface Item {
   startHere?: StartHere;
   wiki: WikiCard[];
   connections: Connection[];
-  /** Rich media: pull quotes, code, video, podcast and audio embeds, pictures (added 2026-10-24). */
+  /** Rich media: pull quotes, code, video, podcast and audio embeds, pictures (added 2026-10-24), charts (2026-10-25). */
   blocks?: Block[];
   /** The year the work was made, when source.date does not say it (the Haul's fingerprint uses it). */
   year?: number;

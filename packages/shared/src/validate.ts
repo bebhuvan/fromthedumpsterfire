@@ -6,6 +6,7 @@ import type { Block, Haul, HaulIndex, Item, Title } from './haul';
 import { AUDIO_FORMATS, BLOCK_KINDS, BUNDLE_VERSION, embedSrc, haulSlug } from './haul';
 import { CODE_ROLES, EDITIONS, SWATCHES as SWATCH_LIST, typeSwatch } from './tokens';
 import { checkStyle } from './style';
+import { validateChart } from './charts/validate';
 
 export interface BundleIssue {
   /** JSON path to the offending value, e.g. "items[2].excerpt.highlight". */
@@ -263,6 +264,24 @@ function checkBlock(c: Collector, b: Block, p: string) {
         if (typeof b.plate.creator !== 'string' || !b.plate.creator.trim()) c.err(`${p}.plate.creator`, 'credit', 'a picture names who made it');
       }
       break;
+    case 'chart': {
+      // The honesty rules (charts/validate.ts): sources and licences, zero baselines, no dual axes,
+      // stated units and bases, the window shown, figures in machine text traced to the rows.
+      const r = validateChart(b.chart, `${p}.chart`);
+      c.errors.push(...r.errors);
+      c.warnings.push(...r.warnings);
+      if (c.obj(b.images, `${p}.images`, true)) {
+        for (const scheme of ['light', 'dark'] as const) {
+          const im = b.images[scheme];
+          if (!c.obj(im, `${p}.images.${scheme}`)) continue;
+          c.https(im.url, `${p}.images.${scheme}.url`);
+          c.hosted(im.url, `${p}.images.${scheme}.url`);
+          c.num(im.width, `${p}.images.${scheme}.width`);
+          c.num(im.height, `${p}.images.${scheme}.height`);
+        }
+      }
+      break;
+    }
   }
 }
 

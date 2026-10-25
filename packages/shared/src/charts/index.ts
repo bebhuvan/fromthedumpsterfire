@@ -6,3 +6,7 @@ export * from './scene';
 export * from './render';
 export { LAYOUT_WIDTH, type Layout } from './frame';
 export * from './csv';
+export * from './validate';
+export * from './figures';
+export * from './glosses';
+export * from './key';
