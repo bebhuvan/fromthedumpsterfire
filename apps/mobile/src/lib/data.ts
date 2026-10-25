@@ -10,6 +10,7 @@ import { BUNDLE_VERSION, type Haul, type HaulIndex, type HaulSummary } from '@fd
 import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 import { useReader } from './store';
 import { INDEX_PATH, seedTable } from './seed';
+import { keepPictures } from './pictures';
 
 const BASE = process.env.EXPO_PUBLIC_FILES_BASE ?? 'https://files.fromthedumpsterfire.com';
 
@@ -69,6 +70,8 @@ async function fetchJson(path: string): Promise<unknown | null> {
       if (path === INDEX_PATH && SEEDS[path] && !(json as HaulIndex).hauls?.length) return null;
       memory.set(path, json);
       writeDisk(path, text);
+      // A Haul's chart pictures are part of it: keep them on the phone too.
+      if (path !== INDEX_PATH && path.startsWith('hauls/')) keepPictures(json as Haul);
       return json;
     } catch {
       return null;
@@ -113,6 +116,8 @@ export function useHaul(number?: number): Load<Haul> & { summary?: HaulSummary }
   const index = useIndex();
   const summary = index.data?.hauls.find((h) => (number === undefined ? true : h.number === number));
   const haul = useBundle<Haul>(summary?.path ?? null, { refresh: false });
+  // A bundle kept before its pictures finished downloading gets them on the next open.
+  useEffect(() => keepPictures(haul.data), [haul.data]);
   if (!summary) {
     // Before Haul 001 the published index is real but empty.
     if (index.data && !index.data.hauls.length) return { data: null, status: 'empty' };
@@ -153,7 +158,7 @@ export function useAllHauls(): Haul[] {
   return summaries.map((s) => peek<Haul>(s.path)).filter((h): h is Haul => Boolean(h));
 }
 
-/** Downloaded Haul files and their total size. */
+/** Downloaded Haul files (bundles and their chart pictures) and their total size. */
 export function storageUsed() {
   let bytes = 0;
   let count = 0;
@@ -161,7 +166,7 @@ export function storageUsed() {
     for (const entry of Paths.document.list()) {
       if (entry instanceof File && entry.name.startsWith('hauls__') && entry.name !== 'hauls__index.json') {
         bytes += entry.size ?? 0;
-        count += 1;
+        if (entry.name.endsWith('.json')) count += 1; // Hauls, not their pictures
       }
     }
   } catch {
@@ -170,7 +175,7 @@ export function storageUsed() {
   return { bytes, count };
 }
 
-/** Remove downloaded Hauls (the index and the reader's own data stay). */
+/** Remove downloaded Hauls and their chart pictures (the index and the reader's own data stay). */
 export function clearDownloads() {
   try {
     for (const entry of Paths.document.list()) {

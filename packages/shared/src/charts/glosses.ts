@@ -6,7 +6,6 @@
 import type { Chart, Cell, ChartColumn } from './types';
 import { FORMS } from './types';
 import { formatNumber, formatTime, type Grouping } from './scales';
-import { isRupees } from './frame';
 
 const col = (chart: Chart, role: keyof Chart['encode']): ChartColumn | undefined => {
   const key = chart.encode?.[role];
@@ -16,6 +15,11 @@ const idx = (chart: Chart, role: keyof Chart['encode']) => {
   const key = chart.encode?.[role];
   return key ? chart.data.columns.findIndex((c) => c.key === key) : -1;
 };
+/** A chart in rupees takes Indian digit grouping (12,34,567). */
+export function isRupees(chart: Pick<Chart, 'units' | 'measure'>): boolean {
+  return /₹|\bINR\b|\brupees?\b|\blakh\b|\bcrores?\b/i.test(chart.units) || /^(INR|₹)$/i.test(chart.measure?.money?.currency ?? '');
+}
+
 const grouping = (chart: Chart): Grouping => (isRupees(chart) ? 'indian' : 'international');
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -26,6 +30,11 @@ export function spanText(v: string): string {
   if (!m) return v;
   const month = MONTH_NAMES[Number(m[2]) - 1] ?? m[2];
   return m[3] ? `${Number(m[3])} ${month} ${m[1]}` : `${month} ${m[1]}`;
+}
+
+/** A span as words: "1850 to 2025", or just "2025" when it is one moment. */
+export function spanRange(span: { from: string; to: string }): string {
+  return span.from === span.to ? spanText(span.from) : `${spanText(span.from)} to ${spanText(span.to)}`;
 }
 
 /** "°C, difference from the 1861–1890 average": what the numbers are, from the editor's fields. */
@@ -77,7 +86,7 @@ export function chartGlosses(chart: Chart): string[] {
   const out: string[] = [];
   const spec = FORMS[chart.form];
   if (chart.span && chart.sourceSpan && (chart.span.from !== chart.sourceSpan.from || chart.span.to !== chart.sourceSpan.to)) {
-    out.push(`Shown from ${spanText(chart.span.from)} to ${spanText(chart.span.to)}; the source runs from ${spanText(chart.sourceSpan.from)} to ${spanText(chart.sourceSpan.to)}.`);
+    out.push(`${chart.span.from === chart.span.to ? `Shown for ${spanText(chart.span.from)}` : `Shown from ${spanText(chart.span.from)} to ${spanText(chart.span.to)}`}; the source runs from ${spanText(chart.sourceSpan.from)} to ${spanText(chart.sourceSpan.to)}.`);
   }
   if (chart.scale?.y?.log || chart.scale?.x?.log) out.push(`${chart.scale?.x?.log && chart.scale?.y?.log ? 'Both scales are' : chart.scale?.x?.log ? 'The horizontal scale is' : 'The vertical scale is'} logarithmic: each step is ten times the one before.`);
   if (spec && !spec.zero && !chart.scale?.y?.log && ['line', 'multiples', 'scatter', 'dot', 'dumbbell', 'slope'].includes(chart.form) && chart.scale?.y?.zero !== true) {
@@ -99,7 +108,6 @@ export function chartGlosses(chart: Chart): string[] {
   }
   if (chart.form === 'waffle') out.push(chart.options?.per ? `Each square stands for ${formatNumber(chart.options.per, 0, grouping(chart))} ${chart.units}, rounded to whole squares.` : 'Each square is one per cent of the total, rounded so the squares add up to a hundred.');
   if (chart.form === 'bump') out.push(`Ranks are among the series shown, worked out from the values in each period; first is the ${chart.options?.rank === 'asc' ? 'lowest' : 'highest'}.`);
-  if (chart.form === 'ridgeline') out.push('Each ridge is a smoothed outline of the values in its group (a kernel density; bandwidth by Silverman’s rule).');
   if (chart.method?.trim()) out.push(chart.method.trim());
   return out;
 }
@@ -139,7 +147,7 @@ export function describeChart(chart: Chart): string {
   const g = grouping(chart);
   const parts: string[] = [];
   const what = col(chart, 'y')?.label ?? [col(chart, 'from')?.label, col(chart, 'to')?.label].filter(Boolean).join(' and ');
-  parts.push(`${spec?.name ?? 'Chart'} of ${what || chart.title} (${unitsLine(chart)})${chart.geography ? `, ${chart.geography}` : ''}${chart.span ? `, ${spanText(chart.span.from)} to ${spanText(chart.span.to)}` : ''}.`);
+  parts.push(`${spec?.name ?? 'Chart'} of ${what || chart.title} (${unitsLine(chart)})${chart.geography ? `, ${chart.geography}` : ''}${chart.span ? `, ${spanRange(chart.span)}` : ''}.`);
   const yi = idx(chart, 'y');
   const xi = idx(chart, 'x');
   const xcol = col(chart, 'x');

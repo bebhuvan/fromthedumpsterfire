@@ -2,7 +2,7 @@
 // website sets them: pull quotes between rules, code on the plate with a numbered gutter and colours by
 // role, a video as its poster with a link to watch it on its own site (no web view in the app), audio
 // files in the editor's player and podcast episodes as a row that opens their app, pictures with their
-// credit and licence.
+// credit and licence, and charts (ui/Chart.tsx).
 import { memo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { creditLine, videoHref, type Block } from '@fdf/shared/haul';
@@ -12,6 +12,7 @@ import { clock, CODE_LANGS, codeLines } from '@/lib/code';
 import { openSource } from '@/lib/open';
 import { Meta } from './type';
 import { PlayGlyph, VoiceNote } from './parts';
+import { Chart } from './Chart';
 
 export function Blocks({ blocks, source }: { blocks?: Block[]; source?: string }) {
   if (!blocks?.length) return null;
@@ -29,6 +30,8 @@ export function Blocks({ blocks, source }: { blocks?: Block[]; source?: string }
             return <AudioBlock key={i} block={b} />;
           case 'image':
             return <Picture key={i} plate={b.plate} />;
+          case 'chart':
+            return <Chart key={i} block={b} />;
           default:
             return null;
         }

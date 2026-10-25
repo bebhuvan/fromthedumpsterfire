@@ -14,6 +14,7 @@ describe('printed forms', () => {
   it('sets the new types as the website does', () => {
     const f = (type: ContentType) => formOf({ ...base, type });
     expect([f('quote'), f('letter'), f('social'), f('image'), f('book'), f('tool'), f('speech')]).toEqual(['epigraph', 'letter', 'clipping', 'print', 'jacket', 'label', 'transcript']);
+    expect(formOf({ type: 'chart', blocks: [{ kind: 'chart', chart: {} as never }] })).toBe('figure');
   });
 
   it('falls back to a magazine opening when the form lacks what it needs', () => {

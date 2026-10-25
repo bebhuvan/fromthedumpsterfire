@@ -5,7 +5,9 @@ import { Image, Pressable, StyleSheet, Text, View, type DimensionValue } from 'r
 import { go } from '@/nav';
 import { haulSlug, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
-import { fonts, typeColor, usePalette } from '@/theme';
+import { fonts, typeColor, usePalette, useScheme } from '@/theme';
+import { firstChart } from '@/lib/chart';
+import { pictureUri } from '@/lib/pictures';
 import { readKey, useReader } from '@/lib/store';
 import { formOf, headword, speaker, titleText, type Form } from '@/lib/forms';
 import { Highlighted, Title } from './type';
@@ -23,6 +25,7 @@ const SHAPE: Partial<Record<Form, Shape>> = {
   clipping: { width: '90%', align: 'flex-start' },
   print: { width: '86%', align: 'flex-start' },
   label: { width: '86%', align: 'center' },
+  figure: { width: '92%', align: 'flex-start' },
 };
 
 /** Forms whose specimen does not show the title; the caption names it. */
@@ -72,11 +75,40 @@ function SmallPlate({ uri, ratio, label }: { uri: string; ratio: number; label: 
   return <Image source={{ uri }} onError={() => setFailed(true)} resizeMode="cover" accessible={false} style={{ width: '100%', aspectRatio: ratio, backgroundColor: p.bg }} />;
 }
 
+/**
+ * The figure's specimen: the chart's own picture under a "Fig." line, cropped to a strip, or, without
+ * a picture (offline, or a bundle without them), the figure set in type in a ruled frame.
+ */
+function FigureSpecimen({ item, n }: { item: Item; n: number }) {
+  const p = usePalette();
+  const scheme = useScheme();
+  const [failed, setFailed] = useState(false);
+  const block = firstChart(item.blocks);
+  const image = block?.images?.[scheme];
+  return (
+    <View style={[st.fig, { borderTopColor: p.ink, borderBottomColor: p.rule }]}>
+      <Text style={[st.small, { color: p.ink2 }]}>{`Fig. ${n}`}</Text>
+      {image && !failed ? (
+        <View style={st.figCrop}>
+          <Image source={{ uri: pictureUri(image.url) }} onError={() => setFailed(true)} resizeMode="cover" accessible={false} style={{ width: '100%', aspectRatio: image.width / image.height, backgroundColor: p.bg }} />
+        </View>
+      ) : (
+        <View style={[st.figBlank, { borderColor: p.rule }]}>
+          <Text style={[st.placeholderText, { color: p.ink2 }]}>{block?.chart.title ?? titleText(item)}</Text>
+        </View>
+      )}
+      <Title title={item.title} size={22} style={{ marginTop: 10, lineHeight: 24 }} />
+    </View>
+  );
+}
+
 function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n: number }): ReactNode {
   const p = usePalette();
   const tint = typeColor(p, item.type);
   const ex = item.excerpt;
   switch (form) {
+    case 'figure':
+      return <FigureSpecimen item={item} n={n} />;
     case 'facing': {
       const r = item.rhyme!;
       return (
@@ -296,4 +328,8 @@ const st = StyleSheet.create({
   lbKey: { width: 84, fontFamily: fonts.sansMedium, fontSize: 10.5, letterSpacing: 0.8 },
   lbVal: { flex: 1, fontFamily: fonts.text, fontSize: 14 },
   lbQ: { paddingTop: 8, fontFamily: fonts.displayRegular, fontSize: 15, lineHeight: 21 },
+
+  fig: { borderTopWidth: 1, borderBottomWidth: hair, paddingTop: 8, paddingBottom: 14 },
+  figCrop: { marginTop: 8, maxHeight: 190, overflow: 'hidden' },
+  figBlank: { marginTop: 8, aspectRatio: 16 / 9, borderWidth: hair, justifyContent: 'center', alignItems: 'center', padding: 16 },
 });

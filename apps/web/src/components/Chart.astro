@@ -4,7 +4,7 @@
 // chosen by the width of the column with a container query); the machine's glosses in the blue sans;
 // the source, its licence and the day it was fetched; and the numbers themselves in a table.
 import type { Chart } from '@fdf/shared/charts';
-import { renderChart, spanText, chartGlosses, chartGrouping, describeChart, formatCell, licenceLine, retrievedLine, unitsLine } from '@fdf/shared/charts';
+import { renderChart, spanRange, chartGlosses, chartGrouping, describeChart, formatCell, licenceLine, retrievedLine, unitsLine } from '@fdf/shared/charts';
 import { safeHref } from '../lib/site';
 import ChartSvg from './ChartSvg.astro';
 
@@ -36,7 +36,7 @@ const rows = chart.data.rows;
     <p class="ch-n">Figure <span>{n}</span></p>
     <h3 class="ch-t" id={`${id}-t`}>{chart.title}</h3>
     {chart.note ? <p class="ch-note">{chart.note}</p> : null}
-    <p class="ch-units">{unitsLine(chart)}{chart.geography || chart.span ? <span>{[chart.geography, chart.span ? `${spanText(chart.span.from)} to ${spanText(chart.span.to)}` : ''].filter(Boolean).join(', ')}</span> : null}</p>
+    <p class="ch-units">{unitsLine(chart)}{chart.geography || chart.span ? <span>{[chart.geography, chart.span ? spanRange(chart.span) : ''].filter(Boolean).join(', ')}</span> : null}</p>
   </figcaption>
   <div class="c ch-plot">
     {drawn ? (

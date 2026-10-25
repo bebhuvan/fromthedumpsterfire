@@ -7,6 +7,7 @@ import { FORMS } from './types';
 import type { Paint, SceneNode } from './scene';
 import type { ChartFace } from './metrics';
 import { textWidth, wrapText } from './text';
+import { isRupees } from './glosses';
 import { decimalYear, dayNumber, decimalsFor, formatCompact, formatNumber, type Grouping, type Scale } from './scales';
 
 export type Layout = 'wide' | 'narrow';
@@ -111,9 +112,6 @@ export class Ctx {
   }
 }
 
-export function isRupees(chart: Pick<Chart, 'units' | 'measure'>): boolean {
-  return /₹|\bINR\b|\brupees?\b|\blakh\b|\bcrores?\b/i.test(chart.units) || /^(INR|₹)$/i.test(chart.measure?.money?.currency ?? '');
-}
 
 /** The decimals the data's numbers carry (up to 2), so labels never claim more precision than the rows. */
 export function valueDecimals(rows: Cell[][], ctx: Ctx, roles: ChartRole[] = ['y', 'from', 'to']): number {
@@ -129,6 +127,8 @@ export function valueDecimals(rows: Cell[][], ctx: Ctx, roles: ChartRole[] = ['y
   }
   return d;
 }
+
+export { isRupees };
 
 export function timeValue(v: Cell, type?: string): number | null {
   if (v === null || v === '') return null;

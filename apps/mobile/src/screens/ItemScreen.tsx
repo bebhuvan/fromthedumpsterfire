@@ -2,7 +2,8 @@
 // is an offprint, a talk or speech is a transcript, a poem is a broadside, rhymes are facing pages, a
 // rabbit hole is a catalogue card, a passage is a page from the book, a quotation is an epigraph, a
 // letter is the letter, a post is a clipping, a picture is a mounted print, a book is its jacket and
-// a tool is a specimen label (lib/forms.ts, the website's choice). Rich media follows (ui/Blocks.tsx).
+// a tool is a specimen label, and a chart-led item is the figure (lib/forms.ts, the website's choice).
+// Rich media follows (ui/Blocks.tsx, charts in ui/Chart.tsx).
 import { memo, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
@@ -22,6 +23,8 @@ import { spineColours, spineOf } from '@fdf/shared/shelf';
 import { Action, Apparatus, Arrow, Folio, Key, RunHead, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Blocks, Credit, Picture } from '@/ui/Blocks';
+import { Chart } from '@/ui/Chart';
+import { firstChart } from '@/lib/chart';
 
 /** Index form of a two-word name: "Joseph Bazalgette" becomes "Bazalgette, Joseph". */
 const inverted = (n: string) => {
@@ -58,7 +61,11 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
     print: <Print item={item} />,
     jacket: <Jacket item={item} />,
     label: <Label item={item} haul={haul} n={at + 1} />,
+    figure: <Figure item={item} />,
   };
+  // The figure form sets its first chart large itself; the rest follow as blocks.
+  const lead = form === 'figure' ? firstChart(item.blocks) : undefined;
+  const blocks = lead ? item.blocks?.filter((b) => b !== lead) : item.blocks;
 
   return (
     <Screen header={header} edition={ed}>
@@ -70,7 +77,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
           {item.shelf ? <OnTheShelf item={item} /> : null}
         </>
       ) : null}
-      <Blocks blocks={item.blocks} source={item.source.name} />
+      <Blocks blocks={blocks} source={item.source.name} />
       <Ideas item={item} />
       {form === 'offprint' ? null : <SeeAlso haul={haul} item={item} />}
       <Source item={item} />
@@ -229,6 +236,29 @@ function Essay({ item, haul }: { item: Item; haul: Haul }) {
           <ShareQuote haul={haul} item={item} />
         </View>
       ) : null}
+      <Notes item={item} />
+    </View>
+  );
+}
+
+/**
+ * The figure: a chart-led item. The title and the editor's why open the page as a magazine opening
+ * does, then the chart is the loud thing, set large, its own title read as the caption under it.
+ */
+function Figure({ item }: { item: Item }) {
+  const p = usePalette();
+  const lead = firstChart(item.blocks)!;
+  const len = titleText(item).length;
+  const size = len <= 24 ? 46 : len <= 44 ? 38 : 32;
+  return (
+    <View>
+      <MetaLine item={item} />
+      <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 0.96, letterSpacing: -size * 0.025 }} />
+      {item.creator ? <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text> : null}
+      <Why item={item} heading={null} style={{ marginTop: 20 }} />
+      <View style={{ marginTop: 28 }}>
+        <Chart block={lead} lead />
+      </View>
       <Notes item={item} />
     </View>
   );
