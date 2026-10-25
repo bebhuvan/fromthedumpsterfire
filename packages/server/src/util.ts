@@ -36,7 +36,11 @@ export function slugify(s: string, max = 48): string {
     .replace(/['’]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return (slug.slice(0, max).replace(/-+$/, '') || 'item');
+  if (slug.length <= max) return slug || 'item';
+  // Cut at a word break, not mid-word ("…largest-democra"), unless that would lose more than half.
+  const cut = slug.slice(0, max + 1);
+  const end = cut.endsWith('-') ? max : cut.lastIndexOf('-');
+  return (end > max / 2 ? slug.slice(0, end) : slug.slice(0, max)).replace(/-+$/, '') || 'item';
 }
 
 export function wordCount(s: string): number {

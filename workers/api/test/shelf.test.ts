@@ -59,7 +59,7 @@ describe('shelf routes', () => {
     // A long title's 60-character slug (D1 refuses LIKE patterns over 50 bytes, so the check is a prefix compare).
     const long = { ...newBook, title: { text: "India After Gandhi: The History of the World's Largest Democracy" } };
     const l1 = (await call(env, '/api/books', json('POST', long))).body.book!.id;
-    expect(l1.length).toBeGreaterThan(50);
+    expect(l1).toBe('india-after-gandhi-the-history-of-the-worlds-largest'); // cut at a word, not "…democra"
     expect((await call(env, '/api/books', json('POST', long))).body.book!.id).toBe(`${l1}-2`);
     for (const id of [l1, `${l1}-2`]) expect((await call(env, `/api/books/${id}`, del)).status).toBe(200);
 
