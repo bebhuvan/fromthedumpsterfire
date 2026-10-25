@@ -134,6 +134,8 @@ export function objects(n: number) {
 }
 
 export const minutes = (n?: number) => (n ? `${n} min` : '');
+/** "1 minute", "11 minutes". */
+export const minutesLong = (n: number) => `${n} minute${n === 1 ? '' : 's'}`;
 export const joinMeta = (...xs: (string | undefined)[]) => xs.filter(Boolean).join(' · ');
 export const pad2 = (n: number) => String(n).padStart(2, '0');
 

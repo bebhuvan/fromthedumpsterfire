@@ -584,20 +584,31 @@ blockquote > p + p { margin-top: 0.65em; }
 /* The fingerprint: the Haul's objects on one line by year. */
 .fp { margin-top: clamp(36px, 5vw, 64px); padding-bottom: 8px; }
 .fp-marks, .fp-axis, .fpm { display: grid; grid-template-columns: repeat(100, minmax(0, 1fr)); }
-.fp-marks { align-items: end; min-height: 40px; }
+.fp-marks { align-items: end; min-height: 34px; }
 .fp-m { grid-row: 1; grid-column-end: span 8; display: flex; }
 .fp-m a { display: grid; justify-items: start; text-decoration: none; color: var(--ink); position: relative; margin-left: -0.5px; }
-.fp-n { font: 500 12px/1 var(--sans); color: var(--ember); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; transform: translateX(-35%); }
-.fp-k { width: 14px; height: 14px; margin: 5px 0 0 -6.5px; background: var(--tint); outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent); outline-offset: -1px; }
-.fp-s { width: 1px; height: var(--stem, 16px); background: var(--ink); }
-.fp-m.lane-1 { --stem: 46px; } .fp-m.lane-2 { --stem: 76px; } .fp-m.lane-3 { --stem: 106px; } .fp-m.lane-4 { --stem: 136px; }
-.fp-m a:hover .fp-k, .fp-m a:focus-visible .fp-k { outline: 2px solid var(--ink); outline-offset: 1px; }
+.fp-n { font: 500 10.5px/1 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; transform: translateX(-38%); transition: color 120ms; }
+.fp-k { width: 7px; height: 7px; margin: 5px 0 0 -3px; border-radius: 50%; background: var(--tint); box-shadow: 0 0 0 1px var(--ink); }
+.fp-s { width: 1px; height: var(--stem, 12px); background: color-mix(in srgb, var(--ink) 35%, transparent); }
+.fp-m.lane-1 { --stem: 30px; } .fp-m.lane-2 { --stem: 48px; } .fp-m.lane-3 { --stem: 66px; } .fp-m.lane-4 { --stem: 84px; }
+.fp-m a:hover .fp-n, .fp-m a:focus-visible .fp-n { color: var(--ember); }
+.fp-m a:hover .fp-k, .fp-m a:focus-visible .fp-k { box-shadow: 0 0 0 1.5px var(--ink), 0 0 0 4px var(--bg); }
+.fp-m a:hover .fp-s, .fp-m a:focus-visible .fp-s { background: var(--ink); }
 .fp-m a:focus-visible { outline: none; }
-.fp-axis { border-top: 1.5px solid var(--ed); padding-top: 8px; font: 400 12.5px/1 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums lining-nums; }
-.fp-y { grid-row: 1; grid-column-end: span 10; transform: translateX(-50%); white-space: nowrap; }
-.fp-y.at-0 { transform: none; }
+.fp-axis { border-top: 1px solid var(--ink); padding-top: 9px; font: 400 11.5px/1 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums lining-nums; letter-spacing: 0.02em; }
+.fp-y { grid-row: 1; grid-column-end: span 10; transform: translateX(-50%); white-space: nowrap; position: relative; text-align: center; }
+.fp-y::before { content: ''; position: absolute; left: 50%; top: -9px; width: 1px; height: 5px; background: var(--ink); }
+.fp-y.at-0 { transform: none; text-align: left; }
+.fp-y.at-0::before { left: 0; }
 .fp-y.fp-end { grid-column: 85 / -1; justify-self: end; transform: none; color: var(--ed); font-weight: 500; }
-.fp-cap { margin-top: 14px; font: italic 400 16px/1.45 var(--serif); }
+.fp-y.fp-end::before { left: auto; right: 0; background: var(--ed); }
+.fp-cap { margin-top: 14px; font: italic 400 15px/1.45 var(--serif); }
+/* Phone: the lanes are spaced for a wide line, so the numbers go and the marks stay, lower. */
+@media (max-width: 640px) {
+  .fp-n { display: none; }
+  .fp-m.lane-1 { --stem: 20px; } .fp-m.lane-2 { --stem: 28px; } .fp-m.lane-3 { --stem: 36px; } .fp-m.lane-4 { --stem: 44px; }
+  .fp-axis { font-size: 10.5px; }
+}
 .fp-cap span { color: var(--ink2); }
 /* The mini fingerprint: ticks on a line, the current item tall. */
 .fpm { align-items: end; height: 18px; border-bottom: 1px solid var(--ed); width: 100%; }
@@ -660,6 +671,8 @@ blockquote > p + p { margin-top: 0.65em; }
 .epi-q p { font: 500 clamp(40px, 6.6vw, 88px)/1.02 var(--display); letter-spacing: -0.025em; text-wrap: balance; }
 .epi-q p::before { content: '\201C'; display: inline-block; width: 0.44em; margin-left: -0.44em; color: var(--ink2); font-weight: 400; }
 .epi-q p::after { content: '\201D'; color: var(--ink2); font-weight: 400; }
+.epi-q.q-medium p { font-size: clamp(28px, 3.4vw, 44px); line-height: 1.1; letter-spacing: -0.015em; }
+.epi-q.q-long p { font: 400 clamp(21px, 2vw, 26px)/1.42 var(--display); letter-spacing: 0; text-wrap: pretty; max-width: 40rem; }
 .epi-q mark { padding: 0 0.06em; margin: 0 -0.06em; }
 .epi-who { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--ink); max-width: 30rem; font: 400 15px/1.45 var(--sans); color: var(--ink2); }
 .epi-name { font: 600 13px/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); }
@@ -733,6 +746,8 @@ blockquote > p + p { margin-top: 0.65em; }
 /* Specimens of the newer forms on the cover. */
 .sp-epigraph .sp-obj { padding: 4px 0 6px; gap: 12px; }
 .sp-eq { font: 500 clamp(28px, 3.4vw, 40px)/1.05 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+.sp-eq.q-medium { font-size: clamp(21px, 2.2vw, 26px); line-height: 1.18; letter-spacing: -0.01em; }
+.sp-eq.q-long { font: 400 17px/1.4 var(--display); letter-spacing: 0; text-wrap: pretty; }
 .sp-eq::before { content: '\201C'; color: var(--ink2); font-weight: 400; }
 .sp-eq::after { content: '\201D'; color: var(--ink2); font-weight: 400; }
 .sp-ew { font: 600 11px/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; padding-top: 8px; border-top: 1px solid var(--ink); max-width: 16rem; }
@@ -818,3 +833,7 @@ blockquote > p + p { margin-top: 0.65em; }
 /* Narrow phones: the masthead (or the nameplate) is the way home, so Latest steps out of the row and
    the five other sections and the theme switch keep to one line. */
 @media (max-width: 430px) { .top-nav .nav-latest { display: none; } .top-nav { gap: 6px 16px; } .top-nav:first-child { width: auto; } .top-home + .top-nav { width: 100%; } }
+/* A quotation of several paragraphs opens on the first and closes on the last. */
+.epi-q p:not(:first-child)::before { content: none; }
+.epi-q p:not(:last-child)::after { content: none; }
+.epi-q.q-long p + p { margin-top: 0.8em; }

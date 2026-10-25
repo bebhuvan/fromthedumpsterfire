@@ -51,7 +51,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | rabbit hole | catalogue card | a sheet in the type colour with a call number (`FDF 001.6`), the headword with its article moved to the end, the entry, the machine's note, a punch hole; the plate beside it |
 | passage | page from the book | a plate-grey page with a running head (book, author), the passage justified, the locator as the folio |
 | speech | transcript | as a talk: the speaker in the margin |
-| quote | epigraph | the words alone in Display Medium at 40–88px, hanging quotation marks, the speaker in spaced caps over the occasion |
+| quote | epigraph | the words alone in Display Medium at 40–88px, hanging quotation marks, the speaker in spaced caps over the occasion. Only a line or two is set that large: past 30 words the type steps down, and past 80 words it reads as a passage at 21–26px (`quoteLength` in `lib/forms.ts`), on the item page and in the Haul's list alike |
 | letter | the letter | a sheet in lilac: place and date ranged right, "From … to …" in sans, the body in Newsreader Text keeping its line breaks, the name it was signed with in display italic at the foot, the holder under a hairline |
 | social | clipping | a sheet in aqua headed by fields (From, with name and handle; On, the platform; Date) over a rule, the post in display at 25–36px. Never the platform's embed |
 | image | mounted print | the picture in a plate-grey mount, a museum label beside it (from 1000px) or under it: title, maker and date, where it is from, credit and licence |
@@ -81,8 +81,10 @@ before reading a word.
 The **fingerprint** (`@fdf/shared/fingerprint`) places each object on one line by the year it was made,
 from a round year before the oldest to the day the Haul came out. The scale is the square root of
 years ago (recent things spread apart, old ones still sit where they belong; the year labels show the
-scale). Marks are numbered in ember (as the route cites items), each a small square in its type's
-colour on a stem; marks whose labels would touch rise into higher lanes. On the cover it is full size;
+scale). On the website (2026-10-25 facelift) each mark is a small dot in its type's colour, ringed in ink,
+on a hairline stem, numbered in small grey figures that turn ember on hover; marks whose labels would
+touch rise into higher lanes. The axis is a hairline with a tick under each year, the last year in the
+edition ink. On a phone the numbers drop and the lanes sit lower. (The app still draws squares.) On the cover it is full size;
 in every item's running head it is a row of ticks with the current item tall; in the archive each back
 issue carries its own. No two Hauls draw the same one.
 

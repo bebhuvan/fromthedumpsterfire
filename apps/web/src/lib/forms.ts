@@ -39,6 +39,12 @@ export function formOf(item: Item): Form {
   }
 }
 
+/** How long a quotation runs, so an epigraph is set large only when it is a line or two. */
+export function quoteLength(text: string): 'short' | 'medium' | 'long' {
+  const words = text.split(/\s+/).filter(Boolean).length;
+  return words <= 30 ? 'short' : words <= 80 ? 'medium' : 'long';
+}
+
 /** The form's name for the running head, as a reader would say it. */
 export const formName: Record<Form, string> = {
   opening: 'Magazine opening',

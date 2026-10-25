@@ -5,7 +5,7 @@
 import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Highlighted from './Highlighted.astro';
-import { formOf, headword, speaker } from '../lib/forms';
+import { formOf, headword, quoteLength, speaker } from '../lib/forms';
 import { firstSentence, paths, safeHref, titleText } from '../lib/site';
 
 interface Props {
@@ -87,7 +87,7 @@ const size = len > 40 ? 'sz-s' : len > 22 ? 'sz-m' : 'sz-l';
     ) : null}
     {form === 'epigraph' && ex ? (
       <>
-        <span class="sp-eq">{ex.text}</span>
+        <span class:list={['sp-eq', `q-${quoteLength(ex.text)}`]}>{ex.text}</span>
         <span class="sp-ew">{item.creator}</span>
       </>
     ) : null}

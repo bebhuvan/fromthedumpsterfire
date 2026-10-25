@@ -49,7 +49,7 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
     `- **Canonical URL**: ${itemUrl}`,
     `- **Type**: ${typeLabel[item.type]} (${formName[form]})`,
     `- **Creator**: ${item.creator}`,
-    `- **Original Source**: ${srcUrl ? `[${item.source.name}](${srcUrl})` : item.source.name} (${item.source.date})${item.minutes ? ` · ${item.minutes} minutes` : ''}`,
+    `- **Original Source**: ${srcUrl ? `[${item.source.name}](${srcUrl})` : item.source.name} (${item.source.date})${item.minutes ? ` · ${item.minutes} minute${item.minutes === 1 ? '' : 's'}` : ''}`,
     `- **Published**: ${haul.publishedAt.slice(0, 10)}`,
     '',
     `${h2} Why it's here (Editor — ${EDITOR_NAME})`,

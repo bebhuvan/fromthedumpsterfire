@@ -15,12 +15,13 @@ import Blocks from './Blocks.astro';
 import Credit from './Credit.astro';
 import StartHere from './StartHere.astro';
 import SeeAlso from './SeeAlso.astro';
-import { formName, formOf, headword, speaker } from '../lib/forms';
+import { formName, formOf, headword, quoteLength, speaker } from '../lib/forms';
 import {
   absolute,
   EDITOR_NAME,
   haulCoverImage,
   haulLastmod,
+  minutesLong,
   paths,
   safeHref,
   titleText,
@@ -103,7 +104,7 @@ const ogImage =
 
     {form === 'opening' || form === 'page' ? (
       <header class="wrap g open">
-        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.name}, {item.source.date}</span>{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
+        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.name}, {item.source.date}</span>{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
         <Title title={item.title} as="h1" class:list={['mc', form === 'page' ? 'h-item' : 'essay-t', { 'essay-t-long': longTitle }]} id="item-title" />
         <p class="c byline">{item.creator}</p>
       </header>
@@ -113,7 +114,7 @@ const ogImage =
       <>
         <div class="wrap"><p class="runcite"><span>{item.creator}. {titleText(item.title)}. {item.source.name}, {item.source.date}.</span><span>{H}, item {n}</span></p></div>
         <header class="wrap g off">
-          <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
+          <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
           <div class="c off-c">
             <Title title={item.title} as="h1" class="off-t" id="item-title" />
             <p class="off-by">{item.creator}</p>
@@ -124,7 +125,7 @@ const ogImage =
 
     {form === 'transcript' || form === 'facing' ? (
       <header class="wrap g tr-head">
-        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{form === 'facing' && item.rhyme ? <span>{item.rhyme.then.year} and {item.rhyme.now.year}</span> : null}{item.minutes ? <span>{item.minutes} minutes</span> : null}</p>
+        <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{form === 'facing' && item.rhyme ? <span>{item.rhyme.then.year} and {item.rhyme.now.year}</span> : null}{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
         <div class="c">
           <Title title={item.title} as="h1" class="h-item" id="item-title" />
           {form === 'transcript' ? <p class="byline">{item.creator}</p> : null}
@@ -179,7 +180,7 @@ const ogImage =
         <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.date}</span></p>
         <figure class="epi-f">
           <h1 class="sr" id="item-title">{titleText(item.title)}, {item.creator}</h1>
-          <blockquote class="epi-q" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+          <blockquote class:list={['epi-q', `q-${quoteLength(item.excerpt.text)}`]} cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
           <figcaption class="epi-who"><span class="epi-name">{item.creator}</span><span>{[item.source.name, item.source.date].filter(Boolean).join(', ')}</span></figcaption>
         </figure>
       </header>
@@ -408,7 +409,7 @@ const ogImage =
 
     {source && form !== 'card' ? (
       <div class="wrap g">
-        <p class="c src"><a href={source} rel="noopener noreferrer" target="_blank">{sourceLabel}<span class="sr"> (opens in a new tab)</span></a><span>{item.source.date}{item.minutes ? ` · ${item.minutes} minutes` : ''}</span></p>
+        <p class="c src"><a href={source} rel="noopener noreferrer" target="_blank">{sourceLabel}<span class="sr"> (opens in a new tab)</span></a><span>{item.source.date}{item.minutes ? ` · ${minutesLong(item.minutes)}` : ''}</span></p>
       </div>
     ) : null}
 
