@@ -209,6 +209,8 @@ export function extractorLabel(x: string): string {
     description: 'video description',
     browser: 'rendered in a browser, then extracted',
     transcript: 'your transcript',
+    readwise: 'your Readwise Reader copy',
+    instapaper: 'your Instapaper copy',
     'substack-api': 'from Substack',
     'substack-page': 'extracted from the Substack page',
     'substack-feed': "from the newsletter's feed",

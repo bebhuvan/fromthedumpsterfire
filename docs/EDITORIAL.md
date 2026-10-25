@@ -190,6 +190,19 @@ with `{"text":"...","as":"text"}`; for a talk's own transcript use `{"text":"...
 There is **no topic-tags field** today. Do not invent JSON tags and assume they were saved. The
 current organising tools are content type, Haul order, connections and approved Threads.
 
+## Paywalled pieces: the editor's library
+
+When a capture fails as paid, the Desk first looks for the editor's own saved copy in Readwise
+Reader, then Instapaper (only if their tokens are set; see `docs/STATUS.md`). If it was not found
+then, save the piece in either app and ask again:
+
+```sh
+npm run editorial -- library it_ID
+```
+
+The answer says which copy was used, or why none could be (not saved, index still building, a
+preview only). Otherwise paste the text with the transcript route (`as: "text"`) or upload a PDF.
+
 ## Voice notes, files and edits
 
 ```sh

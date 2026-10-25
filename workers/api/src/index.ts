@@ -28,6 +28,7 @@ import {
   resolveWikiTopic,
   runChecks,
   SECRET_NAMES,
+  fromLibrary,
   sniffAudioFormat,
   spendStatus,
   storeSource,
@@ -456,6 +457,23 @@ app.post('/api/items/:id/transcript', async (c) => {
   await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = ? WHERE id = ?`).bind(pasted ? 'Reading the text you pasted' : 'Reading your transcript', id).run();
   await c.env.INGEST_QUEUE.send({ kind: 'redraft', itemId: id });
   return c.json({ ok: true, words: parsed.text.split(/\s+/).length, timed: parsed.times.length > 0, format: parsed.format });
+});
+
+// The editor's own saved copy from Readwise Reader or Instapaper (library.ts), for a piece the site
+// shows only in part. It replaces the fetched text; excerpts that no longer match go, and the item
+// is read and drafted again from it. The item keeps its original link.
+app.post('/api/items/:id/library', async (c) => {
+  const id = c.req.param('id');
+  const item = await itemOr404(c.env, id);
+  if (!item.url || item.kind === 'rhyme' || item.kind === 'image' || item.kind === 'pdf') return c.json({ error: 'Only an item captured by link can be read from your library' }, 409);
+  const got = await fromLibrary(c.env, [item.url, item.canonical_url], 'read at your request');
+  if ('miss' in got) return c.json({ error: got.miss }, 404);
+  const { words } = await storeSource(c.env, id, got.outcome);
+  const exs = (await c.env.DB.prepare('SELECT * FROM excerpts WHERE item_id = ?').bind(id).all<ExcerptRow>()).results;
+  for (const ex of exs) if (!isVerbatimAt(got.outcome.text, ex, ex.text)) await c.env.DB.prepare('DELETE FROM excerpts WHERE id = ?').bind(ex.id).run();
+  await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = ? WHERE id = ?`).bind(`Reading your ${got.outcome.extractor === 'readwise' ? 'Readwise Reader' : 'Instapaper'} copy`, id).run();
+  await c.env.INGEST_QUEUE.send({ kind: 'redraft', itemId: id });
+  return c.json({ ok: true, words, via: got.outcome.meta.via?.label });
 });
 
 // The editor's own copy of a PDF for an item captured by link (a paper whose download is blocked).

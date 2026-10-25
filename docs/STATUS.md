@@ -763,3 +763,33 @@ Branch `launch-2026-10-24` at `aff5110`, before the first Haul, at the editor's 
   `/feed.xml`, `/llms.txt` 200, unknown path 404, CSP present; the home page is still the waiting
   page; `/about` carries the editor's note.
 - **Not done**: no app update yet (held for the APK decision); no Haul published.
+
+## The editor's library: Readwise Reader and Instapaper (2026-10-25)
+
+- A paywalled article is read from the editor's own saved copy: Readwise Reader first, then
+  Instapaper (`packages/server/src/library.ts`, migration `0008_library.sql`). Automatic when the
+  fetch fails as paid; on request through `POST /api/items/:id/library`, the Desk's "From my
+  library" button on a failed fetch, and `npm run editorial -- library it_ID`. DECISIONS records
+  the exception to "Free content only". Off until a token is set: without one, nothing changes.
+- Verified offline: 11 new tests (URL matching, paid fetch falling back to Readwise, no token
+  leaves the paid failure as it was, not-found reasons, Instapaper's "Parsed content unavailable"
+  and paywalled flag, a 429 waited out from Retry-After, a refused token reported without the
+  token, a long index built a few pages at a time, the source stored privately, the API route).
+  Not tried against the live APIs (no tokens yet). Instapaper's v2 API (OAuth 2, personal token)
+  is new; its docs were read from instapaper.com/developers on 2026-10-25.
+- **Not deployed.** For the editor, on the laptop:
+  1. Readwise: copy the token from https://readwise.io/access_token.
+  2. Instapaper: create an application at https://www.instapaper.com/developers/applications/create
+     (leave it in Owner Only mode; no review is needed for your own account), open it and choose
+     **Generate access token**. The token is shown once.
+  3. Set each as a secret on both workers (the pipeline reads it on a paid fetch, the Desk on
+     request); `wrangler secret put` prompts for the value, so it never appears in the command:
+     ```sh
+     npx wrangler secret put READWISE_TOKEN -c workers/pipeline/wrangler.jsonc --env production
+     npx wrangler secret put READWISE_TOKEN -c workers/api/wrangler.jsonc --env production
+     npx wrangler secret put INSTAPAPER_TOKEN -c workers/pipeline/wrangler.jsonc --env production
+     npx wrangler secret put INSTAPAPER_TOKEN -c workers/api/wrangler.jsonc --env production
+     ```
+  4. `npm run db:migrate:production` (0008), then `npm run deploy:production`.
+  5. Check: `npm run editorial -- library <a failed paid item>`; the first lookup builds the index
+     (a large Readwise library takes a few lookups, 12 pages of 100 a time).

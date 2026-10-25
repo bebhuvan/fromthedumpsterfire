@@ -211,7 +211,18 @@ own source fields follow the "then" end. Checks and publish re-verify both quote
 Free content only. Substack's `audience` and `wordcount`, the feed's "Read more" tail, Medium's
 `medium-feed-link`, a password-protected WordPress post and the paywall markup on Substack and
 Medium pages (fetched or archived) each stop the fetch with "paid subscribers" or "members-only";
-nothing is retried and no other copy is looked for. The item keeps the original link (a Wayback
+nothing is retried and no other copy is looked for, except the editor's own saved copy: with
+`READWISE_TOKEN` or `INSTAPAPER_TOKEN` set, a paywalled article is read from the editor's Readwise
+Reader library, then Instapaper (`packages/server/src/library.ts`, called from `fetchSource`; the
+Desk's `POST /api/items/:id/library` does the same on request). Neither API finds a document by
+link, so `library_docs` (migration 0008) indexes saved links by a normalised key (no scheme, www,
+fragment, tracking parameters or trailing slash) and `library_sync` keeps each provider's place:
+Readwise `updatedAfter` with its `pageCursor`, Instapaper `since` with an offset, a bounded number
+of pages per lookup so a large first sync resumes on the next one. The text comes from Readwise's
+`html_content` or Instapaper's `/bookmarks/{id}/parse`, flattened like a platform body, with
+`extractor` and `meta.via.route` `readwise` or `instapaper`. Tokens go only in the Authorization
+header to those two fixed hosts (redirects refused, JSON read with a byte cap, 429s waited out
+from Retry-After). The item keeps the original link (a Wayback
 copy never becomes `canonical_url`). `sources.meta.via` records the route, a label, the API, feed
 or archive URL and the capture time; the Desk prints the label under the source, with a link to
 the archived copy. APIs, feeds and the archive are asked with the Desk's own user agent, through

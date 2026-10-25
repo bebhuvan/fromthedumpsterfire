@@ -204,6 +204,16 @@ Dated, newest last. Don't reopen these without a new reason.
 - **Free content only.** A paid or members-only post, or a feed or archived copy that carries only
   the preview, fails the fetch with a plain "paid subscribers" message. Its preview is never stored
   as though it were the piece, and no other copy is sought.
+- **Except the editor's own saved copy (2026-10-25).** Much of what the editor shares is paywalled,
+  and the editor has usually saved the whole piece already in Readwise Reader or Instapaper. When a
+  fetch fails as paid (or the editor asks, "From my library"), the Desk reads that saved copy
+  through the editor's own API tokens (`packages/server/src/library.ts`) instead of making the
+  editor paste it. It is the same text a paste would give; the rule against seeking copies still
+  holds for everything else (no mirrors, no other people's copies, no scrapers). The text stays
+  private like every source; readers get only verified excerpts within `excerptCap` and the link to
+  the original. Instapaper's API terms allow parsed text only for display to the user who saved it,
+  never republication, which is how the Desk uses it. A copy under 400 characters is treated as a
+  preview and refused; an Instapaper copy it marks as possibly paywalled carries a note to check it.
 - **The item keeps the original link.** The source records where the text came from (`meta.via`:
   route, label, API/feed/archive URL, capture time), and the Desk shows it under the source.
 - **WordPress by slug only after a refusal.** Most sites are not WordPress, so a blind REST call on

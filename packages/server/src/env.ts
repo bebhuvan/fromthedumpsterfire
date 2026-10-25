@@ -70,6 +70,9 @@ export interface Env {
   /** Open-access image APIs that need a key; each provider is skipped when its key is missing. */
   SMITHSONIAN_API_KEY?: string;
   RIJKSMUSEUM_API_KEY?: string;
+  /** The editor's own reading library (library.ts): a paywalled piece is read from the editor's saved copy. Each is optional. */
+  READWISE_TOKEN?: string;
+  INSTAPAPER_TOKEN?: string;
 }
 
 export const SECRET_NAMES = [
@@ -82,4 +85,6 @@ export const SECRET_NAMES = [
   'FCM_SERVICE_ACCOUNT',
   'SMITHSONIAN_API_KEY',
   'RIJKSMUSEUM_API_KEY',
+  'READWISE_TOKEN',
+  'INSTAPAPER_TOKEN',
 ] as const;

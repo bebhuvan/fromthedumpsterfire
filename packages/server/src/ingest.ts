@@ -9,6 +9,7 @@ import { mediumFromFeed, mediumTarget, paywallMarker, PaywalledError, RouteMissE
 import { fetchSnapshot, latestSnapshot, savePageNow, type WaybackCopy } from './extract/wayback';
 import { extractArticle } from './extract/html';
 import { browserAvailable, renderPage } from './extract/browser';
+import { paywalledFromLibrary } from './library';
 
 /** Below this many characters of extracted text, a page is tried in a real browser (when bound). */
 export const MIN_STATIC_TEXT = 600;
@@ -612,7 +613,11 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
 
     case 'article':
     default:
-      return fromArticleUrl(env, url);
+      // A paywalled piece is read from the editor's own saved copy when a library is connected.
+      return fromArticleUrl(env, url).catch((e) => {
+        if (e instanceof PaywalledError) return paywalledFromLibrary(env, url, e);
+        throw e;
+      });
   }
 }
 

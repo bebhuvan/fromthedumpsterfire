@@ -20,6 +20,7 @@ npm run editorial -- <command> [arguments] [options]
   note FILE                       upload/transcribe audio (target/references via --data)
   edit ID                         PATCH item with --data item.json
   source ID                       PUT source with --data source.json
+  library ID                      read a paywalled item from the editor's Readwise/Instapaper copy
   wait ID                         wait until ready (--seconds 180, maximum 900)
   check ID                        run item checks
   hauls                           list draft and published Hauls
@@ -112,6 +113,7 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
       case 'note': path = '/api/notes'; method = 'POST'; uploads = [`audio=${p[1] ?? ''}`]; break;
       case 'edit': path = `/api/items/${id()}`; method = 'PATCH'; break;
       case 'source': path = `/api/items/${id()}/source`; method = 'PUT'; break;
+      case 'library': path = `/api/items/${id()}/library`; method = 'POST'; break;
       case 'wait': {
         const seconds = Number(v.seconds);
         if (!Number.isFinite(seconds) || seconds < 1 || seconds > 900) throw new Error('seconds must be from 1 to 900');

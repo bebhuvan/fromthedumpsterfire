@@ -487,12 +487,12 @@ function TranscriptBox({ id, hasSource, onSaved, as = 'transcript' }: { id: stri
 
 // ---------------------------------------------------------------- when the fetch fails
 
-/** Why the fetch failed, in plain words, and every way out: again, the text by hand, a PDF, or delete. */
+/** Why the fetch failed, in plain words, and every way out: again, your library copy, the text by hand, a PDF, or delete. */
 function FetchFailed({ detail, act }: { detail: ItemDetail; act: Act }) {
   const { item } = detail;
   const why = item.status_detail ?? '';
   const explain = /paid subscribers|members-only|password-protected|only part of this post/i.test(why)
-    ? 'Only part of this piece is free to read, and the Desk reads only what is free. Paste the text or upload a PDF if you have a copy.'
+    ? 'Only part of this piece is free to read, and the Desk reads only what is free. Read it from your Readwise or Instapaper copy, paste the text, or upload a PDF.'
     : /429|too many/i.test(why)
     ? 'The site turned the Desk away for asking too often. That usually passes within the hour: try again later, or paste the text now.'
     : /\b(401|403)\b|blocked|forbidden/i.test(why)
@@ -510,6 +510,11 @@ function FetchFailed({ detail, act }: { detail: ItemDetail; act: Act }) {
         <button className="btn small" onClick={() => act('refetch', () => api.post(`/api/items/${item.id}/refetch`), 'Fetching again')}>
           Try again
         </button>
+        {!media && item.url && (
+          <button className="btn small" onClick={() => act('library', () => api.post(`/api/items/${item.id}/library`), 'Reading your saved copy')}>
+            From my library
+          </button>
+        )}
         <TranscriptBox id={item.id} hasSource={false} onSaved={() => act('pasted', async () => true)} as={media ? 'transcript' : 'text'} />
         {!media && item.kind !== 'image' && <PdfUpload id={item.id} hasSource={false} onSaved={() => act('pdf', async () => true)} />}
       </div>

@@ -50,7 +50,8 @@ workers/api       the Desk Worker: UI assets, capture, review, publish; public P
 workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate, embed, connect, draft,
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
-                  threads (connect.ts), rhymes, blocks, the shelf (shelf.ts), publish, FCM
+                  threads (connect.ts), rhymes, blocks, the shelf (shelf.ts), the editor's library
+                  (library.ts), publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator, quoting (excerpt length guide, when to draw out big ideas), highlight
                   (code tokens at publish), fingerprint, shelf (the books the editor is reading:
@@ -86,8 +87,9 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - Articles are fetched in a fixed order (ARCHITECTURE "Article fetch order"): platform routes
   (Substack API and feed, WordPress REST, Medium RSS) before the page, the Wayback Machine (latest
   copy, else Save Page Now) after a refusal. Free content only: a paid preview fails the fetch and
-  is never stored as the piece. The item keeps the original link; `sources.meta.via` says where the
-  text came from. No paid scrapers, proxies, bot-check evasion or disguised user agents.
+  is never stored as the piece. The one exception is the editor's own saved copy in Readwise Reader
+  or Instapaper (`library.ts`, tokens `READWISE_TOKEN`/`INSTAPAPER_TOKEN`), private like any source.
+  The item keeps the original link; `sources.meta.via` says where the text came from. No paid scrapers, proxies, bot-check evasion or disguised user agents.
 - Item blocks (pull quotes, code, video, audio, pictures; `packages/server/src/blocks.ts`) follow the
   same rules: quotes and code verified against the stored source (none on an item without source
   text), embeds parsed from the editor's link by code, posters and pictures fetched through
