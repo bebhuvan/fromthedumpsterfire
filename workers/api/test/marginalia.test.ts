@@ -34,6 +34,13 @@ describe('session-written machine notes', () => {
     expect(r.body.draft.status).toBe('rejected');
   });
 
+  it('fails closed when the judge errors', async () => {
+    const env = await seedHaul(makeEnv(() => { throw new Error('model down'); }, { DEV_AUTH_BYPASS: '1' } as never));
+    const r = await post(env, { text: 'Jevons argued that cheaper coal use raises consumption.', cite: { kind: 'source', quote: 'The very contrary is the truth.' } });
+    expect(r.status).toBe(200);
+    expect(r.body.draft.status).toBe('rejected');
+  });
+
   it('refuses evidence that is not in the source, a card from elsewhere, and prose that fails the style check', async () => {
     const env = await deskEnv();
     expect((await post(env, { text: 'A plain note.', cite: { kind: 'source', quote: 'Efficiency always lowers consumption.' } })).status).toBe(422);

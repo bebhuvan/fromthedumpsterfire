@@ -623,7 +623,12 @@ app.post('/api/items/:id/marginalia', async (c) => {
   await c.env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, model, position, created_at, updated_at) VALUES (?, ?, 'marginal', ?, 'proposed', ?, ?, ?, ?)`)
     .bind(draftId, id, JSON.stringify(note), `${b.writer ?? 'editorial'} (session)`, pos?.n ?? 0, now, now)
     .run();
-  await judgeNotes(c.env, id, draftId);
+  // Fail closed: a judge that errors, or never reads the note (no source text), leaves it unconfirmed.
+  await judgeNotes(c.env, id, draftId).catch((e) => console.error(JSON.stringify({ event: 'session-note-judge-failed', error: errorMessage(e) })));
+  const judged = await c.env.DB.prepare('SELECT body FROM drafts WHERE id = ?').bind(draftId).first<{ body: string }>();
+  if (parseJson<MarginalBody | null>(judged?.body, null)?.verdict !== 'supported') {
+    await c.env.DB.prepare(`UPDATE drafts SET status = 'rejected', updated_at = ? WHERE id = ?`).bind(nowIso(), draftId).run();
+  }
   const fresh = await c.env.DB.prepare('SELECT * FROM drafts WHERE id = ?').bind(draftId).first<DraftRow>();
   return c.json({ draft: { ...fresh, body: parseJson(fresh!.body, {}) }, style });
 });
