@@ -804,3 +804,9 @@ Branch `launch-2026-10-24` at `aff5110`, before the first Haul, at the editor's 
   `docs/EDITORIAL.md`.
 - `findVerbatim` keeps the close of a quotation nested at the end of a pasted quote (Gelsinger's
   "‘Let there be light.’"); test in `packages/shared/test/desk-rules.test.ts`.
+
+## Small fixes, 2026-10-25 (evening)
+
+- Shelf: a long title no longer fails with HTTP 500 (D1 refuses LIKE patterns over 50 bytes; the slug check is a prefix compare), and slugs cut at a word break instead of mid-word (`slugify` in `packages/server/src/util.ts`). Desk `36acd5d1`/pipeline `6664ca84`.
+- Two shelf books made before the fix have bad ids and need deleting on the Desk (the service credential cannot delete): `early-india-from-the-origins-to-ad-1300-early-india`, `india-after-gandhi-the-history-of-the-worlds-largest-democra`.
+- Web footer: "A mobile app is coming soon." (web `3a6ea152`). Remove it when the Play Store listing is live.
