@@ -73,6 +73,13 @@ h3 = {
        "Sample note. A passage as a page from the book.", excerpt={"text": "A sample passage set as a page from the book, justified, under its running head, with its page as the folio.", "locator": "p. 15"}),
  ],
  "threads": [], "colophon": "A development sample."}
+# A chart item (the figure) and a chart block, drawn from the chart comps' real data.
+CHARTS = "../../../../docs/design-comps/charts/data/"
+chart = lambda name: json.load(open(CHARTS + name + ".json"))
+h3["items"].append(item("delhi-heat", "chart", {"text": "A year of Delhi's", "italic": "heat"}, "Open-Meteo (ERA5)", "Open-Meteo", "2024", "https://open-meteo.com/",
+       "Sample note. A year of daily highs and lows against the normal range and the records, after the New York Times weather chart.", year=2024,
+       blocks=[{"kind": "chart", "chart": chart("delhi-band-2024")}, {"kind": "chart", "chart": chart("temperature-stripes")}]))
+h2["items"][2]["blocks"].append({"kind": "chart", "chart": chart("south-asia-gdp-bar")})
 idx = {"bundleVersion": 1, "updatedAt": "2026-10-24T12:00:00Z", "hauls": []}
 for h in (h3, h2):
     n = h["number"]; json.dump(h, open(f"haul-{n:03}.json", "w"), indent=1, ensure_ascii=False)

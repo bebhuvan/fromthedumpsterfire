@@ -179,7 +179,9 @@ export function sceneToSvg(scene: Scene, opts: { scheme: Scheme; edition: Editio
  * (chartVars), so one inline SVG follows the theme. Text faces are t-<face>.
  */
 export function chartCss(): string {
-  const rules = PAINTS.flatMap((p) => [`.ch .f-${p}{fill:var(--ch-${p})}`, `.ch .s-${p}{stroke:var(--ch-${p})}`]);
+  // The edition's ink is read where the chart is (body carries .e-<edition>), not at :root.
+  const v = (p: Paint) => (p === 'ed' ? 'var(--ed,var(--ink))' : `var(--ch-${p})`);
+  const rules = PAINTS.flatMap((p) => [`.ch .f-${p}{fill:${v(p)}}`, `.ch .s-${p}{stroke:${v(p)}}`]);
   const faces = (Object.keys(FACES) as ChartFace[]).map((k) => {
     const f = FACES[k];
     return `.ch .t-${k}{font-family:${f.css};font-weight:${f.weight};font-style:${f.italic ? 'italic' : 'normal'}}`;
@@ -187,7 +189,9 @@ export function chartCss(): string {
   return [...rules, ...faces].join('\n');
 }
 
-/** Custom properties for one theme; "ed" follows the page's edition ink (--ed, set on <body>). */
+/** Custom properties for one theme ("ed" is not one: it is the page's edition ink, --ed). */
 export function chartVars(scheme: Scheme): string {
-  return PAINTS.map((p) => `--ch-${p}:${p === 'ed' ? 'var(--ed,var(--ink))' : paintHex(p, scheme, 'oxblood')}`).join(';');
+  return PAINTS.filter((p) => p !== 'ed')
+    .map((p) => `--ch-${p}:${paintHex(p, scheme, 'oxblood')}`)
+    .join(';');
 }

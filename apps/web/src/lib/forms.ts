@@ -3,7 +3,7 @@
 
 import type { Item } from '@fdf/shared/haul';
 
-export type Form = 'opening' | 'offprint' | 'transcript' | 'broadside' | 'facing' | 'card' | 'page' | 'epigraph' | 'letter' | 'clipping' | 'print' | 'jacket' | 'label';
+export type Form = 'opening' | 'offprint' | 'transcript' | 'broadside' | 'facing' | 'card' | 'page' | 'epigraph' | 'letter' | 'clipping' | 'print' | 'jacket' | 'label' | 'figure';
 
 export function formOf(item: Item): Form {
   switch (item.type) {
@@ -34,6 +34,8 @@ export function formOf(item: Item): Form {
       return 'card';
     case 'passage':
       return 'page';
+    case 'chart':
+      return item.blocks?.some((b) => b.kind === 'chart') ? 'figure' : 'opening';
     default:
       return 'opening';
   }
@@ -60,6 +62,7 @@ export const formName: Record<Form, string> = {
   print: 'A mounted print',
   jacket: 'The jacket',
   label: 'Specimen label',
+  figure: 'The figure',
 };
 
 /** What a Haul holds, each type with the printed form it is set in (waiting page, About). */
@@ -76,6 +79,7 @@ export const formGuide = [
   { type: 'social', name: 'Posts', form: 'clipping' as Form, how: 'as clippings: who posted it, where and when.', detail: 'The post as a clipping with its author, handle, platform and date. Never the platform’s embed.' },
   { type: 'image', name: 'Pictures', form: 'print' as Form, how: 'as mounted prints with a museum label.', detail: 'The picture in its mount, then a label with the maker, the date, the holder and the licence.' },
   { type: 'book', name: 'Books', form: 'jacket' as Form, how: 'as their jackets, with a line from inside.', detail: 'The jacket set in type, a line from the book, and why it is on the desk.' },
+  { type: 'chart', name: 'Charts', form: 'figure' as Form, how: 'as figures: the chart drawn from its data, the numbers under it.', detail: 'The chart drawn from its own data, its source and licence, and every number behind it.' },
   { type: 'tool', name: 'Tools', form: 'label' as Form, how: 'as specimen labels: what it is, who makes it, in its own words.', detail: 'A ruled label: the name, the maker, what it runs on, its own description and where to get it.' },
 ] as const;
 

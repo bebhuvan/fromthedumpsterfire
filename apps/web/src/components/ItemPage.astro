@@ -102,8 +102,8 @@ const ogImage =
       {source ? <link itemprop="url" href={source} /> : null}
     </span>
 
-    {form === 'opening' || form === 'page' ? (
-      <header class="wrap g open">
+    {form === 'opening' || form === 'page' || form === 'figure' ? (
+      <header class:list={['wrap', 'g', 'open', { fig: form === 'figure' }]}>
         <p class="m meta"><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.name}, {item.source.date}</span>{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
         <Title title={item.title} as="h1" class:list={['mc', form === 'page' ? 'h-item' : 'essay-t', { 'essay-t-long': longTitle }]} id="item-title" />
         <p class="c byline">{item.creator}</p>
@@ -286,14 +286,14 @@ const ogImage =
       </div>
     ) : null}
 
-    {['opening', 'broadside', 'page', 'epigraph', 'letter', 'clipping', 'print', 'jacket', 'label'].includes(form) ? (
+    {['opening', 'broadside', 'page', 'epigraph', 'letter', 'clipping', 'print', 'jacket', 'label', 'figure'].includes(form) ? (
       <section class="wrap g why" aria-labelledby="why-title">
         <div class="m">
           <h2 class="mh" id="why-title">Why it's here</h2>
           {!item.excerpt || form !== 'opening' ? <div class="m-notes"><Notes notes={item.marginalia} /></div> : null}
         </div>
         <div class="c">
-          <p class:list={[form === 'opening' ? 'standfirst' : 'ed']}>{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+          <p class:list={[form === 'opening' || form === 'figure' ? 'standfirst' : 'ed']}>{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
           {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
         </div>
       </section>

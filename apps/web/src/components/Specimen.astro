@@ -6,6 +6,8 @@ import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Highlighted from './Highlighted.astro';
 import { formOf, headword, quoteLength, speaker } from '../lib/forms';
+import { renderChart } from '@fdf/shared/charts';
+import ChartSvg from './ChartSvg.astro';
 import { firstSentence, paths, safeHref, titleText } from '../lib/site';
 
 interface Props {
@@ -24,6 +26,14 @@ const ex = item.excerpt;
 // A card carries its plate like a print clipped to it.
 const plate = item.plate ? safeHref(item.plate.url) : undefined;
 const size = len > 40 ? 'sz-s' : len > 22 ? 'sz-m' : 'sz-l';
+// A figure's specimen is its own chart, drawn small: the phone figure, a picture of the real thing.
+const figChart = form === 'figure' ? item.blocks?.find((b) => b.kind === 'chart') : undefined;
+let figScene: ReturnType<typeof renderChart> | null = null;
+try {
+  figScene = figChart?.kind === 'chart' ? renderChart(figChart.chart, 'narrow') : null;
+} catch {
+  figScene = null;
+}
 ---
 <li class:list={['sp', `sp-${form}`, `t-${item.type}`]}>
   <a class="sp-obj" href={href} aria-label={`${n}. ${typeLabel[item.type]}: ${titleText(item.title)}, ${item.creator}`}>
@@ -113,6 +123,16 @@ const size = len > 40 ? 'sz-s' : len > 22 ? 'sz-m' : 'sz-l';
 
     {form === 'jacket' ? (
       <span class="sp-jk"><span class="sp-jt">{item.title.text}{item.title.italic ? ' ' : ''}{item.title.italic ? <em>{item.title.italic}</em> : null}</span><span class="sp-ja">{item.creator}</span></span>
+    ) : null}
+
+    {form === 'figure' ? (
+      <>
+        <span class="sp-fig-t">{item.title.text}{item.title.italic ? ' ' : ''}{item.title.italic ? <em>{item.title.italic}</em> : null}</span>
+        {figScene ? (
+          <svg class="ch sp-fig-svg" viewBox={`0 0 ${figScene.width} ${figScene.height}`} aria-hidden="true" focusable="false" preserveAspectRatio="xMinYMin meet"><ChartSvg nodes={figScene.nodes} /></svg>
+        ) : null}
+        <span class="sp-fig-src">{item.source.name}</span>
+      </>
     ) : null}
 
     {form === 'label' ? (

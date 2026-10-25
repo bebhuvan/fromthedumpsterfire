@@ -4,12 +4,14 @@
 
 import { EDITIONS, editionInk, palettes, typeSwatch, type Palette, type Scheme } from '@fdf/shared/tokens';
 import { SPINES, spineColours } from '@fdf/shared/shelf';
+import { chartCss, chartVars } from '@fdf/shared/charts';
 
 const vars = (p: Palette, scheme: Scheme) =>
   [
     ...Object.entries(p.code).map(([k, v]) => `--code-${k}:${v}`),
     ...EDITIONS.map((e) => `--ed-${e}:${editionInk[scheme][e]}`),
     ...SPINES.flatMap((sp) => { const c = spineColours(sp, scheme); return [`--cloth-${sp}:${c.cloth}`, `--stamp-${sp}:${c.type}`]; }),
+    chartVars(scheme),
     `--bg:${p.bg}`,
     `--ink:${p.ink}`,
     `--ink2:${p.ink2}`,
@@ -37,5 +39,7 @@ export function tokensCss(): string {
     ...EDITIONS.map((e) => `.e-${e}{--ed:var(--ed-${e})}`),
     // Each book's spine on the shelf: its cloth and the colour of the type stamped on it.
     ...SPINES.map((sp) => `.spine-${sp}{--cloth:var(--cloth-${sp});--stamp:var(--stamp-${sp})}`),
+    // Charts (Chart.astro): each shape's colour by role, read from the theme's chart tokens.
+    chartCss(),
   ].join('\n');
 }

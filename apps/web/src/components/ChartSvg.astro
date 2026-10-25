@@ -1,0 +1,18 @@
+---
+// A chart's scene (packages/shared/src/charts) as SVG elements. Colours are classes (chartCss in
+// tokens.css), so one SVG follows the reader's theme and the Haul's edition ink; no inline styles,
+// and every text is escaped by Astro like any other bundle text.
+import { nodeAttrs, type SceneNode } from '@fdf/shared/charts';
+
+interface Props {
+  nodes: SceneNode[];
+}
+const { nodes } = Astro.props;
+---
+{nodes.map((n) => {
+  if (n.t === 'g') return <g><Astro.self nodes={n.children} /></g>;
+  const Tag = n.t;
+  const attrs = nodeAttrs(n);
+  if (n.t === 'text') return <text {...attrs}>{n.text}</text>;
+  return n.tip ? <Tag {...attrs}><title>{n.tip}</title></Tag> : <Tag {...attrs} />;
+})}

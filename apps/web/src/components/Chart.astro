@@ -1,0 +1,83 @@
+---
+// A chart block: the figure. The editor's title and note in the serif; what the numbers are in quiet
+// sans; the chart drawn here on the server from the bundle's rows (a wide figure and a phone figure,
+// chosen by the width of the column with a container query); the machine's glosses in the blue sans;
+// the source, its licence and the day it was fetched; and the numbers themselves in a table.
+import type { Chart } from '@fdf/shared/charts';
+import { renderChart, spanText, chartGlosses, chartGrouping, describeChart, formatCell, licenceLine, retrievedLine, unitsLine } from '@fdf/shared/charts';
+import { safeHref } from '../lib/site';
+import ChartSvg from './ChartSvg.astro';
+
+interface Props {
+  chart: Chart;
+  /** The figure's number within the item. */
+  n: number;
+  /** A stable id for aria references. */
+  id: string;
+}
+const { chart, n, id } = Astro.props;
+const layouts = (['wide', 'narrow'] as const).map((layout) => {
+  try {
+    return { layout, scene: renderChart(chart, layout) };
+  } catch {
+    return { layout, scene: null };
+  }
+});
+const drawn = layouts.every((l) => l.scene);
+const glosses = chartGlosses(chart);
+const alt = describeChart(chart);
+const g = chartGrouping(chart);
+const cols = chart.data.columns;
+const numeric = cols.map((c) => c.type === 'number');
+const rows = chart.data.rows;
+---
+<figure class="g blk blk-chart ch" aria-labelledby={`${id}-t`}>
+  <figcaption class="c ch-head">
+    <p class="ch-n">Figure <span>{n}</span></p>
+    <h3 class="ch-t" id={`${id}-t`}>{chart.title}</h3>
+    {chart.note ? <p class="ch-note">{chart.note}</p> : null}
+    <p class="ch-units">{unitsLine(chart)}{chart.geography || chart.span ? <span>{[chart.geography, chart.span ? `${spanText(chart.span.from)} to ${spanText(chart.span.to)}` : ''].filter(Boolean).join(', ')}</span> : null}</p>
+  </figcaption>
+  <div class="c ch-plot">
+    {drawn ? (
+      layouts.map(({ layout, scene }) => (
+        <svg
+          class:list={['ch-svg', `ch-${layout}`]}
+          viewBox={`0 0 ${scene!.width} ${scene!.height}`}
+          width={scene!.width}
+          height={scene!.height}
+          role="img"
+          aria-label={alt}
+          preserveAspectRatio="xMinYMin meet"
+        >
+          <ChartSvg nodes={scene!.nodes} />
+        </svg>
+      ))
+    ) : (
+      <p class="ch-undrawn">This chart could not be drawn; the numbers are below.</p>
+    )}
+  </div>
+  <div class="c ch-foot">
+    {glosses.length ? <p class="machine ch-gloss">{glosses.join(' ')}</p> : null}
+    <p class="ch-src">
+      Source:{' '}
+      {chart.sources.map((s, i) => (
+        <>
+          {i ? '; ' : ''}
+          {safeHref(s.url) ? <a href={safeHref(s.url)} rel="noopener noreferrer" target="_blank">{s.maker}, {s.dataset}<span class="sr"> (opens in a new tab)</span></a> : `${s.maker}, ${s.dataset}`}
+          {s.via ? <>, via {safeHref(s.via.url) ? <a href={safeHref(s.via.url)} rel="noopener noreferrer" target="_blank">{s.via.name}<span class="sr"> (opens in a new tab)</span></a> : s.via.name}</> : null}
+        </>
+      ))}
+      . {licenceLine(chart)}. Retrieved {retrievedLine(chart)}.
+    </p>
+    <details class="ch-data">
+      <summary>The numbers <span>{rows.length.toLocaleString('en-IN')} {rows.length === 1 ? 'row' : 'rows'}</span></summary>
+      <div class="ch-tbl" tabindex="0" role="region" aria-label={`The data behind ${chart.title}`}>
+        <table>
+          <thead><tr>{cols.map((c, j) => <th scope="col" class:list={{ num: numeric[j] }}>{c.label}{c.unit ? <span> ({c.unit})</span> : null}</th>)}</tr></thead>
+          <tbody>{rows.map((r) => <tr>{r.map((v, j) => <td class:list={{ num: numeric[j], na: v === null }}>{formatCell(v, cols[j]!, g)}</td>)}</tr>)}</tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</figure>

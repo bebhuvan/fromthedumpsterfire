@@ -18,7 +18,17 @@ const idx = (chart: Chart, role: keyof Chart['encode']) => {
 };
 const grouping = (chart: Chart): Grouping => (isRupees(chart) ? 'indian' : 'international');
 
-/** "°C, difference from the 1861–1890 average" — what the numbers are, from the editor's fields. */
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** A span end as a reader says it: "1850", "March 2024", "1 January 2024". */
+export function spanText(v: string): string {
+  const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(v.trim());
+  if (!m) return v;
+  const month = MONTH_NAMES[Number(m[2]) - 1] ?? m[2];
+  return m[3] ? `${Number(m[3])} ${month} ${m[1]}` : `${month} ${m[1]}`;
+}
+
+/** "°C, difference from the 1861–1890 average": what the numbers are, from the editor's fields. */
 export function unitsLine(chart: Chart): string {
   const m = chart.measure;
   const parts: string[] = [chart.units.trim()];
@@ -67,7 +77,7 @@ export function chartGlosses(chart: Chart): string[] {
   const out: string[] = [];
   const spec = FORMS[chart.form];
   if (chart.span && chart.sourceSpan && (chart.span.from !== chart.sourceSpan.from || chart.span.to !== chart.sourceSpan.to)) {
-    out.push(`Shown from ${chart.span.from} to ${chart.span.to}; the source runs from ${chart.sourceSpan.from} to ${chart.sourceSpan.to}.`);
+    out.push(`Shown from ${spanText(chart.span.from)} to ${spanText(chart.span.to)}; the source runs from ${spanText(chart.sourceSpan.from)} to ${spanText(chart.sourceSpan.to)}.`);
   }
   if (chart.scale?.y?.log || chart.scale?.x?.log) out.push(`${chart.scale?.x?.log && chart.scale?.y?.log ? 'Both scales are' : chart.scale?.x?.log ? 'The horizontal scale is' : 'The vertical scale is'} logarithmic: each step is ten times the one before.`);
   if (spec && !spec.zero && !chart.scale?.y?.log && ['line', 'multiples', 'scatter', 'dot', 'dumbbell', 'slope'].includes(chart.form) && chart.scale?.y?.zero !== true) {
@@ -129,7 +139,7 @@ export function describeChart(chart: Chart): string {
   const g = grouping(chart);
   const parts: string[] = [];
   const what = col(chart, 'y')?.label ?? [col(chart, 'from')?.label, col(chart, 'to')?.label].filter(Boolean).join(' and ');
-  parts.push(`${spec?.name ?? 'Chart'} of ${what || chart.title} (${unitsLine(chart)})${chart.geography ? `, ${chart.geography}` : ''}${chart.span ? `, ${chart.span.from} to ${chart.span.to}` : ''}.`);
+  parts.push(`${spec?.name ?? 'Chart'} of ${what || chart.title} (${unitsLine(chart)})${chart.geography ? `, ${chart.geography}` : ''}${chart.span ? `, ${spanText(chart.span.from)} to ${spanText(chart.span.to)}` : ''}.`);
   const yi = idx(chart, 'y');
   const xi = idx(chart, 'x');
   const xcol = col(chart, 'x');

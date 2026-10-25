@@ -292,6 +292,7 @@ export function sourceAction(item: Pick<Item, 'type' | 'creator' | 'source' | 'm
   const url = item.media?.url ?? item.source.url;
   // Things that are not read: a tool is visited, a picture seen, a book looked up.
   if (item.type === 'tool') return `Visit ${titled}`;
+  if (item.type === 'chart') return place ? `The data at ${place}` : 'The data behind the chart';
   if (item.type === 'image') return place ? `See it in ${place}` : 'See the original';
   if (item.type === 'book') return place ? `The book at ${place}` : 'More on the book';
   if (item.type === 'quote') return place ? `Where ${who || 'it'} said it: ${place}` : 'Where it comes from';

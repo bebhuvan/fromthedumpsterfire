@@ -837,3 +837,47 @@ blockquote > p + p { margin-top: 0.65em; }
 .epi-q p:not(:first-child)::before { content: none; }
 .epi-q p:not(:last-child)::after { content: none; }
 .epi-q.q-long p + p { margin-top: 0.8em; }
+
+/* ---------- Charts: the figure (Chart.astro). The chart is SVG drawn on the server from the bundle's
+   rows; shape colours are classes from tokens.css (chartCss). A wide figure and a phone figure are
+   both in the page, and the column's own width chooses which shows. ---------- */
+.blk-chart { row-gap: 0; }
+@media (min-width: 1000px) { .blk-chart .ch-plot { grid-column: 2 / -1; max-width: 720px; } }
+.ch-head { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--ink); }
+.ch-n { font: 500 12.5px/1.4 var(--sans); color: var(--ink2); }
+.ch-n span { color: var(--ember); }
+.ch-t { font: 500 clamp(23px, 2.5vw, 30px)/1.12 var(--display); letter-spacing: -0.012em; text-wrap: balance; max-width: 34rem; }
+.ch-note { font: italic 400 17px/1.45 var(--serif); max-width: 36rem; text-wrap: pretty; }
+.ch-units { display: flex; flex-wrap: wrap; gap: 0 14px; margin-top: 10px; font: 400 13px/1.4 var(--sans); color: var(--ink2); }
+.ch-units span { color: var(--ink2); }
+.ch-plot { container-type: inline-size; margin-top: 12px; }
+.ch-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ch-svg text { font-kerning: normal; }
+.ch-wide { max-width: 720px; }
+.ch-narrow { display: none; max-width: 440px; }
+@container (max-width: 559px) { .ch-wide { display: none; } .ch-narrow { display: block; } }
+.ch-undrawn { font: italic 400 16px/1.45 var(--serif); color: var(--ink2); padding: 24px 0; }
+.ch-foot { display: grid; gap: 10px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.ch-gloss { font-size: 13.5px; line-height: 1.5; max-width: 40rem; }
+.ch-src { font: 400 13px/1.5 var(--sans); color: var(--ink2); max-width: 44rem; }
+.ch-src a { color: inherit; text-decoration-color: var(--rule); text-underline-offset: 2px; }
+.ch-src a:hover { color: var(--ink); text-decoration-color: currentColor; }
+.ch-data summary { display: inline-flex; gap: 10px; align-items: baseline; font: 500 13.5px/1.4 var(--sans); cursor: pointer; list-style: none; }
+.ch-data summary::-webkit-details-marker { display: none; }
+.ch-data summary::before { content: '+'; display: inline-block; width: 0.8em; color: var(--ink2); }
+.ch-data[open] summary::before { content: '–'; }
+.ch-data summary span { font-weight: 400; color: var(--ink2); }
+.ch-tbl { max-height: 26rem; overflow: auto; margin-top: 10px; border-top: 1px solid var(--ink); }
+.ch-tbl table { border-collapse: collapse; width: 100%; font: 400 13px/1.4 var(--sans); font-variant-numeric: tabular-nums; }
+.ch-tbl th { position: sticky; top: 0; background: var(--bg); text-align: left; font-weight: 500; padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+.ch-tbl th span { font-weight: 400; color: var(--ink2); }
+.ch-tbl td { padding: 4px 14px 4px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.ch-tbl .num { text-align: right; }
+.ch-tbl .na { color: var(--ink2); }
+/* The figure as a specimen on the cover: its own chart, drawn small. */
+.sp-figure .sp-obj { border: 1px solid var(--rule); padding: 16px 18px 14px; gap: 12px; }
+.sp-fig-t { font: 500 clamp(24px, 2.6vw, 32px)/1.05 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.sp-fig-t em { font-weight: 400; }
+.sp-fig-svg { display: block; width: 100%; height: auto; }
+.sp-fig-src { font: 400 12px/1.4 var(--sans); color: var(--ink2); }
+@media (min-width: 700px) { .sp-figure { grid-column: span 7; } }
