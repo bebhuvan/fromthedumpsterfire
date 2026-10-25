@@ -30,7 +30,7 @@ export const editorNote: AboutParagraph[] = [
   ],
   ["Disclosure: everything here is chosen by a human, but I lean heavily on LLMs to publish it. There are two reasons."],
   [
-    "One, I think LLMs are awesome. If you think anything on this site is tainted goods because it has been touched by the unholy touch of an LLM, if you're one of those idiots who still has visions of human supremacy and thinks LLMs produce nothing but slop, to you I say fuck you.",
+    "One, I think LLMs are awesome. If you think anything on this site is tainted goods because it has been touched by the unholy touch of an LLM, if you're one of those idiots who still has visions of human supremacy and thinks LLMs produce nothing but slop, to you I say fuck you. And mate, if you still think you're better than an LLM, stand in front of a mirror, open your mouth and listen to what comes out. You're not all that great, and I hate to be the one to break it to you. Humans make plenty of slop too, so get your priorities straight and stop being sloppy.",
   ],
   [
     "Two, I'm solo. Apart from Dumpster Fire, I have a whole host of other projects: ",
@@ -40,7 +40,7 @@ export const editorNote: AboutParagraph[] = [
     ". None of this would be possible without LLMs. They're involved in everything, from designing the site and building the app to helping me publish each Haul.",
   ],
   [
-    "I'm telling you this so that one day I don't see some sanctimonious prick jump up in the air and shout, “Look, this heretic has used LLMs!” and unleash a mob of digital human puritans on team human superiority to come after me, to burn me down like a witch, to burn me down like the infidel that I am.",
+    "I'm telling you this so that one day I don't see some sanctimonious prick jump up in the air and shout, “Look, this heretic has used LLMs!” and unleash a mob of digital human puritans on team human superiority to come after me and burn me down like the witch that I am.",
   ],
   [
     "So with that, I hope you find as many rabbit holes here as I do elsewhere on the internet. That's the simple goal of Dumpster Fire: to send you down a million rabbit holes and have you come out a whole another person. I want you to have serendipity, that moment where you just keep going, “that's interesting,” and more.",
