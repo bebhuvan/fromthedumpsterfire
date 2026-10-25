@@ -65,6 +65,7 @@ describe('normaliseLibraryUrl', () => {
     expect(normaliseLibraryUrl('https://WWW.slowboring.com/p/the-voice-of-a-generation?r=abc&s=r')).toBe(k);
     expect(normaliseLibraryUrl('https://example.org/a?id=2&page=1')).toBe('example.org/a?id=2&page=1');
     expect(normaliseLibraryUrl('https://example.org/a?page=1&id=2')).toBe('example.org/a?id=2&page=1');
+    expect(normaliseLibraryUrl('https://example.org/search?s=cats&r=2')).toBe('example.org/search?r=2&s=cats');
     expect(normaliseLibraryUrl('javascript:alert(1)')).toBeNull();
   });
 });

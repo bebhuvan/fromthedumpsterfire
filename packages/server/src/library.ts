@@ -35,7 +35,10 @@ export const libraryProviders = (env: Env): LibraryProvider[] =>
   [env.READWISE_TOKEN?.trim() ? 'readwise' : null, env.INSTAPAPER_TOKEN?.trim() ? 'instapaper' : null].filter(Boolean) as LibraryProvider[];
 
 // Parameters that track a click, not the piece. Removing them makes the same article match however it was shared.
-const TRACKING = /^(utm_\w+|ref|ref_src|ref_url|source|src|s|r|fbclid|gclid|dclid|mc_cid|mc_eid|igshid|si|mkt_tok|_hsenc|_hsmi|cmpid|smid|sh|giftcopy|gift|share|publication_id|post_id|isfreemail|triedredirect|showwelcome|showwelcomeonshare|access_token|token)$/i;
+const TRACKING = /^(utm_\w+|ref|ref_src|ref_url|source|src|fbclid|gclid|dclid|mc_cid|mc_eid|igshid|si|mkt_tok|_hsenc|_hsmi|cmpid|smid|sh|giftcopy|gift|share|isfreemail|triedredirect|showwelcome|showwelcomeonshare|access_token|token)$/i;
+// Substack's share parameters (r = referrer, s = share surface) are short and generic, so they are
+// dropped only on a Substack-shaped post path (/p/<slug>), where they never name the piece.
+const SUBSTACK_SHARE = /^(r|s|publication_id|post_id)$/i;
 
 /** One key per article: no scheme, no www, no fragment, no tracking parameters, no trailing slash. */
 export function normaliseLibraryUrl(raw: string): string | null {
@@ -46,7 +49,7 @@ export function normaliseLibraryUrl(raw: string): string | null {
     return null;
   }
   if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
-  const params = [...u.searchParams.entries()].filter(([k]) => !TRACKING.test(k)).sort(([a], [b]) => a.localeCompare(b));
+  const params = [...u.searchParams.entries()].filter(([k]) => !TRACKING.test(k) && !(/^\/p\/[^/]+\/?$/.test(u.pathname) && SUBSTACK_SHARE.test(k))).sort(([a], [b]) => a.localeCompare(b));
   const query = params.length ? '?' + new URLSearchParams(params).toString() : '';
   const path = u.pathname.replace(/\/+$/, '') || '';
   return `${u.hostname.toLowerCase().replace(/^www\./, '')}${path}${query}`;
