@@ -83,7 +83,7 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
       ...(c.note ? [c.note, ''] : []),
       `- **What the numbers are**: ${unitsLine(c)}`,
       `- **Description (Machine)**: ${describeChart(c)}`,
-      `- **Source**: ${c.sources.map((s) => `[${s.maker}, ${s.dataset}](${s.url})${s.via ? ` via [${s.via.name}](${s.via.url})` : ''}`).join('; ')}. ${licenceLine(c)}. Retrieved ${c.sources.map((s) => s.retrieved).sort().pop()}.`,
+      `- **Source**: ${c.sources.map((s) => `${safeHref(s.url) ? `[${s.maker}, ${s.dataset}](${safeHref(s.url)})` : `${s.maker}, ${s.dataset}`}${s.via ? ` via ${safeHref(s.via.url) ? `[${s.via.name}](${safeHref(s.via.url)})` : s.via.name}` : ''}`).join('; ')}. ${licenceLine(c)}. Retrieved ${c.sources.map((s) => s.retrieved).sort().pop()}.`,
       `- **Data**: ${c.data.rows.length} rows, on the item page`,
     );
   });

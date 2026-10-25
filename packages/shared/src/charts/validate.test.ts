@@ -278,3 +278,25 @@ describe('validateHaul with chart blocks', () => {
     expect(r.errors.map((e) => e.rule)).toContain('hosted');
   });
 });
+
+describe('malformed and oversized charts are refused, never thrown on', () => {
+  it('refuses null columns and rows with a message', () => {
+    expect(() => validateChart(line({ data: { columns: [null as never], rows: [] } }))).not.toThrow();
+    expect(rules(line({ data: { columns: [null as never], rows: [] } }))).toContain('shape');
+    const nullRow = line({ data: { ...line().data, rows: [null as never] }, annotations: [{ kind: 'point', x: 2001, text: 'Here, 3', by: 'machine' }] });
+    expect(() => validateChart(nullRow)).not.toThrow();
+    expect(rules(nullRow)).toContain('data');
+  });
+  it('caps a chart at 1.5 MB and long text cells and labels', () => {
+    const long = 'x'.repeat(201);
+    const text = line({ data: { columns: [...line().data.columns, { key: 'note', label: 'Note', type: 'text' }], rows: line().data.rows.map((r) => [...r, long]) } });
+    expect(rules(text)).toContain('data');
+    const place = 'Sub-Saharan Africa (excluding high income), a long region name';
+    const big = line({ data: { columns: [...line().data.columns, { key: 'place', label: 'Place', type: 'text' }], rows: Array.from({ length: 19_000 }, (_, k) => [2001, 1234.5678912345 + k, `${place} ${k}`]) } });
+    expect(rules(big)).toContain('size');
+  });
+  it('wants a clean https link for a redistributor', () => {
+    const s = line().sources[0]!;
+    expect(rules(line({ sources: [{ ...s, via: { name: 'OWID', url: 'https://x.org/a b)', licence: 'CC BY 4.0' } }] }))).toContain('source');
+  });
+});

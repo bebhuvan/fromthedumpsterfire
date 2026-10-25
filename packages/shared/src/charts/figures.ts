@@ -70,6 +70,7 @@ export function citableNumbers(chart: Chart): number[] {
     if (typeof v === 'number' && Number.isFinite(v)) nums.add(v);
   };
   for (const row of chart.data?.rows ?? []) {
+    if (!Array.isArray(row)) continue;
     for (const cell of row) {
       if (typeof cell === 'number') add(cell);
       else if (typeof cell === 'string') {
@@ -78,7 +79,7 @@ export function citableNumbers(chart: Chart): number[] {
       }
     }
   }
-  const meta = [...(chart.data?.columns ?? []).map((c) => c.label), chart.units, chart.measure?.base, chart.measure?.denominator, chart.span?.from, chart.span?.to, chart.sourceSpan?.from, chart.sourceSpan?.to, chart.options?.midpoint?.label, chart.geography];
+  const meta = [...(chart.data?.columns ?? []).map((c) => c?.label), chart.units, chart.measure?.base, chart.measure?.denominator, chart.span?.from, chart.span?.to, chart.sourceSpan?.from, chart.sourceSpan?.to, chart.options?.midpoint?.label, chart.geography];
   for (const t of meta) if (typeof t === 'string') for (const f of figuresIn(t)) add(f.value);
   if (chart.measure?.money?.baseYear) add(chart.measure.money.baseYear);
   if (chart.options?.midpoint) add(chart.options.midpoint.value);

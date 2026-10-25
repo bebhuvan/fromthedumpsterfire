@@ -21,7 +21,7 @@ export interface ChartReport {
 }
 
 /** Limits that keep a bundle small enough to read offline. */
-export const CHART_LIMITS = { rows: 20_000, cells: 80_000, columns: 24, annotations: 12, series: 6 };
+export const CHART_LIMITS = { rows: 20_000, cells: 80_000, columns: 24, annotations: 12, series: 6, bytes: 1_500_000, text: 200 };
 
 const TOP_KEYS = new Set(['form', 'title', 'note', 'units', 'geography', 'span', 'sourceSpan', 'sources', 'measure', 'method', 'data', 'encode', 'scale', 'options', 'annotations']);
 const OPTION_KEYS = new Set(['colour', 'focus', 'midpoint', 'sort', 'per', 'rank']);
@@ -95,7 +95,7 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
       if (s.licenceUrl !== undefined && !/^https:\/\/\S+$/.test(String(s.licenceUrl))) c.err(`${p}.licenceUrl`, 'source', 'https link');
       if (!nonEmpty(s.retrieved) || !ISO_DAY.test(s.retrieved)) c.err(`${p}.retrieved`, 'source', 'The date the data was fetched (YYYY-MM-DD).');
       if (s.via !== undefined) {
-        if (!isObj(s.via) || !nonEmpty(s.via.name) || !nonEmpty(s.via.url) || !/^https:\/\//.test(s.via.url)) c.err(`${p}.via`, 'source', 'A redistributor needs its name and an https link.');
+        if (!isObj(s.via) || !nonEmpty(s.via.name) || !nonEmpty(s.via.url) || !/^https:\/\/\S+$/.test(s.via.url)) c.err(`${p}.via`, 'source', 'A redistributor needs its name and an https link.');
         else if (!nonEmpty(s.via.licence)) c.err(`${p}.via.licence`, 'licence', 'State the redistributor’s licence too.');
       }
     });
@@ -116,8 +116,17 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
     else if (keys.has(col.key)) c.err(`${p}.key`, 'data', `Two columns are called "${col.key}".`);
     keys.add(col.key);
     if (!nonEmpty(col.label)) c.err(`${p}.label`, 'data', 'Each column says what it is.');
+    else if (col.label.length > CHART_LIMITS.text) c.err(`${p}.label`, 'data', `Column names are at most ${CHART_LIMITS.text} characters.`);
     if (!['number', 'text', 'year', 'date'].includes(col.type)) c.err(`${p}.type`, 'data', 'number, text, year or date');
   });
+  // Malformed columns or rows: say so and stop, rather than check the rest against a broken table.
+  if (cols.some((col) => !isObj(col)) || rows.some((r) => !Array.isArray(r))) {
+    if (rows.some((r) => !Array.isArray(r))) c.err('.data.rows', 'data', 'Every row is a list of cells.');
+    return done(c);
+  }
+  // A chart lives in one database row and in the bundle: keep it well under D1's 2 MB value limit.
+  const bytes = JSON.stringify(chart).length;
+  if (bytes > CHART_LIMITS.bytes) c.err('.data', 'size', `The chart is ${Math.round(bytes / 1000)} kB; charts take at most ${CHART_LIMITS.bytes / 1000} kB. Summarise first (and say how, in the method).`);
   let badCells = 0;
   rows.forEach((r, i) => {
     if (!Array.isArray(r) || r.length !== cols.length) {
@@ -134,7 +143,7 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
             ? typeof v === 'number' && Number.isInteger(v) && v > -10000 && v < 3000
             : col.type === 'date'
               ? typeof v === 'string' && DATE.test(v)
-              : typeof v === 'string';
+              : typeof v === 'string' && v.length <= CHART_LIMITS.text;
       if (!ok && badCells++ < 5) c.err(`.data.rows[${i}][${j}]`, 'data', `"${String(v)}" is not a ${col.type}${col.type === 'number' ? ' (a missing value is null, never text or NaN)' : ''}.`);
     });
   });

@@ -10,12 +10,13 @@ import { USER_AGENT } from './extract/http';
 import { readCapped, readJsonCapped } from './extract/stream';
 import { dateIst, nowIso } from './util';
 import { BlockRefused } from './blocks';
+import { CHART_LIMITS } from '@fdf/shared/charts';
 
 const CSV_BYTES = 12 * 1024 * 1024;
 const META_BYTES = 1024 * 1024;
 const WB_BYTES = 8 * 1024 * 1024;
 /** A chart fetched from a provider keeps at most this many rows (filter by entity first). */
-const MAX_ROWS = 20_000;
+const MAX_ROWS = CHART_LIMITS.rows;
 
 const refuse = (m: string, status = 422): never => {
   throw new BlockRefused(m, status);
@@ -149,7 +150,7 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
       sources.set(k, {
         maker,
         dataset,
-        url: o.urlMain && /^https:\/\//.test(o.urlMain) ? o.urlMain : page,
+        url: o.urlMain && /^https:\/\/\S+$/.test(o.urlMain) ? o.urlMain : page,
         licence: licence!,
         ...(o.license?.url && /^https:\/\//.test(o.license.url) ? { licenceUrl: o.license.url } : {}),
         retrieved,
@@ -161,10 +162,13 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
   const columns: ChartColumn[] = [
     { key: 'entity', label: 'Entity', type: 'text' },
     { key: timeKey === 'day' ? 'day' : 'year', label: timeKey === 'day' ? 'Date' : 'Year', type: timeKey === 'day' ? 'date' : 'year' },
-    ...valueKeys.map((k) => {
+    ...valueKeys.map((k, j) => {
       const c = colFor(k);
       const unit = c?.shortUnit || c?.unit;
-      return { key: k.slice(0, 40).replace(/[^a-z0-9_-]/g, '_').replace(/^([^a-z])/, 'c$1'), label: c?.titleShort ?? k, type: 'number' as const, ...(unit ? { unit } : {}) };
+      // Short, lowercase, and unique even when two long names start the same.
+      let key = k.toLowerCase().slice(0, 36).replace(/[^a-z0-9_-]/g, '_').replace(/^([^a-z])/, 'c$1');
+      if (valueKeys.slice(0, j).some((o) => o.toLowerCase().slice(0, 36).replace(/[^a-z0-9_-]/g, '_').replace(/^([^a-z])/, 'c$1') === key)) key = `${key}_${j + 1}`;
+      return { key, label: (c?.titleShort ?? k).slice(0, CHART_LIMITS.text), type: 'number' as const, ...(unit ? { unit } : {}) };
     }),
   ];
   const want = opts.entities?.length ? new Set(opts.entities) : null;
@@ -196,9 +200,10 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
   // Too many rows to keep: with places already chosen that is a refusal; before, the editor still
   // gets the list of places to choose from, with no rows yet.
   let notice: string | undefined;
-  if (rows.length > MAX_ROWS) {
-    if (want) refuse(`That is ${rows.length} rows; choose fewer places or a shorter span (at most ${MAX_ROWS}).`);
-    notice = `This chart has ${rows.length.toLocaleString('en-IN')} rows for all its places, more than a chart can carry (${MAX_ROWS.toLocaleString('en-IN')}). Choose the places to show.`;
+  const tooMany = rows.length > MAX_ROWS || rows.length * columns.length > CHART_LIMITS.cells;
+  if (tooMany) {
+    if (want) refuse(`That is ${rows.length} rows of ${columns.length} columns; choose fewer places or a shorter span (at most ${MAX_ROWS} rows and ${CHART_LIMITS.cells} cells).`);
+    notice = `This chart has ${rows.length.toLocaleString('en-IN')} rows for all its places, more than a chart can carry (${MAX_ROWS.toLocaleString('en-IN')} rows, ${CHART_LIMITS.cells.toLocaleString('en-IN')} cells). Choose the places to show.`;
     rows.length = 0;
   }
   const first = cols[0];

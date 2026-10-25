@@ -842,7 +842,7 @@ Built from `docs/CHARTS-BRIEF.md`; the system is in `docs/CHARTS.md`, the night'
 - **Comps**: `docs/design-comps/charts/` with real data (HadCRUT5 via OWID, World Bank WDI, Ember via
   OWID, Open-Meteo ERA5 for Delhi), screenshots in `shots/`.
 - **Dev samples**: Haul 003 has a Chart item (Delhi's 2024 band and the stripes); Haul 002 a bar chart.
-- `npm run verify`: 613 tests pass.
+- `npm run verify`: 617 tests pass.
 
 Before charts go live: merge `charts-kit`, deploy the Desk (CSP and routes) and the site, then an OTA
 for the app. No migration is needed (chart blocks use the existing `blocks` table). The editor's

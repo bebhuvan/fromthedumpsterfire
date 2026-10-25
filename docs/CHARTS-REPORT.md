@@ -1,7 +1,7 @@
 # The chart kit: the night's report (2026-10-25)
 
 Branch `charts-kit` in `.claude/worktrees/fdf-charts`. Nothing is deployed, pushed or merged.
-`npm run verify` passes (typecheck and 613 tests). The system is described in `docs/CHARTS.md`.
+`npm run verify` passes (typecheck and 617 tests). The system is described in `docs/CHARTS.md`.
 
 ## What is done
 
@@ -44,6 +44,11 @@ Branch `charts-kit` in `.claude/worktrees/fdf-charts`. Nothing is deployed, push
 - Chart colours run through the dataviz palette validator in both themes (results in CHARTS.md).
 - Website CPU: one fix took the heatmap from 827 ms to 5 ms. The heaviest chart is now about 15 ms cold
   for both widths, and a chart is drawn once per isolate.
+- An independent review of the branch (security and correctness) found five small issues, all fixed
+  with tests: no byte cap on a chart before it goes into D1, malformed tables crashing the validator
+  instead of being refused, colliding OWID column keys, OWID's fetch limit ignoring the cells limit,
+  and unescaped source links in the site's Markdown. It found no SSRF, publish-path or escaping
+  problems.
 - Provider endpoints and licence fields fetched live on 2026-10-25 (OWID chart API and indicator
   metadata, World Bank API v2 and series metadata, both licence pages).
 
@@ -53,6 +58,8 @@ Branch `charts-kit` in `.claude/worktrees/fdf-charts`. Nothing is deployed, push
   image sizing, `File.downloadFileAsync` and the table widths need a look in a dev build.
 - **The Desk editor has not been used against a running Desk.** Its draft logic is tested (every comps
   fixture opens and saves back unchanged and valid), and the drawing was tested in a browser.
+- The figure check reads digits, not numbers written as words ("doubled", "five"); machine text with
+  such words would pass it. No model writes chart text yet, so this matters only when one does.
 - Not built: horizon charts and marimekko (neither earned its place tonight), daily or monthly World
   Bank series, model-drafted annotations (the gates for them exist: `by: 'machine'` text must pass the
   style check and cite only figures in the rows).

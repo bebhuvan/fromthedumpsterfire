@@ -189,3 +189,23 @@ describe('a large Our World in Data chart', () => {
     await expect(fetchOwid('temperature-anomaly', { entities: Array.from({ length: 200 }, (_, i) => `Place ${i}`) })).rejects.toThrow(/choose fewer places/);
   });
 });
+
+describe('Our World in Data column keys', () => {
+  it('stay unique when two long names start the same', async () => {
+    const a = 'share_of_electricity_generated_by_low_carbon_sources_total';
+    const b = 'share_of_electricity_generated_by_low_carbon_sources_nuclear';
+    const meta = { columns: {
+      A: { titleShort: 'A', shortUnit: '%', shortName: a, fullMetadata: 'https://api.ourworldindata.org/v1/indicators/1.metadata.json' },
+      B: { titleShort: 'B', shortUnit: '%', shortName: b, fullMetadata: 'https://api.ourworldindata.org/v1/indicators/2.metadata.json' },
+    } };
+    serve((u) => {
+      if (u.pathname === '/grapher/x.metadata.json') return json(meta);
+      if (u.pathname === '/grapher/x.csv') return new Response(`entity,code,year,${a},${b}\nIndia,IND,2020,1,2\n`);
+      if (u.hostname === 'api.ourworldindata.org') return json(ORIGINS);
+      return null;
+    });
+    const r = await fetchOwid('x');
+    const keys = r.data.columns.map((c) => c.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
