@@ -59,7 +59,6 @@ Branch `charts-kit` in `.claude/worktrees/fdf-charts`. Nothing is deployed, push
 - Known rough edges, from looking at the comps:
   - Scatter and beeswarm drop a label when there is no free place (Sri Lanka on the phone scatter).
   - Slope leaders bunch when many values cluster.
-  - Labels inside light area layers are low contrast.
   - Gridlines run behind value labels.
   - Point callouts sit close to wide marks.
   - The heatmap's 4 °C bins mostly show the seasons, not the years.
