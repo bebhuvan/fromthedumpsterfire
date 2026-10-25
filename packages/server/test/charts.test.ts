@@ -172,3 +172,20 @@ describe('publishing a chart', () => {
     expect(blocksForBundle([bad], null, 'x', 'https://files.example', { edition: 'teal', pictures: new Map() }).problems[0]).toMatch(/fails its checks/);
   });
 });
+
+describe('a large Our World in Data chart', () => {
+  it('returns the places to choose from instead of refusing', async () => {
+    const big = 'entity,code,year,near_surface_temperature_anomaly\n' + Array.from({ length: 20_050 }, (_, i) => `Place ${i % 200},X,${1800 + Math.floor(i / 200)},0.1`).join('\n');
+    serve((u) => {
+      if (u.pathname === '/grapher/temperature-anomaly.metadata.json') return json(OWID_META);
+      if (u.pathname === '/grapher/temperature-anomaly.csv') return new Response(big);
+      if (u.hostname === 'api.ourworldindata.org') return json(ORIGINS);
+      return null;
+    });
+    const r = await fetchOwid('temperature-anomaly');
+    expect(r.data.rows).toEqual([]);
+    expect(r.entities).toHaveLength(200);
+    expect(r.notice).toMatch(/Choose the places/);
+    await expect(fetchOwid('temperature-anomaly', { entities: Array.from({ length: 200 }, (_, i) => `Place ${i}`) })).rejects.toThrow(/choose fewer places/);
+  });
+});

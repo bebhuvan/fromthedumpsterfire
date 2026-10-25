@@ -5,6 +5,7 @@ import type { ContentType, Edition, Swatch } from '@fdf/shared/tokens';
 import type { BundleIssue } from '@fdf/shared/validate';
 import type { StyleResult } from '@fdf/shared/style';
 import type { BookStatus, Spine } from '@fdf/shared/shelf';
+import type { Chart, ChartData, ChartMeasure, ChartSource } from '@fdf/shared/charts';
 
 export class ApiError extends Error {
   constructor(
@@ -118,7 +119,20 @@ export type BlockBody =
   | { kind: 'code'; code: string; lang?: string; caption?: string; start: number; end: number }
   | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { width: number; height: number }; link: string }
   | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number }
-  | { kind: 'image'; caption: string; credit: string; licence: string; sourceUrl?: string; creator?: string; date?: string; width: number; height: number };
+  | { kind: 'image'; caption: string; credit: string; licence: string; sourceUrl?: string; creator?: string; date?: string; width: number; height: number }
+  | { kind: 'chart'; chart: Chart };
+
+/** What POST /api/charts/fetch returns: a provider's rows and what is known about them. */
+export interface FetchedChartData {
+  data: ChartData;
+  sources: ChartSource[];
+  units: string;
+  measure?: Partial<ChartMeasure>;
+  sourceSpan?: { from: string; to: string };
+  entities: string[];
+  notice?: string;
+  reference: { title?: string; subtitle?: string; note?: string; citation?: string };
+}
 
 export interface BlockUi {
   id: string;

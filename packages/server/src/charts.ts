@@ -31,6 +31,8 @@ export interface FetchedChartData {
   sourceSpan?: { from: string; to: string };
   /** Every entity (country, region) in the source, to choose from. */
   entities: string[];
+  /** Said to the editor when the rows were held back (too many until places are chosen). */
+  notice?: string;
   /** The provider's own title and notes, shown to the editor for reference (never printed as theirs). */
   reference: { title?: string; subtitle?: string; note?: string; citation?: string };
 }
@@ -191,7 +193,14 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
       return Number.isFinite(n) ? n : null;
     })]);
   }
-  if (rows.length > MAX_ROWS) refuse(`That is ${rows.length} rows; choose fewer places or a shorter span (at most ${MAX_ROWS}).`);
+  // Too many rows to keep: with places already chosen that is a refusal; before, the editor still
+  // gets the list of places to choose from, with no rows yet.
+  let notice: string | undefined;
+  if (rows.length > MAX_ROWS) {
+    if (want) refuse(`That is ${rows.length} rows; choose fewer places or a shorter span (at most ${MAX_ROWS}).`);
+    notice = `This chart has ${rows.length.toLocaleString('en-IN')} rows for all its places, more than a chart can carry (${MAX_ROWS.toLocaleString('en-IN')}). Choose the places to show.`;
+    rows.length = 0;
+  }
   const first = cols[0];
   const fmt = (n: number) => (timeKey === 'day' ? `${String(n).slice(0, 4)}-${String(n).slice(4, 6)}-${String(n).slice(6, 8)}` : String(n));
   return {
@@ -200,6 +209,7 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
     units: first?.shortUnit || first?.unit || '',
     sourceSpan: Number.isFinite(tmin) ? { from: fmt(tmin), to: fmt(tmax) } : undefined,
     entities: [...entities].sort(),
+    ...(notice ? { notice } : {}),
     reference: { title: meta.chart?.title, subtitle: meta.chart?.subtitle, note: meta.chart?.note, citation: meta.chart?.citation },
   };
 }

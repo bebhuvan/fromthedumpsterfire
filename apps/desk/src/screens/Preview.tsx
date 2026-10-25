@@ -2,7 +2,9 @@
 // Everything here comes from the bundle that would be published, rendered as text (never as HTML).
 
 import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
-import { typeLabel, typeSwatch } from '@fdf/shared/tokens';
+import { editionOf, typeLabel, typeSwatch, type Edition } from '@fdf/shared/tokens';
+import { unitsLine } from '@fdf/shared/charts';
+import { ChartPreview } from '../lib/charts';
 import { safeHref } from '../lib/core';
 
 function Highlighted({ text, highlight }: { text: string; highlight?: string }) {
@@ -18,7 +20,7 @@ function Highlighted({ text, highlight }: { text: string; highlight?: string }) 
   );
 }
 
-function ItemPreview({ item, n, total }: { item: Item; n: number; total: number }) {
+function ItemPreview({ item, n, total, edition }: { item: Item; n: number; total: number; edition: Edition }) {
   const sw = `var(--${typeSwatch[item.type]})`;
   return (
     <article style={{ ['--type' as string]: sw, borderTop: '1px solid var(--rule)' }}>
@@ -42,6 +44,20 @@ function ItemPreview({ item, n, total }: { item: Item; n: number; total: number 
             <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} />
             <div className="small muted" style={{ fontFamily: 'var(--sans)', marginTop: 8 }}>{item.excerpt.locator} · matched word for word against the source</div>
           </blockquote>
+        )}
+        {item.blocks?.map((b, i) =>
+          b.kind === 'chart' ? (
+            <figure key={i} style={{ margin: '24px 0 0' }}>
+              <div className="serif" style={{ fontSize: 21 }}>{b.chart.title}</div>
+              {b.chart.note && <div className="serif" style={{ fontStyle: 'italic', fontSize: 15.5 }}>{b.chart.note}</div>}
+              <div className="small muted" style={{ margin: '4px 0 8px' }}>{unitsLine(b.chart)}</div>
+              <ChartPreview chart={b.chart} layout="wide" edition={edition} width="100%" />
+              <figcaption className="small muted" style={{ marginTop: 6 }}>
+                {b.chart.sources.map((s) => `${s.maker}, ${s.dataset}`).join('; ')}
+                {b.images ? '' : ' · the app’s pictures are drawn at publish'}
+              </figcaption>
+            </figure>
+          ) : null,
         )}
         {item.marginalia.length > 0 && (
           <div className="pv-marg">
@@ -121,7 +137,7 @@ export function Preview({ haul }: { haul: Haul }) {
           )}
         </div>
         {haul.items.map((it, i) => (
-          <ItemPreview key={it.id} item={it} n={i + 1} total={haul.items.length} />
+          <ItemPreview key={it.id} item={it} n={i + 1} total={haul.items.length} edition={editionOf(haul.number, haul.edition)} />
         ))}
         <div className="pv-body" style={{ borderTop: '1px solid var(--rule)' }}>
           <div className="label" style={{ marginTop: 20 }}>Colophon</div>

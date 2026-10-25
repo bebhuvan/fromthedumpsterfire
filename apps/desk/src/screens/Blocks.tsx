@@ -1,4 +1,4 @@
-// "Add to this item": pull quotes, code, video, podcasts and audio, pictures. Each addition is
+// "Add to this item": pull quotes, code, video, podcasts and audio, pictures, charts. Each addition is
 // checked by the server before it is kept (quotes and code word for word against the piece, links
 // resolved by code, pictures measured and credited); what is added shows as a compact row that can
 // be moved or removed. Every string here is rendered as text, never as HTML.
@@ -8,10 +8,13 @@ import { CODE_LANGS, highlightCode } from '@fdf/shared/highlight';
 import { api, type BlockUi, type ItemDetail } from '../api';
 import { safeHref, useToast } from '../lib/core';
 import { TextArea } from '../ui/parts';
+import { editionOf, type Edition } from '@fdf/shared/tokens';
+import { ChartPreview } from '../lib/charts';
+import { ChartEditor } from './ChartEditor';
 
-type Kind = 'quote' | 'code' | 'video' | 'audio' | 'image';
+type Kind = 'quote' | 'code' | 'video' | 'audio' | 'image' | 'chart';
 
-const KIND_LABEL: Record<Kind, string> = { quote: 'Pull quote', code: 'Code', video: 'Video', audio: 'Podcast or audio', image: 'Picture' };
+const KIND_LABEL: Record<Kind, string> = { quote: 'Pull quote', code: 'Code', video: 'Video', audio: 'Podcast or audio', image: 'Picture', chart: 'Chart' };
 
 const clock = (s?: number) => (s ? `${Math.floor(s / 3600) ? `${Math.floor(s / 3600)}:` : ''}${String(Math.floor((s % 3600) / 60)).padStart(Math.floor(s / 3600) ? 2 : 1, '0')}:${String(s % 60).padStart(2, '0')}` : '');
 
@@ -19,7 +22,10 @@ const clock = (s?: number) => (s ? `${Math.floor(s / 3600) ? `${Math.floor(s / 3
 export function BlocksSection({ detail, onChange }: { detail: ItemDetail; onChange: () => Promise<void> | void }) {
   const toast = useToast();
   const [open, setOpen] = useState<Kind | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // The preview's ink: the item's Haul's default edition (its chosen ink, if any, shows at publish).
+  const edition = editionOf(detail.haul?.number ?? 1);
   const blocks = detail.blocks ?? [];
   const id = detail.item.id;
   const hasSource = Boolean(detail.source?.text.trim());
@@ -52,7 +58,7 @@ export function BlocksSection({ detail, onChange }: { detail: ItemDetail; onChan
         <ol className="blocks" aria-label="Added to this item">
           {blocks.map((b, i) => (
             <li key={b.id} className={b.status === 'cut' ? 'cut' : undefined}>
-              <BlockSummary block={b} />
+              <BlockSummary block={b} edition={edition} onEdit={b.kind === 'chart' ? () => (setOpen(null), setEditing(editing === b.id ? null : b.id)) : undefined} />
               <span className="row" style={{ gap: 2, flexWrap: 'nowrap' }}>
                 <button type="button" className="btn quiet small" aria-label="Move up" disabled={busy || i === 0} onClick={() => move(i, -1)}>
                   ↑
@@ -86,11 +92,19 @@ export function BlocksSection({ detail, onChange }: { detail: ItemDetail; onChan
       {open === 'video' && <LinkForm kind="video" busy={busy} onAdd={(b) => add({ kind: 'video', ...b }, 'Video added')} />}
       {open === 'audio' && <LinkForm kind="audio" busy={busy} onAdd={(b) => add({ kind: 'audio', ...b }, 'Recording added')} />}
       {open === 'image' && <PictureForm itemId={id} busy={busy} setBusy={setBusy} onDone={async () => (await onChange(), setOpen(null))} />}
+      {open === 'chart' && <ChartEditor itemId={id} edition={edition} onCancel={() => setOpen(null)} onDone={async () => (await onChange(), setOpen(null))} />}
+      {editing &&
+        (() => {
+          const b = blocks.find((x) => x.id === editing);
+          return b?.body?.kind === 'chart' ? (
+            <ChartEditor key={b.id} itemId={id} blockId={b.id} initial={b.body.chart} edition={edition} onCancel={() => setEditing(null)} onDone={async () => (await onChange(), setEditing(null))} />
+          ) : null;
+        })()}
     </div>
   );
 }
 
-function BlockSummary({ block }: { block: BlockUi }) {
+function BlockSummary({ block, edition, onEdit }: { block: BlockUi; edition: Edition; onEdit?: () => void }) {
   const b = block.body;
   if (!b) return <span className="small bad">This addition is damaged; remove it.</span>;
   const head = (extra?: string) => (
@@ -134,6 +148,24 @@ function BlockSummary({ block }: { block: BlockUi }) {
           <a className="serif" href={safeHref(b.url)} target="_blank" rel="noreferrer noopener">
             {b.title} ↗
           </a>
+        </span>
+      );
+    case 'chart':
+      return (
+        <span className="block-sum with-thumb">
+          <span style={{ width: 120, flex: '0 0 120px' }} aria-hidden="true">
+            <ChartPreview chart={b.chart} layout="narrow" edition={edition} width={120} />
+          </span>
+          <span className="stack" style={{ gap: 2 }}>
+            {head(`${b.chart.form} · ${b.chart.data.rows.length.toLocaleString('en-IN')} rows`)}
+            <span className="serif">{b.chart.title}</span>
+            <span className="small muted">{b.chart.sources.map((s) => s.maker).join('; ')}</span>
+            {onEdit && (
+              <button type="button" className="btn quiet small" style={{ alignSelf: 'flex-start' }} onClick={onEdit}>
+                Edit
+              </button>
+            )}
+          </span>
         </span>
       );
     case 'image':
