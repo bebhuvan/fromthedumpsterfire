@@ -102,8 +102,9 @@ export function lineWarning(text: string): string | null {
 /** A book's slug from its title: "The Coal" + "Question" -> "the-coal-question"; unique on the shelf. */
 export async function bookSlug(env: Env, title: Title): Promise<string> {
   const base = slugify([title.text, title.italic].filter(Boolean).join(' '), 60);
+  // A prefix compare, not LIKE: D1 refuses LIKE patterns over 50 bytes, and a long title's slug is 60.
   const taken = new Set(
-    (await env.DB.prepare(`SELECT id FROM books WHERE id = ? OR id LIKE ?`).bind(base, `${base}-%`).all<{ id: string }>()).results.map((r) => r.id),
+    (await env.DB.prepare(`SELECT id FROM books WHERE id = ? OR substr(id, 1, ?) = ?`).bind(base, base.length + 1, `${base}-`).all<{ id: string }>()).results.map((r) => r.id),
   );
   if (!taken.has(base)) return base;
   for (let k = 2; ; k++) if (!taken.has(`${base}-${k}`)) return `${base}-${k}`;

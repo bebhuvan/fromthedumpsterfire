@@ -56,6 +56,12 @@ describe('shelf routes', () => {
     expect(a.body.book).toMatchObject({ id: 'seeing-like-a-state', status: 'reading', started: '2026-10-02', finished: null, cover: null });
     expect((await call(env, '/api/books', json('POST', newBook))).body.book!.id).toBe('seeing-like-a-state-2');
     expect((await call(env, '/api/books/nope')).status).toBe(404);
+    // A long title's 60-character slug (D1 refuses LIKE patterns over 50 bytes, so the check is a prefix compare).
+    const long = { ...newBook, title: { text: "India After Gandhi: The History of the World's Largest Democracy" } };
+    const l1 = (await call(env, '/api/books', json('POST', long))).body.book!.id;
+    expect(l1.length).toBeGreaterThan(50);
+    expect((await call(env, '/api/books', json('POST', long))).body.book!.id).toBe(`${l1}-2`);
+    for (const id of [l1, `${l1}-2`]) expect((await call(env, `/api/books/${id}`, del)).status).toBe(200);
 
     const read = await call(env, '/api/books/seeing-like-a-state', json('PATCH', { status: 'read' }));
     expect(read.body.book!.finished).toMatch(/^\d{4}-\d{2}-\d{2}$/);
