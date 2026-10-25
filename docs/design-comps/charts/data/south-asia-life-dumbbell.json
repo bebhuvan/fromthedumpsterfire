@@ -1,0 +1,103 @@
+{
+ "form": "dumbbell",
+ "title": "Women outlive men everywhere in South Asia",
+ "note": "The gap is widest in Sri Lanka, more than six years, and narrowest in Nepal.",
+ "units": "years",
+ "geography": "South Asia",
+ "span": {
+  "from": "2024",
+  "to": "2024"
+ },
+ "sources": [
+  {
+   "maker": "World Bank",
+   "dataset": "World Development Indicators: Life expectancy at birth, male (years) (SP.DYN.LE00.MA.IN)",
+   "url": "https://data.worldbank.org/indicator/SP.DYN.LE00.MA.IN",
+   "licence": "CC BY-4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-25"
+  },
+  {
+   "maker": "World Bank",
+   "dataset": "World Development Indicators: Life expectancy at birth, female (years) (SP.DYN.LE00.FE.IN)",
+   "url": "https://data.worldbank.org/indicator/SP.DYN.LE00.FE.IN",
+   "licence": "CC BY-4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-25"
+  }
+ ],
+ "measure": {
+  "basis": "absolute"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "country",
+    "label": "Country",
+    "type": "text"
+   },
+   {
+    "key": "men",
+    "label": "Men",
+    "type": "number"
+   },
+   {
+    "key": "women",
+    "label": "Women",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   [
+    "Afghanistan",
+    64.7,
+    67.8
+   ],
+   [
+    "Bangladesh",
+    73.3,
+    76.7
+   ],
+   [
+    "Bhutan",
+    71.6,
+    75.3
+   ],
+   [
+    "India",
+    70.7,
+    73.9
+   ],
+   [
+    "Maldives",
+    79.9,
+    83
+   ],
+   [
+    "Nepal",
+    69.1,
+    72.1
+   ],
+   [
+    "Pakistan",
+    65.5,
+    70.3
+   ],
+   [
+    "Sri Lanka",
+    74.4,
+    80.7
+   ]
+  ]
+ },
+ "encode": {
+  "label": "country",
+  "from": "men",
+  "to": "women"
+ },
+ "options": {
+  "focus": [
+   "India"
+  ]
+ }
+}

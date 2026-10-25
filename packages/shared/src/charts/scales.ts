@@ -93,20 +93,21 @@ export function formatNumber(v: number, decimals = 0, grouping: Grouping = 'inte
 /** Compact tick labels for big numbers: 2.5k, 40m, 1.2bn (or lakh and crore for rupees). */
 export function formatCompact(v: number, step: number, grouping: Grouping = 'international'): string {
   const abs = Math.abs(v);
-  const units: Array<[number, string]> =
+  // [threshold, divisor, suffix]: thousands are written out up to 9,999, then 10k.
+  const units: Array<[number, number, string]> =
     grouping === 'indian'
       ? [
-          [1e7, ' cr'],
-          [1e5, ' lakh'],
+          [1e7, 1e7, ' cr'],
+          [1e5, 1e5, ' lakh'],
         ]
       : [
-          [1e12, 'tn'],
-          [1e9, 'bn'],
-          [1e6, 'm'],
-          [1e4, 'k'],
+          [1e12, 1e12, 'tn'],
+          [1e9, 1e9, 'bn'],
+          [1e6, 1e6, 'm'],
+          [1e4, 1e3, 'k'],
         ];
-  for (const [n, suffix] of units) {
-    if (abs >= n && Math.abs(step) >= n / 100) {
+  for (const [t, n, suffix] of units) {
+    if (abs >= t && Math.abs(step) >= n / 100) {
       const d = Math.max(0, decimalsFor(step / n));
       return `${formatNumber(v / n, Math.min(d, 2), grouping)}${suffix}`;
     }

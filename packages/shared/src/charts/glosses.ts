@@ -88,7 +88,7 @@ export function chartGlosses(chart: Chart): string[] {
     if (rest > 0) out.push(rest === 1 ? 'The grey line is the other series.' : `The grey lines are the other ${rest} series.`);
   }
   if (chart.form === 'waffle') out.push(chart.options?.per ? `Each square stands for ${formatNumber(chart.options.per, 0, grouping(chart))} ${chart.units}, rounded to whole squares.` : 'Each square is one per cent of the total, rounded so the squares add up to a hundred.');
-  if (chart.form === 'bump') out.push(`Ranks are worked out from the values in each period; first is the ${chart.options?.rank === 'asc' ? 'lowest' : 'highest'}.`);
+  if (chart.form === 'bump') out.push(`Ranks are among the series shown, worked out from the values in each period; first is the ${chart.options?.rank === 'asc' ? 'lowest' : 'highest'}.`);
   if (chart.form === 'ridgeline') out.push('Each ridge is a smoothed outline of the values in its group (a kernel density; bandwidth by Silverman’s rule).');
   if (chart.method?.trim()) out.push(chart.method.trim());
   return out;

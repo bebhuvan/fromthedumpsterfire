@@ -1,0 +1,164 @@
+{
+ "form": "bar",
+ "title": "Twenty-five years of Indian growth, and one fall",
+ "note": "Real GDP growth each year. The pandemic year is the only one below zero.",
+ "units": "%",
+ "geography": "India",
+ "span": {
+  "from": "2000",
+  "to": "2025"
+ },
+ "sourceSpan": {
+  "from": "1961",
+  "to": "2025"
+ },
+ "sources": [
+  {
+   "maker": "World Bank",
+   "dataset": "World Development Indicators: GDP growth (annual %) (NY.GDP.MKTP.KD.ZG)",
+   "url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG",
+   "licence": "CC BY-4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-25"
+  }
+ ],
+ "measure": {
+  "basis": "change",
+  "base": "the year before, at constant prices"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "year",
+    "label": "Year",
+    "type": "year"
+   },
+   {
+    "key": "growth",
+    "label": "GDP growth (annual %)",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   [
+    2000,
+    3.84
+   ],
+   [
+    2001,
+    4.82
+   ],
+   [
+    2002,
+    3.8
+   ],
+   [
+    2003,
+    7.86
+   ],
+   [
+    2004,
+    7.92
+   ],
+   [
+    2005,
+    7.92
+   ],
+   [
+    2006,
+    8.06
+   ],
+   [
+    2007,
+    7.66
+   ],
+   [
+    2008,
+    3.09
+   ],
+   [
+    2009,
+    7.86
+   ],
+   [
+    2010,
+    8.5
+   ],
+   [
+    2011,
+    5.24
+   ],
+   [
+    2012,
+    5.46
+   ],
+   [
+    2013,
+    6.39
+   ],
+   [
+    2014,
+    7.41
+   ],
+   [
+    2015,
+    8.0
+   ],
+   [
+    2016,
+    8.26
+   ],
+   [
+    2017,
+    6.8
+   ],
+   [
+    2018,
+    6.45
+   ],
+   [
+    2019,
+    3.87
+   ],
+   [
+    2020,
+    -5.78
+   ],
+   [
+    2021,
+    9.69
+   ],
+   [
+    2022,
+    7.61
+   ],
+   [
+    2023,
+    7.21
+   ],
+   [
+    2024,
+    7.1
+   ],
+   [
+    2025,
+    7.57
+   ]
+  ]
+ },
+ "encode": {
+  "x": "year",
+  "y": "growth"
+ },
+ "options": {
+  "colour": "focus"
+ },
+ "annotations": [
+  {
+   "kind": "point",
+   "x": 2020,
+   "text": "Lockdown: the economy shrank",
+   "by": "editor"
+  }
+ ]
+}

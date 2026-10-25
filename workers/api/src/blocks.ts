@@ -6,8 +6,13 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { CODE_LANGS } from '@fdf/shared/highlight';
+import type { Chart } from '@fdf/shared/charts';
 import {
   addAudio,
+  addChart,
+  fetchOwid,
+  fetchWorldBank,
+  replaceChart,
   addCode,
   addPicture,
   addQuote,
@@ -89,11 +94,20 @@ blocksApi.get('/api/items/:id/blocks', async (c) => {
   return c.json(await listing(c.env, c.req.param('id')));
 });
 
-// Pull quotes, code, video and audio. Each is checked before it is stored; a refusal says why.
+/** A chart spec as sent; its shape and every honesty rule are checked by validateChart, server side. */
+const CHART = z.object({ chart: z.record(z.string(), z.unknown()) });
+
+// Pull quotes, code, video, audio and charts. Each is checked before it is stored; a refusal says why.
 blocksApi.post('/api/items/:id/blocks', async (c) => {
   const item = await itemOr404(c.env, c.req.param('id'));
-  const raw = await body(c, z.object({ kind: z.enum(['quote', 'code', 'video', 'audio']) }).passthrough());
-  const schema = raw.kind === 'quote' ? ('start' in raw ? ADD.quoteAt : ADD.quote) : ADD[raw.kind];
+  const raw = await body(c, z.object({ kind: z.enum(['quote', 'code', 'video', 'audio', 'chart']) }).passthrough());
+  if (raw.kind === 'chart') {
+    const parsed = CHART.safeParse(raw);
+    if (!parsed.success) return c.json({ error: 'Send the chart as { kind: "chart", chart: {…} }' }, 400);
+    const r = await attempt(() => addChart(c.env, item, parsed.data.chart as unknown as Chart));
+    return c.json({ id: r.id, warnings: r.warnings, ...(await listing(c.env, item.id)) });
+  }
+  const schema = raw.kind === 'quote' ? ('start' in raw ? ADD.quoteAt : ADD.quote) : ADD[raw.kind as 'code' | 'video' | 'audio'];
   const parsed = schema.safeParse(raw);
   if (!parsed.success) return c.json({ error: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') }, 400);
   const b = parsed.data as Added;
@@ -194,6 +208,31 @@ blocksApi.patch('/api/blocks/:id', async (c) => {
   await attempt(() => patchBlock(c.env, row, p));
   await runChecks(c.env, row.item_id, { links: false });
   return c.json(await listing(c.env, row.item_id));
+});
+
+// A chart's whole spec, replaced after the editor edits it (words, data, form, annotations).
+blocksApi.put('/api/blocks/:id/chart', async (c) => {
+  const row = await blockOr404(c.env, c.req.param('id'));
+  const b = await body(c, CHART);
+  const r = await attempt(() => replaceChart(c.env, row, b.chart as unknown as Chart));
+  return c.json({ warnings: r.warnings, ...(await listing(c.env, row.item_id)) });
+});
+
+/**
+ * The data behind a chart, fetched by code from Our World in Data (a grapher link) or the World Bank
+ * (an indicator and countries), with each source's licence as stated. Nothing is stored: the Desk
+ * builds the chart from the answer and keeps it with POST /api/items/:id/blocks.
+ */
+blocksApi.post('/api/charts/fetch', async (c) => {
+  const b = await body(
+    c,
+    z.discriminatedUnion('provider', [
+      z.object({ provider: z.literal('owid'), chart: z.string().trim().min(2).max(500), entities: z.array(z.string().max(120)).max(60).optional(), from: z.number().int().optional(), to: z.number().int().optional() }),
+      z.object({ provider: z.literal('worldbank'), indicator: z.string().trim().min(2).max(60), countries: z.array(z.string().max(3)).min(1).max(30), from: z.number().int().optional(), to: z.number().int().optional() }),
+    ]),
+  );
+  const r = await attempt(() => (b.provider === 'owid' ? fetchOwid(b.chart, b) : fetchWorldBank(b.indicator, b.countries, b)));
+  return c.json(r);
 });
 
 blocksApi.delete('/api/blocks/:id', async (c) => {

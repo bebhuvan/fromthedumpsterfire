@@ -1,0 +1,89 @@
+{
+ "form": "waffle",
+ "title": "Coal still makes seven of every ten units of India’s electricity",
+ "note": "Solar has passed hydro for the first time.",
+ "units": "% of electricity generated",
+ "geography": "India",
+ "span": {
+  "from": "2025",
+  "to": "2025"
+ },
+ "sourceSpan": {
+  "from": "1985",
+  "to": "2025"
+ },
+ "sources": [
+  {
+   "maker": "Ember",
+   "dataset": "Yearly Electricity Data",
+   "url": "https://ember-energy.org/data/yearly-electricity-data/",
+   "licence": "CC BY 4.0",
+   "retrieved": "2026-10-25",
+   "via": {
+    "name": "Our World in Data",
+    "url": "https://ourworldindata.org/grapher/share-elec-by-source",
+    "licence": "CC BY 4.0"
+   }
+  }
+ ],
+ "measure": {
+  "basis": "share",
+  "denominator": "of all electricity generated in the year"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "source",
+    "label": "Source",
+    "type": "text"
+   },
+   {
+    "key": "share",
+    "label": "Share of electricity, 2025",
+    "type": "number",
+    "unit": "%"
+   }
+  ],
+  "rows": [
+   [
+    "Coal",
+    70.82
+   ],
+   [
+    "Gas",
+    2.33
+   ],
+   [
+    "Hydro",
+    8.55
+   ],
+   [
+    "Solar",
+    9.42
+   ],
+   [
+    "Wind",
+    5.0
+   ],
+   [
+    "Oil",
+    0.2
+   ],
+   [
+    "Nuclear",
+    2.59
+   ],
+   [
+    "Bioenergy",
+    1.11
+   ]
+  ]
+ },
+ "encode": {
+  "label": "source",
+  "y": "share"
+ },
+ "options": {
+  "colour": "categorical"
+ }
+}

@@ -1,0 +1,119 @@
+{
+ "form": "dot",
+ "title": "Twenty-five years of warming, north and south",
+ "note": "Each dot is a year’s average; the whisker is the 95 per cent range of the estimate.",
+ "units": "°C",
+ "geography": "World and hemispheres",
+ "span": {
+  "from": "2000",
+  "to": "2025"
+ },
+ "sourceSpan": {
+  "from": "1850",
+  "to": "2026"
+ },
+ "sources": [
+  {
+   "maker": "Met Office Hadley Centre",
+   "dataset": "HadCRUT5 (HadCRUT.5.1.0.0)",
+   "url": "https://www.metoffice.gov.uk/hadobs/hadcrut5/",
+   "licence": "Open Government Licence v3",
+   "licenceUrl": "https://www.metoffice.gov.uk/hadobs/hadcrut5/terms_and_conditions.html",
+   "retrieved": "2026-10-25",
+   "via": {
+    "name": "Our World in Data",
+    "url": "https://ourworldindata.org/grapher/temperature-anomaly",
+    "licence": "CC BY 4.0"
+   }
+  }
+ ],
+ "measure": {
+  "basis": "anomaly",
+  "base": "the 1861–1890 average"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "region",
+    "label": "Region",
+    "type": "text"
+   },
+   {
+    "key": "year",
+    "label": "Year",
+    "type": "text"
+   },
+   {
+    "key": "anomaly",
+    "label": "Temperature anomaly",
+    "type": "number"
+   },
+   {
+    "key": "lower",
+    "label": "Lower bound (95% confidence)",
+    "type": "number"
+   },
+   {
+    "key": "upper",
+    "label": "Upper bound (95% confidence)",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   [
+    "Northern Hemisphere",
+    "2000",
+    0.87,
+    0.84,
+    0.9
+   ],
+   [
+    "Southern Hemisphere",
+    "2000",
+    0.51,
+    0.46,
+    0.56
+   ],
+   [
+    "World",
+    "2000",
+    0.69,
+    0.66,
+    0.72
+   ],
+   [
+    "Northern Hemisphere",
+    "2025",
+    1.72,
+    1.67,
+    1.77
+   ],
+   [
+    "Southern Hemisphere",
+    "2025",
+    1.1,
+    1.05,
+    1.15
+   ],
+   [
+    "World",
+    "2025",
+    1.41,
+    1.37,
+    1.45
+   ]
+  ]
+ },
+ "encode": {
+  "label": "region",
+  "series": "year",
+  "y": "anomaly",
+  "lo": "lower",
+  "hi": "upper"
+ },
+ "options": {
+  "focus": [
+   "2025"
+  ]
+ }
+}

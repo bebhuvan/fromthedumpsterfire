@@ -199,7 +199,7 @@ export function bandPath(lower: Array<[number, number] | null>, upper: Array<[nu
 export function withGaps<T extends { x: number; y: number | null }>(pts: T[]): Array<T | null> {
   const xs = pts.filter((p) => p.y !== null).map((p) => p.x);
   const diffs = xs.slice(1).map((x, i) => x - xs[i]!).filter((d) => d > 0).sort((a, b) => a - b);
-  const usual = diffs.length ? diffs[Math.floor(diffs.length / 2)]! : Infinity;
+  const usual = diffs.length ? diffs[Math.floor((diffs.length - 1) / 2)]! : Infinity;
   const out: Array<T | null> = [];
   let prev: T | null = null;
   for (const p of pts) {
@@ -311,7 +311,8 @@ export interface AnnotFrame {
   /** The plotted points in px, so labels can be set where the data is not. */
   marks?: Array<[number, number]>;
   /** The data point an annotation points at: its y in px, looked up from the rows. */
-  point?: (a: Extract<Annotation, { kind: 'point' }>) => { x: number; y: number } | null;
+  /** The data point an annotation points at (r: the mark's own radius, when it is bigger than a dot). */
+  point?: (a: Extract<Annotation, { kind: 'point' }>) => { x: number; y: number; r?: number } | null;
   sy?: Scale;
 }
 
@@ -326,10 +327,12 @@ export function drawPeriods(ctx: Ctx, f: AnnotFrame): SceneNode[] {
     const xa = f.sx(a.from);
     const xb = f.sx(a.to);
     if (xa === null || xb === null) continue;
-    const l = Math.max(f.x0, Math.min(xa, xb));
-    const r = Math.min(f.x1, Math.max(xa, xb));
-    if (r <= l) continue;
-    out.push({ t: 'rect', x: l, y: f.y0, w: Math.max(1.5, r - l), h: f.y1 - f.y0, fill: 'plate' });
+    let l = Math.max(f.x0, Math.min(xa, xb));
+    let r = Math.min(f.x1, Math.max(xa, xb));
+    if (r < l) continue;
+    // A period of one year (or one day) is still a period: give it a visible width around its point.
+    if (r - l < 3) ((l = (l + r) / 2 - 1.5), (r = l + 3));
+    out.push({ t: 'rect', x: l, y: f.y0, w: r - l, h: f.y1 - f.y0, fill: 'plate' });
     const size = a.by === 'editor' ? ctx.s.note - 1.5 : ctx.s.small;
     const lines = wrapText(a.text, authorFace(a.by), size, Math.max(60, Math.min(150, r - l + 80)));
     const anchorRight = l + 4 + Math.max(...lines.map((s) => textWidth(s, authorFace(a.by), size))) > f.x1;
@@ -394,7 +397,8 @@ export function drawCallouts(ctx: Ctx, f: AnnotFrame, avoid: Array<{ x: number; 
       { dx: -1, dy: 1 },
       { dx: 1, dy: 1 },
     ].map(({ dx, dy }) => {
-      const off = 26;
+      const ring = Math.max(4.5, (p.r ?? 0) + 2.5);
+      const off = 21 + ring;
       const bx = dx < 0 ? p.x - 6 - w : p.x + 6;
       const by = dy < 0 ? p.y - off - h : p.y + off;
       return { bx, by, dx, dy };
@@ -409,10 +413,11 @@ export function drawCallouts(ctx: Ctx, f: AnnotFrame, avoid: Array<{ x: number; 
     };
     const best = cands.reduce((a2, b2) => (score(b2) < score(a2) ? b2 : a2));
     taken.push({ x: best.bx, y: best.by, w, h });
-    out.push({ t: 'circle', cx: p.x, cy: p.y, r: 4.5, stroke: 'ink', sw: 1.25 });
+    const ring = Math.max(4.5, (p.r ?? 0) + 2.5);
+    out.push({ t: 'circle', cx: p.x, cy: p.y, r: ring, stroke: 'ink', sw: 1.25 });
     const ly = best.dy < 0 ? best.by + h + 1 : best.by - size + 1;
     const lx = best.dx < 0 ? best.bx + w : best.bx;
-    out.push({ t: 'line', x1: p.x + (best.dx < 0 ? -3 : 3), y1: p.y + (best.dy < 0 ? -5 : 5), x2: lx, y2: ly + (best.dy < 0 ? -2 : -size * 0.2), stroke: 'ink', sw: 0.75 });
+    out.push({ t: 'line', x1: p.x + (best.dx < 0 ? -1 : 1) * ring * 0.6, y1: p.y + (best.dy < 0 ? -1 : 1) * ring * 0.8, x2: lx, y2: ly + (best.dy < 0 ? -2 : -size * 0.2), stroke: 'ink', sw: 0.75 });
     lines.forEach((s, i) => out.push(text(best.dx < 0 ? best.bx + w : best.bx, best.by + size + i * lh, s, face, size, paint, best.dx < 0 ? 'end' : 'start')));
   }
   return out;

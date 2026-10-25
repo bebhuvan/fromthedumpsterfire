@@ -1,0 +1,501 @@
+{
+ "form": "bump",
+ "title": "India passes China",
+ "note": "The most populous countries, ranked among themselves each decade.",
+ "units": "people",
+ "geography": "World",
+ "span": {
+  "from": "1960",
+  "to": "2024"
+ },
+ "sourceSpan": {
+  "from": "1960",
+  "to": "2025"
+ },
+ "sources": [
+  {
+   "maker": "World Bank",
+   "dataset": "World Development Indicators: Population, total (SP.POP.TOTL)",
+   "url": "https://data.worldbank.org/indicator/SP.POP.TOTL",
+   "licence": "CC BY-4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-25"
+  }
+ ],
+ "measure": {
+  "basis": "absolute"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "country",
+    "label": "Country",
+    "type": "text"
+   },
+   {
+    "key": "year",
+    "label": "Year",
+    "type": "year"
+   },
+   {
+    "key": "pop",
+    "label": "Population",
+    "type": "number",
+    "unit": "people"
+   }
+  ],
+  "rows": [
+   [
+    "Bangladesh",
+    1960,
+    51828660
+   ],
+   [
+    "Bangladesh",
+    1970,
+    69058894
+   ],
+   [
+    "Bangladesh",
+    1980,
+    88016432
+   ],
+   [
+    "Bangladesh",
+    1990,
+    111633717
+   ],
+   [
+    "Bangladesh",
+    2000,
+    134544304
+   ],
+   [
+    "Bangladesh",
+    2010,
+    152201981
+   ],
+   [
+    "Bangladesh",
+    2020,
+    166298024
+   ],
+   [
+    "Bangladesh",
+    2024,
+    173562364
+   ],
+   [
+    "Brazil",
+    1960,
+    72388126
+   ],
+   [
+    "Brazil",
+    1970,
+    95375651
+   ],
+   [
+    "Brazil",
+    1980,
+    121207461
+   ],
+   [
+    "Brazil",
+    1990,
+    149143223
+   ],
+   [
+    "Brazil",
+    2000,
+    174018282
+   ],
+   [
+    "Brazil",
+    2010,
+    193701929
+   ],
+   [
+    "Brazil",
+    2020,
+    208660842
+   ],
+   [
+    "Brazil",
+    2024,
+    211998573
+   ],
+   [
+    "China",
+    1960,
+    667070000
+   ],
+   [
+    "China",
+    1970,
+    818315000
+   ],
+   [
+    "China",
+    1980,
+    981235000
+   ],
+   [
+    "China",
+    1990,
+    1135185000
+   ],
+   [
+    "China",
+    2000,
+    1262645000
+   ],
+   [
+    "China",
+    2010,
+    1337705000
+   ],
+   [
+    "China",
+    2020,
+    1411100000
+   ],
+   [
+    "China",
+    2024,
+    1408975000
+   ],
+   [
+    "Germany",
+    1960,
+    72814900
+   ],
+   [
+    "Germany",
+    1970,
+    78169289
+   ],
+   [
+    "Germany",
+    1980,
+    78288576
+   ],
+   [
+    "Germany",
+    1990,
+    79433029
+   ],
+   [
+    "Germany",
+    2000,
+    82211508
+   ],
+   [
+    "Germany",
+    2010,
+    81776930
+   ],
+   [
+    "Germany",
+    2020,
+    83160871
+   ],
+   [
+    "Germany",
+    2024,
+    83516593
+   ],
+   [
+    "India",
+    1960,
+    435990338
+   ],
+   [
+    "India",
+    1970,
+    545864268
+   ],
+   [
+    "India",
+    1980,
+    687354025
+   ],
+   [
+    "India",
+    1990,
+    864972221
+   ],
+   [
+    "India",
+    2000,
+    1057922733
+   ],
+   [
+    "India",
+    2010,
+    1243481564
+   ],
+   [
+    "India",
+    2020,
+    1402617695
+   ],
+   [
+    "India",
+    2024,
+    1450935791
+   ],
+   [
+    "Indonesia",
+    1960,
+    88296070
+   ],
+   [
+    "Indonesia",
+    1970,
+    115657495
+   ],
+   [
+    "Indonesia",
+    1980,
+    148950540
+   ],
+   [
+    "Indonesia",
+    1990,
+    183501098
+   ],
+   [
+    "Indonesia",
+    2000,
+    216077790
+   ],
+   [
+    "Indonesia",
+    2010,
+    246305322
+   ],
+   [
+    "Indonesia",
+    2020,
+    274814866
+   ],
+   [
+    "Indonesia",
+    2024,
+    283487931
+   ],
+   [
+    "Japan",
+    1960,
+    93216000
+   ],
+   [
+    "Japan",
+    1970,
+    103403000
+   ],
+   [
+    "Japan",
+    1980,
+    116807000
+   ],
+   [
+    "Japan",
+    1990,
+    123478000
+   ],
+   [
+    "Japan",
+    2000,
+    126843000
+   ],
+   [
+    "Japan",
+    2010,
+    128070000
+   ],
+   [
+    "Japan",
+    2020,
+    126261000
+   ],
+   [
+    "Japan",
+    2024,
+    123975371
+   ],
+   [
+    "Nigeria",
+    1960,
+    45053782
+   ],
+   [
+    "Nigeria",
+    1970,
+    55893838
+   ],
+   [
+    "Nigeria",
+    1980,
+    73764641
+   ],
+   [
+    "Nigeria",
+    1990,
+    97120925
+   ],
+   [
+    "Nigeria",
+    2000,
+    126382494
+   ],
+   [
+    "Nigeria",
+    2010,
+    166642886
+   ],
+   [
+    "Nigeria",
+    2020,
+    213996181
+   ],
+   [
+    "Nigeria",
+    2024,
+    232679478
+   ],
+   [
+    "Pakistan",
+    1960,
+    45709310
+   ],
+   [
+    "Pakistan",
+    1970,
+    60166719
+   ],
+   [
+    "Pakistan",
+    1980,
+    82291010
+   ],
+   [
+    "Pakistan",
+    1990,
+    116155576
+   ],
+   [
+    "Pakistan",
+    2000,
+    154879127
+   ],
+   [
+    "Pakistan",
+    2010,
+    199239047
+   ],
+   [
+    "Pakistan",
+    2020,
+    235001746
+   ],
+   [
+    "Pakistan",
+    2024,
+    251269164
+   ],
+   [
+    "Russian Federation",
+    1960,
+    119897000
+   ],
+   [
+    "Russian Federation",
+    1970,
+    130404000
+   ],
+   [
+    "Russian Federation",
+    1980,
+    139010000
+   ],
+   [
+    "Russian Federation",
+    1990,
+    147969406
+   ],
+   [
+    "Russian Federation",
+    2000,
+    146596869
+   ],
+   [
+    "Russian Federation",
+    2010,
+    142849468
+   ],
+   [
+    "Russian Federation",
+    2020,
+    145245148
+   ],
+   [
+    "Russian Federation",
+    2024,
+    143669648
+   ],
+   [
+    "United States",
+    1960,
+    180671000
+   ],
+   [
+    "United States",
+    1970,
+    205052000
+   ],
+   [
+    "United States",
+    1980,
+    227225000
+   ],
+   [
+    "United States",
+    1990,
+    249623000
+   ],
+   [
+    "United States",
+    2000,
+    282162411
+   ],
+   [
+    "United States",
+    2010,
+    309378227
+   ],
+   [
+    "United States",
+    2020,
+    331578104
+   ],
+   [
+    "United States",
+    2024,
+    340003797
+   ]
+  ]
+ },
+ "encode": {
+  "x": "year",
+  "y": "pop",
+  "series": "country"
+ },
+ "options": {
+  "focus": [
+   "India",
+   "China"
+  ]
+ }
+}

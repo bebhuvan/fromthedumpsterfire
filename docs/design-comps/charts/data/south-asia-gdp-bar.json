@@ -1,0 +1,86 @@
+{
+ "form": "bar",
+ "title": "India sits in the middle of its neighbourhood",
+ "note": "Output per person, in 2015 dollars so the years compare. The Maldives earns from tourism; Afghanistan has no figure for 2025 yet.",
+ "units": "US$ per person",
+ "geography": "South Asia",
+ "span": {
+  "from": "2025",
+  "to": "2025"
+ },
+ "sources": [
+  {
+   "maker": "World Bank",
+   "dataset": "World Development Indicators: GDP per capita (constant 2015 US$) (NY.GDP.PCAP.KD)",
+   "url": "https://data.worldbank.org/indicator/NY.GDP.PCAP.KD",
+   "licence": "CC BY-4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-25"
+  }
+ ],
+ "measure": {
+  "basis": "per-capita",
+  "money": {
+   "currency": "USD",
+   "prices": "real",
+   "baseYear": 2015
+  }
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "country",
+    "label": "Country",
+    "type": "text"
+   },
+   {
+    "key": "gdp_pc",
+    "label": "GDP per capita, 2025 (constant 2015 US$)",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   [
+    "Afghanistan",
+    null
+   ],
+   [
+    "Bangladesh",
+    1985
+   ],
+   [
+    "Bhutan",
+    3989
+   ],
+   [
+    "India",
+    2523
+   ],
+   [
+    "Maldives",
+    12499
+   ],
+   [
+    "Nepal",
+    1234
+   ],
+   [
+    "Pakistan",
+    1669
+   ],
+   [
+    "Sri Lanka",
+    4439
+   ]
+  ]
+ },
+ "encode": {
+  "label": "country",
+  "y": "gdp_pc"
+ },
+ "options": {
+  "focus": [
+   "India"
+  ]
+ }
+}

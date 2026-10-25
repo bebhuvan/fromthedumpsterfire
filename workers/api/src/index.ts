@@ -867,14 +867,33 @@ app.get('/api/hauls/:id/preview', async (c) => {
 
 app.post('/api/hauls/:id/publish', async (c) => {
   // `card`: the share card the Desk drew in the editor's browser, a base64 PNG (checked in publish.ts).
-  const b = await body(c, z.object({ correction: z.string().max(1000).optional(), confirm: z.literal(true), card: z.string().max(3_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/).optional() }));
-  let card: Uint8Array | undefined;
-  try {
-    card = b.card ? Uint8Array.from(atob(b.card), (ch) => ch.charCodeAt(0)) : undefined;
-  } catch {
-    card = undefined;
+  // `charts`: each chart's app pictures (light and dark PNGs, base64), drawn by the Desk or the terminal
+  // and keyed by chartKey; publish.ts checks they were drawn from the chart it is publishing.
+  const b64 = z.string().max(4_500_000).regex(/^[A-Za-z0-9+/]+={0,2}$/);
+  const b = await body(
+    c,
+    z.object({
+      correction: z.string().max(1000).optional(),
+      confirm: z.literal(true),
+      card: z.string().max(3_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/).optional(),
+      charts: z.record(z.string().regex(/^[0-9a-f]{16}$/), z.object({ light: b64, dark: b64 })).optional(),
+    }),
+  );
+  const bytes = (s: string): Uint8Array | undefined => {
+    try {
+      return Uint8Array.from(atob(s), (ch) => ch.charCodeAt(0));
+    } catch {
+      return undefined;
+    }
+  };
+  const card = b.card ? bytes(b.card) : undefined;
+  const chartPictures = new Map<string, { light: Uint8Array; dark: Uint8Array }>();
+  for (const [key, p] of Object.entries(b.charts ?? {})) {
+    const light = bytes(p.light);
+    const dark = bytes(p.dark);
+    if (light && dark) chartPictures.set(key, { light, dark });
   }
-  const r = await publishHaul(c.env, c.req.param('id'), { correction: b.correction, card });
+  const r = await publishHaul(c.env, c.req.param('id'), { correction: b.correction, card, chartPictures });
   return c.json(r, r.ok ? 200 : 422);
 });
 

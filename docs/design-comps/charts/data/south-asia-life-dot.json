@@ -1,0 +1,80 @@
+{
+ "form": "dot",
+ "title": "How long a child born today can expect to live",
+ "units": "years",
+ "geography": "South Asia",
+ "span": {
+  "from": "2024",
+  "to": "2024"
+ },
+ "sources": [
+  {
+   "maker": "World Bank",
+   "dataset": "World Development Indicators: Life expectancy at birth, total (years) (SP.DYN.LE00.IN)",
+   "url": "https://data.worldbank.org/indicator/SP.DYN.LE00.IN",
+   "licence": "CC BY-4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-25"
+  }
+ ],
+ "measure": {
+  "basis": "absolute"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "country",
+    "label": "Country",
+    "type": "text"
+   },
+   {
+    "key": "life",
+    "label": "Life expectancy at birth, 2024",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   [
+    "Afghanistan",
+    66.3
+   ],
+   [
+    "Bangladesh",
+    74.9
+   ],
+   [
+    "Bhutan",
+    73.3
+   ],
+   [
+    "India",
+    72.2
+   ],
+   [
+    "Maldives",
+    81.3
+   ],
+   [
+    "Nepal",
+    70.6
+   ],
+   [
+    "Pakistan",
+    67.8
+   ],
+   [
+    "Sri Lanka",
+    77.7
+   ]
+  ]
+ },
+ "encode": {
+  "label": "country",
+  "y": "life"
+ },
+ "options": {
+  "focus": [
+   "India"
+  ]
+ }
+}

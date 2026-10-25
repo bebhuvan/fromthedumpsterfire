@@ -14,7 +14,9 @@
 import { findCode, findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
 import { startSeconds } from '@fdf/shared/quoting';
 import { codeLang, highlightCode } from '@fdf/shared/highlight';
-import type { Block, BlockKind, Plate } from '@fdf/shared/haul';
+import type { Block, BlockKind, ChartImages, Plate } from '@fdf/shared/haul';
+import { chartKey, validateChart, type Chart } from '@fdf/shared/charts';
+import type { Edition } from '@fdf/shared/tokens';
 import type { Env } from './env';
 import type { ItemRow, SourceRow } from './db';
 import { guardedFetch } from './extract/guard';
@@ -43,7 +45,8 @@ export type StoredBlock =
   | { kind: 'code'; code: string; lang?: string; caption?: string; start: number; end: number }
   | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { width: number; height: number }; link: string }
   | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number; seconds?: number }
-  | { kind: 'image'; caption: string; credit: string; licence: string; sourceUrl?: string; creator?: string; date?: string; width: number; height: number };
+  | { kind: 'image'; caption: string; credit: string; licence: string; sourceUrl?: string; creator?: string; date?: string; width: number; height: number }
+  | { kind: 'chart'; chart: Chart };
 
 /** An error the editor sees as it is: plain words, a 4xx status. */
 export class BlockRefused extends Error {
@@ -457,6 +460,31 @@ export async function setPicturePlate(env: Env, item: ItemRow, input: { bytes?: 
   return id;
 }
 
+// ---------------------------------------------------------------- charts
+
+/**
+ * A chart (packages/shared/src/charts): checked by the honesty validator before it is stored, and
+ * again at publish. Its data rows are stored with it; the website and the app draw only from them.
+ */
+export function checkChart(chart: Chart): { warnings: string[] } {
+  const r = validateChart(chart);
+  if (!r.ok) refuse(`The chart cannot be kept yet:\n${r.errors.slice(0, 12).map((e) => `• ${e.message}${e.path !== 'chart' ? ` (${e.path.replace(/^chart\.?/, '')})` : ''}`).join('\n')}`);
+  return { warnings: r.warnings.map((w) => w.message) };
+}
+
+export async function addChart(env: Env, item: ItemRow, chart: Chart): Promise<{ id: string; warnings: string[] }> {
+  const { warnings } = checkChart(chart);
+  return { id: await insertBlock(env, item.id, { kind: 'chart', chart }), warnings };
+}
+
+/** Replace a chart's spec (the editor edited its words, data or form); checked again. */
+export async function replaceChart(env: Env, row: BlockRow, chart: Chart): Promise<{ warnings: string[] }> {
+  if (row.kind !== 'chart') refuse('That block is not a chart.', 409);
+  const { warnings } = checkChart(chart);
+  await env.DB.prepare('UPDATE blocks SET body = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify({ kind: 'chart', chart }), nowIso(), row.id).run();
+  return { warnings };
+}
+
 // ---------------------------------------------------------------- editing, ordering, removing
 
 export interface BlockPatch {
@@ -543,8 +571,16 @@ export function blockQuoteRows(blocks: BlockRow[], source: string | null): Array
   return rows;
 }
 
+/** The app's pictures of a chart, drawn by the Desk or the terminal and sent with the publish: by chartKey. */
+export type ChartPictures = Map<string, { light: Uint8Array; dark: Uint8Array }>;
+
+/** The app's pictures are the phone figure (375 wide) at three times: 1125 px wide PNGs. */
+export const CHART_PICTURE = { width: 1125, maxHeight: 4000, maxBytes: 3 * 1024 * 1024 } as const;
+
 export interface BundleBlocks {
   blocks: Block[];
+  /** Chart pictures to write next to the bundle: [FILES key, PNG bytes]. */
+  pictures?: Array<[string, Uint8Array]>;
   /** [MEDIA key, FILES key] pairs to copy next to the bundle. */
   copies: Array<[string, string]>;
   problems: string[];
@@ -554,8 +590,14 @@ export interface BundleBlocks {
  * The item's kept blocks as they go into the bundle, in order: quotes re-verified, code tokens
  * computed with highlightCode, posters and pictures pointed at their FILES copies under `to`.
  */
-export function blocksForBundle(rows: BlockRow[], source: string | null, to: string, filesBase: string): BundleBlocks {
-  const out: BundleBlocks = { blocks: [], copies: [], problems: [] };
+export function blocksForBundle(
+  rows: BlockRow[],
+  source: string | null,
+  to: string,
+  filesBase: string,
+  charts: { edition: Edition; pictures?: ChartPictures; warnings?: string[] } = { edition: 'oxblood' },
+): BundleBlocks {
+  const out: BundleBlocks = { blocks: [], copies: [], problems: [], pictures: [] };
   let n = 0;
   for (const r of rows) {
     if (r.status !== 'kept') continue;
@@ -615,6 +657,36 @@ export function blocksForBundle(rows: BlockRow[], source: string | null, to: str
           ...(b.date ? { date: b.date } : {}),
         };
         out.blocks.push({ kind: 'image', plate });
+        break;
+      }
+      case 'chart': {
+        const r = validateChart(b.chart);
+        if (!r.ok) {
+          out.problems.push(`the chart "${b.chart.title || 'untitled'}" fails its checks: ${r.errors[0]!.message}`);
+          continue;
+        }
+        // The app's pictures: drawn from exactly this chart and this Haul's ink, else the publish waits.
+        const key = chartKey(b.chart, charts.edition);
+        const pic = charts.pictures?.get(key);
+        let images: ChartImages | undefined;
+        if (pic) {
+          const bad = (['light', 'dark'] as const).find((s) => {
+            const size = imageSize(pic[s]);
+            return !size || size.mime !== 'image/png' || size.width !== CHART_PICTURE.width || size.height > CHART_PICTURE.maxHeight || pic[s].byteLength > CHART_PICTURE.maxBytes;
+          });
+          if (bad) out.problems.push(`the app picture of the chart "${b.chart.title}" is not a ${CHART_PICTURE.width} px wide PNG; draw it again`);
+          else {
+            images = { light: { url: '', width: 0, height: 0 }, dark: { url: '', width: 0, height: 0 } };
+            for (const s of ['light', 'dark'] as const) {
+              const k = `${to}-${n}-chart-${s}.png`;
+              out.pictures!.push([k, pic[s]]);
+              const size = imageSize(pic[s])!;
+              images[s] = { url: `${filesBase}/${k}`, width: size.width, height: size.height };
+            }
+          }
+        } else if (charts.pictures) out.problems.push(`the chart "${b.chart.title}" has no pictures for the app; publish from the Desk or with npm run editorial -- publish, which draw them`);
+        else charts.warnings?.push(`The chart "${b.chart.title}" gets its app pictures when it is published.`);
+        out.blocks.push({ kind: 'chart', chart: b.chart, ...(images ? { images } : {}) });
         break;
       }
     }

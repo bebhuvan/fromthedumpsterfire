@@ -1,0 +1,1145 @@
+{
+ "form": "beeswarm",
+ "title": "How long people live, country by country",
+ "note": "Each dot is a country. South Asia sits in the middle of the world.",
+ "units": "years",
+ "geography": "World",
+ "span": {
+  "from": "2024",
+  "to": "2024"
+ },
+ "sources": [
+  {
+   "maker": "World Bank",
+   "dataset": "World Development Indicators: Life expectancy at birth, total (years) (SP.DYN.LE00.IN)",
+   "url": "https://data.worldbank.org/indicator/SP.DYN.LE00.IN",
+   "licence": "CC BY-4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-25"
+  }
+ ],
+ "measure": {
+  "basis": "absolute"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "country",
+    "label": "Country",
+    "type": "text"
+   },
+   {
+    "key": "region",
+    "label": "Region",
+    "type": "text"
+   },
+   {
+    "key": "life",
+    "label": "Life expectancy at birth",
+    "type": "number",
+    "unit": "years"
+   }
+  ],
+  "rows": [
+   [
+    "American Samoa",
+    "East Asia & Pacific",
+    73.0
+   ],
+   [
+    "Australia",
+    "East Asia & Pacific",
+    83.1
+   ],
+   [
+    "Brunei Darussalam",
+    "East Asia & Pacific",
+    75.5
+   ],
+   [
+    "Cambodia",
+    "East Asia & Pacific",
+    70.8
+   ],
+   [
+    "China",
+    "East Asia & Pacific",
+    78.0
+   ],
+   [
+    "Fiji",
+    "East Asia & Pacific",
+    67.5
+   ],
+   [
+    "French Polynesia",
+    "East Asia & Pacific",
+    84.2
+   ],
+   [
+    "Guam",
+    "East Asia & Pacific",
+    77.4
+   ],
+   [
+    "Hong Kong SAR, China",
+    "East Asia & Pacific",
+    85.4
+   ],
+   [
+    "Indonesia",
+    "East Asia & Pacific",
+    71.3
+   ],
+   [
+    "Japan",
+    "East Asia & Pacific",
+    84.0
+   ],
+   [
+    "Kiribati",
+    "East Asia & Pacific",
+    66.6
+   ],
+   [
+    "Korea, Dem. People's Rep.",
+    "East Asia & Pacific",
+    73.7
+   ],
+   [
+    "Korea, Rep.",
+    "East Asia & Pacific",
+    83.6
+   ],
+   [
+    "Lao PDR",
+    "East Asia & Pacific",
+    69.2
+   ],
+   [
+    "Macao SAR, China",
+    "East Asia & Pacific",
+    83.3
+   ],
+   [
+    "Malaysia",
+    "East Asia & Pacific",
+    76.8
+   ],
+   [
+    "Marshall Islands",
+    "East Asia & Pacific",
+    67.1
+   ],
+   [
+    "Micronesia, Fed. Sts.",
+    "East Asia & Pacific",
+    67.4
+   ],
+   [
+    "Mongolia",
+    "East Asia & Pacific",
+    72.4
+   ],
+   [
+    "Myanmar",
+    "East Asia & Pacific",
+    67.1
+   ],
+   [
+    "Naoero",
+    "East Asia & Pacific",
+    62.3
+   ],
+   [
+    "New Caledonia",
+    "East Asia & Pacific",
+    78.9
+   ],
+   [
+    "New Zealand",
+    "East Asia & Pacific",
+    82.0
+   ],
+   [
+    "Northern Mariana Islands",
+    "East Asia & Pacific",
+    78.9
+   ],
+   [
+    "Palau",
+    "East Asia & Pacific",
+    69.4
+   ],
+   [
+    "Papua New Guinea",
+    "East Asia & Pacific",
+    66.3
+   ],
+   [
+    "Philippines",
+    "East Asia & Pacific",
+    69.9
+   ],
+   [
+    "Samoa",
+    "East Asia & Pacific",
+    71.8
+   ],
+   [
+    "Singapore",
+    "East Asia & Pacific",
+    83.3
+   ],
+   [
+    "Solomon Islands",
+    "East Asia & Pacific",
+    70.7
+   ],
+   [
+    "Thailand",
+    "East Asia & Pacific",
+    76.6
+   ],
+   [
+    "Timor-Leste",
+    "East Asia & Pacific",
+    67.9
+   ],
+   [
+    "Tonga",
+    "East Asia & Pacific",
+    73.1
+   ],
+   [
+    "Tuvalu",
+    "East Asia & Pacific",
+    67.3
+   ],
+   [
+    "Vanuatu",
+    "East Asia & Pacific",
+    71.7
+   ],
+   [
+    "Viet Nam",
+    "East Asia & Pacific",
+    74.7
+   ],
+   [
+    "Albania",
+    "Europe & Central Asia",
+    79.8
+   ],
+   [
+    "Andorra",
+    "Europe & Central Asia",
+    84.2
+   ],
+   [
+    "Armenia",
+    "Europe & Central Asia",
+    78.3
+   ],
+   [
+    "Austria",
+    "Europe & Central Asia",
+    82.0
+   ],
+   [
+    "Azerbaijan",
+    "Europe & Central Asia",
+    74.6
+   ],
+   [
+    "Belarus",
+    "Europe & Central Asia",
+    74.4
+   ],
+   [
+    "Belgium",
+    "Europe & Central Asia",
+    82.3
+   ],
+   [
+    "Bosnia and Herzegovina",
+    "Europe & Central Asia",
+    78.0
+   ],
+   [
+    "Bulgaria",
+    "Europe & Central Asia",
+    75.8
+   ],
+   [
+    "Channel Islands",
+    "Europe & Central Asia",
+    81.2
+   ],
+   [
+    "Croatia",
+    "Europe & Central Asia",
+    78.9
+   ],
+   [
+    "Cyprus",
+    "Europe & Central Asia",
+    81.8
+   ],
+   [
+    "Czechia",
+    "Europe & Central Asia",
+    80.0
+   ],
+   [
+    "Denmark",
+    "Europe & Central Asia",
+    82.3
+   ],
+   [
+    "Estonia",
+    "Europe & Central Asia",
+    79.3
+   ],
+   [
+    "Faroe Islands",
+    "Europe & Central Asia",
+    83.1
+   ],
+   [
+    "Finland",
+    "Europe & Central Asia",
+    82.3
+   ],
+   [
+    "France",
+    "Europe & Central Asia",
+    83.0
+   ],
+   [
+    "Georgia",
+    "Europe & Central Asia",
+    74.7
+   ],
+   [
+    "Germany",
+    "Europe & Central Asia",
+    80.8
+   ],
+   [
+    "Gibraltar",
+    "Europe & Central Asia",
+    83.6
+   ],
+   [
+    "Greece",
+    "Europe & Central Asia",
+    81.8
+   ],
+   [
+    "Greenland",
+    "Europe & Central Asia",
+    70.3
+   ],
+   [
+    "Hungary",
+    "Europe & Central Asia",
+    76.7
+   ],
+   [
+    "Iceland",
+    "Europe & Central Asia",
+    82.8
+   ],
+   [
+    "Ireland",
+    "Europe & Central Asia",
+    83.0
+   ],
+   [
+    "Isle of Man",
+    "Europe & Central Asia",
+    81.1
+   ],
+   [
+    "Italy",
+    "Europe & Central Asia",
+    84.0
+   ],
+   [
+    "Kazakhstan",
+    "Europe & Central Asia",
+    74.5
+   ],
+   [
+    "Kosovo",
+    "Europe & Central Asia",
+    78.2
+   ],
+   [
+    "Kyrgyz Republic",
+    "Europe & Central Asia",
+    72.4
+   ],
+   [
+    "Latvia",
+    "Europe & Central Asia",
+    76.4
+   ],
+   [
+    "Liechtenstein",
+    "Europe & Central Asia",
+    84.2
+   ],
+   [
+    "Lithuania",
+    "Europe & Central Asia",
+    77.2
+   ],
+   [
+    "Luxembourg",
+    "Europe & Central Asia",
+    83.2
+   ],
+   [
+    "Moldova",
+    "Europe & Central Asia",
+    71.3
+   ],
+   [
+    "Monaco",
+    "Europe & Central Asia",
+    86.5
+   ],
+   [
+    "Montenegro",
+    "Europe & Central Asia",
+    77.9
+   ],
+   [
+    "Netherlands",
+    "Europe & Central Asia",
+    82.0
+   ],
+   [
+    "North Macedonia",
+    "Europe & Central Asia",
+    76.6
+   ],
+   [
+    "Norway",
+    "Europe & Central Asia",
+    83.2
+   ],
+   [
+    "Poland",
+    "Europe & Central Asia",
+    78.4
+   ],
+   [
+    "Portugal",
+    "Europe & Central Asia",
+    82.4
+   ],
+   [
+    "Romania",
+    "Europe & Central Asia",
+    76.5
+   ],
+   [
+    "Russian Federation",
+    "Europe & Central Asia",
+    73.4
+   ],
+   [
+    "San Marino",
+    "Europe & Central Asia",
+    85.8
+   ],
+   [
+    "Serbia",
+    "Europe & Central Asia",
+    76.0
+   ],
+   [
+    "Slovak Republic",
+    "Europe & Central Asia",
+    78.4
+   ],
+   [
+    "Slovenia",
+    "Europe & Central Asia",
+    82.3
+   ],
+   [
+    "Spain",
+    "Europe & Central Asia",
+    83.9
+   ],
+   [
+    "Sweden",
+    "Europe & Central Asia",
+    84.1
+   ],
+   [
+    "Switzerland",
+    "Europe & Central Asia",
+    84.4
+   ],
+   [
+    "Tajikistan",
+    "Europe & Central Asia",
+    71.9
+   ],
+   [
+    "Turkiye",
+    "Europe & Central Asia",
+    77.4
+   ],
+   [
+    "Turkmenistan",
+    "Europe & Central Asia",
+    70.2
+   ],
+   [
+    "Ukraine",
+    "Europe & Central Asia",
+    74.7
+   ],
+   [
+    "United Kingdom",
+    "Europe & Central Asia",
+    81.4
+   ],
+   [
+    "Uzbekistan",
+    "Europe & Central Asia",
+    72.5
+   ],
+   [
+    "Antigua and Barbuda",
+    "Latin America & Caribbean",
+    77.8
+   ],
+   [
+    "Argentina",
+    "Latin America & Caribbean",
+    77.5
+   ],
+   [
+    "Aruba",
+    "Latin America & Caribbean",
+    76.5
+   ],
+   [
+    "Bahamas, The",
+    "Latin America & Caribbean",
+    74.7
+   ],
+   [
+    "Barbados",
+    "Latin America & Caribbean",
+    76.3
+   ],
+   [
+    "Belize",
+    "Latin America & Caribbean",
+    73.7
+   ],
+   [
+    "Bolivia",
+    "Latin America & Caribbean",
+    68.7
+   ],
+   [
+    "Brazil",
+    "Latin America & Caribbean",
+    76.0
+   ],
+   [
+    "British Virgin Islands",
+    "Latin America & Caribbean",
+    77.4
+   ],
+   [
+    "Cayman Islands",
+    "Latin America & Caribbean",
+    80.5
+   ],
+   [
+    "Chile",
+    "Latin America & Caribbean",
+    81.4
+   ],
+   [
+    "Colombia",
+    "Latin America & Caribbean",
+    77.9
+   ],
+   [
+    "Costa Rica",
+    "Latin America & Caribbean",
+    81.0
+   ],
+   [
+    "Cuba",
+    "Latin America & Caribbean",
+    78.3
+   ],
+   [
+    "Curacao",
+    "Latin America & Caribbean",
+    77.0
+   ],
+   [
+    "Dominica",
+    "Latin America & Caribbean",
+    71.3
+   ],
+   [
+    "Dominican Republic",
+    "Latin America & Caribbean",
+    73.9
+   ],
+   [
+    "Ecuador",
+    "Latin America & Caribbean",
+    77.6
+   ],
+   [
+    "El Salvador",
+    "Latin America & Caribbean",
+    72.3
+   ],
+   [
+    "Grenada",
+    "Latin America & Caribbean",
+    75.4
+   ],
+   [
+    "Guatemala",
+    "Latin America & Caribbean",
+    72.7
+   ],
+   [
+    "Guyana",
+    "Latin America & Caribbean",
+    70.3
+   ],
+   [
+    "Haiti",
+    "Latin America & Caribbean",
+    65.1
+   ],
+   [
+    "Honduras",
+    "Latin America & Caribbean",
+    73.0
+   ],
+   [
+    "Jamaica",
+    "Latin America & Caribbean",
+    71.6
+   ],
+   [
+    "Mexico",
+    "Latin America & Caribbean",
+    75.3
+   ],
+   [
+    "Nicaragua",
+    "Latin America & Caribbean",
+    75.1
+   ],
+   [
+    "Panama",
+    "Latin America & Caribbean",
+    79.8
+   ],
+   [
+    "Paraguay",
+    "Latin America & Caribbean",
+    74.0
+   ],
+   [
+    "Peru",
+    "Latin America & Caribbean",
+    77.9
+   ],
+   [
+    "Puerto Rico (US)",
+    "Latin America & Caribbean",
+    81.9
+   ],
+   [
+    "Sint Maarten (Dutch part)",
+    "Latin America & Caribbean",
+    76.5
+   ],
+   [
+    "St. Kitts and Nevis",
+    "Latin America & Caribbean",
+    72.3
+   ],
+   [
+    "St. Lucia",
+    "Latin America & Caribbean",
+    72.8
+   ],
+   [
+    "St. Martin (French part)",
+    "Latin America & Caribbean",
+    80.4
+   ],
+   [
+    "St. Vincent and the Grenadines",
+    "Latin America & Caribbean",
+    71.4
+   ],
+   [
+    "Suriname",
+    "Latin America & Caribbean",
+    73.8
+   ],
+   [
+    "Trinidad and Tobago",
+    "Latin America & Caribbean",
+    73.6
+   ],
+   [
+    "Turks and Caicos Islands",
+    "Latin America & Caribbean",
+    78.2
+   ],
+   [
+    "Uruguay",
+    "Latin America & Caribbean",
+    78.3
+   ],
+   [
+    "Venezuela, RB",
+    "Latin America & Caribbean",
+    72.7
+   ],
+   [
+    "Virgin Islands (U.S.)",
+    "Latin America & Caribbean",
+    80.8
+   ],
+   [
+    "Afghanistan",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    66.3
+   ],
+   [
+    "Algeria",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    76.5
+   ],
+   [
+    "Bahrain",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    81.4
+   ],
+   [
+    "Djibouti",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    66.2
+   ],
+   [
+    "Egypt, Arab Rep.",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    71.8
+   ],
+   [
+    "Iran, Islamic Rep.",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    77.9
+   ],
+   [
+    "Iraq",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    72.4
+   ],
+   [
+    "Israel",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    83.2
+   ],
+   [
+    "Jordan",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    78.0
+   ],
+   [
+    "Kuwait",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    84.6
+   ],
+   [
+    "Lebanon",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    77.9
+   ],
+   [
+    "Libya",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    71.1
+   ],
+   [
+    "Malta",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    83.0
+   ],
+   [
+    "Morocco",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    75.5
+   ],
+   [
+    "Oman",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    80.2
+   ],
+   [
+    "Pakistan",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    67.8
+   ],
+   [
+    "Qatar",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    82.5
+   ],
+   [
+    "Saudi Arabia",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    79.0
+   ],
+   [
+    "Syrian Arab Republic",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    72.6
+   ],
+   [
+    "Tunisia",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    76.7
+   ],
+   [
+    "United Arab Emirates",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    83.1
+   ],
+   [
+    "West Bank and Gaza",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    69.2
+   ],
+   [
+    "Yemen, Rep.",
+    "Middle East, North Africa, Afghanistan & Pakistan",
+    69.4
+   ],
+   [
+    "Bermuda",
+    "North America",
+    82.5
+   ],
+   [
+    "Canada",
+    "North America",
+    82.1
+   ],
+   [
+    "United States",
+    "North America",
+    78.9
+   ],
+   [
+    "Bangladesh",
+    "South Asia",
+    74.9
+   ],
+   [
+    "Bhutan",
+    "South Asia",
+    73.3
+   ],
+   [
+    "India",
+    "South Asia",
+    72.2
+   ],
+   [
+    "Maldives",
+    "South Asia",
+    81.3
+   ],
+   [
+    "Nepal",
+    "South Asia",
+    70.6
+   ],
+   [
+    "Sri Lanka",
+    "South Asia",
+    77.7
+   ],
+   [
+    "Angola",
+    "Sub-Saharan Africa",
+    64.8
+   ],
+   [
+    "Benin",
+    "Sub-Saharan Africa",
+    61.0
+   ],
+   [
+    "Botswana",
+    "Sub-Saharan Africa",
+    69.3
+   ],
+   [
+    "Burkina Faso",
+    "Sub-Saharan Africa",
+    61.3
+   ],
+   [
+    "Burundi",
+    "Sub-Saharan Africa",
+    63.8
+   ],
+   [
+    "Cabo Verde",
+    "Sub-Saharan Africa",
+    76.2
+   ],
+   [
+    "Cameroon",
+    "Sub-Saharan Africa",
+    64.0
+   ],
+   [
+    "Central African Republic",
+    "Sub-Saharan Africa",
+    57.7
+   ],
+   [
+    "Chad",
+    "Sub-Saharan Africa",
+    55.2
+   ],
+   [
+    "Comoros",
+    "Sub-Saharan Africa",
+    67.0
+   ],
+   [
+    "Congo, Dem. Rep.",
+    "Sub-Saharan Africa",
+    62.1
+   ],
+   [
+    "Congo, Rep.",
+    "Sub-Saharan Africa",
+    66.0
+   ],
+   [
+    "Cote d'Ivoire",
+    "Sub-Saharan Africa",
+    62.1
+   ],
+   [
+    "Equatorial Guinea",
+    "Sub-Saharan Africa",
+    63.9
+   ],
+   [
+    "Eritrea",
+    "Sub-Saharan Africa",
+    68.9
+   ],
+   [
+    "Eswatini",
+    "Sub-Saharan Africa",
+    64.3
+   ],
+   [
+    "Ethiopia",
+    "Sub-Saharan Africa",
+    67.6
+   ],
+   [
+    "Gabon",
+    "Sub-Saharan Africa",
+    68.5
+   ],
+   [
+    "Gambia, The",
+    "Sub-Saharan Africa",
+    66.1
+   ],
+   [
+    "Ghana",
+    "Sub-Saharan Africa",
+    65.7
+   ],
+   [
+    "Guinea",
+    "Sub-Saharan Africa",
+    60.9
+   ],
+   [
+    "Guinea-Bissau",
+    "Sub-Saharan Africa",
+    64.3
+   ],
+   [
+    "Kenya",
+    "Sub-Saharan Africa",
+    63.8
+   ],
+   [
+    "Lesotho",
+    "Sub-Saharan Africa",
+    57.8
+   ],
+   [
+    "Liberia",
+    "Sub-Saharan Africa",
+    62.3
+   ],
+   [
+    "Madagascar",
+    "Sub-Saharan Africa",
+    63.8
+   ],
+   [
+    "Malawi",
+    "Sub-Saharan Africa",
+    67.6
+   ],
+   [
+    "Mali",
+    "Sub-Saharan Africa",
+    60.7
+   ],
+   [
+    "Mauritania",
+    "Sub-Saharan Africa",
+    68.7
+   ],
+   [
+    "Mauritius",
+    "Sub-Saharan Africa",
+    73.8
+   ],
+   [
+    "Mozambique",
+    "Sub-Saharan Africa",
+    63.8
+   ],
+   [
+    "Namibia",
+    "Sub-Saharan Africa",
+    67.5
+   ],
+   [
+    "Niger",
+    "Sub-Saharan Africa",
+    61.4
+   ],
+   [
+    "Nigeria",
+    "Sub-Saharan Africa",
+    54.6
+   ],
+   [
+    "Rwanda",
+    "Sub-Saharan Africa",
+    68.0
+   ],
+   [
+    "Sao Tome and Principe",
+    "Sub-Saharan Africa",
+    69.9
+   ],
+   [
+    "Senegal",
+    "Sub-Saharan Africa",
+    68.9
+   ],
+   [
+    "Seychelles",
+    "Sub-Saharan Africa",
+    76.3
+   ],
+   [
+    "Sierra Leone",
+    "Sub-Saharan Africa",
+    62.0
+   ],
+   [
+    "Somalia, Fed. Rep.",
+    "Sub-Saharan Africa",
+    59.0
+   ],
+   [
+    "South Africa",
+    "Sub-Saharan Africa",
+    66.3
+   ],
+   [
+    "South Sudan",
+    "Sub-Saharan Africa",
+    57.7
+   ],
+   [
+    "Sudan",
+    "Sub-Saharan Africa",
+    66.5
+   ],
+   [
+    "Tanzania",
+    "Sub-Saharan Africa",
+    67.2
+   ],
+   [
+    "Togo",
+    "Sub-Saharan Africa",
+    62.9
+   ],
+   [
+    "Uganda",
+    "Sub-Saharan Africa",
+    68.5
+   ],
+   [
+    "Zambia",
+    "Sub-Saharan Africa",
+    66.5
+   ],
+   [
+    "Zimbabwe",
+    "Sub-Saharan Africa",
+    63.1
+   ]
+  ]
+ },
+ "encode": {
+  "y": "life",
+  "series": "region",
+  "label": "country"
+ },
+ "options": {
+  "focus": [
+   "India",
+   "Japan",
+   "Nigeria",
+   "Chad",
+   "Hong Kong SAR, China"
+  ]
+ }
+}

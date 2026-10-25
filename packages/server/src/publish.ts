@@ -5,7 +5,8 @@
 // Two buckets: MEDIA is private (uploads, voice notes, snapshots, chosen plates, book covers); FILES is
 // public and holds only published bundles under hauls/ and the shelf under shelf/. This module is the
 // only writer to FILES: it copies the voice notes, plates, video posters, pictures and covers a bundle
-// needs from MEDIA into FILES next to it, then writes the bundle and the index (or shelf/shelf.json).
+// needs from MEDIA into FILES next to it, writes the share card and the charts' app pictures the Desk
+// (or the terminal) drew, then writes the bundle and the index (or shelf/shelf.json).
 // It never writes hauls/ or shelf/ to MEDIA.
 
 import type { Audio, AudioFormat, Haul, HaulIndex, HaulSummary, Item, Plate, Rhyme, RouteStep, Thread, Title } from '@fdf/shared/haul';
@@ -21,7 +22,7 @@ import { dateIst, nowIso, parseJson, sha256Hex, slugify } from './util';
 import { imageSize, plateForBundle, type PlateRow } from './plates';
 import { formatOfNote } from './voice';
 import { threadsForHaul } from './connect';
-import { blocksFor, blocksForBundle } from './blocks';
+import { blocksFor, blocksForBundle, type ChartPictures } from './blocks';
 import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
 import { SHELF_PATH, SHELF_VERSION, shelfOrder, validateShelf, type BookNote, type Shelf, type ShelfBook } from '@fdf/shared/shelf';
 import { bookTitle, bookTitleText, linesFor, notesFor, shelfChanges, type BookRow } from './shelf';
@@ -56,6 +57,8 @@ export interface Assembled {
   copies: Array<[string, string]>;
   /** The share card to write next to the bundle, when the Desk sent a valid one. */
   card?: { key: string; bytes: Uint8Array };
+  /** The app's chart pictures to write next to the bundle: [FILES key, PNG bytes]. */
+  pictures: Array<[string, Uint8Array]>;
 }
 
 /** The share card's size (Open Graph's 1.91:1). */
@@ -105,7 +108,7 @@ export function bundleItemIds(items: Pick<ItemRow, 'id' | 'title' | 'title_choic
   return idFor;
 }
 
-export async function assembleHaul(env: Env, haulId: string, opts: { correction?: string; card?: Uint8Array } = {}): Promise<Assembled> {
+export async function assembleHaul(env: Env, haulId: string, opts: { correction?: string; card?: Uint8Array; chartPictures?: ChartPictures } = {}): Promise<Assembled> {
   const h = await env.DB.prepare('SELECT * FROM hauls WHERE id = ?').bind(haulId).first<HaulRow>();
   if (!h) throw new Error('No such Haul');
   const problems: PublishProblem[] = [];
@@ -114,6 +117,10 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
   const version = h.status === 'published' ? h.version + 1 : 1;
   const slug = haulSlug(h.number);
   const filesBase = env.FILES_BASE.replace(/\/$/, '');
+  const edition = editionOf(h.number, h.edition ?? undefined);
+  // Charts' app pictures: required at publish (the Desk and the terminal draw them), noted in a preview.
+  const pictures: Array<[string, Uint8Array]> = [];
+  const chartNotes: string[] = [];
 
   const items = await haulItemRows(env, haulId);
   const idFor = bundleItemIds(items);
@@ -195,8 +202,9 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     if (it.type === 'image' && !plate) problems.push({ itemId: it.id, itemTitle: label, message: 'a Picture needs its picture: add it with its credit and licence' });
     // The editor's blocks, in order: quotes and code re-verified, code highlighted, posters and
     // pictures copied next to the bundle.
-    const bb = blocksForBundle(await blocksFor(env, it.id), src?.text ?? null, `hauls/${slug}/media/${idFor.get(it.id)}`, filesBase);
+    const bb = blocksForBundle(await blocksFor(env, it.id), src?.text ?? null, `hauls/${slug}/media/${idFor.get(it.id)}`, filesBase, { edition, pictures: opts.chartPictures, warnings: chartNotes });
     copies.push(...bb.copies);
+    pictures.push(...(bb.pictures ?? []));
     for (const m of bb.problems) problems.push({ itemId: it.id, itemTitle: label, message: m });
 
     let shelf: string | undefined;
@@ -301,7 +309,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     publishedAt,
     swatch: h.swatch as Swatch,
     // Written out even when the editor left the default, so every reader shows the same ink.
-    edition: editionOf(h.number, h.edition ?? undefined),
+    edition,
     ...(card ? { card: { url: `${filesBase}/${card.key}`, ...CARD_SIZE } } : {}),
     ...(cover ? { cover } : {}),
     fieldNote: {
@@ -334,8 +342,9 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     hauls: [...current.hauls.filter((x) => x.number !== h.number), entry].sort((a, b) => b.number - a.number),
   };
 
+  for (const m of chartNotes) warnings.push({ path: 'items', rule: 'chart-pictures', message: m });
   const report = validateHaul(haul, index, { filesBase });
-  return { haul, index, problems, bundleErrors: report.errors, warnings: [...warnings, ...report.warnings], copies, ...(card ? { card } : {}) };
+  return { haul, index, problems, bundleErrors: report.errors, warnings: [...warnings, ...report.warnings], copies, pictures, ...(card ? { card } : {}) };
 }
 
 export interface PublishResult {
@@ -348,7 +357,7 @@ export interface PublishResult {
   warnings: BundleIssue[];
 }
 
-export async function publishHaul(env: Env, haulId: string, opts: { correction?: string; dryRun?: boolean; card?: Uint8Array } = {}): Promise<PublishResult> {
+export async function publishHaul(env: Env, haulId: string, opts: { correction?: string; dryRun?: boolean; card?: Uint8Array; chartPictures?: ChartPictures } = {}): Promise<PublishResult> {
   const a = await assembleHaul(env, haulId, opts);
   const base = { problems: a.problems, bundleErrors: a.bundleErrors, warnings: a.warnings };
   if (a.problems.length || a.bundleErrors.length || opts.dryRun) return { ok: !a.problems.length && !a.bundleErrors.length, ...base };
@@ -367,6 +376,10 @@ export async function publishHaul(env: Env, haulId: string, opts: { correction?:
   if (a.card) {
     if (!isHaulPath(a.card.key)) throw new Error(`Refusing to publish outside hauls/: ${a.card.key}`);
     await env.FILES.put(a.card.key, a.card.bytes, { httpMetadata: { contentType: 'image/png', cacheControl: 'public, max-age=31536000, immutable' } });
+  }
+  for (const [key, bytes] of a.pictures) {
+    if (!isHaulPath(key)) throw new Error(`Refusing to publish outside hauls/: ${key}`);
+    await env.FILES.put(key, bytes, { httpMetadata: { contentType: 'image/png', cacheControl: 'public, max-age=31536000, immutable' } });
   }
   const body = JSON.stringify(a.haul, null, 2);
   await env.FILES.put(path, body, { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=31536000, immutable' } });

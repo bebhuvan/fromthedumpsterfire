@@ -1,0 +1,851 @@
+{
+ "form": "area",
+ "title": "India still runs on coal, but the sun is catching up",
+ "units": "TWh",
+ "geography": "India",
+ "span": {
+  "from": "2000",
+  "to": "2025"
+ },
+ "sourceSpan": {
+  "from": "1965",
+  "to": "2025"
+ },
+ "sources": [
+  {
+   "maker": "Ember",
+   "dataset": "Yearly Electricity Data",
+   "url": "https://ember-energy.org/data/yearly-electricity-data/",
+   "licence": "CC BY 4.0",
+   "retrieved": "2026-10-25",
+   "via": {
+    "name": "Our World in Data",
+    "url": "https://ourworldindata.org/grapher/electricity-production-by-source",
+    "licence": "CC BY 4.0"
+   }
+  }
+ ],
+ "measure": {
+  "basis": "absolute"
+ },
+ "method": "Gas and oil are added together; so are nuclear, bioenergy and other renewables.",
+ "data": {
+  "columns": [
+   {
+    "key": "year",
+    "label": "Year",
+    "type": "year"
+   },
+   {
+    "key": "source",
+    "label": "Source",
+    "type": "text"
+   },
+   {
+    "key": "twh",
+    "label": "Electricity generated",
+    "type": "number",
+    "unit": "TWh"
+   }
+  ],
+  "rows": [
+   [
+    2000,
+    "Coal",
+    390.23
+   ],
+   [
+    2000,
+    "Gas and oil",
+    85.12
+   ],
+   [
+    2000,
+    "Hydro",
+    76.99
+   ],
+   [
+    2000,
+    "Nuclear and bioenergy",
+    17.46
+   ],
+   [
+    2000,
+    "Wind",
+    1.58
+   ],
+   [
+    2000,
+    "Solar",
+    0.01
+   ],
+   [
+    2001,
+    "Coal",
+    408.29
+   ],
+   [
+    2001,
+    "Gas and oil",
+    82.72
+   ],
+   [
+    2001,
+    "Hydro",
+    72.02
+   ],
+   [
+    2001,
+    "Nuclear and bioenergy",
+    20.96
+   ],
+   [
+    2001,
+    "Wind",
+    2.09
+   ],
+   [
+    2001,
+    "Solar",
+    0.01
+   ],
+   [
+    2002,
+    "Coal",
+    426.7
+   ],
+   [
+    2002,
+    "Gas and oil",
+    90.81
+   ],
+   [
+    2002,
+    "Hydro",
+    68.54
+   ],
+   [
+    2002,
+    "Nuclear and bioenergy",
+    21.49
+   ],
+   [
+    2002,
+    "Wind",
+    2.09
+   ],
+   [
+    2002,
+    "Solar",
+    0.01
+   ],
+   [
+    2003,
+    "Coal",
+    441.47
+   ],
+   [
+    2003,
+    "Gas and oil",
+    103.89
+   ],
+   [
+    2003,
+    "Hydro",
+    69.3
+   ],
+   [
+    2003,
+    "Nuclear and bioenergy",
+    20.85
+   ],
+   [
+    2003,
+    "Wind",
+    2.6
+   ],
+   [
+    2003,
+    "Solar",
+    0.02
+   ],
+   [
+    2004,
+    "Coal",
+    463.01
+   ],
+   [
+    2004,
+    "Gas and oil",
+    104.85
+   ],
+   [
+    2004,
+    "Hydro",
+    100.64
+   ],
+   [
+    2004,
+    "Nuclear and bioenergy",
+    24.57
+   ],
+   [
+    2004,
+    "Wind",
+    5.23
+   ],
+   [
+    2004,
+    "Solar",
+    0.02
+   ],
+   [
+    2005,
+    "Coal",
+    478.48
+   ],
+   [
+    2005,
+    "Gas and oil",
+    100.84
+   ],
+   [
+    2005,
+    "Hydro",
+    97.42
+   ],
+   [
+    2005,
+    "Nuclear and bioenergy",
+    21.77
+   ],
+   [
+    2005,
+    "Wind",
+    5.99
+   ],
+   [
+    2005,
+    "Solar",
+    0.02
+   ],
+   [
+    2006,
+    "Coal",
+    505.46
+   ],
+   [
+    2006,
+    "Gas and oil",
+    93.78
+   ],
+   [
+    2006,
+    "Hydro",
+    112.62
+   ],
+   [
+    2006,
+    "Nuclear and bioenergy",
+    23.22
+   ],
+   [
+    2006,
+    "Wind",
+    9.34
+   ],
+   [
+    2006,
+    "Solar",
+    0.01
+   ],
+   [
+    2007,
+    "Coal",
+    533.27
+   ],
+   [
+    2007,
+    "Gas and oil",
+    103.41
+   ],
+   [
+    2007,
+    "Hydro",
+    122.61
+   ],
+   [
+    2007,
+    "Nuclear and bioenergy",
+    25.23
+   ],
+   [
+    2007,
+    "Wind",
+    11.68
+   ],
+   [
+    2007,
+    "Solar",
+    0.06
+   ],
+   [
+    2008,
+    "Coal",
+    573.12
+   ],
+   [
+    2008,
+    "Gas and oil",
+    101.15
+   ],
+   [
+    2008,
+    "Hydro",
+    115.17
+   ],
+   [
+    2008,
+    "Nuclear and bioenergy",
+    24.53
+   ],
+   [
+    2008,
+    "Wind",
+    14.38
+   ],
+   [
+    2008,
+    "Solar",
+    0.06
+   ],
+   [
+    2009,
+    "Coal",
+    611.11
+   ],
+   [
+    2009,
+    "Gas and oil",
+    117.45
+   ],
+   [
+    2009,
+    "Hydro",
+    106.34
+   ],
+   [
+    2009,
+    "Nuclear and bioenergy",
+    27.38
+   ],
+   [
+    2009,
+    "Wind",
+    16.27
+   ],
+   [
+    2009,
+    "Solar",
+    0.08
+   ],
+   [
+    2010,
+    "Coal",
+    642.97
+   ],
+   [
+    2010,
+    "Gas and oil",
+    128.81
+   ],
+   [
+    2010,
+    "Hydro",
+    108.74
+   ],
+   [
+    2010,
+    "Nuclear and bioenergy",
+    36.3
+   ],
+   [
+    2010,
+    "Wind",
+    19.46
+   ],
+   [
+    2010,
+    "Solar",
+    0.11
+   ],
+   [
+    2011,
+    "Coal",
+    701.25
+   ],
+   [
+    2011,
+    "Gas and oil",
+    126.91
+   ],
+   [
+    2011,
+    "Hydro",
+    131.7
+   ],
+   [
+    2011,
+    "Nuclear and bioenergy",
+    47.68
+   ],
+   [
+    2011,
+    "Wind",
+    23.95
+   ],
+   [
+    2011,
+    "Solar",
+    0.83
+   ],
+   [
+    2012,
+    "Coal",
+    787.13
+   ],
+   [
+    2012,
+    "Gas and oil",
+    106.32
+   ],
+   [
+    2012,
+    "Hydro",
+    115.78
+   ],
+   [
+    2012,
+    "Nuclear and bioenergy",
+    49.66
+   ],
+   [
+    2012,
+    "Wind",
+    27.43
+   ],
+   [
+    2012,
+    "Solar",
+    2.1
+   ],
+   [
+    2013,
+    "Coal",
+    847.97
+   ],
+   [
+    2013,
+    "Gas and oil",
+    76.96
+   ],
+   [
+    2013,
+    "Hydro",
+    131.98
+   ],
+   [
+    2013,
+    "Nuclear and bioenergy",
+    50.88
+   ],
+   [
+    2013,
+    "Wind",
+    30.01
+   ],
+   [
+    2013,
+    "Solar",
+    3.43
+   ],
+   [
+    2014,
+    "Coal",
+    949.93
+   ],
+   [
+    2014,
+    "Gas and oil",
+    75.56
+   ],
+   [
+    2014,
+    "Hydro",
+    139.0
+   ],
+   [
+    2014,
+    "Nuclear and bioenergy",
+    55.83
+   ],
+   [
+    2014,
+    "Wind",
+    33.45
+   ],
+   [
+    2014,
+    "Solar",
+    4.91
+   ],
+   [
+    2015,
+    "Coal",
+    1006.55
+   ],
+   [
+    2015,
+    "Gas and oil",
+    74.03
+   ],
+   [
+    2015,
+    "Hydro",
+    133.48
+   ],
+   [
+    2015,
+    "Nuclear and bioenergy",
+    56.67
+   ],
+   [
+    2015,
+    "Wind",
+    32.74
+   ],
+   [
+    2015,
+    "Solar",
+    7.09
+   ],
+   [
+    2016,
+    "Coal",
+    1073.6
+   ],
+   [
+    2016,
+    "Gas and oil",
+    82.03
+   ],
+   [
+    2016,
+    "Hydro",
+    128.55
+   ],
+   [
+    2016,
+    "Nuclear and bioenergy",
+    55.1
+   ],
+   [
+    2016,
+    "Wind",
+    43.45
+   ],
+   [
+    2016,
+    "Solar",
+    12.2
+   ],
+   [
+    2017,
+    "Coal",
+    1115.24
+   ],
+   [
+    2017,
+    "Gas and oil",
+    83.78
+   ],
+   [
+    2017,
+    "Hydro",
+    135.98
+   ],
+   [
+    2017,
+    "Nuclear and bioenergy",
+    52.4
+   ],
+   [
+    2017,
+    "Wind",
+    52.63
+   ],
+   [
+    2017,
+    "Solar",
+    22.36
+   ],
+   [
+    2018,
+    "Coal",
+    1198.86
+   ],
+   [
+    2018,
+    "Gas and oil",
+    77.66
+   ],
+   [
+    2018,
+    "Hydro",
+    139.92
+   ],
+   [
+    2018,
+    "Nuclear and bioenergy",
+    57.45
+   ],
+   [
+    2018,
+    "Wind",
+    60.31
+   ],
+   [
+    2018,
+    "Solar",
+    37.45
+   ],
+   [
+    2019,
+    "Coal",
+    1198.76
+   ],
+   [
+    2019,
+    "Gas and oil",
+    75.02
+   ],
+   [
+    2019,
+    "Hydro",
+    162.29
+   ],
+   [
+    2019,
+    "Nuclear and bioenergy",
+    64.15
+   ],
+   [
+    2019,
+    "Wind",
+    63.31
+   ],
+   [
+    2019,
+    "Solar",
+    37.45
+   ],
+   [
+    2020,
+    "Coal",
+    1143.78
+   ],
+   [
+    2020,
+    "Gas and oil",
+    77.88
+   ],
+   [
+    2020,
+    "Hydro",
+    163.94
+   ],
+   [
+    2020,
+    "Nuclear and bioenergy",
+    64.49
+   ],
+   [
+    2020,
+    "Wind",
+    60.43
+   ],
+   [
+    2020,
+    "Solar",
+    52.91
+   ],
+   [
+    2021,
+    "Coal",
+    1255.56
+   ],
+   [
+    2021,
+    "Gas and oil",
+    63.79
+   ],
+   [
+    2021,
+    "Hydro",
+    160.57
+   ],
+   [
+    2021,
+    "Nuclear and bioenergy",
+    65.12
+   ],
+   [
+    2021,
+    "Wind",
+    68.09
+   ],
+   [
+    2021,
+    "Solar",
+    65.59
+   ],
+   [
+    2022,
+    "Coal",
+    1344.42
+   ],
+   [
+    2022,
+    "Gas and oil",
+    49.65
+   ],
+   [
+    2022,
+    "Hydro",
+    175.09
+   ],
+   [
+    2022,
+    "Nuclear and bioenergy",
+    69.48
+   ],
+   [
+    2022,
+    "Wind",
+    70.05
+   ],
+   [
+    2022,
+    "Solar",
+    95.92
+   ],
+   [
+    2023,
+    "Coal",
+    1445.44
+   ],
+   [
+    2023,
+    "Gas and oil",
+    54.65
+   ],
+   [
+    2023,
+    "Hydro",
+    149.43
+   ],
+   [
+    2023,
+    "Nuclear and bioenergy",
+    71.21
+   ],
+   [
+    2023,
+    "Wind",
+    82.11
+   ],
+   [
+    2023,
+    "Solar",
+    115.42
+   ],
+   [
+    2024,
+    "Coal",
+    1517.9
+   ],
+   [
+    2024,
+    "Gas and oil",
+    60.53
+   ],
+   [
+    2024,
+    "Hydro",
+    156.53
+   ],
+   [
+    2024,
+    "Nuclear and bioenergy",
+    76.95
+   ],
+   [
+    2024,
+    "Wind",
+    81.54
+   ],
+   [
+    2024,
+    "Solar",
+    143.07
+   ],
+   [
+    2025,
+    "Coal",
+    1474.15
+   ],
+   [
+    2025,
+    "Gas and oil",
+    52.64
+   ],
+   [
+    2025,
+    "Hydro",
+    177.97
+   ],
+   [
+    2025,
+    "Nuclear and bioenergy",
+    76.87
+   ],
+   [
+    2025,
+    "Wind",
+    103.98
+   ],
+   [
+    2025,
+    "Solar",
+    195.99
+   ]
+  ]
+ },
+ "encode": {
+  "x": "year",
+  "y": "twh",
+  "series": "source"
+ },
+ "options": {
+  "colour": "categorical"
+ },
+ "annotations": [
+  {
+   "kind": "rule",
+   "axis": "x",
+   "value": 2020,
+   "text": "Covid lockdown",
+   "by": "editor"
+  }
+ ]
+}

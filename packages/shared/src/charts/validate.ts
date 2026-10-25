@@ -218,7 +218,8 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
     if (role) {
       const i = idx(role);
       const n = new Set(rows.map((r) => (Array.isArray(r) ? r[i] : null))).size;
-      if (n > CHART_LIMITS.series) c.err('.options.colour', 'too-many-series', `${n} series is more than six colours can tell apart. Fold the rest into "Other", make one series loud (focus), or use small multiples.`);
+      // A waffle folds its smallest parts into a quiet "Other" block, each still listed with its value.
+      if (chart.form === 'waffle' ? n > 12 : n > CHART_LIMITS.series) c.err('.options.colour', 'too-many-series', `${n} series is more than six colours can tell apart. Fold the rest into "Other", make one series loud (focus), or use small multiples.`);
     }
   }
   if (colour === 'diverging') {
