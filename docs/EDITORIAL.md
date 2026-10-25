@@ -271,6 +271,24 @@ Inspect existing drafts before changing them. Other useful API routes: `/api/pla
 `/api/books/ID/notes` and `/api/shelf/preview`. Read their schemas in `workers/api/src` before
 submitting unfamiliar payloads; do not guess field names. All responses report server refusals.
 
+## Machine notes written in a session
+
+A note of context that the pipeline did not draft (a timeline, a definition the editor asked for)
+goes in through the same gates as the pipeline's own notes:
+
+```sh
+npm run editorial -- request POST /api/items/it_ID/marginalia --data .editorial/note.json
+```
+
+`note.json` is `{"text":"One or two plain sentences.","cite":{"kind":"source","quote":"The exact
+passage that supports it."},"writer":"claude-opus-5-5"}`, or cite a Wikipedia card already on the
+item with `{"kind":"wiki","cardId":"wk_ID"}` (add one first with `POST /api/items/it_ID/wiki`
+`{"query":"Lighthill report"}`). The passage must be in the stored source word for word, the text
+must pass the style check, and the judge then checks the note against its evidence: anything not
+fully supported is set aside and never shown. The note arrives as `proposed`, recorded as written
+by `<writer> (session)`, and ships only if the editor keeps it. Machine notes are always set as
+machine text; never use this route for the editor's words.
+
 ## Compose, review, publish
 
 ```sh

@@ -793,3 +793,14 @@ Branch `launch-2026-10-24` at `aff5110`, before the first Haul, at the editor's 
   4. `npm run db:migrate:production` (0008), then `npm run deploy:production`.
   5. Check: `npm run editorial -- library <a failed paid item>`; the first lookup builds the index
      (a large Readwise library takes a few lookups, 12 pages of 100 a time).
+
+## Session-written machine notes (2026-10-25)
+
+- `POST /api/items/:id/marginalia` (`workers/api/src/index.ts`): a machine note written in an
+  editorial session, at the editor's request (context such as a timeline). Same gates as the
+  pipeline's notes: evidence found verbatim in the stored source or a Wikipedia card on the item,
+  `checkStyle`, then `judgeNotes`; not fully supported means set aside unseen; arrives `proposed`
+  with `model` = `<writer> (session)`. Tests in `workers/api/test/marginalia.test.ts`. Guide in
+  `docs/EDITORIAL.md`.
+- `findVerbatim` keeps the close of a quotation nested at the end of a pasted quote (Gelsinger's
+  "‘Let there be light.’"); test in `packages/shared/test/desk-rules.test.ts`.

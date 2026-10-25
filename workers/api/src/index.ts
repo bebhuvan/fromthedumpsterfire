@@ -5,7 +5,7 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { checkStyle } from '@fdf/shared/style';
-import { isVerbatimAt } from '@fdf/shared/verbatim';
+import { findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
 import { START_AT } from '@fdf/shared/quoting';
 import { EDITIONS, SWATCHES, typeSwatch } from '@fdf/shared/tokens';
 import {
@@ -581,6 +581,52 @@ app.delete('/api/excerpts/:id', async (c) => {
 });
 
 // ------------------------------------------------------------------ drafts (titles, marginalia)
+
+// A machine note written outside the pipeline (an editorial session in Codex or Claude Code). It
+// passes the same gates as the pipeline's own: evidence found word for word in the stored source
+// (or a Wikipedia card already on the item), the style check, then the judge. Anything the judge
+// does not fully confirm is set aside unseen; nothing ships until the editor keeps it.
+app.post('/api/items/:id/marginalia', async (c) => {
+  const id = c.req.param('id');
+  await itemOr404(c.env, id);
+  const b = await body(
+    c,
+    z.object({
+      text: z.string().min(1).max(600),
+      cite: z.discriminatedUnion('kind', [
+        z.object({ kind: z.literal('source'), quote: z.string().min(2).max(1200) }),
+        z.object({ kind: z.literal('wiki'), cardId: z.string().min(1).max(64) }),
+      ]),
+      /** Who wrote it, for the record (e.g. "claude-opus-5-5"); stored as "<writer> (session)". */
+      writer: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,58}$/).optional(),
+    }),
+  );
+  const text = b.text.trim();
+  const style = checkStyle(text);
+  if (!style.ok) return c.json({ error: 'The note fails the style check', style }, 422);
+  let cite: MarginalBody['cite'];
+  if (b.cite.kind === 'source') {
+    const src = await c.env.DB.prepare('SELECT text FROM sources WHERE item_id = ?').bind(id).first<{ text: string }>();
+    if (!src) return c.json({ error: 'This item has no source text to check a note against' }, 409);
+    const f = findVerbatim(src.text, b.cite.quote);
+    if (!f) return c.json({ error: 'The cited passage is not in the source word for word' }, 422);
+    cite = { kind: 'source', quote: f.text, start: f.start, end: f.end };
+  } else {
+    const card = await c.env.DB.prepare(`SELECT id, title FROM wiki_cards WHERE id = ? AND item_id = ? AND status != 'cut'`).bind(b.cite.cardId, id).first<{ id: string; title: string }>();
+    if (!card) return c.json({ error: 'That Wikipedia card is not on this item' }, 422);
+    cite = { kind: 'wiki', title: card.title, cardId: card.id };
+  }
+  const pos = await c.env.DB.prepare(`SELECT COALESCE(MAX(position), -1) + 1 AS n FROM drafts WHERE item_id = ? AND kind = 'marginal'`).bind(id).first<{ n: number }>();
+  const draftId = newId('dr_');
+  const now = nowIso();
+  const note: MarginalBody = { text, cite, verdict: 'unchecked' };
+  await c.env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, model, position, created_at, updated_at) VALUES (?, ?, 'marginal', ?, 'proposed', ?, ?, ?, ?)`)
+    .bind(draftId, id, JSON.stringify(note), `${b.writer ?? 'editorial'} (session)`, pos?.n ?? 0, now, now)
+    .run();
+  await judgeNotes(c.env, id, draftId);
+  const fresh = await c.env.DB.prepare('SELECT * FROM drafts WHERE id = ?').bind(draftId).first<DraftRow>();
+  return c.json({ draft: { ...fresh, body: parseJson(fresh!.body, {}) }, style });
+});
 
 app.patch('/api/drafts/:id', async (c) => {
   const d = await c.env.DB.prepare('SELECT * FROM drafts WHERE id = ?').bind(c.req.param('id')).first<DraftRow>();
