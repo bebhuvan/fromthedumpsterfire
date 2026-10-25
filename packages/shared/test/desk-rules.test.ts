@@ -63,6 +63,14 @@ describe('verbatim matching', () => {
     expect(q?.text).toBe('the days of “square-rigged” ships');
     expect(isVerbatimAt(source, q!, q!.text)).toBe(true);
   });
+  it('keeps the close of a quotation nested at either end of the quote', () => {
+    const src = 'Gelsinger said: “At the center is light, and God said, ‘Let there be light.’ ” Then he left.';
+    expect(findVerbatim(src, 'At the center is light, and God said, ‘Let there be light.’')?.text).toBe('At the center is light, and God said, ‘Let there be light.’');
+    expect(findVerbatim(src, '“At the center is light, and God said, ‘Let there be light.’ ”')?.text).toBe('At the center is light, and God said, ‘Let there be light.’');
+    const s2 = 'She wrote ‘no’ in the margin and it’s still there.';
+    expect(findVerbatim(s2, 'in the margin and it’s still there')?.text).toBe('in the margin and it’s still there');
+    expect(findVerbatim('He said “yes” twice.', 'yes” twice')?.text).toBe('“yes” twice');
+  });
   it('refuses paraphrase', () => {
     expect(findVerbatim(source, 'the means we use to thread through the maze')).toBeNull();
   });

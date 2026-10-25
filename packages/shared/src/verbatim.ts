@@ -72,7 +72,7 @@ export function findVerbatim(source: string, quote: string): (Span & { text: str
   const trimmed = quote.trim().replace(/^["“'‘]+|["”'’]+$/g, '').trim();
   if (trimmed.length < 2) return null;
   const exact = source.indexOf(trimmed);
-  if (exact >= 0) return { start: exact, end: exact + trimmed.length, text: trimmed };
+  if (exact >= 0) return balanceQuotes(source, exact, exact + trimmed.length);
   const src = normaliseWithMap(source);
   const q = normaliseWithMap(trimmed).text;
   if (!q) return null;
@@ -81,6 +81,33 @@ export function findVerbatim(source: string, quote: string): (Span & { text: str
   const start = src.map[at]!;
   const lastSrcIndex = src.map[at + q.length - 1]!;
   const end = lastSrcIndex + 1;
+  return balanceQuotes(source, start, end);
+}
+
+/** Curly quotation marks opened or closed inside s and not matched there. A ’ between letters is an apostrophe. */
+function unmatched(s: string, open: string, close: string): { opens: number; closes: number } {
+  let opens = 0;
+  let closes = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === open) opens++;
+    else if (s[i] === close && !(/\p{L}/u.test(s[i - 1] ?? '') && /\p{L}/u.test(s[i + 1] ?? ''))) {
+      if (opens) opens--;
+      else closes++;
+    }
+  }
+  return { opens, closes };
+}
+
+/**
+ * Stripping the marks around a pasted quote can also strip the close of a quotation nested at its
+ * end ("God said, ‘Let there be light.’"). Take back from the source the marks the span needs to balance.
+ */
+function balanceQuotes(source: string, start: number, end: number): Span & { text: string } {
+  for (const [open, close] of [['‘', '’'], ['“', '”']] as const) {
+    const u = unmatched(source.slice(start, end), open, close);
+    for (let n = u.opens; n > 0 && source[end] === close; n--) end++;
+    for (let n = u.closes; n > 0 && source[start - 1] === open; n--) start--;
+  }
   return { start, end, text: source.slice(start, end) };
 }
 
