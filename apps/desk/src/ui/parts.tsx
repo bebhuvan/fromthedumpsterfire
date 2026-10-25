@@ -66,6 +66,7 @@ export const deskTypeLabel: Record<ContentType, string> = {
   image: 'Picture, artwork or meme (printed as a mounted print)',
   book: 'Book (printed as its jacket)',
   tool: 'Tool or app (printed as a specimen label)',
+  chart: 'Chart or data (printed as the figure)',
 };
 
 /** How each type is printed, so the choice reads as a layout decision. */
@@ -87,6 +88,7 @@ export const deskTypeForm: Record<ContentType, string> = {
   image: 'Printed as a mounted print: the picture large, its credit and licence beneath. Add the picture below.',
   book: 'Printed as its jacket: title, author, year, your note on the flap.',
   tool: 'Printed as a specimen label: what it is, what it does, your note.',
+  chart: 'Printed as the figure: your title, the chart drawn large from its data, your note, the source and the numbers. Add the chart below.',
 };
 
 export function TypeSelect({ value, onChange, className = 'select' }: { value: ContentType; onChange: (t: ContentType) => void; className?: string }) {
