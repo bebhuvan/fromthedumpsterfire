@@ -462,6 +462,10 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .ab-t { font-weight: 500; font-size: clamp(56px, 11vw, 150px); line-height: 0.86; letter-spacing: -0.035em; text-wrap: balance; }
 .ab-open .deck { margin-top: 12px; }
 @media (min-width: 1000px) { .ab-open .meta { grid-row: 1 / 3; align-self: end; padding-bottom: 0.6em; } .ab-t { grid-column: 2 / -1; } }
+.ab-note-body { max-width: 38rem; }
+.ab-note-body p { font: 400 clamp(19px, 1.8vw, 21px)/1.6 var(--serif); text-wrap: pretty; }
+.ab-note-body p + p { margin-top: 0.8em; }
+.ab-note-body .ab-sign { text-align: right; font-size: 28px; line-height: 1; margin-top: 0.6em; }
 .ab-voices { padding-block: 24px 16px; }
 .ab-voices .ed { font-size: 23px; line-height: 1.5; }
 .ab-voices .ab-m { font-size: 18px; line-height: 1.55; }

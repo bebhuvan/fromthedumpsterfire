@@ -738,3 +738,11 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
 
   Desk assets build and production Worker `wrangler deploy --dry-run` also pass. The isolated local
   smoke Worker was stopped after verification; its private fixture data remains gitignored.
+
+## The editor's note on About (2026-10-25)
+
+- The About page on the website and in the app opens with the editor's note ("From the editor",
+  signed B.), the editor's dictation tightened at the editor's request. One source for both:
+  `packages/shared/src/about.ts` (`@fdf/shared/about`), paragraphs of text, links and italic titles.
+  Links checked live on 2026-10-25 (LinkedIn refuses automated checks; the editor confirmed it).
+- Not yet live: needs `npm run deploy:web` and an over-the-air app update (`npm run app:update`).

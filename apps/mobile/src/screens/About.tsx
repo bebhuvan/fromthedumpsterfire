@@ -1,10 +1,12 @@
-// How it's made, in the magazine's own forms (as on the website): the title as a magazine opening,
+// About, as on the website: the editor's note (`@fdf/shared/about`), then how it's made: the title as a magazine opening,
 // the two voices as a transcript with B. and MACHINE in the margin, the promises as numbered house
 // rules each with the check that keeps it, and a key to the printed forms.
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { fonts, typeColor, usePalette } from '@/theme';
+import { editorNote, EDITOR_EMAIL } from '@fdf/shared/about';
 import { formGuide, formName } from '@/lib/forms';
+import { openSource } from '@/lib/open';
 import { Body, Machine, Meta, Note, Title } from '@/ui/type';
 import { Flame, TopBar } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
@@ -37,6 +39,19 @@ export function About() {
       <Body style={{ marginTop: 16 }}>
         From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays and talks, letters and speeches, poems, papers, podcasts, posts, pictures, passages from books, tools worth knowing and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.
       </Body>
+
+      <Head>From the editor</Head>
+      {editorNote.map((para, i) => (
+        <Body key={i} selectable style={{ marginTop: i ? 14 : 16 }}>
+          {para.map((s, j) =>
+            typeof s === 'string' ? s
+            : s.em ? <Text key={j} style={{ fontFamily: fonts.textItalic }}>{s.text}</Text>
+            : s.href ? <Text key={j} accessibilityRole="link" style={{ textDecorationLine: 'underline', textDecorationColor: p.ember }} onPress={() => (s.href === `mailto:${EDITOR_EMAIL}` ? Linking.openURL(s.href) : openSource(s.href!, p))}>{s.text}</Text>
+            : s.text,
+          )}
+        </Body>
+      ))}
+      <Text style={[styles.sign, { color: p.ember }]}>B.</Text>
 
       <Head>Two voices</Head>
       <View style={styles.turn}>
@@ -85,6 +100,7 @@ export function About() {
 const styles = StyleSheet.create({
   head: { fontFamily: fonts.display, fontSize: 24, lineHeight: 29, includeFontPadding: false },
   turn: { flexDirection: 'row', gap: 14, paddingVertical: 16 },
+  sign: { marginTop: 10, textAlign: 'right', fontFamily: fonts.displayItalic, fontSize: 26, lineHeight: 30 },
   whoEd: { width: 70, fontFamily: fonts.displayItalic, fontSize: 22, lineHeight: 28 },
   who: { width: 70, fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.1, lineHeight: 22 },
   rule: { flexDirection: 'row', gap: 14, paddingVertical: 14 },

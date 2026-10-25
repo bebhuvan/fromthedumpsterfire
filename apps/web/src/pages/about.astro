@@ -1,10 +1,11 @@
 ---
-// How it's made. The page uses the magazine's own forms: the two voices as a transcript, the promises
+// About: the editor's note (`@fdf/shared/about`), then how it's made in the magazine's own forms: the two voices as a transcript, the promises
 // as house rules with the check behind each, and a key to the printed forms.
 import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
 import { formGuide, formName } from '../lib/forms';
-import { paths } from '../lib/site';
+import { paths, safeHref } from '../lib/site';
+import { editorNote, EDITOR_EMAIL } from '@fdf/shared/about';
 
 export const prerender = true;
 
@@ -34,6 +35,8 @@ const rules = [
     how: 'Pictures come from public-domain archives, or are shown for commentary, with who made them, who holds them and the licence under each one.',
   },
 ];
+// The editor's own address is the one link that is not http(s); everything else goes through safeHref.
+const href = (u: string) => (u === `mailto:${EDITOR_EMAIL}` ? u : safeHref(u));
 ---
 <Base title="How it's made" description="One editor chooses everything. Machines read closely, find connections and check facts, and their words are always marked." path={paths.about} section="about" markdownPath={paths.llms}>
   <header class="wrap g ab-open">
@@ -41,6 +44,16 @@ const rules = [
     <Title title={{ text: "How it's", italic: 'made' }} as="h1" class="ab-t display" />
     <p class="c deck">From the Dumpster Fire is a magazine of things worth pulling out of the internet and the archive before they burn: essays and talks, letters and speeches, poems, papers, podcasts, posts, pictures, passages from books, tools worth knowing and strange corners of Wikipedia. It arrives in Hauls, when there is enough worth sending.</p>
   </header>
+
+  <section class="wrap g row ab-note" aria-labelledby="note-title">
+    <h2 class="m mh" id="note-title">From the editor</h2>
+    <div class="c ab-note-body">
+      {editorNote.map((para) => (
+        <p>{para.map((s) => (typeof s === 'string' ? s : s.em ? <em>{s.text}</em> : s.href && href(s.href) ? <a href={href(s.href)}>{s.text}</a> : s.text))}</p>
+      ))}
+      <p class="ab-sign"><span class="sign-in">B.</span></p>
+    </div>
+  </section>
 
   <section class="wrap transcript ab-voices" aria-labelledby="voices-title">
     <h2 class="sr" id="voices-title">Two voices</h2>
