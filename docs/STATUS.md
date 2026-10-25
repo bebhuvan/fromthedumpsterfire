@@ -810,3 +810,8 @@ Branch `launch-2026-10-24` at `aff5110`, before the first Haul, at the editor's 
 - Shelf: a long title no longer fails with HTTP 500 (D1 refuses LIKE patterns over 50 bytes; the slug check is a prefix compare), and slugs cut at a word break instead of mid-word (`slugify` in `packages/server/src/util.ts`). Desk `36acd5d1`/pipeline `6664ca84`.
 - Two shelf books made before the fix have bad ids and need deleting on the Desk (the service credential cannot delete): `early-india-from-the-origins-to-ad-1300-early-india`, `india-after-gandhi-the-history-of-the-worlds-largest-democra`.
 - Web footer: "A mobile app is coming soon." (web `3a6ea152`). Remove it when the Play Store listing is live.
+
+## Haul 001 ready on the Desk (2026-10-25)
+
+- Draft `hl_01m5spzqqsfnnb3fs08n`, "Wild, wild *times*", 17 items, 15 kept machine notes (all Claude: Sonnet from the pipeline, Opus from the session). Preview: no problems, no bundle errors, no warnings. The editor publishes it from the Desk; the session credential is draft-only.
+- Web `0e8864e7`: the timeline facelift, quotations sized by length (`quoteLength`), "1 minute". The app still draws the old timeline and large epigraphs; bring it level before the next APK/OTA.
