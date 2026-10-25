@@ -6,6 +6,7 @@
 import { haulSlug, type Haul, type Item, type Thread } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import { formName, formOf } from './forms';
+import { describeChart, licenceLine, unitsLine } from '@fdf/shared/charts/glosses';
 import { collectThreads } from './store';
 import {
   absolute,
@@ -69,6 +70,23 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
       lines.push('', `- **Marked by editor**: "${item.excerpt.highlight}"`);
     }
   }
+
+  // Charts: the editor's title and note, what the numbers are, the machine's description, the source.
+  const charts = (item.blocks ?? []).filter((b) => b.kind === 'chart');
+  charts.forEach((b, i) => {
+    if (b.kind !== 'chart') return;
+    const c = b.chart;
+    lines.push(
+      '',
+      `${h2} Figure ${i + 1}: ${c.title}`,
+      '',
+      ...(c.note ? [c.note, ''] : []),
+      `- **What the numbers are**: ${unitsLine(c)}`,
+      `- **Description (Machine)**: ${describeChart(c)}`,
+      `- **Source**: ${c.sources.map((s) => `[${s.maker}, ${s.dataset}](${s.url})${s.via ? ` via [${s.via.name}](${s.via.url})` : ''}`).join('; ')}. ${licenceLine(c)}. Retrieved ${c.sources.map((s) => s.retrieved).sort().pop()}.`,
+      `- **Data**: ${c.data.rows.length} rows, on the item page`,
+    );
+  });
 
   if (item.rhyme) {
     lines.push(

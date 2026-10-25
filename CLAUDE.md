@@ -17,6 +17,8 @@ Read these before working:
 - `docs/EDITORIAL.md`: agent/terminal editing from Codex or Claude Code, credentials, remote sessions,
   payloads and the shared Desk workflow. Use `npm run editorial -- --help`; never bypass the API
   with ad-hoc database writes or public-bucket uploads.
+- `docs/CHARTS.md`: the chart kit: forms, data spec, the honesty validator's rules, source adapters,
+  how a chart is added on the Desk and from the terminal, and how the app gets its pictures.
 - `docs/VOICE.md`: the editor's measured writing voice and the AI patterns to keep out of machine
   drafts. Machine-usable form in `packages/shared/src/voice.ts`.
 
@@ -35,6 +37,8 @@ Read these before working:
 - **No AI-generated images.** Plates are public domain, with licence recorded.
 - **Every work names the person who made it.** Pictures carry maker, holder, licence and a link back
   (`creditLine`); the Desk refuses a picture without its maker.
+- **Every number on a chart traces to its stored rows.** Charts are drawn by code from the data in the
+  bundle; models never write or "clean" a number, and the chart validator gates every chart.
 - **Model prose passes the style check** in `packages/shared` (no em-dash chains, no "not X but Y",
   banned-word list) before the editor sees it.
 - Secrets live in `.dev.vars` / `wrangler secret`, never in code, config or commands.
@@ -55,10 +59,12 @@ packages/server   Worker-side code shared by both: D1, model router, extraction,
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator, quoting (excerpt length guide, when to draw out big ideas), highlight
                   (code tokens at publish), fingerprint, shelf (the books the editor is reading:
-                  Shelf, validateShelf, shelfOrder)
+                  Shelf, validateShelf, shelfOrder), charts (src/charts: spec, validateChart,
+                  renderer with one file per form in forms/, glosses, CSV, bandSummary, app pictures)
 migrations/       D1 migrations
 scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-models.ts,
-                  publish-app-update.ts (signed over-the-air app updates)
+                  publish-app-update.ts (signed over-the-air app updates), chart-metrics.py (chart
+                  font metrics), chart-preview.ts (PNGs of chart JSON while designing)
 ```
 
 ## The Desk (apps/desk, workers/*, packages/server)
@@ -95,6 +101,13 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   text), embeds parsed from the editor's link by code, posters and pictures fetched through
   `guardedFetch` with a byte cap and kept in MEDIA, pictures only with the editor's credit and
   licence. `publish.ts` copies them to FILES, with the share card the Desk draws in the browser.
+- Charts (`docs/CHARTS.md`) are blocks too: stored with their rows, checked by `validateChart` (shared)
+  on the Desk, at publish and in `validateHaul`. Provider data comes only through
+  `packages/server/src/charts.ts` (Our World in Data, World Bank; `guardedFetch`, byte caps, licence as
+  stated or refused). The app's chart pictures are drawn on the editor's side at publish (the Desk in
+  the browser, `npm run editorial -- publish` in Node; resvg WebAssembly, hence `'wasm-unsafe-eval'`
+  in the Desk CSP) and accepted only under `chartKey(chart, edition)`. Bump `CHART_RENDER_VERSION`
+  when the renderer's output changes.
 - Machine-suggested connections, rhyme quotes and plate metadata follow the same rules as excerpts:
   quotes verified verbatim against stored source text at both ends, licences as the institution
   states them. A kept connection's published note is the editor's own words.
@@ -126,6 +139,9 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   Positions (the fingerprint) are classes on a 100-column grid, never inline styles.
 - Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
   sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.
+- Charts render as inline SVG from the bundle's rows (`Chart.astro`, `ChartSvg.astro`): colours are
+  classes from tokens.css (`chartCss`), a wide and a phone figure picked by a container query, the
+  data as a table under each. Never `set:html` for them either.
 - Design is Salvage (`docs/DESIGN.md`): each item renders in its printed form, chosen in
   `src/lib/forms.ts`; blocks in `Blocks.astro`; every picture's credit through `Credit.astro`; each
   Haul's edition ink on `<body>` (`.e-<edition>`) and its fingerprint (`Fingerprint.astro`); marks
@@ -152,6 +168,9 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   edition ink via `useEdition(haul)` and `Screen edition=`. No SVG: marks are tinted PNGs in
   `assets/marks/`. Development builds carry sample Hauls 001 to 003 (`lib/seed*.ts`); launch builds
   (`EXPO_PUBLIC_USE_SEED=0`) carry none.
+- Charts (`ui/Chart.tsx`): the published light and dark pictures (downloaded with the bundle for
+  offline, `lib/pictures.ts`) with native title, note, glosses, credit and the data table. Import chart
+  words from `@fdf/shared/charts/glosses`, not `@fdf/shared/charts` (that pulls in the renderer).
 - Fonts are embedded static cuts; use the names in `src/theme.ts` and never set fontWeight/fontStyle.
 - Build a release APK: `cd apps/mobile && npm run prebuild:android && npm run build:android`
   (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS

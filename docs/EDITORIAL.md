@@ -271,6 +271,25 @@ Inspect existing drafts before changing them. Other useful API routes: `/api/pla
 `/api/books/ID/notes` and `/api/shelf/preview`. Read their schemas in `workers/api/src` before
 submitting unfamiliar payloads; do not guess field names. All responses report server refusals.
 
+## Charts
+
+Charts have their own commands (`docs/CHARTS.md` has the spec and the rules):
+
+```sh
+npm run editorial -- chart-fetch --data .editorial/source.json   # Our World in Data or World Bank rows, licences stated
+npm run editorial -- chart-csv .editorial/table.csv              # a CSV/TSV as chart data (local)
+npm run editorial -- chart-check --data .editorial/chart.json    # the honesty validator (local)
+npm run editorial -- chart-draw /tmp/look --data .editorial/chart.json   # PNGs to look at (local)
+npm run editorial -- chart it_ID --data .editorial/chart.json    # keep it on an item
+npm run editorial -- chart-edit bk_ID --data .editorial/chart.json      # replace a kept chart
+```
+
+The title and note are the editor's words: take them from the editor, never write them. Every number
+comes from the source's rows; never type, round or "clean" a value. Machine annotations
+(`"by": "machine"`) may cite only figures that are in the rows; the server refuses others. `publish`
+draws each chart's app pictures in the terminal before it publishes (resvg and the app's fonts); a
+publish through `request` without them is refused when the Haul has charts.
+
 ## Machine notes written in a session
 
 A note of context that the pipeline did not draft (a timeline, a definition the editor asked for)

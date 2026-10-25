@@ -455,6 +455,18 @@ Prerendered: `/about`, 404, `/503`, `/tokens.css` (from `packages/shared/src/tok
 `deploy:web:preview` and `deploy:web` do both. Worker size: 776 KiB, 202 KiB gzipped. Measured CPU: 0 to
 1 ms per rendered page.
 
+## Charts (2026-10-25)
+
+A chart is an item block (`{ kind: 'chart', chart, images }`) carrying its data rows; a Chart item is
+printed as the figure. The spec, the honesty validator, the renderer (sixteen forms, a scene of shapes
+with colours by role) and the CSV and temperature-band helpers are in `packages/shared/src/charts`;
+the Our World in Data and World Bank adapters (guarded, byte-capped, licences as stated or refused) in
+`packages/server/src/charts.ts`. The website draws the SVG from the rows per render (two widths, a
+container query picks one; scenes memoised per isolate); the app shows light and dark PNGs of the
+phone figure, drawn at publish by the Desk in the browser or by `npm run editorial -- publish` (resvg
+WebAssembly, the app's font cuts), checked by `chartKey` and copied next to the bundle by publish.
+The Desk's CSP allows `'wasm-unsafe-eval'` for this. Details: `docs/CHARTS.md`.
+
 ## Agent and terminal editing (2026-10-24)
 
 `npm run editorial -- ...` is a Node client of the same private API as the Desk UI. No parallel

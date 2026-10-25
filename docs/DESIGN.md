@@ -57,6 +57,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | image | mounted print | the picture in a plate-grey mount, a museum label beside it (from 1000px) or under it: title, maker and date, where it is from, credit and licence |
 | book | jacket | the book set in type as a 2:3 jacket in lilac in the margin (or its cover, if the editor uploaded one), the title as a heading, a line from inside under a rule |
 | tool | specimen label | a ruled box with a tint strip on its top edge: the name huge, then fields (Made by, What it is, Since, In its own words, Where) |
+| chart | the figure | a magazine opening whose loud thing is the chart: the title, the why as standfirst, then the first chart drawn large from its data. On the cover its specimen is its own chart, drawn small |
 
 Shared by every item page: the running head (Haul and title, then the form's name), a thumb tab on
 the right edge in the type colour at a height set by the item's number (7px on phones, a numbered tab
@@ -107,6 +108,15 @@ credit and licence). Players and code may run past the column into the air on wi
 has no web view: it shows a video's poster and opens YouTube or Vimeo, opens Spotify and Apple episodes
 in their apps, plays audio files in its voice-note player, and sets code in the system monospace.
 It turns fingerprint columns into points in `apps/mobile/src/lib/fpGeometry.ts`.
+
+**Charts** (2026-10-25, `docs/CHARTS.md`): "Figure n" in quiet sans with the number in ember, the
+editor's title in display and note in the italic serif, a units line in quiet sans, the plot, the
+machine's glosses in the blue sans, the credit, and the numbers as a table. In the plot: hairline
+gridlines, ink2 tick labels in the margin, an ink zero line, square-ended marks with 2px ground gaps,
+labels on the lines instead of legends, text never in a data colour, one loud series in the Haul's
+edition ink and the rest quiet grey. Chart colours (`chartInk`) are validated ramps that avoid machine
+blue and ember. The wide figure runs 720px into the air from 1000px; the phone figure is 375px and is
+also the app's picture.
 
 ## The cover
 
@@ -206,6 +216,8 @@ Defined in `packages/shared/src/tokens.ts`.
 | pistachio (rabbit hole) | #E6F2C8 | #2E3915 |
 | lilac (letter, book) | #ECE4FA | #33284A |
 | aqua (post, picture) | #D3EFF0 | #123B3D |
+
+Charts share sky with Rhymes (a figure is cool-headed); their own colours are `chartInk`.
 
 Code colours (`palette.code`) and the eight edition inks (`editionInk`) are in tokens.ts. Talk, video,
 podcast and speech share butter; paper and tool share mint; poem, passage and quotation share coral.

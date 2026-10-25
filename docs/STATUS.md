@@ -815,3 +815,35 @@ Branch `launch-2026-10-24` at `aff5110`, before the first Haul, at the editor's 
 
 - Draft `hl_01m5spzqqsfnnb3fs08n`, "Wild, wild *times*", 17 items, 15 kept machine notes (all Claude: Sonnet from the pipeline, Opus from the session). Preview: no problems, no bundle errors, no warnings. The editor publishes it from the Desk; the session credential is draft-only.
 - Web `0e8864e7`: the timeline facelift, quotations sized by length (`quoteLength`), "1 minute". The app still draws the old timeline and large epigraphs; bring it level before the next APK/OTA.
+
+## The chart kit (2026-10-25, overnight, branch `charts-kit`; not deployed, not merged)
+
+Built from `docs/CHARTS-BRIEF.md`; the system is in `docs/CHARTS.md`, the night's report in
+`docs/CHARTS-REPORT.md`.
+
+- **Shared** (`packages/shared/src/charts`, export `@fdf/shared/charts`, light `@fdf/shared/charts/glosses`):
+  the chart spec, sixteen forms (line, small multiples, stacked area, bars and columns, dot, dumbbell,
+  slope, scatter, bump, warming stripes, temperature band, calendar, heatmap, ridgeline, beeswarm,
+  waffle), the honesty validator with a test per rule, figure tracing for machine text, glosses and a
+  text alternative written by code, CSV parsing, `bandSummary`, chart tokens (`chartInk`) validated
+  for colour blindness and contrast in both themes. `Block` gains `chart`; content type `chart`
+  (sky) is printed as the figure.
+- **Server and Desk**: chart blocks checked on keep and at publish; Our World in Data and World Bank
+  adapters (guarded, capped, licences as stated or refused); the Desk's chart editor (table, OWID,
+  World Bank; live preview and checks); the app's pictures drawn in the browser at publish with resvg
+  and accepted only under `chartKey`. Desk CSP: `script-src 'self' 'wasm-unsafe-eval'`.
+- **Terminal**: `chart`, `chart-edit`, `chart-fetch`, `chart-csv`, `chart-check`, `chart-draw`; `publish`
+  draws the pictures. End-to-end test against the Worker: keep, publish, PNGs next to the bundle.
+- **Website**: charts drawn as SVG from the rows (wide and phone figures), the figure form, chart
+  specimens on the cover, the numbers as a table. Worker 1,152 KiB, 301 KiB gzipped (was 202).
+- **App**: the chart block with the published pictures kept offline, native text and table, the
+  figure form and specimen. JS only (autolinking unchanged): ships over the air once published.
+  Not yet seen on a device.
+- **Comps**: `docs/design-comps/charts/` with real data (HadCRUT5 via OWID, World Bank WDI, Ember via
+  OWID, Open-Meteo ERA5 for Delhi), screenshots in `shots/`.
+- **Dev samples**: Haul 003 has a Chart item (Delhi's 2024 band and the stripes); Haul 002 a bar chart.
+- `npm run verify`: 613 tests pass.
+
+Before charts go live: merge `charts-kit`, deploy the Desk (CSP and routes) and the site, then an OTA
+for the app. No migration is needed (chart blocks use the existing `blocks` table). The editor's
+decisions are listed in the report.

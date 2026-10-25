@@ -270,3 +270,27 @@ Dated, newest last. Don't reopen these without a new reason.
   commentary with that line.
 - **The mark is the internet on fire**: one ember flame with the globe cut out of it (the editor's
   pick, G4, from comps of the caret, the struck word, the name alone and the globe).
+
+## 2026-10-25 (the chart kit, built overnight; the editor to review)
+
+- **Charts are drawn by us from data, not embedded.** A chart is an item block carrying its rows, and a
+  chart-led find is a Chart item printed as the figure. Our World in Data and World Bank charts are
+  redrawn from their data (both CC BY 4.0, with each producer's own licence credited); someone else's
+  chart as it stands comes in as a picture under the credit rule. Rejected: embedding their
+  interactive charts (third-party script, breaks with them, the CSP forbids it).
+- **Honesty is code.** `validateChart` gates the Desk, publish and `validateHaul` alike: sources and
+  licences, zero baselines for bars and areas, no dual axes, 3D or pies, stated bases and
+  denominators, real or nominal money, the window against the source's span, uncertainty and sample
+  sizes shown when the data has them, missing values drawn as missing, and figures in machine text
+  traced to the rows. No model touches a chart.
+- **No pies.** The waffle does parts of a whole; the validator refuses a pie by name. (The brief allowed
+  a pie of a few slices; angles compare badly and a waffle of the same parts is as quick to read.)
+- **One loud colour per chart is the Haul's edition ink**, so a Haul's charts belong to it; categorical
+  colour (six validated hues, never machine blue or ember) only when every series matters.
+- **The website draws SVG on the server; the app shows pictures drawn at publish on the editor's side.**
+  The app stays without an SVG runtime, and the Workers free plan rules out rasterising on the server
+  (as for share cards), so the Desk (browser) and the terminal draw the light and dark PNGs with resvg
+  WebAssembly and the app's own fonts, and publish accepts them only under the chart's key. The Desk's
+  CSP allows `'wasm-unsafe-eval'` for this, and only this. Rejected: drawing with Views in the app
+  (areas and ridges need polygons Views cannot draw well; two renderers would drift).
+
