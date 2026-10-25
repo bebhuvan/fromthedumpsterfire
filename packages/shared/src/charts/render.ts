@@ -42,8 +42,17 @@ const DRAW: Record<ChartForm, Draw> = {
   waffle: drawWaffle,
 };
 
+// Bundles are immutable and the website keeps each one in memory, so a chart object is drawn once
+// per layout per isolate; scenes are never mutated after they are drawn.
+const drawn = new WeakMap<Chart, Partial<Record<Layout, Scene>>>();
+
 export function renderChart(chart: Chart, layout: Layout): Scene {
   const draw = DRAW[chart.form];
   if (!draw) throw new Error(`No renderer for the ${chart.form} form`);
-  return draw(new Ctx(chart, layout));
+  const memo = drawn.get(chart) ?? {};
+  if (!memo[layout]) {
+    memo[layout] = draw(new Ctx(chart, layout));
+    drawn.set(chart, memo);
+  }
+  return memo[layout]!;
 }

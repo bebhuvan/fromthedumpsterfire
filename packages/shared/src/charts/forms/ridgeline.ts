@@ -32,13 +32,28 @@ export function quantile(sorted: number[], q: number): number {
   return sorted[lo]! + (sorted[hi]! - sorted[lo]!) * (i - lo);
 }
 
+/**
+ * Gaussian kernel density on a grid. Exact (kernel cut at six bandwidths, where it is below 1e-8);
+ * equal values are counted once with their weight and each grid point visits only the values within
+ * reach, so a page renders inside the website's CPU budget.
+ */
 export function kde(vals: number[], h: number, grid: number[]): number[] {
   const k = 1 / (vals.length * h * Math.sqrt(2 * Math.PI));
+  const sorted = [...vals].sort((a, b) => a - b);
+  const xs: number[] = [];
+  const ws: number[] = [];
+  for (const v of sorted) {
+    if (xs.length && xs[xs.length - 1] === v) ws[ws.length - 1]!++;
+    else (xs.push(v), ws.push(1));
+  }
+  const reach = 6 * h;
+  let lo = 0;
   return grid.map((x) => {
+    while (lo < xs.length && xs[lo]! < x - reach) lo++;
     let s = 0;
-    for (const v of vals) {
-      const u = (x - v) / h;
-      if (u > -6 && u < 6) s += Math.exp(-0.5 * u * u);
+    for (let i = lo; i < xs.length && xs[i]! <= x + reach; i++) {
+      const u = (x - xs[i]!) / h;
+      s += ws[i]! * Math.exp(-0.5 * u * u);
     }
     return s * k;
   });

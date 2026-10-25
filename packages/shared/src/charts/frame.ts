@@ -108,8 +108,11 @@ export class Ctx {
   }
   /** A value as a label prints it, with the decimals the data carries (at most 2 more than the ticks). */
   value(v: number, decimals?: number): string {
-    return formatNumber(v, decimals ?? valueDecimals(this.rows, this), this.grouping);
+    // The data's decimals are read once per chart; labels are many.
+    this.dec ??= valueDecimals(this.rows, this);
+    return formatNumber(v, decimals ?? this.dec, this.grouping);
   }
+  private dec?: number;
 }
 
 
@@ -119,7 +122,8 @@ export function valueDecimals(rows: Cell[][], ctx: Ctx, roles: ChartRole[] = ['y
   for (const r of rows.slice(0, 2000)) {
     for (const role of roles) {
       const v = ctx.num(r, role);
-      if (v === null) continue;
+      if (v === null || Number.isInteger(v)) continue;
+      if (d === 2) return d;
       const s = String(v);
       const k = s.includes('e') ? 2 : (s.split('.')[1]?.length ?? 0);
       d = Math.max(d, Math.min(2, k));

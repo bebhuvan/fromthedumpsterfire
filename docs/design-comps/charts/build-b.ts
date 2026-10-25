@@ -78,7 +78,7 @@ write('delhi-heatmap-months', {
   span: { from: '1950', to: '2025' },
   sourceSpan: { from: '1940', to: '2025' },
   measure: { basis: 'absolute' },
-  method: 'Each cell is the average of that month’s daily highs, rounded to 0.1. The chart starts in 1950; the source runs from 1940.',
+  method: 'Each cell is the average of that month’s daily highs, rounded to 0.1.',
   data: { columns: [{ key: 'year', label: 'Year', type: 'year' }, { key: 'month', label: 'Month', type: 'text' }, { key: 'high', label: 'Average daily high', type: 'number' }], rows: hrows },
   encode: { x: 'year', label: 'month', y: 'high' },
   options: { colour: 'sequential', sort: 'given' },

@@ -29,7 +29,7 @@
  "measure": {
   "basis": "absolute"
  },
- "method": "Each cell is the average of that month’s daily highs, rounded to 0.1. The chart starts in 1950; the source runs from 1940.",
+ "method": "Each cell is the average of that month’s daily highs, rounded to 0.1.",
  "data": {
   "columns": [
    {

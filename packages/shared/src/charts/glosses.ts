@@ -40,6 +40,8 @@ export function spanRange(span: { from: string; to: string }): string {
 /** "°C, difference from the 1861–1890 average": what the numbers are, from the editor's fields. */
 export function unitsLine(chart: Chart): string {
   const m = chart.measure;
+  // A scatter has two measures; each axis carries its own title, so the line says only the units.
+  if (chart.form === 'scatter') return chart.units.trim();
   const parts: string[] = [chart.units.trim()];
   if (m?.basis === 'per-capita' && !/per (person|capita|head)/i.test(chart.units)) parts.push('per person');
   if ((m?.basis === 'share' || m?.basis === 'rate') && m.denominator && !chart.units.includes(m.denominator)) parts.push(m.denominator);
