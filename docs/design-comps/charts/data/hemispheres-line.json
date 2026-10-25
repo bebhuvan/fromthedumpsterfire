@@ -1,0 +1,1822 @@
+{
+ "form": "line",
+ "title": "The north is warming faster than the south",
+ "units": "°C",
+ "geography": "Northern and Southern Hemispheres",
+ "sources": [
+  {
+   "maker": "Met Office Hadley Centre",
+   "dataset": "HadCRUT5 (HadCRUT.5.1.0.0)",
+   "url": "https://www.metoffice.gov.uk/hadobs/hadcrut5/",
+   "licence": "Open Government Licence v3",
+   "licenceUrl": "https://www.metoffice.gov.uk/hadobs/hadcrut5/terms_and_conditions.html",
+   "retrieved": "2026-10-25",
+   "via": {
+    "name": "Our World in Data",
+    "url": "https://ourworldindata.org/grapher/temperature-anomaly",
+    "licence": "CC BY 4.0"
+   }
+  }
+ ],
+ "measure": {
+  "basis": "anomaly",
+  "base": "the 1861–1890 average"
+ },
+ "span": {
+  "from": "1850",
+  "to": "2025"
+ },
+ "sourceSpan": {
+  "from": "1850",
+  "to": "2026"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "region",
+    "label": "Region",
+    "type": "text"
+   },
+   {
+    "key": "year",
+    "label": "Year",
+    "type": "year"
+   },
+   {
+    "key": "anomaly",
+    "label": "Temperature anomaly",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   [
+    "Northern Hemisphere",
+    1850,
+    -0.074
+   ],
+   [
+    "Northern Hemisphere",
+    1851,
+    0.099
+   ],
+   [
+    "Northern Hemisphere",
+    1852,
+    0.156
+   ],
+   [
+    "Northern Hemisphere",
+    1853,
+    0.15
+   ],
+   [
+    "Northern Hemisphere",
+    1854,
+    0.201
+   ],
+   [
+    "Northern Hemisphere",
+    1855,
+    0.144
+   ],
+   [
+    "Northern Hemisphere",
+    1856,
+    0.034
+   ],
+   [
+    "Northern Hemisphere",
+    1857,
+    -0.071
+   ],
+   [
+    "Northern Hemisphere",
+    1858,
+    0.006
+   ],
+   [
+    "Northern Hemisphere",
+    1859,
+    0.109
+   ],
+   [
+    "Northern Hemisphere",
+    1860,
+    -0.111
+   ],
+   [
+    "Northern Hemisphere",
+    1861,
+    -0.089
+   ],
+   [
+    "Northern Hemisphere",
+    1862,
+    -0.355
+   ],
+   [
+    "Northern Hemisphere",
+    1863,
+    0.007
+   ],
+   [
+    "Northern Hemisphere",
+    1864,
+    -0.133
+   ],
+   [
+    "Northern Hemisphere",
+    1865,
+    -0.098
+   ],
+   [
+    "Northern Hemisphere",
+    1866,
+    -0.101
+   ],
+   [
+    "Northern Hemisphere",
+    1867,
+    -0.1
+   ],
+   [
+    "Northern Hemisphere",
+    1868,
+    0.003
+   ],
+   [
+    "Northern Hemisphere",
+    1869,
+    0.13
+   ],
+   [
+    "Northern Hemisphere",
+    1870,
+    0.071
+   ],
+   [
+    "Northern Hemisphere",
+    1871,
+    -0.068
+   ],
+   [
+    "Northern Hemisphere",
+    1872,
+    0.061
+   ],
+   [
+    "Northern Hemisphere",
+    1873,
+    0.044
+   ],
+   [
+    "Northern Hemisphere",
+    1874,
+    0.105
+   ],
+   [
+    "Northern Hemisphere",
+    1875,
+    -0.083
+   ],
+   [
+    "Northern Hemisphere",
+    1876,
+    -0.025
+   ],
+   [
+    "Northern Hemisphere",
+    1877,
+    0.317
+   ],
+   [
+    "Northern Hemisphere",
+    1878,
+    0.496
+   ],
+   [
+    "Northern Hemisphere",
+    1879,
+    0.073
+   ],
+   [
+    "Northern Hemisphere",
+    1880,
+    0.023
+   ],
+   [
+    "Northern Hemisphere",
+    1881,
+    0.134
+   ],
+   [
+    "Northern Hemisphere",
+    1882,
+    0.053
+   ],
+   [
+    "Northern Hemisphere",
+    1883,
+    -0.011
+   ],
+   [
+    "Northern Hemisphere",
+    1884,
+    -0.217
+   ],
+   [
+    "Northern Hemisphere",
+    1885,
+    -0.102
+   ],
+   [
+    "Northern Hemisphere",
+    1886,
+    -0.039
+   ],
+   [
+    "Northern Hemisphere",
+    1887,
+    -0.092
+   ],
+   [
+    "Northern Hemisphere",
+    1888,
+    0.023
+   ],
+   [
+    "Northern Hemisphere",
+    1889,
+    0.128
+   ],
+   [
+    "Northern Hemisphere",
+    1890,
+    -0.124
+   ],
+   [
+    "Northern Hemisphere",
+    1891,
+    -0.015
+   ],
+   [
+    "Northern Hemisphere",
+    1892,
+    -0.183
+   ],
+   [
+    "Northern Hemisphere",
+    1893,
+    -0.165
+   ],
+   [
+    "Northern Hemisphere",
+    1894,
+    -0.046
+   ],
+   [
+    "Northern Hemisphere",
+    1895,
+    -0.047
+   ],
+   [
+    "Northern Hemisphere",
+    1896,
+    0.104
+   ],
+   [
+    "Northern Hemisphere",
+    1897,
+    0.145
+   ],
+   [
+    "Northern Hemisphere",
+    1898,
+    -0.024
+   ],
+   [
+    "Northern Hemisphere",
+    1899,
+    0.074
+   ],
+   [
+    "Northern Hemisphere",
+    1900,
+    0.204
+   ],
+   [
+    "Northern Hemisphere",
+    1901,
+    0.184
+   ],
+   [
+    "Northern Hemisphere",
+    1902,
+    -0.071
+   ],
+   [
+    "Northern Hemisphere",
+    1903,
+    -0.123
+   ],
+   [
+    "Northern Hemisphere",
+    1904,
+    -0.19
+   ],
+   [
+    "Northern Hemisphere",
+    1905,
+    -0.012
+   ],
+   [
+    "Northern Hemisphere",
+    1906,
+    0.134
+   ],
+   [
+    "Northern Hemisphere",
+    1907,
+    -0.143
+   ],
+   [
+    "Northern Hemisphere",
+    1908,
+    -0.078
+   ],
+   [
+    "Northern Hemisphere",
+    1909,
+    -0.102
+   ],
+   [
+    "Northern Hemisphere",
+    1910,
+    -0.084
+   ],
+   [
+    "Northern Hemisphere",
+    1911,
+    -0.067
+   ],
+   [
+    "Northern Hemisphere",
+    1912,
+    -0.144
+   ],
+   [
+    "Northern Hemisphere",
+    1913,
+    -0.1
+   ],
+   [
+    "Northern Hemisphere",
+    1914,
+    0.122
+   ],
+   [
+    "Northern Hemisphere",
+    1915,
+    0.213
+   ],
+   [
+    "Northern Hemisphere",
+    1916,
+    -0.058
+   ],
+   [
+    "Northern Hemisphere",
+    1917,
+    -0.195
+   ],
+   [
+    "Northern Hemisphere",
+    1918,
+    -0.078
+   ],
+   [
+    "Northern Hemisphere",
+    1919,
+    0.008
+   ],
+   [
+    "Northern Hemisphere",
+    1920,
+    0.075
+   ],
+   [
+    "Northern Hemisphere",
+    1921,
+    0.228
+   ],
+   [
+    "Northern Hemisphere",
+    1922,
+    0.088
+   ],
+   [
+    "Northern Hemisphere",
+    1923,
+    0.143
+   ],
+   [
+    "Northern Hemisphere",
+    1924,
+    0.205
+   ],
+   [
+    "Northern Hemisphere",
+    1925,
+    0.22
+   ],
+   [
+    "Northern Hemisphere",
+    1926,
+    0.385
+   ],
+   [
+    "Northern Hemisphere",
+    1927,
+    0.285
+   ],
+   [
+    "Northern Hemisphere",
+    1928,
+    0.297
+   ],
+   [
+    "Northern Hemisphere",
+    1929,
+    0.056
+   ],
+   [
+    "Northern Hemisphere",
+    1930,
+    0.367
+   ],
+   [
+    "Northern Hemisphere",
+    1931,
+    0.427
+   ],
+   [
+    "Northern Hemisphere",
+    1932,
+    0.343
+   ],
+   [
+    "Northern Hemisphere",
+    1933,
+    0.112
+   ],
+   [
+    "Northern Hemisphere",
+    1934,
+    0.331
+   ],
+   [
+    "Northern Hemisphere",
+    1935,
+    0.288
+   ],
+   [
+    "Northern Hemisphere",
+    1936,
+    0.324
+   ],
+   [
+    "Northern Hemisphere",
+    1937,
+    0.514
+   ],
+   [
+    "Northern Hemisphere",
+    1938,
+    0.544
+   ],
+   [
+    "Northern Hemisphere",
+    1939,
+    0.438
+   ],
+   [
+    "Northern Hemisphere",
+    1940,
+    0.504
+   ],
+   [
+    "Northern Hemisphere",
+    1941,
+    0.461
+   ],
+   [
+    "Northern Hemisphere",
+    1942,
+    0.449
+   ],
+   [
+    "Northern Hemisphere",
+    1943,
+    0.505
+   ],
+   [
+    "Northern Hemisphere",
+    1944,
+    0.613
+   ],
+   [
+    "Northern Hemisphere",
+    1945,
+    0.477
+   ],
+   [
+    "Northern Hemisphere",
+    1946,
+    0.378
+   ],
+   [
+    "Northern Hemisphere",
+    1947,
+    0.432
+   ],
+   [
+    "Northern Hemisphere",
+    1948,
+    0.389
+   ],
+   [
+    "Northern Hemisphere",
+    1949,
+    0.319
+   ],
+   [
+    "Northern Hemisphere",
+    1950,
+    0.193
+   ],
+   [
+    "Northern Hemisphere",
+    1951,
+    0.437
+   ],
+   [
+    "Northern Hemisphere",
+    1952,
+    0.456
+   ],
+   [
+    "Northern Hemisphere",
+    1953,
+    0.594
+   ],
+   [
+    "Northern Hemisphere",
+    1954,
+    0.356
+   ],
+   [
+    "Northern Hemisphere",
+    1955,
+    0.261
+   ],
+   [
+    "Northern Hemisphere",
+    1956,
+    0.107
+   ],
+   [
+    "Northern Hemisphere",
+    1957,
+    0.354
+   ],
+   [
+    "Northern Hemisphere",
+    1958,
+    0.473
+   ],
+   [
+    "Northern Hemisphere",
+    1959,
+    0.438
+   ],
+   [
+    "Northern Hemisphere",
+    1960,
+    0.392
+   ],
+   [
+    "Northern Hemisphere",
+    1961,
+    0.388
+   ],
+   [
+    "Northern Hemisphere",
+    1962,
+    0.442
+   ],
+   [
+    "Northern Hemisphere",
+    1963,
+    0.466
+   ],
+   [
+    "Northern Hemisphere",
+    1964,
+    0.133
+   ],
+   [
+    "Northern Hemisphere",
+    1965,
+    0.197
+   ],
+   [
+    "Northern Hemisphere",
+    1966,
+    0.305
+   ],
+   [
+    "Northern Hemisphere",
+    1967,
+    0.352
+   ],
+   [
+    "Northern Hemisphere",
+    1968,
+    0.253
+   ],
+   [
+    "Northern Hemisphere",
+    1969,
+    0.291
+   ],
+   [
+    "Northern Hemisphere",
+    1970,
+    0.267
+   ],
+   [
+    "Northern Hemisphere",
+    1971,
+    0.162
+   ],
+   [
+    "Northern Hemisphere",
+    1972,
+    0.142
+   ],
+   [
+    "Northern Hemisphere",
+    1973,
+    0.412
+   ],
+   [
+    "Northern Hemisphere",
+    1974,
+    0.142
+   ],
+   [
+    "Northern Hemisphere",
+    1975,
+    0.282
+   ],
+   [
+    "Northern Hemisphere",
+    1976,
+    0.141
+   ],
+   [
+    "Northern Hemisphere",
+    1977,
+    0.47
+   ],
+   [
+    "Northern Hemisphere",
+    1978,
+    0.377
+   ],
+   [
+    "Northern Hemisphere",
+    1979,
+    0.418
+   ],
+   [
+    "Northern Hemisphere",
+    1980,
+    0.525
+   ],
+   [
+    "Northern Hemisphere",
+    1981,
+    0.726
+   ],
+   [
+    "Northern Hemisphere",
+    1982,
+    0.377
+   ],
+   [
+    "Northern Hemisphere",
+    1983,
+    0.581
+   ],
+   [
+    "Northern Hemisphere",
+    1984,
+    0.36
+   ],
+   [
+    "Northern Hemisphere",
+    1985,
+    0.333
+   ],
+   [
+    "Northern Hemisphere",
+    1986,
+    0.448
+   ],
+   [
+    "Northern Hemisphere",
+    1987,
+    0.581
+   ],
+   [
+    "Northern Hemisphere",
+    1988,
+    0.701
+   ],
+   [
+    "Northern Hemisphere",
+    1989,
+    0.603
+   ],
+   [
+    "Northern Hemisphere",
+    1990,
+    0.848
+   ],
+   [
+    "Northern Hemisphere",
+    1991,
+    0.77
+   ],
+   [
+    "Northern Hemisphere",
+    1992,
+    0.483
+   ],
+   [
+    "Northern Hemisphere",
+    1993,
+    0.579
+   ],
+   [
+    "Northern Hemisphere",
+    1994,
+    0.709
+   ],
+   [
+    "Northern Hemisphere",
+    1995,
+    0.953
+   ],
+   [
+    "Northern Hemisphere",
+    1996,
+    0.675
+   ],
+   [
+    "Northern Hemisphere",
+    1997,
+    0.917
+   ],
+   [
+    "Northern Hemisphere",
+    1998,
+    1.098
+   ],
+   [
+    "Northern Hemisphere",
+    1999,
+    0.858
+   ],
+   [
+    "Northern Hemisphere",
+    2000,
+    0.871
+   ],
+   [
+    "Northern Hemisphere",
+    2001,
+    1.012
+   ],
+   [
+    "Northern Hemisphere",
+    2002,
+    1.053
+   ],
+   [
+    "Northern Hemisphere",
+    2003,
+    1.104
+   ],
+   [
+    "Northern Hemisphere",
+    2004,
+    1.019
+   ],
+   [
+    "Northern Hemisphere",
+    2005,
+    1.218
+   ],
+   [
+    "Northern Hemisphere",
+    2006,
+    1.177
+   ],
+   [
+    "Northern Hemisphere",
+    2007,
+    1.215
+   ],
+   [
+    "Northern Hemisphere",
+    2008,
+    1.054
+   ],
+   [
+    "Northern Hemisphere",
+    2009,
+    1.088
+   ],
+   [
+    "Northern Hemisphere",
+    2010,
+    1.302
+   ],
+   [
+    "Northern Hemisphere",
+    2011,
+    1.11
+   ],
+   [
+    "Northern Hemisphere",
+    2012,
+    1.166
+   ],
+   [
+    "Northern Hemisphere",
+    2013,
+    1.161
+   ],
+   [
+    "Northern Hemisphere",
+    2014,
+    1.292
+   ],
+   [
+    "Northern Hemisphere",
+    2015,
+    1.512
+   ],
+   [
+    "Northern Hemisphere",
+    2016,
+    1.634
+   ],
+   [
+    "Northern Hemisphere",
+    2017,
+    1.496
+   ],
+   [
+    "Northern Hemisphere",
+    2018,
+    1.341
+   ],
+   [
+    "Northern Hemisphere",
+    2019,
+    1.543
+   ],
+   [
+    "Northern Hemisphere",
+    2020,
+    1.667
+   ],
+   [
+    "Northern Hemisphere",
+    2021,
+    1.479
+   ],
+   [
+    "Northern Hemisphere",
+    2022,
+    1.495
+   ],
+   [
+    "Northern Hemisphere",
+    2023,
+    1.811
+   ],
+   [
+    "Northern Hemisphere",
+    2024,
+    1.918
+   ],
+   [
+    "Northern Hemisphere",
+    2025,
+    1.72
+   ],
+   [
+    "Southern Hemisphere",
+    1850,
+    -0.051
+   ],
+   [
+    "Southern Hemisphere",
+    1851,
+    0.102
+   ],
+   [
+    "Southern Hemisphere",
+    1852,
+    0.124
+   ],
+   [
+    "Southern Hemisphere",
+    1853,
+    0.054
+   ],
+   [
+    "Southern Hemisphere",
+    1854,
+    -0.06
+   ],
+   [
+    "Southern Hemisphere",
+    1855,
+    0.001
+   ],
+   [
+    "Southern Hemisphere",
+    1856,
+    0.038
+   ],
+   [
+    "Southern Hemisphere",
+    1857,
+    -0.133
+   ],
+   [
+    "Southern Hemisphere",
+    1858,
+    -0.071
+   ],
+   [
+    "Southern Hemisphere",
+    1859,
+    0.035
+   ],
+   [
+    "Southern Hemisphere",
+    1860,
+    0.025
+   ],
+   [
+    "Southern Hemisphere",
+    1861,
+    -0.11
+   ],
+   [
+    "Southern Hemisphere",
+    1862,
+    -0.027
+   ],
+   [
+    "Southern Hemisphere",
+    1863,
+    -0.045
+   ],
+   [
+    "Southern Hemisphere",
+    1864,
+    -0.128
+   ],
+   [
+    "Southern Hemisphere",
+    1865,
+    0.041
+   ],
+   [
+    "Southern Hemisphere",
+    1866,
+    0.028
+   ],
+   [
+    "Southern Hemisphere",
+    1867,
+    0.029
+   ],
+   [
+    "Southern Hemisphere",
+    1868,
+    -0.001
+   ],
+   [
+    "Southern Hemisphere",
+    1869,
+    -0.039
+   ],
+   [
+    "Southern Hemisphere",
+    1870,
+    0.002
+   ],
+   [
+    "Southern Hemisphere",
+    1871,
+    0.049
+   ],
+   [
+    "Southern Hemisphere",
+    1872,
+    0.048
+   ],
+   [
+    "Southern Hemisphere",
+    1873,
+    0.041
+   ],
+   [
+    "Southern Hemisphere",
+    1874,
+    -0.108
+   ],
+   [
+    "Southern Hemisphere",
+    1875,
+    0.077
+   ],
+   [
+    "Southern Hemisphere",
+    1876,
+    -0.068
+   ],
+   [
+    "Southern Hemisphere",
+    1877,
+    0.246
+   ],
+   [
+    "Southern Hemisphere",
+    1878,
+    0.253
+   ],
+   [
+    "Southern Hemisphere",
+    1879,
+    0.077
+   ],
+   [
+    "Southern Hemisphere",
+    1880,
+    0.099
+   ],
+   [
+    "Southern Hemisphere",
+    1881,
+    0.168
+   ],
+   [
+    "Southern Hemisphere",
+    1882,
+    0.13
+   ],
+   [
+    "Southern Hemisphere",
+    1883,
+    0.083
+   ],
+   [
+    "Southern Hemisphere",
+    1884,
+    -0.004
+   ],
+   [
+    "Southern Hemisphere",
+    1885,
+    -0.086
+   ],
+   [
+    "Southern Hemisphere",
+    1886,
+    -0.049
+   ],
+   [
+    "Southern Hemisphere",
+    1887,
+    -0.157
+   ],
+   [
+    "Southern Hemisphere",
+    1888,
+    -0.04
+   ],
+   [
+    "Southern Hemisphere",
+    1889,
+    0.1
+   ],
+   [
+    "Southern Hemisphere",
+    1890,
+    -0.149
+   ],
+   [
+    "Southern Hemisphere",
+    1891,
+    -0.052
+   ],
+   [
+    "Southern Hemisphere",
+    1892,
+    -0.102
+   ],
+   [
+    "Southern Hemisphere",
+    1893,
+    -0.097
+   ],
+   [
+    "Southern Hemisphere",
+    1894,
+    -0.183
+   ],
+   [
+    "Southern Hemisphere",
+    1895,
+    -0.109
+   ],
+   [
+    "Southern Hemisphere",
+    1896,
+    0.067
+   ],
+   [
+    "Southern Hemisphere",
+    1897,
+    0.073
+   ],
+   [
+    "Southern Hemisphere",
+    1898,
+    -0.196
+   ],
+   [
+    "Southern Hemisphere",
+    1899,
+    -0.035
+   ],
+   [
+    "Southern Hemisphere",
+    1900,
+    0.063
+   ],
+   [
+    "Southern Hemisphere",
+    1901,
+    -0.03
+   ],
+   [
+    "Southern Hemisphere",
+    1902,
+    -0.076
+   ],
+   [
+    "Southern Hemisphere",
+    1903,
+    -0.22
+   ],
+   [
+    "Southern Hemisphere",
+    1904,
+    -0.276
+   ],
+   [
+    "Southern Hemisphere",
+    1905,
+    -0.072
+   ],
+   [
+    "Southern Hemisphere",
+    1906,
+    -0.037
+   ],
+   [
+    "Southern Hemisphere",
+    1907,
+    -0.128
+   ],
+   [
+    "Southern Hemisphere",
+    1908,
+    -0.207
+   ],
+   [
+    "Southern Hemisphere",
+    1909,
+    -0.236
+   ],
+   [
+    "Southern Hemisphere",
+    1910,
+    -0.232
+   ],
+   [
+    "Southern Hemisphere",
+    1911,
+    -0.285
+   ],
+   [
+    "Southern Hemisphere",
+    1912,
+    -0.081
+   ],
+   [
+    "Southern Hemisphere",
+    1913,
+    -0.099
+   ],
+   [
+    "Southern Hemisphere",
+    1914,
+    0.087
+   ],
+   [
+    "Southern Hemisphere",
+    1915,
+    0.134
+   ],
+   [
+    "Southern Hemisphere",
+    1916,
+    -0.055
+   ],
+   [
+    "Southern Hemisphere",
+    1917,
+    -0.165
+   ],
+   [
+    "Southern Hemisphere",
+    1918,
+    -0.046
+   ],
+   [
+    "Southern Hemisphere",
+    1919,
+    0.055
+   ],
+   [
+    "Southern Hemisphere",
+    1920,
+    0.044
+   ],
+   [
+    "Southern Hemisphere",
+    1921,
+    0.017
+   ],
+   [
+    "Southern Hemisphere",
+    1922,
+    -0.036
+   ],
+   [
+    "Southern Hemisphere",
+    1923,
+    -0.044
+   ],
+   [
+    "Southern Hemisphere",
+    1924,
+    -0.094
+   ],
+   [
+    "Southern Hemisphere",
+    1925,
+    -0.051
+   ],
+   [
+    "Southern Hemisphere",
+    1926,
+    0.099
+   ],
+   [
+    "Southern Hemisphere",
+    1927,
+    -0.009
+   ],
+   [
+    "Southern Hemisphere",
+    1928,
+    0.014
+   ],
+   [
+    "Southern Hemisphere",
+    1929,
+    -0.109
+   ],
+   [
+    "Southern Hemisphere",
+    1930,
+    0.021
+   ],
+   [
+    "Southern Hemisphere",
+    1931,
+    0.089
+   ],
+   [
+    "Southern Hemisphere",
+    1932,
+    0.085
+   ],
+   [
+    "Southern Hemisphere",
+    1933,
+    -0.04
+   ],
+   [
+    "Southern Hemisphere",
+    1934,
+    0.042
+   ],
+   [
+    "Southern Hemisphere",
+    1935,
+    0.014
+   ],
+   [
+    "Southern Hemisphere",
+    1936,
+    0.062
+   ],
+   [
+    "Southern Hemisphere",
+    1937,
+    0.181
+   ],
+   [
+    "Southern Hemisphere",
+    1938,
+    0.158
+   ],
+   [
+    "Southern Hemisphere",
+    1939,
+    0.206
+   ],
+   [
+    "Southern Hemisphere",
+    1940,
+    0.372
+   ],
+   [
+    "Southern Hemisphere",
+    1941,
+    0.336
+   ],
+   [
+    "Southern Hemisphere",
+    1942,
+    0.278
+   ],
+   [
+    "Southern Hemisphere",
+    1943,
+    0.236
+   ],
+   [
+    "Southern Hemisphere",
+    1944,
+    0.404
+   ],
+   [
+    "Southern Hemisphere",
+    1945,
+    0.337
+   ],
+   [
+    "Southern Hemisphere",
+    1946,
+    0.104
+   ],
+   [
+    "Southern Hemisphere",
+    1947,
+    0.104
+   ],
+   [
+    "Southern Hemisphere",
+    1948,
+    0.081
+   ],
+   [
+    "Southern Hemisphere",
+    1949,
+    0.101
+   ],
+   [
+    "Southern Hemisphere",
+    1950,
+    0.056
+   ],
+   [
+    "Southern Hemisphere",
+    1951,
+    0.147
+   ],
+   [
+    "Southern Hemisphere",
+    1952,
+    0.294
+   ],
+   [
+    "Southern Hemisphere",
+    1953,
+    0.288
+   ],
+   [
+    "Southern Hemisphere",
+    1954,
+    0.137
+   ],
+   [
+    "Southern Hemisphere",
+    1955,
+    0.069
+   ],
+   [
+    "Southern Hemisphere",
+    1956,
+    0.091
+   ],
+   [
+    "Southern Hemisphere",
+    1957,
+    0.304
+   ],
+   [
+    "Southern Hemisphere",
+    1958,
+    0.222
+   ],
+   [
+    "Southern Hemisphere",
+    1959,
+    0.197
+   ],
+   [
+    "Southern Hemisphere",
+    1960,
+    0.109
+   ],
+   [
+    "Southern Hemisphere",
+    1961,
+    0.311
+   ],
+   [
+    "Southern Hemisphere",
+    1962,
+    0.168
+   ],
+   [
+    "Southern Hemisphere",
+    1963,
+    0.199
+   ],
+   [
+    "Southern Hemisphere",
+    1964,
+    -0.01
+   ],
+   [
+    "Southern Hemisphere",
+    1965,
+    0.126
+   ],
+   [
+    "Southern Hemisphere",
+    1966,
+    0.133
+   ],
+   [
+    "Southern Hemisphere",
+    1967,
+    0.145
+   ],
+   [
+    "Southern Hemisphere",
+    1968,
+    0.147
+   ],
+   [
+    "Southern Hemisphere",
+    1969,
+    0.381
+   ],
+   [
+    "Southern Hemisphere",
+    1970,
+    0.293
+   ],
+   [
+    "Southern Hemisphere",
+    1971,
+    0.157
+   ],
+   [
+    "Southern Hemisphere",
+    1972,
+    0.405
+   ],
+   [
+    "Southern Hemisphere",
+    1973,
+    0.421
+   ],
+   [
+    "Southern Hemisphere",
+    1974,
+    0.249
+   ],
+   [
+    "Southern Hemisphere",
+    1975,
+    0.234
+   ],
+   [
+    "Southern Hemisphere",
+    1976,
+    0.166
+   ],
+   [
+    "Southern Hemisphere",
+    1977,
+    0.469
+   ],
+   [
+    "Southern Hemisphere",
+    1978,
+    0.362
+   ],
+   [
+    "Southern Hemisphere",
+    1979,
+    0.486
+   ],
+   [
+    "Southern Hemisphere",
+    1980,
+    0.586
+   ],
+   [
+    "Southern Hemisphere",
+    1981,
+    0.495
+   ],
+   [
+    "Southern Hemisphere",
+    1982,
+    0.413
+   ],
+   [
+    "Southern Hemisphere",
+    1983,
+    0.589
+   ],
+   [
+    "Southern Hemisphere",
+    1984,
+    0.46
+   ],
+   [
+    "Southern Hemisphere",
+    1985,
+    0.487
+   ],
+   [
+    "Southern Hemisphere",
+    1986,
+    0.464
+   ],
+   [
+    "Southern Hemisphere",
+    1987,
+    0.623
+   ],
+   [
+    "Southern Hemisphere",
+    1988,
+    0.582
+   ],
+   [
+    "Southern Hemisphere",
+    1989,
+    0.475
+   ],
+   [
+    "Southern Hemisphere",
+    1990,
+    0.59
+   ],
+   [
+    "Southern Hemisphere",
+    1991,
+    0.625
+   ],
+   [
+    "Southern Hemisphere",
+    1992,
+    0.485
+   ],
+   [
+    "Southern Hemisphere",
+    1993,
+    0.472
+   ],
+   [
+    "Southern Hemisphere",
+    1994,
+    0.474
+   ],
+   [
+    "Southern Hemisphere",
+    1995,
+    0.517
+   ],
+   [
+    "Southern Hemisphere",
+    1996,
+    0.595
+   ],
+   [
+    "Southern Hemisphere",
+    1997,
+    0.642
+   ],
+   [
+    "Southern Hemisphere",
+    1998,
+    0.774
+   ],
+   [
+    "Southern Hemisphere",
+    1999,
+    0.506
+   ],
+   [
+    "Southern Hemisphere",
+    2000,
+    0.508
+   ],
+   [
+    "Southern Hemisphere",
+    2001,
+    0.683
+   ],
+   [
+    "Southern Hemisphere",
+    2002,
+    0.749
+   ],
+   [
+    "Southern Hemisphere",
+    2003,
+    0.701
+   ],
+   [
+    "Southern Hemisphere",
+    2004,
+    0.634
+   ],
+   [
+    "Southern Hemisphere",
+    2005,
+    0.715
+   ],
+   [
+    "Southern Hemisphere",
+    2006,
+    0.684
+   ],
+   [
+    "Southern Hemisphere",
+    2007,
+    0.684
+   ],
+   [
+    "Southern Hemisphere",
+    2008,
+    0.593
+   ],
+   [
+    "Southern Hemisphere",
+    2009,
+    0.82
+   ],
+   [
+    "Southern Hemisphere",
+    2010,
+    0.774
+   ],
+   [
+    "Southern Hemisphere",
+    2011,
+    0.683
+   ],
+   [
+    "Southern Hemisphere",
+    2012,
+    0.705
+   ],
+   [
+    "Southern Hemisphere",
+    2013,
+    0.804
+   ],
+   [
+    "Southern Hemisphere",
+    2014,
+    0.772
+   ],
+   [
+    "Southern Hemisphere",
+    2015,
+    0.852
+   ],
+   [
+    "Southern Hemisphere",
+    2016,
+    0.944
+   ],
+   [
+    "Southern Hemisphere",
+    2017,
+    0.905
+   ],
+   [
+    "Southern Hemisphere",
+    2018,
+    0.893
+   ],
+   [
+    "Southern Hemisphere",
+    2019,
+    0.96
+   ],
+   [
+    "Southern Hemisphere",
+    2020,
+    0.894
+   ],
+   [
+    "Southern Hemisphere",
+    2021,
+    0.783
+   ],
+   [
+    "Southern Hemisphere",
+    2022,
+    0.836
+   ],
+   [
+    "Southern Hemisphere",
+    2023,
+    1.137
+   ],
+   [
+    "Southern Hemisphere",
+    2024,
+    1.148
+   ],
+   [
+    "Southern Hemisphere",
+    2025,
+    1.104
+   ]
+  ]
+ },
+ "encode": {
+  "x": "year",
+  "y": "anomaly",
+  "series": "region"
+ },
+ "options": {
+  "colour": "categorical"
+ }
+}

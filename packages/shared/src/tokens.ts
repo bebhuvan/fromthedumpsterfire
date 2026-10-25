@@ -133,3 +133,50 @@ export const editionInk: Record<Scheme, Record<Edition, string>> = {
 };
 export const editionOf = (n: number, chosen?: string): Edition =>
   chosen && (EDITIONS as readonly string[]).includes(chosen) ? (chosen as Edition) : EDITIONS[(Math.max(1, n) - 1) % EDITIONS.length]!;
+
+/**
+ * Chart colours (docs/CHARTS.md). Every hex here was run through the dataviz palette validator
+ * (OKLCH lightness band, chroma floor, protan/deutan separation, normal-vision floor, contrast) on
+ * this theme's ground; the results are in docs/CHARTS.md. A chart's one loud colour is the Haul's
+ * edition ink; these carry everything else. None is machine blue or ember: blue sans is the
+ * machine's voice and ember is never a fill.
+ */
+export interface ChartInk {
+  /** Six series in a fixed order: teal, crimson, ochre, plum, green, steel. Never cycled. */
+  cat: readonly string[];
+  /** Magnitude, light to dark (a heat ramp: butter through ochre to oxblood); flipped in dark mode. */
+  seq: readonly string[];
+  /** Polarity: five cool steps, a neutral middle, five warm steps. */
+  div: readonly string[];
+  /** Series that recede when one is loud. */
+  quiet: string;
+  /** Record range and normal range on the temperature band. */
+  record: string;
+  normal: string;
+  /** Record highs and lows marked on the temperature band. */
+  hot: string;
+  cold: string;
+}
+
+export const chartInk: Record<Scheme, ChartInk> = {
+  light: {
+    cat: ['#008A7A', '#A4313F', '#C38323', '#914A8C', '#518B44', '#227CB1'],
+    seq: ['#FFF4C6', '#F9D68B', '#EFB764', '#E19949', '#CE7C3A', '#B66336', '#9A4E37', '#773F39', '#582F31'],
+    div: ['#00488A', '#336AA0', '#638CB6', '#92AECB', '#C2D0DF', '#F3F3F3', '#E4C8C5', '#D39E99', '#BF746E', '#A94944', '#90101A'],
+    quiet: '#C4C4CB',
+    record: '#EFEBE3',
+    normal: '#D3CABB',
+    hot: '#A4313F',
+    cold: '#227CB1',
+  },
+  dark: {
+    cat: ['#00A89F', '#C54F59', '#BA8B25', '#B167AB', '#639E56', '#388EC4'],
+    seq: ['#421519', '#681D19', '#853219', '#A04B19', '#B86721', '#CC8534', '#DCA550', '#EAC576', '#F3E5B0'],
+    div: ['#5AA3EC', '#5188C0', '#476E97', '#3D556F', '#323D49', '#262626', '#4A3533', '#6E4440', '#95524D', '#BD605A', '#E66E68'],
+    quiet: '#4B4B54',
+    record: '#211F1C',
+    normal: '#3B362F',
+    hot: '#E66E68',
+    cold: '#5AA3EC',
+  },
+};
