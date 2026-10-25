@@ -745,4 +745,21 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   signed B.), the editor's dictation tightened at the editor's request. One source for both:
   `packages/shared/src/about.ts` (`@fdf/shared/about`), paragraphs of text, links and italic titles.
   Links checked live on 2026-10-25 (LinkedIn refuses automated checks; the editor confirmed it).
-- Not yet live: needs `npm run deploy:web` and an over-the-air app update (`npm run app:update`).
+- Live on the website (2026-10-25, below). The app gets it with the next over-the-air update.
+
+## Launch deployed (2026-10-25)
+
+Branch `launch-2026-10-24` at `aff5110`, before the first Haul, at the editor's go.
+
+- **D1 production**: migrations 0006 (blocks) and 0007 (shelf) applied; both only add tables and
+  columns. Restore point before them: bookmark `0000001c-00000000-0000510f-30db4e1d1536a34dcaf30f9ca9c136fc`.
+- **Desk** `fdf-desk` `f362818e-1e92-407b-b081-bace07b22252` (was `620fc6f6`), **pipeline**
+  `fdf-pipeline` `ca83f534-12e7-4352-958c-fa06760ac148` (was `9da99db4`), **website** `fdf-web`
+  `fa7317f6-3d9d-48a5-b85f-f02a9bd6525e` (was `3b027264`). Roll back with `wrangler rollback`.
+- **Checked live**: editorial CLI status (service, publish and delete false), `/api/books` and item
+  blocks answer, publish refused for the service (403); the Desk domain sends anonymous requests to
+  Access (302); api. answers `/v1/health` 200, `/api/me` 403, and `/v1/updates` serves a signed
+  `noUpdateAvailable`. Website: `/`, `/about`, `/shelf`, `/archive`, `/threads`, `/search`,
+  `/feed.xml`, `/llms.txt` 200, unknown path 404, CSP present; the home page is still the waiting
+  page; `/about` carries the editor's note.
+- **Not done**: no app update yet (held for the APK decision); no Haul published.
