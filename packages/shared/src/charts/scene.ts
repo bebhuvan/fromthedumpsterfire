@@ -21,12 +21,14 @@ export type Paint =
   | 'normal'
   | 'hot'
   | 'cold'
+  | 'white'
+  | 'black'
   | `cat${0 | 1 | 2 | 3 | 4 | 5}`
   | `seq${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`
   | `div${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`;
 
 export const PAINTS: readonly Paint[] = [
-  'ink', 'ink2', 'rule', 'quiet', 'ed', 'bg', 'plate', 'mach', 'record', 'normal', 'hot', 'cold',
+  'ink', 'ink2', 'rule', 'quiet', 'ed', 'bg', 'plate', 'mach', 'record', 'normal', 'hot', 'cold', 'white', 'black',
   ...([0, 1, 2, 3, 4, 5] as const).map((i) => `cat${i}` as Paint),
   ...([0, 1, 2, 3, 4, 5, 6, 7, 8] as const).map((i) => `seq${i}` as Paint),
   ...([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const).map((i) => `div${i}` as Paint),
@@ -86,9 +88,31 @@ export function paintHex(p: Paint, scheme: Scheme, edition: Edition): string {
       return ink.hot;
     case 'cold':
       return ink.cold;
+    case 'white':
+      return '#FFFFFF';
+    case 'black':
+      return palettes.light.ink;
   }
   const m = /^(cat|seq|div)(\d+)$/.exec(p)!;
   return ink[m[1] as 'cat' | 'seq' | 'div'][Number(m[2])]!;
+}
+
+/**
+ * The colour of a label set inside a filled mark: white or near-black, the same in both themes, by
+ * the fill's contrast (categorical and ramp steps keep their lightness across themes). The edition's
+ * ink is deep in light mode and pale in dark mode, so a label on it takes the ground.
+ */
+export function labelOn(fill: Paint): Paint {
+  if (fill === 'ed') return 'bg';
+  const lum = (hex: string) => {
+    const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
+  };
+  const worst = Math.min(...(['light', 'dark'] as const).map((sch) => lum(paintHex(fill, sch, 'oxblood'))));
+  const best = Math.max(...(['light', 'dark'] as const).map((sch) => lum(paintHex(fill, sch, 'oxblood'))));
+  const onWhite = 1.05 / (worst + 0.05);
+  const onBlack = (best + 0.05) / (lum(palettes.light.ink) + 0.05);
+  return onWhite >= onBlack ? 'white' : 'black';
 }
 
 /** The faces: the website's CSS family and weight, and the family name of the app's static cut. */

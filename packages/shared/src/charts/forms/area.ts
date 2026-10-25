@@ -4,7 +4,7 @@
 // beside the plot with a leader. A missing value breaks the whole stack at that x (stacking over a
 // hole would misplace every layer above it).
 
-import type { Scene, SceneNode, Paint } from '../scene';
+import { labelOn, type Scene, type SceneNode, type Paint } from '../scene';
 import { Ctx, drawCallouts, drawPeriods, drawXYears, drawYAxis, annotX, linePath, shortUnit, spread, text, yLabelWidth } from '../frame';
 import { linear, niceTicks, yearTicks } from '../scales';
 import { textWidth, wrapText } from '../text';
@@ -175,9 +175,8 @@ export function drawArea(ctx: Ctx): Scene {
       if (outside.includes(i)) return;
       const b = st.bands[i]![lastI]!;
       const mid = sy((b[0] + b[1]) / 2);
-      // Light fills take ink; deep ones take the ground. Cat steps sit in a middle band, so test lightness.
-      const dark = (ctx.chart.options?.focus?.length ? paints[i] === 'ed' : true);
-      nodes.push(text(xr - 6, mid + ctx.s.label * 0.35, name, 'sansMedium', ctx.s.label, dark ? 'bg' : 'ink', 'end'));
+      // White or near-black by the fill's own contrast (labelOn), the same in both themes.
+      nodes.push(text(xr - 6, mid + ctx.s.label * 0.35, name, 'sansMedium', ctx.s.label, labelOn(paintOf(i)), 'end'));
     });
   }
 
