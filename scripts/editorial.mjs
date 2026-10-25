@@ -7,6 +7,7 @@ import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { createClient, TARGETS, DeskError, redact, waitForItem, deskOrigin } from './editorial/client.mjs';
+import { checkChart, csvData, drawFiles, drawPictures } from './editorial/charts.mjs';
 
 export const HELP = `From the Dumpster Fire — editorial client (Node >=22.21)
 
@@ -29,7 +30,16 @@ npm run editorial -- <command> [arguments] [options]
   edit-haul ID                    PATCH Haul with --data haul.json
   order ID                        set Haul items with --data order.json
   preview ID                      assemble/check a Haul without publishing
-  publish ID                      publish with --confirm-publish (fields via --data)
+  publish ID                      publish with --confirm-publish (fields via --data); draws each
+                                  chart's app pictures here first (resvg, the app's fonts)
+  chart ITEM                      add a chart block from --data chart.json (checked by the Desk)
+  chart-edit BLOCK                replace a chart block's spec with --data chart.json
+  chart-fetch                     data behind a chart from Our World in Data or the World Bank
+                                  (--data {"provider":"owid","chart":URL,"entities":[...]} or
+                                  {"provider":"worldbank","indicator":ID,"countries":["IND"]})
+  chart-csv FILE                  a CSV/TSV file as chart data (local; prints data and problems)
+  chart-check                     the honesty validator on --data chart.json (local)
+  chart-draw DIR                  draw --data chart.json to PNGs in DIR for a look (local)
   request METHOD /api/PATH         any Desk JSON API route, or --upload file=PATH
   login                           owner login using cloudflared; saves token privately
 
@@ -85,13 +95,30 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
       stdout('Owner login saved privately. Run status to verify it.\n');
       return 0;
     }
-    const client = createClient({ origin, credentials, fetcher });
     let data;
     if (v.data !== undefined) {
       const raw = readFileSync(v.data === '-' ? 0 : v.data, 'utf8');
       if (Buffer.byteLength(raw) > 4 * 1024 * 1024) throw new Error('JSON input exceeds 4 MB');
       try { data = JSON.parse(raw); } catch { throw new Error('The data file/stdin must contain valid JSON'); }
     }
+    // Local chart commands: no Desk, no credentials.
+    if (command === 'chart-csv') {
+      if (p.length !== 2) throw new Error('chart-csv takes one file');
+      output(await csvData(readFileSync(p[1], 'utf8'))); return 0;
+    }
+    if (command === 'chart-check') {
+      if (p.length !== 1 || !data) throw new Error('chart-check takes --data chart.json');
+      const report = await checkChart(data);
+      output(report); return report.ok ? 0 : 1;
+    }
+    if (command === 'chart-draw') {
+      if (p.length !== 2 || !data) throw new Error('chart-draw takes a directory and --data chart.json');
+      const report = await checkChart(data);
+      if (!report.ok) { output(report); return 1; }
+      mkdirSync(p[1], { recursive: true });
+      output({ files: await drawFiles(data, p[1]) }); return 0;
+    }
+    const client = createClient({ origin, credentials, fetcher });
     let method = 'GET', path;
     let uploads = v.upload ?? [];
     const id = () => idPath(p[1]);
@@ -130,15 +157,28 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
       case 'publish':
         path = `/api/hauls/${id()}/publish`; method = 'POST';
         if (data !== undefined && (!data || typeof data !== 'object' || Array.isArray(data))) throw new Error('publish data must be an object');
-        data = { ...data, confirm: true }; break;
+        data = { ...data, confirm: true };
+        // The app has no SVG: draw each chart's light and dark pictures from the previewed bundle,
+        // as the Desk does. Publish refuses pictures drawn from any other chart or edition ink.
+        if (v['confirm-publish'] && p.length === 2) {
+          const q = data.correction ? `?correction=${encodeURIComponent(data.correction)}` : '';
+          const pv = await client.request('GET', `/api/hauls/${id()}/preview${q}`, {});
+          const charts = pv?.haul ? await drawPictures(pv.haul) : {};
+          if (Object.keys(charts).length) data = { ...data, charts };
+        }
+        break;
+      case 'chart': path = `/api/items/${id()}/blocks`; method = 'POST'; data = { kind: 'chart', chart: data }; break;
+      case 'chart-edit': path = `/api/blocks/${id()}/chart`; method = 'PUT'; data = { chart: data }; break;
+      case 'chart-fetch': path = '/api/charts/fetch'; method = 'POST'; break;
       case 'request': method = p[1] ?? ''; path = p[2] ?? ''; break;
       default: throw new Error(`Unknown command. Use --help`);
     }
     // Catch accidental positional arguments rather than silently ignoring supplied content.
-    const expected = ['capture', 'request'].includes(command) ? null : ['status', 'items', 'hauls', 'new-haul'].includes(command) ? 1 : 2;
+    const expected = ['capture', 'request'].includes(command) ? null : ['status', 'items', 'hauls', 'new-haul', 'chart-fetch'].includes(command) ? 1 : 2;
     if (expected !== null && p.length !== expected) throw new Error('Unexpected or missing arguments; use --help');
     if (command === 'request' && p.length !== 3) throw new Error('request requires METHOD and /api/PATH');
-    if (['edit', 'source', 'edit-haul', 'order'].includes(command) && data === undefined) throw new Error('Supply --data FILE or --data -');
+    if (['edit', 'source', 'edit-haul', 'order', 'chart-fetch'].includes(command) && data === undefined) throw new Error('Supply --data FILE or --data -');
+    if (['chart', 'chart-edit'].includes(command) && !data?.chart) throw new Error('Supply the chart with --data chart.json');
     let form;
     if (uploads.length) {
       if (data !== undefined && (!data || typeof data !== 'object' || Array.isArray(data))) throw new Error('Multipart fields must be a JSON object');
