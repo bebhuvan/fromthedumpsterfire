@@ -90,7 +90,7 @@ function hasMissing(chart: Chart): boolean {
   // Years that are absent from a yearly series are missing too.
   const x = col(chart, 'x');
   if (x?.type === 'year' && spec.time) {
-    const si = idx(chart, 'series') >= 0 ? idx(chart, 'series') : idx(chart, 'facet');
+    const si = idx(chart, 'series') >= 0 ? idx(chart, 'series') : idx(chart, 'facet') >= 0 ? idx(chart, 'facet') : chart.form === 'table' ? idx(chart, 'label') : -1;
     const by = new Map<string, number[]>();
     const xi = idx(chart, 'x');
     for (const r of chart.data.rows) {
@@ -101,7 +101,8 @@ function hasMissing(chart: Chart): boolean {
       ys.sort((a, b) => a - b);
       const steps = ys.slice(1).map((y, i) => y - ys[i]!);
       const usual = steps.length ? [...steps].sort((a, b) => a - b)[Math.floor((steps.length - 1) / 2)]! : 0;
-      if (steps.some((s) => s > usual * 1.5)) return true;
+      // A usual step of zero means the years repeat (rows of different things): no gap can be read from them.
+      if (usual > 0 && steps.some((s) => s > usual * 1.5)) return true;
     }
   }
   return false;
@@ -162,7 +163,9 @@ function formGlosses(chart: Chart): string[] {
       if (t && typeof r[yi] === 'number') have.add(t.code);
     }
     const none = INDIA_TILES.filter((t) => !have.has(t.code)).map((t) => t.name);
-    if (none.length) out.push(`No data for ${none.length === 1 ? none[0] : `${none.slice(0, -1).join(', ')} and ${none[none.length - 1]}`}.`);
+    // Names that hold an "and" of their own are listed with semicolons, so the list reads clearly.
+    const sep = none.some((n) => / and /.test(n)) ? '; ' : ', ';
+    if (none.length) out.push(`No data for ${none.length === 1 ? none[0] : `${none.slice(0, -1).join(sep)}${sep === '; ' ? ';' : ''} and ${none[none.length - 1]}`}.`);
   }
   if (chart.form === 'choropleth') out.push('Countries in grey have no data. The boundaries are India’s, as India depicts them (Natural Earth’s India view); Antarctica is not shown.');
   if (chart.form === 'drawdown') {

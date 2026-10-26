@@ -20,6 +20,13 @@ function niceNear(w: number): number {
   return best;
 }
 
+/** The smallest of 1, 2, 2.5 or 5 times a power of ten at least w. */
+function niceAtLeast(w: number): number {
+  const p = 10 ** Math.floor(Math.log10(w));
+  for (const m of [...NICE, 10]) if (m * p >= w * (1 - 1e-12)) return m * p;
+  return 10 * p;
+}
+
 export function bins(values: number[]): Bins {
   const v = values.filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
   const n = v.length;
@@ -33,8 +40,11 @@ export function bins(values: number[]): Bins {
   const count = (w: number) => Math.floor(max / w + 1e-9) - Math.floor(min / w + 1e-9) + 1;
   for (let guard = 0; guard < 20 && count(width) > 30; guard++) width = niceNear(width * 1.6);
   for (let guard = 0; guard < 20 && count(width) < 6 && width > 1e-9; guard++) width = niceNear(width / 1.6);
+  // However the data is spread, never more than 30 bars: an extreme range takes its width straight
+  // from the range (the smallest nice width that fits it in 29), and the count is clamped besides.
+  if (!(count(width) <= 30)) width = niceAtLeast(range / 29);
   const start = Math.floor(min / width + 1e-9) * width;
-  const k = count(width);
+  const k = Math.max(1, Math.min(30, count(width)));
   const index = (x: number) => Math.max(0, Math.min(k - 1, Math.floor((x - start) / width + 1e-9)));
   const counts = new Array<number>(k).fill(0);
   for (const x of v) counts[index(x)]!++;

@@ -38,7 +38,7 @@ net = [r for r in rows('wb-IT.NET.USER.ZS-2019-2024.csv') if r['aggregate'] == '
 write('world-internet', {
     'form': 'choropleth', 'title': 'Two in three Indians are online now',
     'note': 'About 65 in every 100 people in India used the internet in 2024, against 71 for the world as a whole.',
-    'units': '% of people', 'geography': 'World', 'span': {'from': '2024', 'to': '2024'},
+    'units': '%', 'geography': 'World', 'span': {'from': '2024', 'to': '2024'},
     'sources': [WB('IT.NET.USER.ZS', 'Individuals using the Internet (% of population)')],
     'measure': {'basis': 'share', 'denominator': 'of the population'},
     'data': {'columns': [{'key': 'country', 'label': 'Country', 'type': 'text'}, {'key': 'code', 'label': 'ISO code', 'type': 'text'}, {'key': 'share', 'label': 'People using the internet', 'type': 'number', 'unit': '%'}],

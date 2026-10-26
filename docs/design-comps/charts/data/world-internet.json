@@ -2,7 +2,7 @@
  "form": "choropleth",
  "title": "Two in three Indians are online now",
  "note": "About 65 in every 100 people in India used the internet in 2024, against 71 for the world as a whole.",
- "units": "% of people",
+ "units": "%",
  "geography": "World",
  "span": {
   "from": "2024",

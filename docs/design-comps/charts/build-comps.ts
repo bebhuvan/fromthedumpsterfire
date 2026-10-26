@@ -6,9 +6,9 @@
 //           --format=esm --outfile=/tmp/build-comps.mjs && node /tmp/build-comps.mjs
 // Shoot:  node docs/design-comps/_shared/shoot.mjs docs/design-comps/charts docs/design-comps/charts/shots 390,1280
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { renderChart, groupTransform, nodeAttrs, chartGlosses, describeChart, headLine, creditParts, formatCell, chartGrouping, FORMS, type Chart, type SceneNode } from '../../../packages/shared/src/charts/index.ts';
+import { renderChart, sceneToSvg, shareScene, SHARE, RASTER_FONTS, groupTransform, nodeAttrs, chartGlosses, describeChart, headLine, creditParts, formatCell, chartGrouping, FORMS, type Chart, type SceneNode } from '../../../packages/shared/src/charts/index.ts';
 import { tokensCss } from '../../../apps/web/src/lib/tokens-css.ts';
 
 const root = process.cwd();
@@ -40,9 +40,23 @@ const GROUPS: Array<{ page: string; title: string; deck: string; edition: string
   {
     page: 'weather',
     title: 'Weather and climate',
-    deck: 'A year of days against the normal and the records, the warming stripes, every day as a square, and every month of every year.',
-    edition: 'ochre',
+    deck: 'A year of days against the normal and the records, the warming stripes, and every day and every month against its normal.',
+    edition: 'slate',
     charts: ['delhi-band-2024', 'temperature-stripes', 'delhi-calendar-2024', 'delhi-heatmap-months'],
+  },
+  {
+    page: 'places',
+    title: 'Places and counts',
+    deck: 'The world shaded with India drawn as India draws it, every state an equal tile, and a distribution counted.',
+    edition: 'pine',
+    charts: ['world-internet', 'india-female-literacy', 'histogram-fertility'],
+  },
+  {
+    page: 'money',
+    title: 'Money',
+    deck: 'A price and how far it fell, a calendar of monthly returns, and a table that carries its own small lines.',
+    edition: 'umber',
+    charts: ['gold-drawdown', 'gold-monthly-returns', 'south-asia-gdp-table'],
   },
 ];
 
@@ -111,7 +125,7 @@ const page = `
 for (const grp of GROUPS) {
   let n = 0;
   const figs = grp.charts.map((f) => figure(JSON.parse(readFileSync(join(dir, 'data', `${f}.json`), 'utf8')) as Chart, ++n, f)).join('\n');
-  const nav = GROUPS.map((g) => `<a href="${g.page}.html"${g.page === grp.page ? ' aria-current="page"' : ''}>${g.title}</a>`).join('');
+  const nav = GROUPS.map((g) => `<a href="${g.page}.html"${g.page === grp.page ? ' aria-current="page"' : ''}>${g.title}</a>`).join('') + '<a href="cards.html">Share pictures</a>';
   const html = `<!doctype html>
 <html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Charts: ${esc(grp.title)}. From the Dumpster Fire comps</title>
@@ -122,6 +136,42 @@ ${figs}
 </main></body></html>`;
   writeFileSync(join(dir, `${grp.page}.html`), html);
 }
+// The share cards: every chart's picture for social posts, drawn with resvg and the app's fonts
+// exactly as publish draws it, on a page of its own.
+{
+  const { initWasm, Resvg } = await import('@resvg/resvg-wasm');
+  await initWasm(readFileSync(join(root, 'node_modules/@resvg/resvg-wasm/index_bg.wasm')));
+  const fonts = RASTER_FONTS.map((f) => new Uint8Array(readFileSync(join(root, 'apps/mobile/assets/fonts', f))));
+  mkdirSync(join(dir, 'cards'), { recursive: true });
+  const cards: string[] = [];
+  let k = 0;
+  for (const grp of GROUPS)
+    for (const f of grp.charts) {
+      const chart = JSON.parse(readFileSync(join(dir, 'data', `${f}.json`), 'utf8')) as Chart;
+      const scene = shareScene(chart, { haul: 1, figure: ++k % 5 || 5, address: 'fromthedumpsterfire.com/haul/1' });
+      const png = new Resvg(sceneToSvg(scene, { scheme: 'light', edition: grp.edition as 'teal' }), { fitTo: { mode: 'zoom', value: SHARE.zoom }, font: { fontBuffers: fonts, loadSystemFonts: false, defaultFontFamily: 'Schibsted-Regular' } }).render().asPng();
+      writeFileSync(join(dir, 'cards', `${f}.png`), png);
+      cards.push(`<figure class="card"><img src="cards/${f}.png" alt="${esc(chart.title)}" width="540"><figcaption>${esc(chart.title)}</figcaption></figure>`);
+    }
+  const nav = GROUPS.map((g) => `<a href="${g.page}.html">${g.title}</a>`).join('') + '<a href="cards.html" aria-current="page">Share pictures</a>';
+  writeFileSync(
+    join(dir, 'cards.html'),
+    `<!doctype html>
+<html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charts: share pictures. From the Dumpster Fire comps</title>
+<style>${tokensCss()}\n${base}\n${page}
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 40px 32px; align-items: start; }
+.card img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); background: #fff; }
+.card figcaption { font: 400 13px/1.4 var(--sans); color: var(--ink2); margin-top: 8px; }
+.comps-wide { max-width: 1240px; }
+</style></head>
+<body><main class="comps comps-wide">
+<header class="comps-head"><p>The chart kit · comps with real data</p><h1>Share pictures</h1><p class="deck">Every chart as the card publish draws for social posts and Substack: 1080 pixels wide, with the masthead, the editor’s words, the credit and the address.</p><nav class="comps-nav">${nav}</nav></header>
+<div class="cards">${cards.join('\n')}</div>
+</main></body></html>`,
+  );
+}
+
 writeFileSync(
   join(dir, 'index.html'),
   `<!doctype html><meta charset="utf-8"><title>The chart kit: comps</title><ul>${GROUPS.map((g) => `<li><a href="${g.page}.html">${g.title}</a></li>`).join('')}</ul>`,

@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charts: share pictures. From the Dumpster Fire comps</title>
+<style>:root{--code-k:#8A2A55;--code-s:#2F6B3A;--code-c:#6E6E76;--code-n:#9A5B00;--code-f:#141416;--code-t:#0F5F63;--code-a:#7A4A12;--code-m:#6B3FA0;--code-d:#A3232E;--code-i:#2F6B3A;--ed-oxblood:#8C2333;--ed-teal:#0E6461;--ed-ochre:#94650C;--ed-plum:#6A2C61;--ed-pine:#24573F;--ed-umber:#7A4A2A;--ed-slate:#465661;--ed-olive:#5E6214;--cloth-oxblood:#8C2333;--stamp-oxblood:#FFFFFF;--cloth-teal:#0E6461;--stamp-teal:#FFFFFF;--cloth-ochre:#94650C;--stamp-ochre:#FFFFFF;--cloth-plum:#6A2C61;--stamp-plum:#FFFFFF;--cloth-pine:#24573F;--stamp-pine:#FFFFFF;--cloth-umber:#7A4A2A;--stamp-umber:#FFFFFF;--cloth-slate:#465661;--stamp-slate:#FFFFFF;--cloth-olive:#5E6214;--stamp-olive:#FFFFFF;--cloth-ink:#141416;--stamp-ink:#FFFFFF;--cloth-paper:#F4F4F6;--stamp-paper:#141416;--ch-ink:#141416;--ch-ink2:#55555C;--ch-rule:#E6E6EA;--ch-quiet:#C2C4C8;--ch-quiet2:#DDDEE1;--ch-quiet3:#96989D;--ch-bg:#FFFFFF;--ch-plate:#F4F4F6;--ch-mach:#4651D2;--ch-ember:#FF4F1F;--ch-record:#ECEDEF;--ch-normal:#D1D2D6;--ch-hot:#9C302A;--ch-cold:#055CA5;--ch-white:#FFFFFF;--ch-black:#141416;--ch-cat0:#008A7A;--ch-cat1:#A4313F;--ch-cat2:#C38323;--ch-cat3:#914A8C;--ch-cat4:#518B44;--ch-cat5:#227CB1;--ch-seq0:#8EBED4;--ch-seq1:#72A5C0;--ch-seq2:#588CAC;--ch-seq3:#3F7498;--ch-seq4:#265C84;--ch-seq5:#0D4571;--ch-seq6:#002E59;--ch-heat0:#EAAA6B;--ch-heat1:#D78F55;--ch-heat2:#C47441;--ch-heat3:#AF5A2E;--ch-heat4:#9B401E;--ch-heat5:#85250F;--ch-heat6:#6E0104;--ch-div0:#024077;--ch-div1:#055CA5;--ch-div2:#3D7BBD;--ch-div3:#659AD5;--ch-div4:#8DBAED;--ch-div5:#ECEBE9;--ch-div6:#EB9F96;--ch-div7:#D27B71;--ch-div8:#B7564E;--ch-div9:#9C302A;--ch-div10:#7D0008;--ch-dv0:#024077;--ch-dv1:#034782;--ch-dv2:#034E8E;--ch-dv3:#045599;--ch-dv4:#055CA5;--ch-dv5:#1964AB;--ch-dv6:#266BB1;--ch-dv7:#3273B7;--ch-dv8:#3D7BBD;--ch-dv9:#4783C3;--ch-dv10:#518AC9;--ch-dv11:#5B92CF;--ch-dv12:#659AD5;--ch-dv13:#6FA2DB;--ch-dv14:#79AAE1;--ch-dv15:#83B2E7;--ch-dv16:#8DBAED;--ch-dv17:#A5C7ED;--ch-dv18:#BDD3EC;--ch-dv19:#D4DFEB;--ch-dv20:#ECEBE9;--ch-dv21:#EDD8D4;--ch-dv22:#EEC5BF;--ch-dv23:#EDB2AA;--ch-dv24:#EB9F96;--ch-dv25:#E5968D;--ch-dv26:#DF8D83;--ch-dv27:#D8847A;--ch-dv28:#D27B71;--ch-dv29:#CB7268;--ch-dv30:#C5695F;--ch-dv31:#BE5F57;--ch-dv32:#B7564E;--ch-dv33:#B04D45;--ch-dv34:#AA443C;--ch-dv35:#A33A33;--ch-dv36:#9C302A;--ch-dv37:#942722;--ch-dv38:#8C1D1A;--ch-dv39:#851012;--ch-dv40:#7D0008;--bg:#FFFFFF;--ink:#141416;--ink2:#55555C;--rule:#E6E6EA;--plate:#F4F4F6;--machine:#4651D2;--ember:#FF4F1F;--inv-bg:#141416;--inv-ink:#FFFFFF;--apricot:#FFE0C2;--coral:#FFD8D0;--butter:#FFF0A6;--sky:#DCEBFF;--mint:#D2F3E2;--pistachio:#E6F2C8;--lilac:#ECE4FA;--aqua:#D3EFF0;--t-essay:var(--apricot);--t-post:var(--apricot);--t-talk:var(--butter);--t-video:var(--butter);--t-podcast:var(--butter);--t-paper:var(--mint);--t-poem:var(--coral);--t-passage:var(--coral);--t-rhymes:var(--sky);--t-rabbit-hole:var(--pistachio);--t-quote:var(--coral);--t-letter:var(--lilac);--t-speech:var(--butter);--t-social:var(--aqua);--t-image:var(--aqua);--t-book:var(--lilac);--t-tool:var(--mint);--t-chart:var(--sky);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--code-k:#F09CC0;--code-s:#9ED39A;--code-c:#8E8E98;--code-n:#F2BE6E;--code-f:#F3F3F1;--code-t:#7FD3D0;--code-a:#E8B98A;--code-m:#C9A8F2;--code-d:#F08A92;--code-i:#9ED39A;--ed-oxblood:#EE8E99;--ed-teal:#6FD0CB;--ed-ochre:#E6B65E;--ed-plum:#D99CD0;--ed-pine:#86C9A6;--ed-umber:#D9A783;--ed-slate:#A9BAC6;--ed-olive:#C7C96E;--cloth-oxblood:#EE8E99;--stamp-oxblood:#0F0F12;--cloth-teal:#6FD0CB;--stamp-teal:#0F0F12;--cloth-ochre:#E6B65E;--stamp-ochre:#0F0F12;--cloth-plum:#D99CD0;--stamp-plum:#0F0F12;--cloth-pine:#86C9A6;--stamp-pine:#0F0F12;--cloth-umber:#D9A783;--stamp-umber:#0F0F12;--cloth-slate:#A9BAC6;--stamp-slate:#0F0F12;--cloth-olive:#C7C96E;--stamp-olive:#0F0F12;--cloth-ink:#F3F3F1;--stamp-ink:#0F0F12;--cloth-paper:#1B1B20;--stamp-paper:#F3F3F1;--ch-ink:#F3F3F1;--ch-ink2:#A2A2AA;--ch-rule:#2A2A31;--ch-quiet:#4C4D50;--ch-quiet2:#343539;--ch-quiet3:#707175;--ch-bg:#0F0F12;--ch-plate:#1B1B20;--ch-mach:#A3ACFF;--ch-ember:#FF6A3D;--ch-record:#222325;--ch-normal:#38393C;--ch-hot:#F99085;--ch-cold:#76B6FD;--ch-white:#FFFFFF;--ch-black:#141416;--ch-cat0:#00A89F;--ch-cat1:#C54F59;--ch-cat2:#BA8B25;--ch-cat3:#B167AB;--ch-cat4:#639E56;--ch-cat5:#388EC4;--ch-seq0:#305275;--ch-seq1:#436A8D;--ch-seq2:#5683A5;--ch-seq3:#6B9CBD;--ch-seq4:#80B6D6;--ch-seq5:#96D1EF;--ch-seq6:#BCE9FE;--ch-heat0:#972620;--ch-heat1:#AD442D;--ch-heat2:#C1613E;--ch-heat3:#D57C51;--ch-heat4:#E89866;--ch-heat5:#FBB47E;--ch-heat6:#FFD5B0;--ch-div0:#B0D5FE;--ch-div1:#76B6FD;--ch-div2:#5D97D8;--ch-div3:#447AB4;--ch-div4:#2C5D91;--ch-div5:#333331;--ch-div6:#8C4039;--ch-div7:#AF5A52;--ch-div8:#D4756B;--ch-div9:#F99085;--ch-div10:#FEBFB7;--ch-dv0:#B0D5FE;--ch-dv1:#A2CDFE;--ch-dv2:#93C6FE;--ch-dv3:#85BEFD;--ch-dv4:#76B6FD;--ch-dv5:#70AEF4;--ch-dv6:#69A6EA;--ch-dv7:#639FE1;--ch-dv8:#5D97D8;--ch-dv9:#5790CF;--ch-dv10:#5088C6;--ch-dv11:#4A81BD;--ch-dv12:#447AB4;--ch-dv13:#3E73AB;--ch-dv14:#386BA2;--ch-dv15:#32649A;--ch-dv16:#2C5D91;--ch-dv17:#305378;--ch-dv18:#324860;--ch-dv19:#333E48;--ch-dv20:#333331;--ch-dv21:#4A3834;--ch-dv22:#603B36;--ch-dv23:#763E38;--ch-dv24:#8C4039;--ch-dv25:#95463F;--ch-dv26:#9D4D45;--ch-dv27:#A6534C;--ch-dv28:#AF5A52;--ch-dv29:#B86158;--ch-dv30:#C1675E;--ch-dv31:#CB6E65;--ch-dv32:#D4756B;--ch-dv33:#DD7C71;--ch-dv34:#E68278;--ch-dv35:#F0897E;--ch-dv36:#F99085;--ch-dv37:#FB9C91;--ch-dv38:#FCA89E;--ch-dv39:#FDB3AA;--ch-dv40:#FEBFB7;--bg:#0F0F12;--ink:#F3F3F1;--ink2:#A2A2AA;--rule:#2A2A31;--plate:#1B1B20;--machine:#A3ACFF;--ember:#FF6A3D;--inv-bg:#F3F3F1;--inv-ink:#0F0F12;--apricot:#4D2E14;--coral:#4E2320;--butter:#433B12;--sky:#15304B;--mint:#163D2D;--pistachio:#2E3915;--lilac:#33284A;--aqua:#123B3D;color-scheme:dark}}
+:root[data-theme="dark"]{--code-k:#F09CC0;--code-s:#9ED39A;--code-c:#8E8E98;--code-n:#F2BE6E;--code-f:#F3F3F1;--code-t:#7FD3D0;--code-a:#E8B98A;--code-m:#C9A8F2;--code-d:#F08A92;--code-i:#9ED39A;--ed-oxblood:#EE8E99;--ed-teal:#6FD0CB;--ed-ochre:#E6B65E;--ed-plum:#D99CD0;--ed-pine:#86C9A6;--ed-umber:#D9A783;--ed-slate:#A9BAC6;--ed-olive:#C7C96E;--cloth-oxblood:#EE8E99;--stamp-oxblood:#0F0F12;--cloth-teal:#6FD0CB;--stamp-teal:#0F0F12;--cloth-ochre:#E6B65E;--stamp-ochre:#0F0F12;--cloth-plum:#D99CD0;--stamp-plum:#0F0F12;--cloth-pine:#86C9A6;--stamp-pine:#0F0F12;--cloth-umber:#D9A783;--stamp-umber:#0F0F12;--cloth-slate:#A9BAC6;--stamp-slate:#0F0F12;--cloth-olive:#C7C96E;--stamp-olive:#0F0F12;--cloth-ink:#F3F3F1;--stamp-ink:#0F0F12;--cloth-paper:#1B1B20;--stamp-paper:#F3F3F1;--ch-ink:#F3F3F1;--ch-ink2:#A2A2AA;--ch-rule:#2A2A31;--ch-quiet:#4C4D50;--ch-quiet2:#343539;--ch-quiet3:#707175;--ch-bg:#0F0F12;--ch-plate:#1B1B20;--ch-mach:#A3ACFF;--ch-ember:#FF6A3D;--ch-record:#222325;--ch-normal:#38393C;--ch-hot:#F99085;--ch-cold:#76B6FD;--ch-white:#FFFFFF;--ch-black:#141416;--ch-cat0:#00A89F;--ch-cat1:#C54F59;--ch-cat2:#BA8B25;--ch-cat3:#B167AB;--ch-cat4:#639E56;--ch-cat5:#388EC4;--ch-seq0:#305275;--ch-seq1:#436A8D;--ch-seq2:#5683A5;--ch-seq3:#6B9CBD;--ch-seq4:#80B6D6;--ch-seq5:#96D1EF;--ch-seq6:#BCE9FE;--ch-heat0:#972620;--ch-heat1:#AD442D;--ch-heat2:#C1613E;--ch-heat3:#D57C51;--ch-heat4:#E89866;--ch-heat5:#FBB47E;--ch-heat6:#FFD5B0;--ch-div0:#B0D5FE;--ch-div1:#76B6FD;--ch-div2:#5D97D8;--ch-div3:#447AB4;--ch-div4:#2C5D91;--ch-div5:#333331;--ch-div6:#8C4039;--ch-div7:#AF5A52;--ch-div8:#D4756B;--ch-div9:#F99085;--ch-div10:#FEBFB7;--ch-dv0:#B0D5FE;--ch-dv1:#A2CDFE;--ch-dv2:#93C6FE;--ch-dv3:#85BEFD;--ch-dv4:#76B6FD;--ch-dv5:#70AEF4;--ch-dv6:#69A6EA;--ch-dv7:#639FE1;--ch-dv8:#5D97D8;--ch-dv9:#5790CF;--ch-dv10:#5088C6;--ch-dv11:#4A81BD;--ch-dv12:#447AB4;--ch-dv13:#3E73AB;--ch-dv14:#386BA2;--ch-dv15:#32649A;--ch-dv16:#2C5D91;--ch-dv17:#305378;--ch-dv18:#324860;--ch-dv19:#333E48;--ch-dv20:#333331;--ch-dv21:#4A3834;--ch-dv22:#603B36;--ch-dv23:#763E38;--ch-dv24:#8C4039;--ch-dv25:#95463F;--ch-dv26:#9D4D45;--ch-dv27:#A6534C;--ch-dv28:#AF5A52;--ch-dv29:#B86158;--ch-dv30:#C1675E;--ch-dv31:#CB6E65;--ch-dv32:#D4756B;--ch-dv33:#DD7C71;--ch-dv34:#E68278;--ch-dv35:#F0897E;--ch-dv36:#F99085;--ch-dv37:#FB9C91;--ch-dv38:#FCA89E;--ch-dv39:#FDB3AA;--ch-dv40:#FEBFB7;--bg:#0F0F12;--ink:#F3F3F1;--ink2:#A2A2AA;--rule:#2A2A31;--plate:#1B1B20;--machine:#A3ACFF;--ember:#FF6A3D;--inv-bg:#F3F3F1;--inv-ink:#0F0F12;--apricot:#4D2E14;--coral:#4E2320;--butter:#433B12;--sky:#15304B;--mint:#163D2D;--pistachio:#2E3915;--lilac:#33284A;--aqua:#123B3D;color-scheme:dark}
+.t-essay{--tint:var(--t-essay)}
+.t-post{--tint:var(--t-post)}
+.t-talk{--tint:var(--t-talk)}
+.t-video{--tint:var(--t-video)}
+.t-podcast{--tint:var(--t-podcast)}
+.t-paper{--tint:var(--t-paper)}
+.t-poem{--tint:var(--t-poem)}
+.t-passage{--tint:var(--t-passage)}
+.t-rhymes{--tint:var(--t-rhymes)}
+.t-rabbit-hole{--tint:var(--t-rabbit-hole)}
+.t-quote{--tint:var(--t-quote)}
+.t-letter{--tint:var(--t-letter)}
+.t-speech{--tint:var(--t-speech)}
+.t-social{--tint:var(--t-social)}
+.t-image{--tint:var(--t-image)}
+.t-book{--tint:var(--t-book)}
+.t-tool{--tint:var(--t-tool)}
+.t-chart{--tint:var(--t-chart)}
+.s-apricot{--tint:var(--apricot)}
+.s-coral{--tint:var(--coral)}
+.s-butter{--tint:var(--butter)}
+.s-sky{--tint:var(--sky)}
+.s-mint{--tint:var(--mint)}
+.s-pistachio{--tint:var(--pistachio)}
+.s-lilac{--tint:var(--lilac)}
+.s-aqua{--tint:var(--aqua)}
+.e-oxblood{--ed:var(--ed-oxblood)}
+.e-teal{--ed:var(--ed-teal)}
+.e-ochre{--ed:var(--ed-ochre)}
+.e-plum{--ed:var(--ed-plum)}
+.e-pine{--ed:var(--ed-pine)}
+.e-umber{--ed:var(--ed-umber)}
+.e-slate{--ed:var(--ed-slate)}
+.e-olive{--ed:var(--ed-olive)}
+.spine-oxblood{--cloth:var(--cloth-oxblood);--stamp:var(--stamp-oxblood)}
+.spine-teal{--cloth:var(--cloth-teal);--stamp:var(--stamp-teal)}
+.spine-ochre{--cloth:var(--cloth-ochre);--stamp:var(--stamp-ochre)}
+.spine-plum{--cloth:var(--cloth-plum);--stamp:var(--stamp-plum)}
+.spine-pine{--cloth:var(--cloth-pine);--stamp:var(--stamp-pine)}
+.spine-umber{--cloth:var(--cloth-umber);--stamp:var(--stamp-umber)}
+.spine-slate{--cloth:var(--cloth-slate);--stamp:var(--stamp-slate)}
+.spine-olive{--cloth:var(--cloth-olive);--stamp:var(--stamp-olive)}
+.spine-ink{--cloth:var(--cloth-ink);--stamp:var(--stamp-ink)}
+.spine-paper{--cloth:var(--cloth-paper);--stamp:var(--stamp-paper)}
+.ch .f-ink{fill:var(--ch-ink)}
+.ch .s-ink{stroke:var(--ch-ink)}
+.ch .f-ink2{fill:var(--ch-ink2)}
+.ch .s-ink2{stroke:var(--ch-ink2)}
+.ch .f-rule{fill:var(--ch-rule)}
+.ch .s-rule{stroke:var(--ch-rule)}
+.ch .f-quiet{fill:var(--ch-quiet)}
+.ch .s-quiet{stroke:var(--ch-quiet)}
+.ch .f-quiet2{fill:var(--ch-quiet2)}
+.ch .s-quiet2{stroke:var(--ch-quiet2)}
+.ch .f-quiet3{fill:var(--ch-quiet3)}
+.ch .s-quiet3{stroke:var(--ch-quiet3)}
+.ch .f-ed{fill:var(--ed,var(--ink))}
+.ch .s-ed{stroke:var(--ed,var(--ink))}
+.ch .f-bg{fill:var(--ch-bg)}
+.ch .s-bg{stroke:var(--ch-bg)}
+.ch .f-plate{fill:var(--ch-plate)}
+.ch .s-plate{stroke:var(--ch-plate)}
+.ch .f-mach{fill:var(--ch-mach)}
+.ch .s-mach{stroke:var(--ch-mach)}
+.ch .f-ember{fill:var(--ch-ember)}
+.ch .s-ember{stroke:var(--ch-ember)}
+.ch .f-record{fill:var(--ch-record)}
+.ch .s-record{stroke:var(--ch-record)}
+.ch .f-normal{fill:var(--ch-normal)}
+.ch .s-normal{stroke:var(--ch-normal)}
+.ch .f-hot{fill:var(--ch-hot)}
+.ch .s-hot{stroke:var(--ch-hot)}
+.ch .f-cold{fill:var(--ch-cold)}
+.ch .s-cold{stroke:var(--ch-cold)}
+.ch .f-white{fill:var(--ch-white)}
+.ch .s-white{stroke:var(--ch-white)}
+.ch .f-black{fill:var(--ch-black)}
+.ch .s-black{stroke:var(--ch-black)}
+.ch .f-cat0{fill:var(--ch-cat0)}
+.ch .s-cat0{stroke:var(--ch-cat0)}
+.ch .f-cat1{fill:var(--ch-cat1)}
+.ch .s-cat1{stroke:var(--ch-cat1)}
+.ch .f-cat2{fill:var(--ch-cat2)}
+.ch .s-cat2{stroke:var(--ch-cat2)}
+.ch .f-cat3{fill:var(--ch-cat3)}
+.ch .s-cat3{stroke:var(--ch-cat3)}
+.ch .f-cat4{fill:var(--ch-cat4)}
+.ch .s-cat4{stroke:var(--ch-cat4)}
+.ch .f-cat5{fill:var(--ch-cat5)}
+.ch .s-cat5{stroke:var(--ch-cat5)}
+.ch .f-seq0{fill:var(--ch-seq0)}
+.ch .s-seq0{stroke:var(--ch-seq0)}
+.ch .f-seq1{fill:var(--ch-seq1)}
+.ch .s-seq1{stroke:var(--ch-seq1)}
+.ch .f-seq2{fill:var(--ch-seq2)}
+.ch .s-seq2{stroke:var(--ch-seq2)}
+.ch .f-seq3{fill:var(--ch-seq3)}
+.ch .s-seq3{stroke:var(--ch-seq3)}
+.ch .f-seq4{fill:var(--ch-seq4)}
+.ch .s-seq4{stroke:var(--ch-seq4)}
+.ch .f-seq5{fill:var(--ch-seq5)}
+.ch .s-seq5{stroke:var(--ch-seq5)}
+.ch .f-seq6{fill:var(--ch-seq6)}
+.ch .s-seq6{stroke:var(--ch-seq6)}
+.ch .f-heat0{fill:var(--ch-heat0)}
+.ch .s-heat0{stroke:var(--ch-heat0)}
+.ch .f-heat1{fill:var(--ch-heat1)}
+.ch .s-heat1{stroke:var(--ch-heat1)}
+.ch .f-heat2{fill:var(--ch-heat2)}
+.ch .s-heat2{stroke:var(--ch-heat2)}
+.ch .f-heat3{fill:var(--ch-heat3)}
+.ch .s-heat3{stroke:var(--ch-heat3)}
+.ch .f-heat4{fill:var(--ch-heat4)}
+.ch .s-heat4{stroke:var(--ch-heat4)}
+.ch .f-heat5{fill:var(--ch-heat5)}
+.ch .s-heat5{stroke:var(--ch-heat5)}
+.ch .f-heat6{fill:var(--ch-heat6)}
+.ch .s-heat6{stroke:var(--ch-heat6)}
+.ch .f-div0{fill:var(--ch-div0)}
+.ch .s-div0{stroke:var(--ch-div0)}
+.ch .f-div1{fill:var(--ch-div1)}
+.ch .s-div1{stroke:var(--ch-div1)}
+.ch .f-div2{fill:var(--ch-div2)}
+.ch .s-div2{stroke:var(--ch-div2)}
+.ch .f-div3{fill:var(--ch-div3)}
+.ch .s-div3{stroke:var(--ch-div3)}
+.ch .f-div4{fill:var(--ch-div4)}
+.ch .s-div4{stroke:var(--ch-div4)}
+.ch .f-div5{fill:var(--ch-div5)}
+.ch .s-div5{stroke:var(--ch-div5)}
+.ch .f-div6{fill:var(--ch-div6)}
+.ch .s-div6{stroke:var(--ch-div6)}
+.ch .f-div7{fill:var(--ch-div7)}
+.ch .s-div7{stroke:var(--ch-div7)}
+.ch .f-div8{fill:var(--ch-div8)}
+.ch .s-div8{stroke:var(--ch-div8)}
+.ch .f-div9{fill:var(--ch-div9)}
+.ch .s-div9{stroke:var(--ch-div9)}
+.ch .f-div10{fill:var(--ch-div10)}
+.ch .s-div10{stroke:var(--ch-div10)}
+.ch .f-dv0{fill:var(--ch-dv0)}
+.ch .s-dv0{stroke:var(--ch-dv0)}
+.ch .f-dv1{fill:var(--ch-dv1)}
+.ch .s-dv1{stroke:var(--ch-dv1)}
+.ch .f-dv2{fill:var(--ch-dv2)}
+.ch .s-dv2{stroke:var(--ch-dv2)}
+.ch .f-dv3{fill:var(--ch-dv3)}
+.ch .s-dv3{stroke:var(--ch-dv3)}
+.ch .f-dv4{fill:var(--ch-dv4)}
+.ch .s-dv4{stroke:var(--ch-dv4)}
+.ch .f-dv5{fill:var(--ch-dv5)}
+.ch .s-dv5{stroke:var(--ch-dv5)}
+.ch .f-dv6{fill:var(--ch-dv6)}
+.ch .s-dv6{stroke:var(--ch-dv6)}
+.ch .f-dv7{fill:var(--ch-dv7)}
+.ch .s-dv7{stroke:var(--ch-dv7)}
+.ch .f-dv8{fill:var(--ch-dv8)}
+.ch .s-dv8{stroke:var(--ch-dv8)}
+.ch .f-dv9{fill:var(--ch-dv9)}
+.ch .s-dv9{stroke:var(--ch-dv9)}
+.ch .f-dv10{fill:var(--ch-dv10)}
+.ch .s-dv10{stroke:var(--ch-dv10)}
+.ch .f-dv11{fill:var(--ch-dv11)}
+.ch .s-dv11{stroke:var(--ch-dv11)}
+.ch .f-dv12{fill:var(--ch-dv12)}
+.ch .s-dv12{stroke:var(--ch-dv12)}
+.ch .f-dv13{fill:var(--ch-dv13)}
+.ch .s-dv13{stroke:var(--ch-dv13)}
+.ch .f-dv14{fill:var(--ch-dv14)}
+.ch .s-dv14{stroke:var(--ch-dv14)}
+.ch .f-dv15{fill:var(--ch-dv15)}
+.ch .s-dv15{stroke:var(--ch-dv15)}
+.ch .f-dv16{fill:var(--ch-dv16)}
+.ch .s-dv16{stroke:var(--ch-dv16)}
+.ch .f-dv17{fill:var(--ch-dv17)}
+.ch .s-dv17{stroke:var(--ch-dv17)}
+.ch .f-dv18{fill:var(--ch-dv18)}
+.ch .s-dv18{stroke:var(--ch-dv18)}
+.ch .f-dv19{fill:var(--ch-dv19)}
+.ch .s-dv19{stroke:var(--ch-dv19)}
+.ch .f-dv20{fill:var(--ch-dv20)}
+.ch .s-dv20{stroke:var(--ch-dv20)}
+.ch .f-dv21{fill:var(--ch-dv21)}
+.ch .s-dv21{stroke:var(--ch-dv21)}
+.ch .f-dv22{fill:var(--ch-dv22)}
+.ch .s-dv22{stroke:var(--ch-dv22)}
+.ch .f-dv23{fill:var(--ch-dv23)}
+.ch .s-dv23{stroke:var(--ch-dv23)}
+.ch .f-dv24{fill:var(--ch-dv24)}
+.ch .s-dv24{stroke:var(--ch-dv24)}
+.ch .f-dv25{fill:var(--ch-dv25)}
+.ch .s-dv25{stroke:var(--ch-dv25)}
+.ch .f-dv26{fill:var(--ch-dv26)}
+.ch .s-dv26{stroke:var(--ch-dv26)}
+.ch .f-dv27{fill:var(--ch-dv27)}
+.ch .s-dv27{stroke:var(--ch-dv27)}
+.ch .f-dv28{fill:var(--ch-dv28)}
+.ch .s-dv28{stroke:var(--ch-dv28)}
+.ch .f-dv29{fill:var(--ch-dv29)}
+.ch .s-dv29{stroke:var(--ch-dv29)}
+.ch .f-dv30{fill:var(--ch-dv30)}
+.ch .s-dv30{stroke:var(--ch-dv30)}
+.ch .f-dv31{fill:var(--ch-dv31)}
+.ch .s-dv31{stroke:var(--ch-dv31)}
+.ch .f-dv32{fill:var(--ch-dv32)}
+.ch .s-dv32{stroke:var(--ch-dv32)}
+.ch .f-dv33{fill:var(--ch-dv33)}
+.ch .s-dv33{stroke:var(--ch-dv33)}
+.ch .f-dv34{fill:var(--ch-dv34)}
+.ch .s-dv34{stroke:var(--ch-dv34)}
+.ch .f-dv35{fill:var(--ch-dv35)}
+.ch .s-dv35{stroke:var(--ch-dv35)}
+.ch .f-dv36{fill:var(--ch-dv36)}
+.ch .s-dv36{stroke:var(--ch-dv36)}
+.ch .f-dv37{fill:var(--ch-dv37)}
+.ch .s-dv37{stroke:var(--ch-dv37)}
+.ch .f-dv38{fill:var(--ch-dv38)}
+.ch .s-dv38{stroke:var(--ch-dv38)}
+.ch .f-dv39{fill:var(--ch-dv39)}
+.ch .s-dv39{stroke:var(--ch-dv39)}
+.ch .f-dv40{fill:var(--ch-dv40)}
+.ch .s-dv40{stroke:var(--ch-dv40)}
+.ch .t-sans{font-family:'Schibsted Grotesk', system-ui, sans-serif;font-weight:400;font-style:normal}
+.ch .t-sansMedium{font-family:'Schibsted Grotesk', system-ui, sans-serif;font-weight:500;font-style:normal}
+.ch .t-serif{font-family:'Newsreader Text', Georgia, serif;font-weight:400;font-style:normal}
+.ch .t-serifItalic{font-family:'Newsreader Text', Georgia, serif;font-weight:400;font-style:italic}
+.ch .t-display{font-family:'Newsreader Display', Georgia, serif;font-weight:500;font-style:normal}
+.ch .t-displayRegular{font-family:'Newsreader Display', Georgia, serif;font-weight:400;font-style:normal}
+.ch .t-displayItalic{font-family:'Newsreader Display', Georgia, serif;font-weight:400;font-style:italic}
+/* From the Dumpster Fire, web edition. Design: Salvage (docs/DESIGN.md).
+   Colours come only from /tokens.css (generated from packages/shared/src/tokens.ts); .t-<type> and
+   .s-<swatch> set --tint. Type roles encode authorship: the serif is the editor and the source; the
+   blue sans (.machine) is always and only the machine. Ember is the brand's: the flame, the strike
+   through "Internet", the editor's "B." and the folio. One loud thing per screen. */
+
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'DM Mono'; src: url('../../../apps/web/public/fonts/DMMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'DM Mono'; src: url('../../../apps/web/public/fonts/DMMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+
+/* Layout: a wide left margin for the apparatus, an off-centre reading column, air on the right. */
+:root {
+  --serif: 'Newsreader Text', Georgia, 'Times New Roman', serif;
+  --display: 'Newsreader Display', 'Newsreader Text', Georgia, serif;
+  --sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --gut: 16px;
+  --colgap: 0px;
+  --margin: 17rem;
+  --tint: var(--butter);
+  --hair: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+@media (min-width: 640px) { :root { --gut: 28px; } }
+@media (min-width: 1000px) { :root { --gut: 48px; --colgap: clamp(40px, 5vw, 72px); } }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; position: relative; overflow-x: hidden;
+  background: var(--bg); color: var(--ink);
+  font: 18px/1.55 var(--serif);
+  font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-wrap: break-word;
+}
+h1, h2, h3, p, ol, ul, figure, blockquote { margin: 0; }
+ol, ul { list-style: none; padding: 0; }
+img { max-width: 100%; height: auto; display: block; }
+button { font: inherit; color: inherit; }
+em, i { font-style: italic; }
+b { font-weight: 400; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18em; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+main:focus { outline: none; }
+::selection { background: var(--butter); color: var(--ink); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip { position: absolute; left: 8px; top: -60px; z-index: 10; background: var(--ink); color: var(--bg); padding: 8px 12px; font: 500 14px var(--sans); text-decoration: none; }
+.skip:focus { top: 8px; }
+.ink2 { color: var(--ink2); }
+.small { font-size: 15px; line-height: 1.5; }
+.display { font-family: var(--display); }
+.title em, .display em { font-weight: 400; }
+
+
+
+.comps { max-width: 760px; margin: 0 0 0 max(var(--gut), calc(50vw - 600px)); padding: 48px var(--gut) 96px 0; display: grid; gap: 88px; }
+.comps-head { display: grid; gap: 12px; padding-bottom: 8px; }
+.comps-head p:first-child { font: 500 13px/1.4 var(--sans); color: var(--ink2); }
+.comps-head h1 { font: 500 clamp(40px, 6vw, 64px)/1 var(--display); letter-spacing: -0.03em; }
+.comps-head p.deck { font: italic 400 19px/1.45 var(--serif); max-width: 34rem; }
+.comps-nav { display: flex; flex-wrap: wrap; gap: 4px 18px; font: 400 14px/1.4 var(--sans); }
+.comps-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--ember); text-decoration-thickness: 2px; }
+.ch-n i { font-style: normal; color: var(--ink2); margin-left: 8px; }
+@media (max-width: 640px) { .comps { margin-left: var(--gut); padding-right: var(--gut); gap: 64px; } }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 40px 32px; align-items: start; }
+.card img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); background: #fff; }
+.card figcaption { font: 400 13px/1.4 var(--sans); color: var(--ink2); margin-top: 8px; }
+.comps-wide { max-width: 1240px; }
+</style></head>
+<body><main class="comps comps-wide">
+<header class="comps-head"><p>The chart kit · comps with real data</p><h1>Share pictures</h1><p class="deck">Every chart as the card publish draws for social posts and Substack: 1080 pixels wide, with the masthead, the editor’s words, the credit and the address.</p><nav class="comps-nav"><a href="time.html">Over time</a><a href="compare.html">Comparing</a><a href="spread.html">Spread and parts</a><a href="weather.html">Weather and climate</a><a href="places.html">Places and counts</a><a href="money.html">Money</a><a href="cards.html" aria-current="page">Share pictures</a></nav></header>
+<div class="cards"><figure class="card"><img src="cards/temperature-line.png" alt="The world has warmed by about one and a half degrees" width="540"><figcaption>The world has warmed by about one and a half degrees</figcaption></figure>
+<figure class="card"><img src="cards/hemispheres-line.png" alt="The north is warming faster than the south" width="540"><figcaption>The north is warming faster than the south</figcaption></figure>
+<figure class="card"><img src="cards/multiples-life-expectancy.png" alt="Everyone in South Asia lives longer now, Afghanistan least of all" width="540"><figcaption>Everyone in South Asia lives longer now, Afghanistan least of all</figcaption></figure>
+<figure class="card"><img src="cards/area-india-electricity.png" alt="India still runs on coal, but the sun is catching up" width="540"><figcaption>India still runs on coal, but the sun is catching up</figcaption></figure>
+<figure class="card"><img src="cards/bump-population.png" alt="India passes China" width="540"><figcaption>India passes China</figcaption></figure>
+<figure class="card"><img src="cards/south-asia-gdp-bar.png" alt="India sits in the middle of its neighbourhood" width="540"><figcaption>India sits in the middle of its neighbourhood</figcaption></figure>
+<figure class="card"><img src="cards/india-growth-columns.png" alt="Twenty-five years of Indian growth, and one fall" width="540"><figcaption>Twenty-five years of Indian growth, and one fall</figcaption></figure>
+<figure class="card"><img src="cards/south-asia-life-dot.png" alt="How long a child born today can expect to live" width="540"><figcaption>How long a child born today can expect to live</figcaption></figure>
+<figure class="card"><img src="cards/hemispheres-dot.png" alt="Twenty-five years of warming, north and south" width="540"><figcaption>Twenty-five years of warming, north and south</figcaption></figure>
+<figure class="card"><img src="cards/south-asia-life-dumbbell.png" alt="Women outlive men everywhere in South Asia" width="540"><figcaption>Women outlive men everywhere in South Asia</figcaption></figure>
+<figure class="card"><img src="cards/south-asia-life-slope.png" alt="Every country in the region added years of life" width="540"><figcaption>Every country in the region added years of life</figcaption></figure>
+<figure class="card"><img src="cards/scatter-wealth-health.png" alt="Richer countries live longer, but money buys less health at the top" width="540"><figcaption>Richer countries live longer, but money buys less health at the top</figcaption></figure>
+<figure class="card"><img src="cards/beeswarm-life-expectancy.png" alt="How long people live, country by country" width="540"><figcaption>How long people live, country by country</figcaption></figure>
+<figure class="card"><img src="cards/delhi-ridgeline-may.png" alt="Every May day’s high in Delhi, decade by decade" width="540"><figcaption>Every May day’s high in Delhi, decade by decade</figcaption></figure>
+<figure class="card"><img src="cards/india-electricity-waffle.png" alt="Coal still makes seven of every ten units of India’s electricity" width="540"><figcaption>Coal still makes seven of every ten units of India’s electricity</figcaption></figure>
+<figure class="card"><img src="cards/delhi-band-2024.png" alt="Delhi’s 2024: the summer that would not break" width="540"><figcaption>Delhi’s 2024: the summer that would not break</figcaption></figure>
+<figure class="card"><img src="cards/temperature-stripes.png" alt="Every year since 1850, as a stripe" width="540"><figcaption>Every year since 1850, as a stripe</figcaption></figure>
+<figure class="card"><img src="cards/delhi-calendar-2024.png" alt="Every day of 2024 in Delhi, against its normal" width="540"><figcaption>Every day of 2024 in Delhi, against its normal</figcaption></figure>
+<figure class="card"><img src="cards/delhi-heatmap-months.png" alt="Delhi’s afternoons have not warmed the way the world has" width="540"><figcaption>Delhi’s afternoons have not warmed the way the world has</figcaption></figure>
+<figure class="card"><img src="cards/world-internet.png" alt="Two in three Indians are online now" width="540"><figcaption>Two in three Indians are online now</figcaption></figure>
+<figure class="card"><img src="cards/india-female-literacy.png" alt="Kerala taught its girls to read long before the rest" width="540"><figcaption>Kerala taught its girls to read long before the rest</figcaption></figure>
+<figure class="card"><img src="cards/histogram-fertility.png" alt="Most of the world now has fewer children than it takes to replace itself" width="540"><figcaption>Most of the world now has fewer children than it takes to replace itself</figcaption></figure>
+<figure class="card"><img src="cards/gold-drawdown.png" alt="Gold took 29 years to get back to its 1980 peak" width="540"><figcaption>Gold took 29 years to get back to its 1980 peak</figcaption></figure>
+<figure class="card"><img src="cards/gold-monthly-returns.png" alt="Ten years of gold, month by month" width="540"><figcaption>Ten years of gold, month by month</figcaption></figure>
+<figure class="card"><img src="cards/south-asia-gdp-table.png" alt="A quarter-century of South Asian growth" width="540"><figcaption>A quarter-century of South Asian growth</figcaption></figure></div>
+</main></body></html>

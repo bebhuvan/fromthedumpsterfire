@@ -32,6 +32,11 @@ describe('histogram', () => {
     expect(b.index(b.start + b.width)).toBe(1);
     expect(b.counts.length).toBeGreaterThanOrEqual(6);
   });
+  it('never makes more than 30 bars, whatever the spread', () => {
+    const b = bins([...Array.from({ length: 50 }, (_, i) => 1 + i * 1e-6), 1e15]);
+    expect(b.counts.length).toBeLessThanOrEqual(30);
+    expect(b.counts.reduce((a, c) => a + c, 0)).toBe(51);
+  });
   it('draws a bar per occupied band, the named rows’ bands loud', () => {
     const chart = copy(histogram);
     const bars = flat(renderChart(chart, 'wide').nodes).filter((n): n is Extract<SceneNode, { t: 'rect' }> => n.t === 'rect' && Boolean(n.tip));
@@ -161,6 +166,8 @@ describe('table with sparklines', () => {
     expect(nodes.some((n) => n.t === 'text' && n.text === '+213%')).toBe(true);
     expect(nodes.filter((n) => n.t === 'path' && n.tip).length).toBe(8);
     expect(chartGlosses(chart).some((g) => g.includes('own scale') && g.includes('percentage change'))).toBe(true);
+    // Every row has every year: no gap to speak of (rows of different places repeat the years).
+    expect(chartGlosses(chart).some((g) => g.startsWith('Gaps'))).toBe(false);
   });
   it('keeps to 25 rows', () => {
     const chart = copy(table);
