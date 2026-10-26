@@ -221,7 +221,14 @@ drawn as an equal-tile grid, which draws no boundaries at all, so the question d
   `POST /api/charts/share` (0.6 s, a 1080 px PNG named after the chart).
 - **The website, built and run on the local Worker** with the sample Hauls: the chart page under the
   strict CSP (screenshots in `shots/site/`).
-- **The app on the Android emulator**: see the next section.
+- **The app on the Android emulator** (a release APK for x86_64, Android 14, built after this
+  morning's crash with a 2 GB Gradle heap and four workers, nothing else running): the sample Haul
+  003's chart item opened from its deep link, its pictures (drawn by `scripts/chart-seed-pictures.ts`
+  as publish draws them, placed in the app's document folder where it keeps downloaded pictures) show
+  sharp at 1080 px; the native head line, blue glosses, one-line linked credit, "Share the chart as a
+  picture" and "The numbers" sit under each; dark mode swaps to the dark pictures. Screenshots in
+  `shots/app/`. Not exercised: the share sheet itself (the pictures are not on the live files host
+  until a publish) and downloading pictures over the network.
 - Every claim in the comps' notes was checked against the rows (listed in `raw/SOURCES-D.md`); two
   that did not hold were rewritten before keeping.
 - An automated security review flagged that the histogram's 30-bar cap could be defeated by an extreme

@@ -870,7 +870,8 @@ after screenshots and the colour decisions.
   price and drawdown, table with sparklines; heatmap values (a calendar of returns). Real-data comps.
 - **Checked on a running Desk**: the chart editor (screenshots in `docs/design-comps/charts/shots/desk/`),
   publishing with server-drawn pictures, the share download.
-- **Checked in the app on the Android emulator**: see the report.
+- **Checked in the app on the Android emulator**: charts, glosses, credit and share action render in
+  light and dark (screenshots in `docs/design-comps/charts/shots/app/`).
 - `npm run verify`: 729 tests pass.
 
 Before charts go live: merge `charts-kit`, deploy the Desk (routes, CSP, server drawing) and the site,

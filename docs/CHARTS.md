@@ -19,7 +19,7 @@ is), and is designed for the 375 px phone figure first.
 Comps with real data: `docs/design-comps/charts/` (`time.html`, `compare.html`, `spread.html`,
 `weather.html`, `places.html`, `money.html`, and `cards.html` for the share pictures; screenshots in
 `shots/`, light and dark, 390 and 1280 wide; last night's first version in `shots/before/`; the Desk's
-chart editor in `shots/desk/`).
+chart editor in `shots/desk/`; the built site in `shots/site/`; the app on the emulator in `shots/app/`).
 
 ## Where the code is
 
