@@ -143,3 +143,104 @@ npm run editorial -- chart it_ITEM --data chart.json
 
 The fixtures in `docs/design-comps/charts/data/` are complete, valid examples of every form to copy
 from.
+
+## Refinement, 2026-10-26
+
+From `docs/CHARTS-REFINE-BRIEF.md`. Nothing is deployed, pushed or merged. `npm run verify` passes
+(typecheck and 729 tests). The system as it now stands is in `docs/CHARTS.md`; the decisions and
+their reasons in `docs/DECISIONS.md` (2026-10-26).
+
+### Before and after
+
+Last night's screenshots are in `docs/design-comps/charts/shots/before/`; today's are in `shots/`
+(six pages and the share pictures, 390 and 1280, light and dark). Compare, for instance:
+
+- `before/weather-1280-light.png` with `weather-1280-light.png`: four warm charts that read as one
+  muddy colour became a quiet grey band with a fine bar per day, stripes where every year is its own
+  shade with weight at both ends, and a calendar and a heatmap that show each day's and each month's
+  departure from its normal in blue and red.
+- `before/time-1280-light.png` with `time-1280-light.png`: the stacked area no longer has "Hydro"
+  sitting on its neighbour; solar is the one loud part, the rest are greys.
+- `before/compare-390-light.png` with `compare-390-light.png`: Sri Lanka is labelled on the phone
+  scatter (on a leader), slope labels no longer fan into a knot, the callout keeps clear of its dot.
+
+### What changed
+
+1. **Colour.** Neutral first; the brief's rule is now code. New ramps generated in OKLCH and run
+   through the dataviz palette validator in both themes, with the results in `docs/CHARTS.md`: a cool
+   one-hue sequential default, a heat ramp the validator allows only for temperatures, a diverging
+   ramp whose first tint on each arm clears 2:1 against the ground and whose arms stay apart for
+   colour-blind readers (worst ΔE 12.3) and for everyone (16.6). Diverging bins are sized to the
+   bulk of the values, with open, pointed end bins in the key. The weather fixtures now show
+   departures from normal.
+2. **Warming stripes** take a 41-step continuous ramp and the Met Office's own HadCRUT5 series
+   against 1961–1990 (as Ed Hawkins draws them); no seams, no near-white years.
+3. **Temperature band**: grey record and normal ranges, a day's bar half a day wide.
+4. **Labels never collide**: one placer for every form (`charts/labels.ts`), with leaders before
+   anything is dropped, halos over gridlines, area names that follow their bands, brackets where
+   slope values coincide, beeswarm group names in a column, callouts held clear of marks. A test
+   renders every fixture at both widths, and each share picture, and fails on any overlap, any label
+   off the figure, or any loud name left unwritten.
+5. **Typography**: one head line (units, place, span; a whole year reads as the year); one credit line
+   ("Source: Ember, Yearly Electricity Data, via Our World in Data (both CC BY 4.0). Retrieved …");
+   tighter figure type.
+6. **Pictures on the server** (the hosting question): see below.
+7. **Share pictures**, including your request in this session: every chart gets a 1080 px card with the
+   ember flame and the struck masthead, your title and note, what the numbers are, the chart, the
+   machine's glosses, the credit and the address. **Download the picture** in the Desk's chart editor
+   (before or without publishing), `chart-draw` writes `chart-share.png`, each chart on the site links
+   its card (and a Chart item uses it as its link preview), and the app has "Share the chart as a
+   picture". All of them are on `docs/design-comps/charts/cards.html`.
+8. **New forms** (fewer, made well): histogram; tile map of India; world map; price and drawdown;
+   table with sparklines; and values in a heatmap's cells, which makes it a calendar of monthly
+   returns. Real-data comps on `places.html` and `money.html`.
+
+### The hosting decision
+
+The chart pictures are now drawn **on the server, at publish, by the Desk Worker**. Measured: the
+resvg wasm is 0.96 MB gzipped; each chart's two app pictures take 0.1 to 0.7 s of CPU (all nineteen
+first comps: 4.6 s); the Desk Worker bundles to 1.85 MB gzipped (Workers Paid allows 10 MB); a publish
+with a chart took 1.2 s on a local workerd, and a share picture 0.6 s. So the Desk drops
+`'wasm-unsafe-eval'` (its CSP is `script-src 'self'` again) and its 2.4 MB download, the terminal stops
+drawing, and publish no longer trusts pictures a client sends. Picture names carry the chart's key, so
+a changed chart never overwrites an immutable file.
+
+### India's boundaries
+
+The world map uses Natural Earth's **India point of view** (public domain): Jammu and Kashmir
+(Gilgit-Baltistan and Aksai Chin included) and Arunachal Pradesh within India, as India depicts its
+boundaries. A test checks points in Gilgit, Aksai Chin and Tawang fall inside India. Indian states are
+drawn as an equal-tile grid, which draws no boundaries at all, so the question does not arise there.
+
+### Checked, with evidence
+
+- **The Desk, running locally** (a local-only copy of the Desk Worker on workerd, local D1 and R2, no
+  remote bindings): captured a Chart item, kept a chart through the API, opened the chart editor in
+  headless Chrome (screenshots in `shots/desk/`, both widths and themes), published a Haul (the Worker
+  drew the app pictures and the share picture; 1.2 s), and downloaded a share picture from
+  `POST /api/charts/share` (0.6 s, a 1080 px PNG named after the chart).
+- **The website, built and run on the local Worker** with the sample Hauls: the chart page under the
+  strict CSP (screenshots in `shots/site/`).
+- **The app on the Android emulator**: see the next section.
+- Every claim in the comps' notes was checked against the rows (listed in `raw/SOURCES-D.md`); two
+  that did not hold were rewritten before keeping.
+- An automated security review flagged that the histogram's 30-bar cap could be defeated by an extreme
+  spread of values; fixed and tested.
+
+### Not done
+
+- Timeline, population pyramid, treemap, Sankey, connected scatter and fan chart: judged not to earn a
+  place yet (reasons in `docs/CHARTS.md`). A boundary map of Indian states: no openly licensed boundary
+  file matching India's depiction was found to record, and the tile grid serves the purpose.
+- The figure check still reads digits, not numbers written as words.
+- Indian state data more recent than 2011 needs a source whose licence is stated (data.gov.in's API
+  needs a key; the RBI's tables are not openly licensed).
+
+### For you to decide
+
+1. **Deploy**: merge `charts-kit`, `npm run deploy:production` (Desk: routes, CSP, server drawing), `npm
+   run deploy:web`, `npm run app:update` (JavaScript only). No migration. On the first publish every
+   chart's pictures are drawn afresh (`CHART_RENDER_VERSION` 2).
+2. The colour decisions (neutral first; red and blue for departures; heat kept for temperatures).
+3. The five new forms, and the ones left out.
+4. Open-Meteo's non-commercial terms (unchanged from last night's list).
