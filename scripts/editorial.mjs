@@ -39,7 +39,8 @@ npm run editorial -- <command> [arguments] [options]
                                   {"provider":"worldbank","indicator":ID,"countries":["IND"]})
   chart-csv FILE                  a CSV/TSV file as chart data (local; prints data and problems)
   chart-check                     the honesty validator on --data chart.json (local)
-  chart-draw DIR                  draw --data chart.json to PNGs in DIR for a look (local)
+  chart-draw DIR                  draw --data chart.json to PNGs in DIR (local): wide and phone,
+                                  light and dark, and the share card (chart-share.png)
   request METHOD /api/PATH         any Desk JSON API route, or --upload file=PATH
   login                           owner login using cloudflared; saves token privately
 

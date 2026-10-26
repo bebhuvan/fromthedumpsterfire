@@ -6,10 +6,12 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { CODE_LANGS } from '@fdf/shared/highlight';
-import type { Chart } from '@fdf/shared/charts';
+import { SHARE, sceneToSvg, shareScene, type Chart } from '@fdf/shared/charts';
+import { EDITIONS, type Edition } from '@fdf/shared/tokens';
 import {
   addAudio,
   addChart,
+  checkChart,
   fetchOwid,
   fetchWorldBank,
   replaceChart,
@@ -216,6 +218,23 @@ blocksApi.put('/api/blocks/:id/chart', async (c) => {
   const b = await body(c, CHART);
   const r = await attempt(() => replaceChart(c.env, row, b.chart as unknown as Chart));
   return c.json({ warnings: r.warnings, ...(await listing(c.env, row.item_id)) });
+});
+
+/**
+ * A chart's share card as a PNG, drawn here for the editor to download before (or without)
+ * publishing: the same card publish writes next to the bundle. Only a chart that passes every check
+ * is drawn, so no picture of a dishonest chart can leave the Desk.
+ */
+blocksApi.post('/api/charts/share', async (c) => {
+  const b = await body(c, CHART.extend({ edition: z.enum(EDITIONS as unknown as [Edition, ...Edition[]]).optional(), haul: z.number().int().min(1).max(9999).optional(), figure: z.number().int().min(1).max(99).optional() }));
+  const chart = b.chart as unknown as Chart;
+  await attempt(async () => checkChart(chart));
+  const { chartDrawer } = await import('./draw');
+  const drawer = await chartDrawer(c.env);
+  const site = (c.env.SITE_BASE ?? '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const png = drawer.png(sceneToSvg(shareScene(chart, { ...(b.haul ? { haul: b.haul } : {}), ...(b.figure ? { figure: b.figure } : {}), ...(site ? { address: site } : {}) }), { scheme: 'light', edition: b.edition ?? 'oxblood' }), SHARE.zoom);
+  const name = `${(chart.title || 'chart').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'chart'}.png`;
+  return new Response(png, { headers: { 'content-type': 'image/png', 'content-disposition': `attachment; filename="${name}"`, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
 });
 
 /**

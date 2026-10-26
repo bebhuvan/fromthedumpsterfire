@@ -115,3 +115,25 @@ describe('block routes', () => {
     expect(env.FILES.objects.has('hauls/001/v1/card.png')).toBe(true);
   });
 });
+
+describe('a chart’s share picture, drawn by the Desk to download', () => {
+  const chart = {
+    form: 'line', title: 'The world has warmed', units: '°C', geography: 'World',
+    span: { from: '2020', to: '2023' }, sourceSpan: { from: '1850', to: '2023' },
+    sources: [{ maker: 'Met Office Hadley Centre', dataset: 'HadCRUT5', url: 'https://www.metoffice.gov.uk/hadobs/hadcrut5/', licence: 'Open Government Licence v3', retrieved: '2026-10-25' }],
+    measure: { basis: 'anomaly', base: 'the 1961–1990 average' },
+    data: { columns: [{ key: 'year', label: 'Year', type: 'year' }, { key: 't', label: 'Anomaly', type: 'number' }], rows: [[2020, 0.93], [2021, 0.77], [2022, 0.8], [2023, 1.1]] },
+    encode: { x: 'year', y: 't' },
+  };
+  it('returns a 1080 px wide PNG named after the chart, for an honest chart only', async () => {
+    const env = await deskEnv();
+    const res = await app.request(`${BASE}/api/charts/share`, json('POST', { chart, edition: 'teal', haul: 1, figure: 2 }), env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('image/png');
+    expect(res.headers.get('content-disposition')).toBe('attachment; filename="the-world-has-warmed.png"');
+    const png = new Uint8Array(await res.arrayBuffer());
+    expect(new DataView(png.buffer).getUint32(16)).toBe(1080);
+    const bad = await call(env, '/api/charts/share', json('POST', { chart: { ...chart, sources: [] } }));
+    expect(bad.status).toBe(422);
+  }, 30_000);
+});

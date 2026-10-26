@@ -19,6 +19,8 @@ export type Paint =
   | 'bg'
   | 'plate'
   | 'mach'
+  /** The brand's ember: the flame and the masthead's strike on a share card, never data. */
+  | 'ember'
   | 'record'
   | 'normal'
   | 'hot'
@@ -36,7 +38,7 @@ export type Paint =
 export const FINE_STEPS = 41;
 
 export const PAINTS: readonly Paint[] = [
-  'ink', 'ink2', 'rule', 'quiet', 'quiet2', 'quiet3', 'ed', 'bg', 'plate', 'mach', 'record', 'normal', 'hot', 'cold', 'white', 'black',
+  'ink', 'ink2', 'rule', 'quiet', 'quiet2', 'quiet3', 'ed', 'bg', 'plate', 'mach', 'ember', 'record', 'normal', 'hot', 'cold', 'white', 'black',
   ...([0, 1, 2, 3, 4, 5] as const).map((i) => `cat${i}` as Paint),
   ...([0, 1, 2, 3, 4, 5, 6] as const).map((i) => `seq${i}` as Paint),
   ...([0, 1, 2, 3, 4, 5, 6] as const).map((i) => `heat${i}` as Paint),
@@ -119,6 +121,8 @@ export function paintHex(p: Paint, scheme: Scheme, edition: Edition): string {
       return pal.plate;
     case 'mach':
       return pal.machine;
+    case 'ember':
+      return pal.ember;
     case 'ed':
       return editionInk[scheme][edition];
     case 'quiet':
@@ -175,6 +179,8 @@ export const FACES: Record<ChartFace, { css: string; weight: number; italic: boo
   serif: { css: "'Newsreader Text', Georgia, serif", weight: 400, italic: false, cut: 'NewsreaderText-Regular' },
   serifItalic: { css: "'Newsreader Text', Georgia, serif", weight: 400, italic: true, cut: 'NewsreaderText-Italic' },
   display: { css: "'Newsreader Display', Georgia, serif", weight: 500, italic: false, cut: 'NewsreaderDisplay-Medium' },
+  displayRegular: { css: "'Newsreader Display', Georgia, serif", weight: 400, italic: false, cut: 'NewsreaderDisplay-Regular' },
+  displayItalic: { css: "'Newsreader Display', Georgia, serif", weight: 400, italic: true, cut: 'NewsreaderDisplay-Italic' },
 };
 
 /** The font files the PNG renderer must load (from apps/mobile/assets/fonts). */

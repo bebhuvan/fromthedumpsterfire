@@ -54,7 +54,7 @@ it('checks, keeps and publishes a chart with its app pictures and share card fro
   // Local: draw it for a look.
   const drawn = await cli(['chart-draw', join(d, 'look'), '--data', file('look.json', chart)], fetcher);
   expect(drawn.code).toBe(0);
-  expect(readdirSync(join(d, 'look')).sort()).toEqual(['chart-narrow-dark.png', 'chart-narrow-light.png', 'chart-wide-dark.png', 'chart-wide-light.png']);
+  expect(readdirSync(join(d, 'look')).sort()).toEqual(['chart-narrow-dark.png', 'chart-narrow-light.png', 'chart-share.png', 'chart-wide-dark.png', 'chart-wide-light.png']);
 
   // Through the Desk: keep the chart on an item, then publish.
   const kept = await cli(['chart', 'it_jevons', '--data', file('chart.json', chart)], fetcher);

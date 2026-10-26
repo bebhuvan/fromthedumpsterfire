@@ -39,7 +39,7 @@ export async function rasteriser() {
     if (!/already/i.test(String(e?.message ?? e))) throw e;
   }
   const fontBuffers = k.RASTER_FONTS.map((f) => new Uint8Array(readFileSync(join(ROOT, 'apps/mobile/assets/fonts', f))));
-  raster = (svg) => new Resvg(svg, { fitTo: { mode: 'zoom', value: k.APP_PICTURE.zoom }, font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'Schibsted-Regular' } }).render().asPng();
+  raster = (svg, zoom = k.APP_PICTURE.zoom) => new Resvg(svg, { fitTo: { mode: 'zoom', value: zoom }, font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'Schibsted-Regular' } }).render().asPng();
   return raster;
 }
 
@@ -56,7 +56,7 @@ export async function checkChart(chart) {
   return { ...report, units: report.ok ? k.unitsLine(chart) : undefined, glosses: report.ok ? k.chartGlosses(chart) : undefined, description: report.ok ? k.describeChart(chart) : undefined };
 }
 
-/** Draw a chart to PNG files for a look before keeping it: wide and phone, light and dark. */
+/** Draw a chart to PNG files for a look before keeping it: wide and phone, light and dark, and its share card. */
 export async function drawFiles(chart, outDir, edition = 'oxblood') {
   const k = await loadKit();
   const r = await rasteriser();
@@ -69,5 +69,9 @@ export async function drawFiles(chart, outDir, edition = 'oxblood') {
       files.push(file);
     }
   }
+  // The share card, as publish draws it: the chart whole with its title, credit and the masthead.
+  const share = join(outDir, 'chart-share.png');
+  writeFileSync(share, r(k.sceneToSvg(k.shareScene(chart, { address: 'fromthedumpsterfire.com' }), { scheme: 'light', edition }), k.SHARE.zoom));
+  files.push(share);
   return files;
 }

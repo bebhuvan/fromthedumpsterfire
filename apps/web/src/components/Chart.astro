@@ -67,7 +67,7 @@ const rows = chart.data.rows;
         p.url && safeHref(p.url) ? <a href={safeHref(p.url)} rel="noopener noreferrer" target="_blank">{p.text}<span class="sr"> (opens in a new tab)</span></a> : p.text,
       )}
     </p>
-    {shareHref ? <p class="ch-share"><a href={shareHref} target="_blank" rel="noopener">The chart as a picture, for sharing<span class="sr"> (opens in a new tab)</span></a></p> : null}
+    {shareHref ? <p class="ch-share"><a href={shareHref} download target="_blank" rel="noopener">Download the chart as a picture<span class="sr"> (a PNG; opens in a new tab)</span></a></p> : null}
     <details class="ch-data">
       <summary>The numbers <span>{rows.length.toLocaleString('en-IN')} {rows.length === 1 ? 'row' : 'rows'}</span></summary>
       <div class="ch-tbl" tabindex="0" role="region" aria-label={`The data behind ${chart.title}`}>

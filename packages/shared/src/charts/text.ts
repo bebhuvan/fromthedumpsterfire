@@ -67,3 +67,18 @@ export function wrapBalanced(text: string, face: ChartFace, size: number, max: n
   }
   return wrapText(text, face, size, hi);
 }
+
+/**
+ * Wrap as wrapText does, but never leave one word alone on the last line: the line before gives up a
+ * word (as CSS's text-wrap: pretty), unless that would leave it with one word itself.
+ */
+export function wrapPretty(text: string, face: ChartFace, size: number, max: number): string[] {
+  const lines = wrapText(text, face, size, max);
+  if (lines.length < 2) return lines;
+  const last = lines[lines.length - 1]!.split(' ');
+  const prev = lines[lines.length - 2]!.split(' ');
+  if (last.length > 1 || prev.length < 3) return lines;
+  const moved = [prev.pop()!, ...last].join(' ');
+  if (textWidth(moved, face, size) > max) return lines;
+  return [...lines.slice(0, -2), prev.join(' '), moved];
+}

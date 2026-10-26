@@ -3,6 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { renderChart } from './render';
+import { shareScene, SHARE } from './share';
 import { textBoxes, overlapping } from './labels';
 import type { Chart } from './types';
 
@@ -30,5 +31,15 @@ describe('labels never collide', () => {
         expect((chart.options?.focus ?? []).filter((n) => !said(n))).toEqual([]);
       });
     }
+  }
+  for (const f of files) {
+    it(`${f.replace('.json', '')}, share card`, () => {
+      const chart = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Chart;
+      const card = shareScene(chart, { haul: 1, figure: 1, address: 'fromthedumpsterfire.com/haul/1/a-rather-long-item-name-for-the-address-line-to-fit' });
+      expect(card.width).toBe(SHARE.width);
+      const boxes = textBoxes(card.nodes);
+      expect(overlapping(boxes).map(([a, b]) => `"${a.text}" × "${b.text}"`)).toEqual([]);
+      expect(boxes.filter((b) => b.x < SHARE.pad - 4 || b.x + b.w > card.width - SHARE.pad + 4 || b.y < 0 || b.y + b.h > card.height).map((b) => b.text)).toEqual([]);
+    });
   }
 });

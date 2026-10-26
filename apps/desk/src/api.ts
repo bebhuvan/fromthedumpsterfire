@@ -48,6 +48,30 @@ export const api = {
   del: <T>(p: string) => call<T>('DELETE', p),
 };
 
+/**
+ * A chart's share card, drawn by the Desk Worker (the same card publish writes), saved as a file:
+ * the browser downloads it under the chart's title.
+ */
+export async function downloadSharePicture(chart: Chart, edition: Edition, opts: { haul?: number; figure?: number } = {}): Promise<void> {
+  const res = await fetch('/api/charts/share', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'x-desk': '1', 'content-type': 'application/json' },
+    body: JSON.stringify({ chart, edition, ...opts }),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new ApiError(res.status, data?.error ?? `The picture could not be drawn (${res.status})`, data);
+  }
+  const name = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? 'chart.png';
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 export type CheckStatus = 'pass' | 'warn' | 'fail';
 
 export interface TrayItem {

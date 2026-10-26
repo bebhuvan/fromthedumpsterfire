@@ -26,7 +26,7 @@ import {
   type ChartSource,
 } from '@fdf/shared/charts';
 import type { Edition } from '@fdf/shared/tokens';
-import { api, type FetchedChartData } from '../api';
+import { api, downloadSharePicture, type FetchedChartData } from '../api';
 import { safeHref, useToast } from '../lib/core';
 import { ChartPreview } from '../lib/charts';
 import { assemble, autoEncode, clean, colIndex, draftFrom, draftOf, emptySource, namesOf, type Draft } from '../lib/chartDraft';
@@ -235,6 +235,7 @@ export function ChartEditor({
   const [fetched, setFetched] = useState<FetchedChartData | null>(null);
   const [owidRef, setOwidRef] = useState<{ provider: 'owid'; chart: string; from?: number; to?: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [picturing, setPicturing] = useState(false);
 
   const chart = useMemo(() => (draft ? clean(assemble(draft)) : null), [draft]);
   const report = useMemo(() => (chart ? validateChart(chart) : null), [chart]);
@@ -742,6 +743,20 @@ export function ChartEditor({
       <div className="row">
         <button type="button" className="btn primary" disabled={busy || !report?.ok} onClick={() => void keep()}>
           {busy ? 'Checking…' : blockId ? 'Save the chart' : 'Keep the chart'}
+        </button>
+        <button
+          type="button"
+          className="btn"
+          disabled={busy || picturing || !report?.ok || !chart}
+          onClick={() => {
+            if (!chart) return;
+            setPicturing(true);
+            downloadSharePicture(chart, edition)
+              .catch((e) => toast(e instanceof Error ? e.message : String(e), true))
+              .finally(() => setPicturing(false));
+          }}
+        >
+          {picturing ? 'Drawing…' : 'Download the picture'}
         </button>
         {!report?.ok && <span className="small muted">Keep is off until every check passes.</span>}
       </div>
