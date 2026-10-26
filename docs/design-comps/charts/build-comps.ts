@@ -8,7 +8,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { renderChart, nodeAttrs, chartGlosses, describeChart, headLine, creditParts, formatCell, chartGrouping, FORMS, type Chart, type SceneNode } from '../../../packages/shared/src/charts/index.ts';
+import { renderChart, groupTransform, nodeAttrs, chartGlosses, describeChart, headLine, creditParts, formatCell, chartGrouping, FORMS, type Chart, type SceneNode } from '../../../packages/shared/src/charts/index.ts';
 import { tokensCss } from '../../../apps/web/src/lib/tokens-css.ts';
 
 const root = process.cwd();
@@ -49,7 +49,7 @@ const GROUPS: Array<{ page: string; title: string; deck: string; edition: string
 function svgNodes(nodes: SceneNode[]): string {
   return nodes
     .map((n) => {
-      if (n.t === 'g') return `<g>${svgNodes(n.children)}</g>`;
+      if (n.t === 'g') return groupTransform(n) ? `<g transform="${groupTransform(n)}">${svgNodes(n.children)}</g>` : `<g>${svgNodes(n.children)}</g>`;
       const a = Object.entries(nodeAttrs(n))
         .map(([k, v]) => `${k}="${esc(String(v))}"`)
         .join(' ');

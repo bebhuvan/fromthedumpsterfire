@@ -1,0 +1,184 @@
+{
+ "form": "tilemap",
+ "title": "Kerala taught its girls to read long before the rest",
+ "note": "Women and girls aged seven and over who can read and write, at the 2011 census. Telangana and Ladakh were then part of Andhra Pradesh and Jammu and Kashmir; Dadra and Nagar Haveli and Daman and Diu, merged since, are left out.",
+ "units": "%",
+ "geography": "India, states and union territories",
+ "span": {
+  "from": "2011",
+  "to": "2011"
+ },
+ "sources": [
+  {
+   "maker": "World Bank",
+   "dataset": "India sub-national indicators (Country Partnership Strategy FY2013–17): Literacy Rate Female (%), from the Census of India 2011",
+   "url": "https://datacatalog.worldbank.org/search/dataset/0041418/country-partnership-strategy-for-india-fy2013-17",
+   "licence": "CC BY 4.0",
+   "licenceUrl": "https://datacatalog.worldbank.org/public-licenses#cc-by",
+   "retrieved": "2026-10-26"
+  }
+ ],
+ "measure": {
+  "basis": "share",
+  "denominator": "of women and girls aged seven and over"
+ },
+ "data": {
+  "columns": [
+   {
+    "key": "state",
+    "label": "State or union territory",
+    "type": "text"
+   },
+   {
+    "key": "literacy",
+    "label": "Female literacy",
+    "type": "number",
+    "unit": "%"
+   }
+  ],
+  "rows": [
+   [
+    "Andaman and Nicobar Islands",
+    81.8
+   ],
+   [
+    "Andhra Pradesh",
+    59.7
+   ],
+   [
+    "Arunachal Pradesh",
+    59.6
+   ],
+   [
+    "Assam",
+    67.3
+   ],
+   [
+    "Bihar",
+    53.3
+   ],
+   [
+    "Chandigarh",
+    81.4
+   ],
+   [
+    "Chhattisgarh",
+    60.6
+   ],
+   [
+    "Delhi",
+    80.9
+   ],
+   [
+    "Goa",
+    81.8
+   ],
+   [
+    "Gujarat",
+    70.7
+   ],
+   [
+    "Haryana",
+    66.8
+   ],
+   [
+    "Himachal Pradesh",
+    76.6
+   ],
+   [
+    "Jammu and Kashmir",
+    58.0
+   ],
+   [
+    "Jharkhand",
+    56.2
+   ],
+   [
+    "Karnataka",
+    68.1
+   ],
+   [
+    "Kerala",
+    92.0
+   ],
+   [
+    "Lakshadweep",
+    88.2
+   ],
+   [
+    "Madhya Pradesh",
+    60.0
+   ],
+   [
+    "Maharashtra",
+    75.5
+   ],
+   [
+    "Manipur",
+    73.2
+   ],
+   [
+    "Meghalaya",
+    73.8
+   ],
+   [
+    "Mizoram",
+    89.4
+   ],
+   [
+    "Nagaland",
+    76.7
+   ],
+   [
+    "Odisha",
+    64.4
+   ],
+   [
+    "Pudducherry",
+    81.2
+   ],
+   [
+    "Punjab",
+    71.3
+   ],
+   [
+    "Rajasthan",
+    52.7
+   ],
+   [
+    "Sikkim",
+    76.4
+   ],
+   [
+    "Tamil Nadu",
+    73.9
+   ],
+   [
+    "Tripura",
+    83.2
+   ],
+   [
+    "Uttar Pradesh",
+    59.3
+   ],
+   [
+    "Uttarakhand",
+    70.7
+   ],
+   [
+    "West Bengal",
+    71.2
+   ]
+  ]
+ },
+ "encode": {
+  "label": "state",
+  "y": "literacy"
+ },
+ "options": {
+  "colour": "sequential",
+  "focus": [
+   "Kerala"
+  ]
+ }
+}

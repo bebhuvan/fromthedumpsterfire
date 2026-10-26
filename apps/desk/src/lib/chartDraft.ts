@@ -49,6 +49,10 @@ export interface Draft {
   sort: 'value' | 'given';
   per: string;
   rank: 'desc' | 'asc';
+  /** histogram: what each bar counts. */
+  of: string;
+  /** heatmap: print each value in its cell. */
+  values: boolean;
   logY: boolean;
   logX: boolean;
   zero: boolean;
@@ -122,6 +126,8 @@ export function draftFrom(data: ChartData, f?: Partial<FetchedChartData>): Draft
     sort: 'value',
     per: '',
     rank: 'desc',
+    of: '',
+    values: false,
     logY: false,
     logX: false,
     zero: false,
@@ -158,6 +164,8 @@ export function draftOf(chart: Chart): Draft {
     sort: chart.options?.sort ?? 'value',
     per: chart.options?.per ? String(chart.options.per) : '',
     rank: chart.options?.rank ?? 'desc',
+    of: chart.options?.of ?? '',
+    values: Boolean(chart.options?.values),
     logY: Boolean(chart.scale?.y?.log),
     logX: Boolean(chart.scale?.x?.log),
     zero: Boolean(chart.scale?.y?.zero),
@@ -207,9 +215,11 @@ export function assemble(d: Draft): Chart {
     ...(colour ? { colour } : {}),
     ...(d.focus.length ? { focus: d.focus } : {}),
     ...(effective === 'diverging' && (d.midValue.trim() || d.midLabel.trim()) ? { midpoint: { value: Number(d.midValue), label: d.midLabel.trim() } } : {}),
-    ...(['bar', 'dot', 'dumbbell', 'slope', 'waffle', 'heatmap'].includes(d.form) && d.sort !== 'value' ? { sort: d.sort } : {}),
+    ...(['bar', 'dot', 'dumbbell', 'slope', 'waffle', 'heatmap', 'table'].includes(d.form) && d.sort !== 'value' ? { sort: d.sort } : {}),
     ...(d.form === 'waffle' && d.per.trim() ? { per: Number(d.per) } : {}),
     ...(d.form === 'bump' && d.rank !== 'desc' ? { rank: d.rank } : {}),
+    ...(d.form === 'histogram' && d.of.trim() ? { of: d.of.trim() } : {}),
+    ...(d.form === 'heatmap' && d.values ? { values: true } : {}),
   };
   const y = { ...(d.logY ? { log: true } : {}), ...(d.zero && !spec.zero ? { zero: true } : {}) };
   const x = d.logX && d.form === 'scatter' ? { log: true } : {};

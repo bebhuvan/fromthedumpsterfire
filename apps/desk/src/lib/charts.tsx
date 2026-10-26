@@ -3,7 +3,7 @@
 // the Desk Worker at publish. See docs/CHARTS.md.
 
 import { createElement, useEffect, useState, type ReactNode } from 'react';
-import { FACES, nodeAttrs, paintHex, renderChart, type Chart, type Layout, type Scene, type SceneNode } from '@fdf/shared/charts';
+import { FACES, groupTransform, nodeAttrs, paintHex, renderChart, type Chart, type Layout, type Scene, type SceneNode } from '@fdf/shared/charts';
 import type { Edition, Scheme } from '@fdf/shared/tokens';
 
 /** The Desk's theme right now: the toggle's choice, else the system's. */
@@ -33,7 +33,7 @@ export function useScheme(): Scheme {
 const camel = (k: string) => k.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 
 function element(n: SceneNode, key: number, scheme: Scheme, edition: Edition): ReactNode {
-  if (n.t === 'g') return createElement('g', { key, transform: n.dx || n.dy ? `translate(${n.dx ?? 0} ${n.dy ?? 0})` : undefined }, n.children.map((c, i) => element(c, i, scheme, edition)));
+  if (n.t === 'g') return createElement('g', { key, transform: groupTransform(n) || undefined }, n.children.map((c, i) => element(c, i, scheme, edition)));
   const a = nodeAttrs(n);
   const props: Record<string, unknown> = { key };
   for (const [k, v] of Object.entries(a)) if (k !== 'class') props[camel(k)] = v;

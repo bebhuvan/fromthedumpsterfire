@@ -4,7 +4,8 @@
 //
 // - sequential (7 steps, seq0 to seq6, or heat0 to heat6 for temperatures): equal-width bins of a
 //   round width (1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 times a power of ten), starting at a round
-//   number at or below the smallest value; a value on a boundary goes to the upper bin.
+//   number at or below the smallest value; a value on a boundary goes to the upper bin. A share in
+//   per cent ends its top bin at 100.
 // - diverging (11 steps, div0 to div10): equal-width bins centred on the midpoint, so div5 holds the
 //   values within half a bin of it. The width is a round width (as above), the smallest that keeps
 //   95 per cent of the values inside the nine inner bins.
@@ -51,7 +52,7 @@ export function roundUp(w: number): number {
 
 const SEQ = 7;
 
-export function sequentialRamp(values: number[], ramp: 'seq' | 'heat' = 'seq'): Ramp {
+export function sequentialRamp(values: number[], ramp: 'seq' | 'heat' = 'seq', ceiling?: number): Ramp {
   const min = Math.min(...values);
   const max = Math.max(...values);
   let step = roundUp((max - min) / SEQ || 1);
@@ -61,6 +62,8 @@ export function sequentialRamp(values: number[], ramp: 'seq' | 'heat' = 'seq'): 
     lo = Math.floor(min / step) * step;
   }
   const edges = Array.from({ length: SEQ + 1 }, (_, i) => clean(lo + i * step, step));
+  // A share in per cent cannot pass 100: the top band ends there rather than at 105.
+  if (ceiling !== undefined && edges[SEQ]! > ceiling && max <= ceiling) edges[SEQ] = ceiling;
   const steps = Array.from({ length: SEQ }, (_, i) => `${ramp}${i}` as Paint);
   const index = (v: number) => Math.max(0, Math.min(SEQ - 1, Math.floor((v - lo) / step + 1e-9)));
   return { kind: 'sequential', edges, steps, step, index, paint: (v) => steps[index(v)]! };
@@ -96,7 +99,8 @@ const clean = (v: number, step: number) => Number(v.toFixed(Math.min(10, decimal
 /** The ramp the chart asks for (diverging needs options.midpoint; it defaults to zero, labelled "zero"). */
 export function rampFor(ctx: Ctx, values: number[]): Ramp {
   if (ctx.colour === 'diverging') return divergingRamp(values, ctx.chart.options?.midpoint ?? { value: 0, label: 'zero' });
-  return sequentialRamp(values, ctx.colour === 'heat' ? 'heat' : 'seq');
+  const pct = ctx.chart.measure?.basis === 'share' && /^%/.test(ctx.chart.units.trim());
+  return sequentialRamp(values, ctx.colour === 'heat' ? 'heat' : 'seq', pct ? 100 : undefined);
 }
 
 /**
@@ -104,7 +108,7 @@ export function rampFor(ctx: Ctx, values: number[]): Ramp {
  * "no data" swatch when something is missing, and for a diverging ramp what its middle is.
  * Returns its nodes and its height. x, y is the top-left; it never runs wider than maxW.
  */
-export function drawKey(ctx: Ctx, ramp: Ramp, x: number, y: number, maxW: number, opts: { unit?: string; missing?: boolean; align?: 'start' | 'end' } = {}): { nodes: SceneNode[]; height: number; width: number } {
+export function drawKey(ctx: Ctx, ramp: Ramp, x: number, y: number, maxW: number, opts: { unit?: string; missing?: boolean; align?: 'start' | 'end'; missingPaint?: Paint } = {}): { nodes: SceneNode[]; height: number; width: number } {
   const size = ctx.s.small;
   if (ramp.kind === 'continuous') return drawContinuousKey(ctx, ramp, x, y, maxW, opts);
   const n = ramp.steps.length;
@@ -179,14 +183,15 @@ export function drawKey(ctx: Ctx, ramp: Ramp, x: number, y: number, maxW: number
   }
   if (opts.missing) {
     const mx = x0 + keyW + 12;
-    nodes.push({ t: 'rect', x: mx + 0.5, y: y + 0.5, w: 12, h: sh - 1, stroke: 'rule', sw: 1 });
+    // No data is an empty outline, or (on a map) the quiet fill the map gives it.
+    nodes.push(opts.missingPaint ? { t: 'rect', x: mx, y, w: 12, h: sh, fill: opts.missingPaint } : { t: 'rect', x: mx + 0.5, y: y + 0.5, w: 12, h: sh - 1, stroke: 'rule', sw: 1 });
     nodes.push(text(mx + 16, y + sh - 0.5, 'No data', 'sans', size, 'ink2'));
   }
   return { nodes, height, width };
 }
 
 /** The continuous ramp's key: one smooth bar, its two ends in the data's units, the midpoint named. */
-function drawContinuousKey(ctx: Ctx, ramp: Ramp, x: number, y: number, maxW: number, opts: { unit?: string; missing?: boolean; align?: 'start' | 'end' }): { nodes: SceneNode[]; height: number; width: number } {
+function drawContinuousKey(ctx: Ctx, ramp: Ramp, x: number, y: number, maxW: number, opts: { unit?: string; missing?: boolean; align?: 'start' | 'end'; missingPaint?: Paint }): { nodes: SceneNode[]; height: number; width: number } {
   const size = ctx.s.small;
   const keyW = Math.min(maxW - (opts.missing ? 80 : 0), ctx.narrow ? 240 : 300);
   const sh = 9;

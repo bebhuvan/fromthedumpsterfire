@@ -7,6 +7,9 @@ import type { Annotation, Chart, ChartForm, ChartRole, Cell } from './types';
 import { BASES, CHART_COLOURS, CHART_FORMS, CHART_ROLES, FORMS } from './types';
 import { checkFigures, figuresIn, citableNumbers } from './figures';
 import { chartGlosses, describeChart } from './glosses';
+import { indiaTile } from './geo/india';
+import { worldIndex } from './geo/countries';
+import { WORLD } from './geo/world';
 
 export interface ChartIssue {
   path: string;
@@ -24,7 +27,7 @@ export interface ChartReport {
 export const CHART_LIMITS = { rows: 20_000, cells: 80_000, columns: 24, annotations: 12, series: 6, bytes: 1_500_000, text: 200 };
 
 const TOP_KEYS = new Set(['form', 'title', 'note', 'units', 'geography', 'span', 'sourceSpan', 'sources', 'measure', 'method', 'data', 'encode', 'scale', 'options', 'annotations']);
-const OPTION_KEYS = new Set(['colour', 'focus', 'midpoint', 'sort', 'per', 'rank']);
+const OPTION_KEYS = new Set(['colour', 'focus', 'midpoint', 'sort', 'per', 'rank', 'of', 'values']);
 const SCALE_KEYS = new Set(['log', 'zero']);
 const DUAL = /^(y2|yRight|rightAxis|secondary(Axis|Y)?|dualAxis|twinAxis|axis2)$/i;
 const THREE_D = /^(3d|threeD|depth|perspective|extrude|bevel|isometric)$/i;
@@ -246,6 +249,11 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
   if (opts.sort !== undefined && opts.sort !== 'value' && opts.sort !== 'given') c.err('.options.sort', 'shape', 'value or given');
   if (opts.rank !== undefined && opts.rank !== 'desc' && opts.rank !== 'asc') c.err('.options.rank', 'shape', 'desc or asc');
   if (opts.per !== undefined && (typeof opts.per !== 'number' || !(opts.per > 0))) c.err('.options.per', 'shape', 'a number above zero');
+  // A histogram counts something; it says what.
+  if (chart.form === 'histogram' && !nonEmpty(opts.of)) c.err('.options.of', 'histogram', 'Say what each bar counts, in the plural ("countries", "districts", "days").');
+  if (opts.of !== undefined && chart.form !== 'histogram') c.err('.options.of', 'unknown-field', '"of" belongs to a histogram.');
+  if (opts.of !== undefined && (typeof opts.of !== 'string' || opts.of.length > 40)) c.err('.options.of', 'shape', 'a few words');
+  if (opts.values !== undefined && (chart.form !== 'heatmap' || typeof opts.values !== 'boolean')) c.err('.options.values', 'unknown-field', 'Values in the cells belong to a heatmap (true or false).');
   if (opts.focus !== undefined) {
     if (!Array.isArray(opts.focus) || !opts.focus.every(nonEmpty)) c.err('.options.focus', 'shape', 'a list of names');
     else {
@@ -274,7 +282,7 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
   if (spec.zero && ys.zero === false) c.err('.scale.y.zero', 'zero-baseline', 'Bars, areas and waffles start at zero: their length is the value.');
   if (spec.zero && ys.log) c.err('.scale.y.log', 'log', 'Bars and areas cannot be drawn on a log scale: their length would lie.');
   if (ys.log) {
-    if (!['line', 'multiples', 'scatter', 'dot'].includes(chart.form)) c.err('.scale.y.log', 'log', 'A log scale is for lines, dots and scatters.');
+    if (!['line', 'multiples', 'scatter', 'dot', 'drawdown'].includes(chart.form)) c.err('.scale.y.log', 'log', 'A log scale is for lines, dots, scatters and prices.');
     if (allValues.some((v) => v <= 0)) c.err('.scale.y.log', 'log', 'A log scale needs every value above zero.');
   }
   if (xs.log) {
@@ -286,6 +294,38 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
   if (spec.zero && allValues.some((v) => v < 0) && chart.form === 'waffle') c.err('.data', 'waffle', 'A waffle shows parts of a whole; parts cannot be negative.');
   if (chart.form === 'area' && nums('y').some((v) => v === null)) c.err('.data', 'missing', 'A stacked area cannot show a missing value honestly (every layer above would shift). Use lines, or fill the gap from the source and say how.');
   if (chart.form === 'area' && nums('y').some((v) => v !== null && v < 0)) c.err('.data', 'area', 'Stacked areas cannot hold negative values.');
+
+  // ---- the forms that place rows by name: every row must find its place, once.
+  const li = idx('label');
+  const ci = idx('code');
+  const placeOf = (r: Cell[]) => String((ci >= 0 ? r[ci] : null) ?? r[li] ?? '');
+  if (chart.form === 'tilemap' && li >= 0) {
+    const seen = new Set<string>();
+    for (const r of rows) {
+      if (!Array.isArray(r)) continue;
+      const t = indiaTile(placeOf(r)) ?? indiaTile(String(r[li] ?? ''));
+      if (!t) c.err('.data.rows', 'tilemap', `"${String(r[li])}" is not one of India’s states or union territories as the tile map knows them (current names, or older ones such as Orissa).`);
+      else if (seen.has(t.code)) c.err('.data.rows', 'duplicate', `Two rows for ${t.name}.`);
+      else seen.add(t.code);
+    }
+  }
+  if (chart.form === 'choropleth' && li >= 0) {
+    const seen = new Set<number>();
+    const away: string[] = [];
+    for (const r of rows) {
+      if (!Array.isArray(r)) continue;
+      const i = worldIndex(placeOf(r)) ?? worldIndex(String(r[li] ?? ''));
+      if (i === undefined) away.push(String(r[li]));
+      else if (seen.has(i)) c.err('.data.rows', 'duplicate', `Two rows for ${WORLD[i]![1]}.`);
+      else seen.add(i);
+    }
+    if (away.length) c.warn('.data.rows', 'choropleth', `No shape on the map for ${away.slice(0, 8).join(', ')}${away.length > 8 ? ` and ${away.length - 8} more` : ''}: these rows stay in the table but are not drawn. (The map follows India’s view, so a place it counts as part of another, such as Kosovo, has no shape of its own; regions and income groups have none either.)`);
+  }
+  if (chart.form === 'drawdown' && nums('y').some((v) => v !== null && v <= 0)) c.err('.data', 'drawdown', 'A drawdown is measured on prices or index levels above zero.');
+  if (chart.form === 'table' && li >= 0) {
+    const names = new Set(rows.map((r) => (Array.isArray(r) ? String(r[li]) : '')));
+    if (names.size > 25) c.err('.data.rows', 'table', `A table of ${names.size} rows is a spreadsheet: keep it to 25, and say which in the note.`);
+  }
 
   // ---- what the numbers are
   const m = isObj(chart.measure) ? chart.measure : undefined;
@@ -341,9 +381,9 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
   } else if (chart.span !== undefined && !isObj(chart.span)) c.err('.span', 'shape', 'from and to');
 
   // Duplicate points would be drawn on top of each other.
-  if (['line', 'multiples', 'area', 'bump', 'stripes', 'calendar', 'band'].includes(chart.form)) {
+  if (['line', 'multiples', 'area', 'bump', 'stripes', 'calendar', 'band', 'drawdown', 'table'].includes(chart.form)) {
     const xi = idx('x');
-    const gi = enc.series ? idx('series') : enc.facet ? idx('facet') : -1;
+    const gi = enc.series ? idx('series') : enc.facet ? idx('facet') : chart.form === 'table' ? idx('label') : -1;
     const seen = new Set<string>();
     let dup = 0;
     for (const r of rows) {

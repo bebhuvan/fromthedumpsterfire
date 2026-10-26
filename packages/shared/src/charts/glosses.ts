@@ -5,7 +5,10 @@
 
 import type { Chart, Cell, ChartColumn } from './types';
 import { FORMS } from './types';
-import { formatNumber, formatTime, type Grouping } from './scales';
+import { formatNumber, formatTime, decimalsFor, type Grouping } from './scales';
+import { bins } from './bins';
+import { drawdowns } from './drawdowns';
+import { INDIA_TILES, indiaTile } from './geo/india';
 
 const col = (chart: Chart, role: keyof Chart['encode']): ChartColumn | undefined => {
   const key = chart.encode?.[role];
@@ -114,7 +117,7 @@ export function chartGlosses(chart: Chart): string[] {
     out.push(`${shown.from === shown.to ? `Shown for ${spanText(shown.from)}` : `Shown from ${spanText(shown.from)} to ${spanText(shown.to)}`}; the source runs from ${spanText(all.from)} to ${spanText(all.to)}.`);
   }
   if (chart.scale?.y?.log || chart.scale?.x?.log) out.push(`${chart.scale?.x?.log && chart.scale?.y?.log ? 'Both scales are' : chart.scale?.x?.log ? 'The horizontal scale is' : 'The vertical scale is'} logarithmic: each step is ten times the one before.`);
-  if (spec && !spec.zero && !chart.scale?.y?.log && ['line', 'multiples', 'scatter', 'dot', 'dumbbell', 'slope'].includes(chart.form) && chart.scale?.y?.zero !== true) {
+  if (spec && !spec.zero && !chart.scale?.y?.log && ['line', 'multiples', 'scatter', 'dot', 'dumbbell', 'slope', 'drawdown'].includes(chart.form) && chart.scale?.y?.zero !== true) {
     const vals = [...values(chart, 'y'), ...values(chart, 'from'), ...values(chart, 'to'), ...values(chart, 'lo')].filter((v): v is number => typeof v === 'number');
     if (vals.length && Math.min(...vals) > 0) out.push(['dot', 'dumbbell'].includes(chart.form) ? 'The scale does not start at zero.' : 'The vertical scale does not start at zero.');
   }
@@ -133,7 +136,54 @@ export function chartGlosses(chart: Chart): string[] {
   }
   if (chart.form === 'waffle') out.push(chart.options?.per ? `Each square stands for ${formatNumber(chart.options.per, 0, grouping(chart))} ${chart.units}, rounded to whole squares.` : 'Each square is one per cent of the total, rounded so the squares add up to a hundred.');
   if (chart.form === 'bump') out.push(`Ranks are among the series shown, worked out from the values in each period; first is the ${chart.options?.rank === 'asc' ? 'lowest' : 'highest'}.`);
+  for (const g of formGlosses(chart)) out.push(g);
   if (chart.method?.trim()) out.push(chart.method.trim());
+  return out;
+}
+
+/** What code did to draw the newer forms, in a sentence each (every figure from the rows). */
+function formGlosses(chart: Chart): string[] {
+  const out: string[] = [];
+  const g = grouping(chart);
+  const yi = idx(chart, 'y');
+  const ys = yi < 0 ? [] : chart.data.rows.map((r) => r[yi]).filter((v): v is number => typeof v === 'number');
+  if (chart.form === 'histogram' && ys.length) {
+    const b = bins(ys);
+    const d = decimalsFor(b.width);
+    out.push(`Each bar counts the ${chart.options?.of?.trim() || 'rows'} with a value in its band, ${formatNumber(b.width, d, g)} wide, starting at ${formatNumber(b.start, d, g)}; a value on an edge counts in the band above.`);
+  }
+  if (chart.form === 'tilemap') {
+    out.push('Each tile is a state or union territory, all the same size whatever their area.');
+    const li = idx(chart, 'label');
+    const ci = idx(chart, 'code');
+    const have = new Set<string>();
+    for (const r of chart.data.rows) {
+      const t = indiaTile(String((ci >= 0 ? r[ci] : null) ?? r[li] ?? '')) ?? indiaTile(String(r[li] ?? ''));
+      if (t && typeof r[yi] === 'number') have.add(t.code);
+    }
+    const none = INDIA_TILES.filter((t) => !have.has(t.code)).map((t) => t.name);
+    if (none.length) out.push(`No data for ${none.length === 1 ? none[0] : `${none.slice(0, -1).join(', ')} and ${none[none.length - 1]}`}.`);
+  }
+  if (chart.form === 'choropleth') out.push('Countries in grey have no data. The boundaries are India’s, as India depicts them (Natural Earth’s India view); Antarctica is not shown.');
+  if (chart.form === 'drawdown') {
+    out.push('The lower panel is the drawdown: how far the value stood below its highest point up to then.');
+    const xi = idx(chart, 'x');
+    const xcol = col(chart, 'x');
+    const pts = chart.data.rows
+      .map((r) => ({ raw: r[xi] as string | number, x: Number(String(r[xi]).replace(/-/g, '')), v: r[yi] }))
+      .filter((p): p is { raw: string | number; x: number; v: number } => typeof p.v === 'number' && p.raw !== null);
+    const { pts: dd, deepest } = drawdowns(pts);
+    if (deepest) {
+      const when = (raw: string | number) => (xcol?.type === 'date' ? formatTime(String(raw), 'date').replace(/^\d+ /, '') : String(raw));
+      const t = dd[deepest.trough]!;
+      const back = deepest.recovery !== null ? `back above that peak in ${when(dd[deepest.recovery]!.raw)}` : 'not yet back above that peak';
+      out.push(`Deepest fall: ${formatNumber(Math.abs(t.dd * 100), 0, g)}%, from the ${when(dd[deepest.peak]!.raw)} peak to the ${when(t.raw)} low; ${back}.`);
+    }
+  }
+  if (chart.form === 'table') {
+    const pct = (chart.measure?.basis === 'absolute' || chart.measure?.basis === 'per-capita') && ys.every((v) => v > 0);
+    out.push(`Each line is drawn to its own scale, from its lowest value to its highest; the dots are its first and last values. The change is ${pct ? 'the percentage change' : `the difference, in ${chart.units.trim()},`} from the first value to the last.`);
+  }
   return out;
 }
 
@@ -258,6 +308,13 @@ export function describeChart(chart: Chart): string {
       parts.push(`${k ? `${k}: ` : ''}${fmt(first[yi] as number)} in ${t(first)}, ${fmt(last[yi] as number)} in ${t(last)}; highest ${fmt(max[yi] as number)} in ${t(max)}.`);
     }
     if (groups.size > 6) parts.push(`And ${groups.size - 6} more series in the table.`);
+  } else if (chart.form === 'histogram' && yi >= 0) {
+    const ok = chart.data.rows.filter((r) => typeof r[yi] === 'number').sort((a, b) => (a[yi] as number) - (b[yi] as number));
+    if (ok.length) {
+      const mid = ok.length % 2 ? (ok[(ok.length - 1) / 2]![yi] as number) : ((ok[ok.length / 2 - 1]![yi] as number) + (ok[ok.length / 2]![yi] as number)) / 2;
+      const name = (r: Cell[]) => (li >= 0 ? `${r[li]} at ` : '');
+      parts.push(`It counts ${ok.length} ${chart.options?.of?.trim() || 'rows'}, whose median is ${fmt(Number(mid.toFixed(2)))}, with the lowest ${name(ok[0]!)}${fmt(ok[0]![yi] as number)} and the highest ${name(ok[ok.length - 1]!)}${fmt(ok[ok.length - 1]![yi] as number)}.`);
+    }
   } else if (yi >= 0 && li >= 0) {
     const ok = chart.data.rows.filter((r) => typeof r[yi] === 'number');
     const sorted = [...ok].sort((a, b) => (b[yi] as number) - (a[yi] as number));

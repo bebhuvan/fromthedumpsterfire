@@ -20,6 +20,11 @@ import { drawHeatmap } from './forms/heatmap';
 import { drawRidgeline } from './forms/ridgeline';
 import { drawBeeswarm } from './forms/beeswarm';
 import { drawWaffle } from './forms/waffle';
+import { drawHistogram } from './forms/histogram';
+import { drawTilemap } from './forms/tilemap';
+import { drawChoropleth } from './forms/choropleth';
+import { drawDrawdown } from './forms/drawdown';
+import { drawTable } from './forms/table';
 
 type Draw = (ctx: Ctx) => Scene;
 
@@ -40,6 +45,11 @@ const DRAW: Record<ChartForm, Draw> = {
   ridgeline: drawRidgeline,
   beeswarm: drawBeeswarm,
   waffle: drawWaffle,
+  histogram: drawHistogram,
+  tilemap: drawTilemap,
+  choropleth: drawChoropleth,
+  drawdown: drawDrawdown,
+  table: drawTable,
 };
 
 // Bundles are immutable and the website keeps each one in memory, so a chart object is drawn once

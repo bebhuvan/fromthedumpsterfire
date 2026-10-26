@@ -4,9 +4,10 @@
 // no value is drawn as missing. Rows keep the order they first appear in, or go by their average
 // when the editor asks for options.sort "value". On a phone a long, short table (dozens of years by
 // twelve months) turns on its side, as a printed table would: the many columns run down the page so
-// every cell stays big enough to read.
+// every cell stays big enough to read. With options.values each cell also prints its value where it
+// fits (a calendar of monthly returns), in the colour that reads on its fill.
 
-import type { Scene, SceneNode } from '../scene';
+import { labelOn, type Scene, type SceneNode } from '../scene';
 import { Ctx, shortUnit, text } from '../frame';
 import { drawKey, rampFor } from '../ramp';
 import { textWidth } from '../text';
@@ -46,12 +47,27 @@ export function drawHeatmap(ctx: Ctx): Scene {
   // Columns keep a hairline of ground between them while there is room for one; rows always do.
   const gap = rawPitch >= 12 ? 2 : rawPitch >= 6 ? 1 : 0;
   const cw = rawPitch - gap;
-  const rowPitch = turned ? Math.max(8, Math.min(14, Math.floor(rawPitch * 0.42))) : Math.max(rawPitch, ctx.narrow ? 15 : 19);
+  // Rows are as tall as the columns are wide while that is small; with few columns they stop at a
+  // comfortable height (taller when values are printed in the cells).
+  const rowCap = ctx.chart.options?.values ? (ctx.narrow ? 22 : 30) : ctx.narrow ? 20 : 26;
+  const rowPitch = turned ? Math.max(8, Math.min(14, Math.floor(rawPitch * 0.42))) : Math.max(Math.min(rawPitch, rowCap), ctx.narrow ? 15 : 19);
   const rgap = rowPitch >= 10 ? 2 : 1;
   const ch = rowPitch - rgap;
   const nodes: SceneNode[] = [];
   let missing = false;
   const unit = ctx.chart.units;
+  const showValues = Boolean(ctx.chart.options?.values);
+  // Differences from a midpoint of zero read as changes, so they carry their sign.
+  const signed = ramp.kind === 'diverging' && (ramp.midpoint?.value ?? 0) === 0;
+  // One size for every value, stepped down until all of them fit; if even the smallest cannot, none is
+  // printed (the table under the chart holds them), rather than leaving some out.
+  let vSize = ctx.narrow ? 9.5 : 10.5;
+  if (showValues) {
+    const all = [...cells.values()].filter((v): v is number => v !== null).map((v) => `${signed && v > 0 ? '+' : ''}${ctx.value(v)}`);
+    const widest = (sz: number) => Math.max(0, ...all.map((sv) => textWidth(sv, 'sans', sz)));
+    while (vSize > 7.5 && widest(vSize) > cw - 3) vSize -= 0.5;
+  }
+  const valuesFit = showValues && ch >= vSize + 3 && [...cells.values()].every((v) => v === null || textWidth(`${signed && v > 0 ? '+' : ''}${ctx.value(v)}`, 'sans', vSize) <= cw - 3);
 
   // Column labels: all of them when they fit; for years, round years spaced to fit.
   const widest = Math.max(...cols.map((c) => textWidth(c, 'sans', size))) + 6;
@@ -88,7 +104,10 @@ export function drawHeatmap(ctx: Ctx): Scene {
         if (cw >= 4) nodes.push({ t: 'rect', x: x + 0.5, y: y + 0.5, w: cw - 1, h: ch - 1, stroke: 'rule', sw: 1, tip: `${rn}, ${cn}: no data` });
         return;
       }
-      nodes.push({ t: 'rect', x, y, w: cw + (gap === 0 ? 0.4 : 0), h: ch, fill: ramp.paint(v), tip: `${rn}, ${cn}: ${ctx.value(v)} ${unit}` });
+      const fill = ramp.paint(v);
+      nodes.push({ t: 'rect', x, y, w: cw + (gap === 0 ? 0.4 : 0), h: ch, fill, tip: `${rn}, ${cn}: ${ctx.value(v)} ${unit}` });
+      // The value in its cell (a calendar-returns grid), when asked and where it fits.
+      if (valuesFit) nodes.push(text(x + cw / 2, y + ch / 2 + vSize * 0.35, `${signed && v > 0 ? '+' : ''}${ctx.value(v)}`, 'sans', vSize, labelOn(fill), 'middle'));
     });
   });
 

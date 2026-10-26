@@ -20,6 +20,11 @@ export const CHART_FORMS = [
   'ridgeline',
   'beeswarm',
   'waffle',
+  'histogram',
+  'tilemap',
+  'choropleth',
+  'drawdown',
+  'table',
 ] as const;
 export type ChartForm = (typeof CHART_FORMS)[number];
 
@@ -86,7 +91,7 @@ export interface ChartScale {
 }
 
 /** The roles a column can play. Which a form needs is in FORMS. */
-export const CHART_ROLES = ['x', 'y', 'series', 'label', 'facet', 'lo', 'hi', 'n', 'size', 'from', 'to', 'normalLo', 'normalHi', 'recordLo', 'recordHi'] as const;
+export const CHART_ROLES = ['x', 'y', 'series', 'label', 'facet', 'lo', 'hi', 'n', 'size', 'from', 'to', 'normalLo', 'normalHi', 'recordLo', 'recordHi', 'code'] as const;
 export type ChartRole = (typeof CHART_ROLES)[number];
 export type ChartEncode = Partial<Record<ChartRole, string>>;
 
@@ -111,6 +116,10 @@ export interface ChartOptions {
   per?: number;
   /** bump: rank highest first (default) or lowest first. */
   rank?: 'desc' | 'asc';
+  /** histogram: what each bar counts, in the plural ("countries", "districts", "days"). */
+  of?: string;
+  /** heatmap: print each cell's value in it (a calendar-returns grid), where the cells have room. */
+  values?: boolean;
 }
 
 export type Author = 'editor' | 'machine';
@@ -320,6 +329,56 @@ export const FORMS: Record<ChartForm, FormSpec> = {
     types: { y: NUM, series: CAT, label: CAT },
     zero: false,
     time: false,
+    colours: ['focus'],
+  },
+  histogram: {
+    name: 'Histogram',
+    use: 'How many of something fall in each band of a value: the shape of a distribution, counted.',
+    required: ['y'],
+    optional: ['label'],
+    types: { y: NUM, label: CAT },
+    zero: true,
+    time: false,
+    colours: ['focus'],
+  },
+  tilemap: {
+    name: 'Tile map of India',
+    use: 'A value for each state and union territory, one equal tile each, laid out roughly as the map is.',
+    required: ['label', 'y'],
+    optional: ['code'],
+    types: { label: CAT, y: NUM, code: CAT },
+    zero: false,
+    time: false,
+    colours: ['sequential', 'diverging', 'heat'],
+  },
+  choropleth: {
+    name: 'World map',
+    use: 'A value for each country, shaded on a map (India’s boundaries as India depicts them).',
+    required: ['label', 'y'],
+    optional: ['code'],
+    types: { label: CAT, y: NUM, code: CAT },
+    zero: false,
+    time: false,
+    colours: ['sequential', 'diverging', 'heat'],
+  },
+  drawdown: {
+    name: 'Price and drawdown',
+    use: 'A price or index over time, with how far it stood below its last peak (the drawdown) underneath.',
+    required: ['x', 'y'],
+    optional: [],
+    types: { x: TIME, y: NUM },
+    zero: false,
+    time: true,
+    colours: ['focus'],
+  },
+  table: {
+    name: 'Table with sparklines',
+    use: 'A few rows compared on their first and last values, with each row’s path drawn small beside them.',
+    required: ['label', 'x', 'y'],
+    optional: [],
+    types: { label: CAT, x: TIME, y: NUM },
+    zero: false,
+    time: true,
     colours: ['focus'],
   },
   waffle: {

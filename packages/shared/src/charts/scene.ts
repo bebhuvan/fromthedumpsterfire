@@ -95,8 +95,8 @@ export type SceneNode =
   | (Mark & { t: 'path'; d: string })
   | (Mark & { t: 'circle'; cx: number; cy: number; r: number })
   | (Mark & { t: 'text'; x: number; y: number; text: string; face: ChartFace; size: number; anchor?: 'start' | 'middle' | 'end' })
-  /** A group, moved by dx, dy (a figure set inside a share card). */
-  | { t: 'g'; children: SceneNode[]; dx?: number; dy?: number };
+  /** A group, moved by dx, dy and scaled by s (a figure inside a share card; a map's outlines). */
+  | { t: 'g'; children: SceneNode[]; dx?: number; dy?: number; s?: number };
 
 export interface Scene {
   width: number;
@@ -229,6 +229,13 @@ export function nodeAttrs(n: Exclude<SceneNode, { t: 'g' }>): Record<string, str
   return a;
 }
 
+/** A group's transform attribute, or '' when it has none. */
+export function groupTransform(n: { dx?: number; dy?: number; s?: number }): string {
+  const t = n.dx || n.dy ? `translate(${r2(n.dx ?? 0)} ${r2(n.dy ?? 0)})` : '';
+  const sc = n.s !== undefined && n.s !== 1 ? `scale(${Math.round(n.s * 100000) / 100000})` : '';
+  return [t, sc].filter(Boolean).join(' ');
+}
+
 /** A standalone SVG with one theme's colours resolved and the app's font cuts named (for PNGs). */
 export function sceneToSvg(scene: Scene, opts: { scheme: Scheme; edition: Edition; background?: boolean }): string {
   const hex = (p: Paint) => paintHex(p, opts.scheme, opts.edition);
@@ -236,7 +243,7 @@ export function sceneToSvg(scene: Scene, opts: { scheme: Scheme; edition: Editio
   const walk = (nodes: SceneNode[]) => {
     for (const n of nodes) {
       if (n.t === 'g') {
-        out.push(n.dx || n.dy ? `<g transform="translate(${r2(n.dx ?? 0)} ${r2(n.dy ?? 0)})">` : '<g>');
+        out.push(groupTransform(n) ? `<g transform="${groupTransform(n)}">` : '<g>');
         walk(n.children);
         out.push('</g>');
         continue;

@@ -58,6 +58,7 @@ const ROLE_LABEL: Record<ChartRole, string> = {
   normalHi: 'Normal high',
   recordLo: 'Record low',
   recordHi: 'Record high',
+  code: 'Code (ISO, for matching places)',
 };
 
 const COLOUR_LABEL: Record<ChartColour, string> = {
@@ -558,7 +559,7 @@ export function ChartEditor({
               ))}
             </select>
           </label>
-          {['bar', 'dot', 'dumbbell', 'slope', 'waffle', 'heatmap'].includes(draft.form) && (
+          {['bar', 'dot', 'dumbbell', 'slope', 'waffle', 'heatmap', 'table'].includes(draft.form) && (
             <label className="field" style={{ flex: '1 1 150px' }}>
               <span className="label">Order</span>
               <select className="select" value={draft.sort} onChange={(e) => set('sort', e.target.value as 'value' | 'given')}>
@@ -571,6 +572,18 @@ export function ChartEditor({
             <label className="field" style={{ flex: '1 1 150px' }}>
               <span className="label">One square stands for (optional)</span>
               <input className="input num" inputMode="decimal" value={draft.per} onChange={(e) => set('per', e.target.value)} placeholder="1% of the total" />
+            </label>
+          )}
+          {draft.form === 'histogram' && (
+            <label className="field" style={{ flex: '1 1 150px' }}>
+              <span className="label">What each bar counts</span>
+              <input className="input" value={draft.of} onChange={(e) => set('of', e.target.value)} placeholder="countries" />
+            </label>
+          )}
+          {draft.form === 'heatmap' && (
+            <label className="field row" style={{ flex: '1 1 150px', alignItems: 'center', gap: 8 }}>
+              <input type="checkbox" checked={draft.values} onChange={(e) => set('values', e.target.checked)} />
+              <span>Print each value in its cell</span>
             </label>
           )}
           {draft.form === 'bump' && (
