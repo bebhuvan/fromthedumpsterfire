@@ -286,9 +286,9 @@ npm run editorial -- chart-edit bk_ID --data .editorial/chart.json      # replac
 
 The title and note are the editor's words: take them from the editor, never write them. Every number
 comes from the source's rows; never type, round or "clean" a value. Machine annotations
-(`"by": "machine"`) may cite only figures that are in the rows; the server refuses others. `publish`
-draws each chart's app pictures in the terminal before it publishes (resvg and the app's fonts); a
-publish through `request` without them is refused when the Haul has charts.
+(`"by": "machine"`) may cite only figures that are in the rows; the server refuses others. The Desk
+Worker draws each chart's app pictures and share picture when it publishes; `chart-draw` writes the
+same pictures locally (`chart-share.png` is the share picture) for a look first.
 
 ## Machine notes written in a session
 

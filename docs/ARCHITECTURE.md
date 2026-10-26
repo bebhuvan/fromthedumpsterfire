@@ -455,17 +455,20 @@ Prerendered: `/about`, 404, `/503`, `/tokens.css` (from `packages/shared/src/tok
 `deploy:web:preview` and `deploy:web` do both. Worker size: 776 KiB, 202 KiB gzipped. Measured CPU: 0 to
 1 ms per rendered page.
 
-## Charts (2026-10-25)
+## Charts (2026-10-25, refined 2026-10-26)
 
 A chart is an item block (`{ kind: 'chart', chart, images }`) carrying its data rows; a Chart item is
-printed as the figure. The spec, the honesty validator, the renderer (sixteen forms, a scene of shapes
-with colours by role) and the CSV and temperature-band helpers are in `packages/shared/src/charts`;
-the Our World in Data and World Bank adapters (guarded, byte-capped, licences as stated or refused) in
-`packages/server/src/charts.ts`. The website draws the SVG from the rows per render (two widths, a
-container query picks one; scenes memoised per isolate); the app shows light and dark PNGs of the
-phone figure, drawn at publish by the Desk in the browser or by `npm run editorial -- publish` (resvg
-WebAssembly, the app's font cuts), checked by `chartKey` and copied next to the bundle by publish.
-The Desk's CSP allows `'wasm-unsafe-eval'` for this. Details: `docs/CHARTS.md`.
+printed as the figure. The spec, the honesty validator, the renderer (twenty-one forms, a scene of
+shapes with colours by role, labels placed so they never collide), the CSV and temperature-band
+helpers, the map outlines (Natural Earth, India's point of view) and the share picture are in
+`packages/shared/src/charts`; the Our World in Data and World Bank adapters (guarded, byte-capped,
+licences as stated or refused) in `packages/server/src/charts.ts`. The website draws the SVG from the
+rows per render (two widths, a container query picks one; scenes memoised per isolate). At publish the
+Desk Worker draws each chart's app pictures (light and dark PNGs of the phone figure) and its share
+picture with resvg WebAssembly (`packages/server/src/chartdraw.ts`, the module bundled by
+`workers/api/src/draw.ts`, the app's font cuts from the Desk's assets) and writes them next to the
+bundle under names that carry the chart's key; `POST /api/charts/share` draws a share picture to
+download. The Desk compiles no WebAssembly. Details: `docs/CHARTS.md`.
 
 ## Agent and terminal editing (2026-10-24)
 

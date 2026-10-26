@@ -847,3 +847,33 @@ Built from `docs/CHARTS-BRIEF.md`; the system is in `docs/CHARTS.md`, the night'
 Before charts go live: merge `charts-kit`, deploy the Desk (CSP and routes) and the site, then an OTA
 for the app. No migration is needed (chart blocks use the existing `blocks` table). The editor's
 decisions are listed in the report.
+
+## The chart kit, refined (2026-10-26, branch `charts-kit`; not deployed, not merged)
+
+From `docs/CHARTS-REFINE-BRIEF.md`; the report's "Refinement, 2026-10-26" section has the before and
+after screenshots and the colour decisions.
+
+- **Colour**: neutral first; new OKLCH-generated ramps validated in both themes (a cool sequential
+  default, a heat ramp kept for temperatures by a validator rule, a diverging ramp with weight at both
+  ends); departures from normal on the weather charts; stripes on a continuous ramp from the Met
+  Office's own HadCRUT5; diverging bins sized to the bulk with open ends.
+- **Labels**: one placer (`charts/labels.ts`) with leaders and halos; area names follow their bands;
+  slope brackets; callouts kept clear of marks; `labels.test.ts` checks every fixture and share card.
+- **Typography**: one head line (units, place, span); one credit line; tighter figure type.
+- **Pictures on the server**: the Desk Worker draws the app's pictures and each chart's share picture
+  at publish (resvg bundled as a wasm module); the Desk's CSP drops `'wasm-unsafe-eval'`; the terminal
+  no longer draws at publish. Checked on a local workerd: a chart published in 1.2 s.
+- **Share pictures**: 1080 px cards with the flame and the struck masthead; Download the picture on
+  the Desk (`POST /api/charts/share`), `chart-draw`, under each chart on the site (and a Chart item's
+  og:image), Share in the app.
+- **New forms**: histogram, tile map of India, world map (India's boundaries as India depicts them),
+  price and drawdown, table with sparklines; heatmap values (a calendar of returns). Real-data comps.
+- **Checked on a running Desk**: the chart editor (screenshots in `docs/design-comps/charts/shots/desk/`),
+  publishing with server-drawn pictures, the share download.
+- **Checked in the app on the Android emulator**: see the report.
+- `npm run verify`: 729 tests pass.
+
+Before charts go live: merge `charts-kit`, deploy the Desk (routes, CSP, server drawing) and the site,
+then an OTA for the app (JavaScript only). No migration is needed. On the first publish after deploy,
+every chart's pictures are drawn afresh under new names (`CHART_RENDER_VERSION` is 2).
+

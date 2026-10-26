@@ -1,6 +1,6 @@
 // Charts in the app, the parts that need no device: where a chart's picture is kept on the phone and
-// the data table under it. The pictures themselves are drawn by the editor's side at publish from the
-// website's own scene (packages/shared/src/charts/raster.ts); the app only shows and keeps them.
+// the data table under it. The pictures themselves are drawn by the Desk Worker at publish from the
+// website's own scene (packages/server/src/chartdraw.ts); the app only shows and keeps them.
 
 import type { Block, Haul } from '@fdf/shared/haul';
 import { chartGrouping, formatCell } from '@fdf/shared/charts/glosses';

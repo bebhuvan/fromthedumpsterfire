@@ -109,14 +109,18 @@ has no web view: it shows a video's poster and opens YouTube or Vimeo, opens Spo
 in their apps, plays audio files in its voice-note player, and sets code in the system monospace.
 It turns fingerprint columns into points in `apps/mobile/src/lib/fpGeometry.ts`.
 
-**Charts** (2026-10-25, `docs/CHARTS.md`): "Figure n" in quiet sans with the number in ember, the
-editor's title in display and note in the italic serif, a units line in quiet sans, the plot, the
-machine's glosses in the blue sans, the credit, and the numbers as a table. In the plot: hairline
+**Charts** (2026-10-25, refined 2026-10-26, `docs/CHARTS.md`): "Figure n" in quiet sans with the
+number in ember, the editor's title in display and note in the italic serif, one head line in quiet
+sans (what the numbers are, where and when), the plot, the machine's glosses in the blue sans, one
+credit line, a link to the chart as a picture, and the numbers as a table. In the plot: hairline
 gridlines, ink2 tick labels in the margin, an ink zero line, square-ended marks with 2px ground gaps,
-labels on the lines instead of legends, text never in a data colour, one loud series in the Haul's
-edition ink and the rest quiet grey. Chart colours (`chartInk`) are validated ramps that avoid machine
-blue and ember. The wide figure runs 720px into the air from 1000px; the phone figure is 375px and is
-also the app's picture.
+labels on the lines instead of legends (placed so none ever touches another, with leaders and halos),
+text never in a data colour. Colour is neutral first: greys and ink for context, the Haul's edition
+ink for the one loud thing, a second hue only when a comparison needs it; warm colours mean heat, and
+a departure from normal is blue for cooler and red for warmer. Chart colours (`chartInk`) are
+validated ramps that avoid machine blue and ember. The wide figure runs 720px into the air from
+1000px; the phone figure is 375px and is also the app's picture. Each chart's share picture (1080px)
+carries the flame and the struck masthead, the editor's words, the credit and the address.
 
 ## The cover
 

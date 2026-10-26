@@ -219,6 +219,23 @@
         "India"
        ]
       }
+     },
+     "images": {
+      "light": {
+       "url": "https://files.fromthedumpsterfire.com/hauls/002/media/datasette-3-chart-1f30f9171a29ace6-light.png",
+       "width": 1125,
+       "height": 773
+      },
+      "dark": {
+       "url": "https://files.fromthedumpsterfire.com/hauls/002/media/datasette-3-chart-1f30f9171a29ace6-dark.png",
+       "width": 1125,
+       "height": 773
+      },
+      "share": {
+       "url": "https://files.fromthedumpsterfire.com/hauls/002/media/datasette-3-chart-1f30f9171a29ace6-share.png",
+       "width": 1080,
+       "height": 1473
+      }
      }
     }
    ]

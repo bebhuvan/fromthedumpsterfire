@@ -294,3 +294,45 @@ Dated, newest last. Don't reopen these without a new reason.
   CSP allows `'wasm-unsafe-eval'` for this, and only this. Rejected: drawing with Views in the app
   (areas and ridges need polygons Views cannot draw well; two renderers would drift).
 
+
+## 2026-10-26 (the chart kit, refined)
+
+- **Chart pictures are drawn on the server at publish** (supersedes the 2026-10-25 decision to draw
+  them on the editor's side). The editor moved to Workers Paid, which removes the CPU reason. Measured:
+  each chart's two app pictures take 0.1 to 0.7 s of CPU with resvg's WebAssembly, the Desk Worker
+  bundles to 1.85 MB gzipped, and a publish with a chart took 1.2 s on a local workerd; the paid plan
+  allows 30 s of CPU per request and 10 MB per Worker. So the Desk Worker draws the app's pictures and
+  each chart's share picture from the chart itself: the Desk drops `'wasm-unsafe-eval'` from its CSP
+  and the 2.4 MB download, the terminal stops drawing, and publish no longer has to trust pictures a
+  client sent. Picture files carry the chart's key in their names, since `hauls/` files are cached as
+  immutable. Rejected: drawing in the pipeline Worker (a service hop for no gain; publish already runs
+  in the Desk Worker).
+- **Every chart gets a share picture** (1080 px wide): the Haul's ink, the flame and the struck
+  masthead drawn from the website's own marks, the title, note, head line, the phone figure, glosses,
+  credit and address. Downloadable on the Desk before publishing, from `chart-draw`, under each chart on
+  the site (and the og:image of a Chart item), and shared from the app.
+- **Colour is neutral first.** Greys and ink carry context, the edition ink marks the story, a second
+  colour only when a comparison needs it. The default sequential ramp is one cool hue; warm colours are
+  kept for heat and a heat ramp is allowed only for temperatures (a validator rule); a temperature's
+  departure from normal is shown on the diverging ramp. Ramps are generated in OKLCH and validated; the
+  lowest step of every ramp clears 2:1 against the ground (only the diverging middle sits near it), so
+  no value reads as a gap. Rejected: the multi-hue butter-to-oxblood ramp (the weather page read as one
+  muddy colour) and a diverging ramp with a near-white cool end.
+- **Warming stripes take a continuous ramp** (41 steps interpolated in OKLab between the 11 validated
+  ones), so every year is its own shade as in Ed Hawkins's original; diverging bins elsewhere are sized
+  to the bulk of the values with open, pointed end bins in the key, so one outlier cannot flatten the
+  rest.
+- **Labels never collide, by construction and by test.** One placer for every form, leaders before
+  dropping, halos over gridlines, brackets where slope values coincide, area names only where they fit
+  inside their band at every point; a test renders every fixture at both widths and its share card.
+- **The credit is one line**: each maker once, via the redistributor, each licence once ("both CC BY
+  4.0"), the date.
+- **Five forms added, chosen over others**: histogram, a tile map of India, a world map, price and
+  drawdown, a table with sparklines; and values in a heatmap's cells (a calendar of returns). A
+  timeline, a population pyramid, a treemap, a Sankey and a connected scatter were judged not to earn a
+  place yet (no open events data for a real timeline; the other forms cover parts and change).
+- **The world map follows India's official depiction** of its boundaries (Natural Earth's India point
+  of view, public domain), in the Equal Earth projection; Indian states are shown as an equal-tile grid
+  rather than a boundary map, which also keeps a small state as visible as a large one. Rejected: the
+  default de facto Natural Earth lines, and a state boundary map (no openly licensed boundary file that
+  matches India's depiction was found to record).
