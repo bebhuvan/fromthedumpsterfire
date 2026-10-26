@@ -816,7 +816,12 @@ Branch `launch-2026-10-24` at `aff5110`, before the first Haul, at the editor's 
 - Draft `hl_01m5spzqqsfnnb3fs08n`, "Wild, wild *times*", 17 items, 15 kept machine notes (all Claude: Sonnet from the pipeline, Opus from the session). Preview: no problems, no bundle errors, no warnings. The editor publishes it from the Desk; the session credential is draft-only.
 - Web `0e8864e7`: the timeline facelift, quotations sized by length (`quoteLength`), "1 minute". The app still draws the old timeline and large epigraphs; bring it level before the next APK/OTA.
 
-## The chart kit (2026-10-25, overnight, branch `charts-kit`; not deployed, not merged)
+## The chart kit (built 2026-10-25 and 26 on `charts-kit`; merged and deployed 2026-10-26)
+
+**Deployed 2026-10-26 (the editor's go):** `charts-kit` merged into `launch-2026-10-24` (fast-forward),
+`CHART_RENDER_VERSION` 3. Desk `fdf-desk` 8a151cd0, pipeline `fdf-pipeline` 8e03853b, web `fdf-web`
+a1baef4b, app over-the-air update fc0c647f for runtime `e903061b` (the launch APK), signature and assets
+checked live. `GET /v1/health` ok. No migration. Haul 001 is still waiting for the editor's Publish.
 
 Built from `docs/CHARTS-BRIEF.md`; the system is in `docs/CHARTS.md`, the night's report in
 `docs/CHARTS-REPORT.md`.
