@@ -251,3 +251,17 @@ drawn as an equal-tile grid, which draws no boundaries at all, so the question d
 2. The colour decisions (neutral first; red and blue for departures; heat kept for temperatures).
 3. The five new forms, and the ones left out.
 4. Open-Meteo's non-commercial terms (unchanged from last night's list).
+
+### Review fixes, 2026-10-26 evening
+
+From the editor's main session, after looking at the screenshots:
+
+- **Monthly returns:** gains were red and losses blue. Every money chart now mirrors the diverging ramp
+  (a fall is red), in heatmaps, calendars, stripes and diverging bars.
+- **Histogram:** the named countries were loud bins that read as a second series, with names on the
+  bars. They are now pins at each exact value, and the names are placed clear of bars and rules, tested
+  at both widths.
+- **Temperature band:** the weather comps page used the slate edition, a grey, which made this year's
+  bars a grey mass. It now uses teal, and in a Haul the bars take that Haul's edition ink.
+- **Tile map:** "Kerala 92.0" was printed twice. The callout now gives the name only when the tile
+  already shows the value.

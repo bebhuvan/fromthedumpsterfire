@@ -336,3 +336,6 @@ Dated, newest last. Don't reopen these without a new reason.
   rather than a boundary map, which also keeps a small state as visible as a large one. Rejected: the
   default de facto Natural Earth lines, and a state boundary map (no openly licensed boundary file that
   matches India's depiction was found to record).
+- **Money's diverging colour is mirrored (2026-10-26):** on a chart with `measure.money`, a fall is red and
+  a rise is blue. Temperatures keep blue for cooler, red for warmer. Rejected: red and green (colour-blind
+  readers cannot tell them apart) and one convention for every chart (a red gain reads as a loss).

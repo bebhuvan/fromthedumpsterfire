@@ -47,12 +47,14 @@ export function drawTilemap(ctx: Ctx): Scene {
     if (textWidth(s, 'sans', size - 0.5) <= tile - 8) nodes.push(text(x + 5, y + tile - 6, s, 'sans', size - 0.5, ink));
     if (focus.has(t.code)) nodes.push({ t: 'rect', x: x - 1.5, y: y - 1.5, w: tile + 3, h: tile + 3, stroke: 'ink', sw: 1.5 });
   }
-  // The focus, named in full with its value beside its tile, clear of every tile.
+  // The focus, named in full beside its tile, clear of every tile; its value too only when the tile
+  // had no room to print it, so no number is written twice.
   const placer = new Placer({ x: 0, y: 0, w: W, h: rows * pitch }, INDIA_TILES.map((t) => ({ x: t.col * pitch - 1, y: t.row * pitch - 1, w: tile + 2, h: tile + 2 })));
   for (const t of INDIA_TILES) {
     if (!focus.has(t.code)) continue;
     const v = value.get(t.code);
-    const s = `${t.name} ${v === null || v === undefined ? 'no data' : ctx.value(v)}`;
+    const inTile = v !== null && v !== undefined && textWidth(ctx.value(v), 'sans', size - 0.5) <= tile - 8;
+    const s = v === null || v === undefined ? `${t.name} no data` : inTile ? t.name : `${t.name} ${ctx.value(v)}`;
     const p = placePoint(placer, { x: t.col * pitch + tile / 2, y: t.row * pitch + tile / 2, r: tile / 2 + 2, text: s, face: 'sansMedium', size: ctx.s.small + 0.5 }, 140);
     if (!p) continue;
     if (p.leader) nodes.push({ t: 'line', ...p.leader, stroke: 'ink', sw: 0.75 });

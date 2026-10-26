@@ -41,7 +41,7 @@ const GROUPS: Array<{ page: string; title: string; deck: string; edition: string
     page: 'weather',
     title: 'Weather and climate',
     deck: 'A year of days against the normal and the records, the warming stripes, and every day and every month against its normal.',
-    edition: 'slate',
+    edition: 'teal',
     charts: ['delhi-band-2024', 'temperature-stripes', 'delhi-calendar-2024', 'delhi-heatmap-months'],
   },
   {

@@ -1,7 +1,8 @@
 // Screenshot comps with headless Chrome over CDP: full page, light and dark, at given widths.
 // node docs/design-comps/_shared/shoot.mjs <dir-with-html> <outdir> [widths=390,1280] [pages=all]
 import { spawn } from 'node:child_process';
-import { readdirSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readdirSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 
 const [dir, out, w = '390,1280', only] = process.argv.slice(2);
@@ -9,7 +10,9 @@ const widths = w.split(',').map(Number);
 const pages = only ? only.split(',') : readdirSync(dir).filter((f) => f.endsWith('.html') && f !== 'index.html').map((f) => f.slice(0, -5));
 mkdirSync(out, { recursive: true });
 const port = 9300 + Math.floor(Math.random() * 500);
-const chrome = spawn('/usr/bin/google-chrome', ['--headless=new', `--remote-debugging-port=${port}`, '--no-first-run', '--hide-scrollbars', '--allow-file-access-from-files', '--user-data-dir=' + resolve(out, '.chrome'), 'about:blank'], { stdio: 'ignore' });
+// A throwaway browser profile outside the repo, removed when the shots are done.
+const profile = mkdtempSync(join(tmpdir(), 'fdf-shoot-'));
+const chrome = spawn('/usr/bin/google-chrome', ['--headless=new', `--remote-debugging-port=${port}`, '--no-first-run', '--hide-scrollbars', '--allow-file-access-from-files', '--user-data-dir=' + profile, 'about:blank'], { stdio: 'ignore' });
 let list;
 for (let i = 0; i < 60 && !list; i++) {
   await new Promise((r) => setTimeout(r, 200));
@@ -39,4 +42,5 @@ for (const p of pages) for (const width of widths) for (const scheme of ['light'
 }
 ws.close();
 chrome.kill();
+setTimeout(() => rmSync(profile, { recursive: true, force: true }), 500);
 console.log('done', pages.length * widths.length * 2, 'shots in', out);

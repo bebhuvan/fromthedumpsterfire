@@ -22,7 +22,7 @@ export function drawStripes(ctx: Ctx): Scene {
   const first = years[0] ?? 0;
   const last = years[years.length - 1] ?? 0;
   const values = [...byYear.values()].filter((v): v is number => v !== null);
-  const ramp = continuousRamp(values.length ? values : [0], ctx.chart.options?.midpoint ?? { value: 0, label: 'zero' });
+  const ramp = continuousRamp(values.length ? values : [0], ctx.chart.options?.midpoint ?? { value: 0, label: 'zero' }, Boolean(ctx.chart.measure?.money));
 
   const W = ctx.W;
   const stripeH = ctx.narrow ? 190 : 270;

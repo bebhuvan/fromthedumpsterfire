@@ -13,11 +13,12 @@ import { drawRowLabel, drawValueAxisTop, labelColumn, orderRows, whisker } from 
 
 const SMALL_N = 30;
 
-/** The paint for a bar: diverging by sign around the midpoint, else focus (edition ink) and quiet. */
+/** The paint for a bar: diverging by sign around the midpoint (a fall in money is red, ramp.ts), else focus (edition ink) and quiet. */
 function barPaint(ctx: Ctx, name: string, all: string[], v: number | null): Paint {
   if (ctx.colour === 'diverging' && v !== null) {
     const mid = ctx.chart.options?.midpoint?.value ?? 0;
-    return v >= mid ? 'div8' : 'div2';
+    const up = v >= mid;
+    return up !== Boolean(ctx.chart.measure?.money) ? 'div8' : 'div2';
   }
   // One series: every bar is the loud thing unless the editor picked some.
   return ctx.chart.options?.focus?.length ? ctx.paintFor(name, all) : 'ed';

@@ -11,3 +11,6 @@ dist/
 
 # Private raw dictation, commentary payloads and editorial previews
 .editorial/
+
+# Headless browser profiles left by screenshot scripts
+.chrome/

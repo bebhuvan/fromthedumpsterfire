@@ -151,6 +151,17 @@ describe('ramps', () => {
     expect(c.edges[11]).toBeGreaterThanOrEqual(2);
   });
 
+  it('runs the diverging ramps the other way for money, so a fall is red', () => {
+    const t = divergingRamp([-3, 3], { value: 0, label: 'no change' });
+    const m = divergingRamp([-3, 3], { value: 0, label: 'no change' }, true);
+    // The same bins, the paints mirrored: the low end blue for a temperature, red for money.
+    for (const v of [-3, -1, 0, 1, 3]) expect(m.paint(v)).toBe(`div${10 - Number(t.paint(v).slice(3))}`);
+    expect(Number(m.paint(-3).slice(3))).toBeGreaterThan(5);
+    expect(m.steps[0]).toBe('div10');
+    const c = continuousRamp([-1, 1], { value: 0, label: 'zero' }, true);
+    expect(c.paint(-1)).toBe('dv40');
+  });
+
   it('centres the diverging ramp on the midpoint', () => {
     const r = divergingRamp([-0.4, 1.5], { value: 0, label: 'zero' });
     expect(r.index(0)).toBe(5);

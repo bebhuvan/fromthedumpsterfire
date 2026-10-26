@@ -102,6 +102,11 @@ over gridlines or quiet marks wear a halo of the ground (SVG `paint-order: strok
 attribute, so the CSP is untouched). Labels inside fills take the text colour (white, near-black, ink
 or ground) with the best worst-case contrast across both themes and every edition ink (`labelOn`).
 
+A histogram's named rows are pins, not loud bins: the bins stay one quiet series, and each named row
+gets a stem in the edition ink at its exact value, rising until its name fits beside its dot. The
+placer there knows the bars and the vertical rules as well as the text, so a name never sits on a mark.
+A tile map names its focus in full beside the tile and leaves out the value the tile already prints.
+
 `labels.test.ts` renders every comps fixture at both widths and its share card and fails on any two
 labels that overlap, any label off its figure, or any name the editor made loud that is not written.
 
@@ -135,7 +140,10 @@ only the brand on a share picture). Machine blue is never data.
 Neutral first: greys and ink carry the context, the Haul's edition ink marks the story, and a second
 colour comes in only when a comparison needs it (two hemispheres, say). Warm colours mean heat: the
 heat ramp is for temperatures only, and a temperature's departure from a normal takes the diverging
-ramp, blue for cooler and red for warmer. The ramps are generated in OKLCH by `scripts/chart-ramps.mjs`
+ramp, blue for cooler and red for warmer. Money runs the other way: on any chart with `measure.money`
+(returns, price changes, a diverging bar of gains and losses) the diverging ramps are mirrored, so a
+fall is red and a rise is blue, as a reader of prices expects; blue and red rather than red and green,
+which colour-blind readers cannot tell apart (`ramp.ts`, `bar.ts`, tested in `forms-b.test.ts`). The ramps are generated in OKLCH by `scripts/chart-ramps.mjs`
 (even lightness steps) and each was run through the dataviz palette validator on this theme's ground,
 2026-10-26:
 

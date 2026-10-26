@@ -8,6 +8,7 @@ import { renderChart } from '../render';
 import { validateChart } from '../validate';
 import { chartGlosses } from '../glosses';
 import { bins } from '../bins';
+import { textWidth } from '../text';
 import { drawdowns } from '../drawdowns';
 import { INDIA_TILES, indiaTile } from '../geo/india';
 import { worldIndex } from '../geo/countries';
@@ -37,12 +38,26 @@ describe('histogram', () => {
     expect(b.counts.length).toBeLessThanOrEqual(30);
     expect(b.counts.reduce((a, c) => a + c, 0)).toBe(51);
   });
-  it('draws a bar per occupied band, the named rows’ bands loud', () => {
+  it('draws a bar per occupied band, one quiet series, the named rows pinned and named clear of the bars', () => {
     const chart = copy(histogram);
-    const bars = flat(renderChart(chart, 'wide').nodes).filter((n): n is Extract<SceneNode, { t: 'rect' }> => n.t === 'rect' && Boolean(n.tip));
-    const b = bins(chart.data.rows.map((r) => r[2] as number));
-    expect(bars).toHaveLength(b.counts.filter(Boolean).length);
-    expect(bars.filter((r) => r.fill === 'ed').length).toBeGreaterThan(0);
+    for (const layout of ['wide', 'narrow'] as const) {
+      const nodes = flat(renderChart(chart, layout).nodes);
+      const bars = nodes.filter((n): n is Extract<SceneNode, { t: 'rect' }> => n.t === 'rect' && Boolean(n.tip));
+      const b = bins(chart.data.rows.map((r) => r[2] as number));
+      expect(bars).toHaveLength(b.counts.filter(Boolean).length);
+      expect(bars.every((r) => r.fill === 'quiet')).toBe(true);
+      const named = chart.options!.focus!;
+      expect(nodes.filter((n) => n.t === 'circle' && n.fill === 'ed')).toHaveLength(named.length);
+      // Every name is printed, and none sits on a bar.
+      const labels = nodes.filter((n): n is Extract<SceneNode, { t: 'text' }> => n.t === 'text' && named.some((f) => n.text.startsWith(f)));
+      expect(labels).toHaveLength(named.length);
+      for (const l of labels) {
+        const w = textWidth(l.text, l.face, l.size);
+        const x0 = l.anchor === 'end' ? l.x - w : l.anchor === 'middle' ? l.x - w / 2 : l.x;
+        const box = { x: x0, y: l.y - l.size * 0.75, w, h: l.size * 0.95 };
+        for (const r of bars) expect(box.x < r.x + r.w && box.x + box.w > r.x && box.y < r.y + r.h && box.y + box.h > r.y, `${layout}: ${l.text} on a bar`).toBe(false);
+      }
+    }
   });
   it('must say what it counts', () => {
     const chart = copy(histogram);
@@ -68,6 +83,13 @@ describe('tile map of India', () => {
     expect(tiles).toHaveLength(36);
     expect(tiles.filter((t) => t.fill === undefined).map((t) => t.tip!.split(':')[0]).sort()).toEqual(['Dadra and Nagar Haveli and Daman and Diu', 'Ladakh', 'Telangana']);
     expect(chartGlosses(chart).some((g) => g.startsWith('No data for') && g.includes('Telangana'))).toBe(true);
+  });
+  it('names the focus in full beside its tile without printing its value a second time', () => {
+    for (const layout of ['wide', 'narrow'] as const) {
+      const texts = flat(renderChart(copy(tilemap), layout).nodes).filter((n): n is Extract<SceneNode, { t: 'text' }> => n.t === 'text').map((n) => n.text);
+      expect(texts).toContain('Kerala');
+      expect(texts.filter((t) => t.includes('92.0'))).toHaveLength(1);
+    }
   });
   it('refuses a place it does not know, and the same place twice', () => {
     const chart = copy(tilemap);

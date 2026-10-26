@@ -1,8 +1,9 @@
 // Histogram: how many of something fall in each band of a value. Code bins the rows (bins.ts: round
 // widths, stated in a gloss); bars stand on zero and touch but for a hairline of ground, their counts
 // on a value axis that says what is counted (options.of: "countries"). The rows the editor names
-// (options.focus) are loud: their bars take the edition's ink, the rest are grey, and each is named
-// above its bar with its own value. A reference line (a rule on x) marks a threshold.
+// (options.focus) are pinned at their own value: a stem in the edition's ink from the ground to a dot
+// above their bin, named beside the dot, so the bins stay one series and each named row sits exactly
+// where its value falls. A reference line (a rule on x) marks a threshold.
 
 import type { Scene, SceneNode } from '../scene';
 import { Ctx, drawYAxis, halo, text, vline, yLabelWidth } from '../frame';
@@ -20,7 +21,6 @@ export function drawHistogram(ctx: Ctx): Scene {
   const b = bins(values.length ? values : [0]);
   const focus = ctx.chart.options?.focus ?? [];
   const named = rows.filter((r) => focus.includes(ctx.str(r, 'label')));
-  const loudBins = new Set(named.map((r) => b.index(ctx.num(r, 'y')!)));
   const top = 22 + (named.length ? ctx.s.label + 16 : 0);
   const bottom = H - 30;
   const ax = tightAxis(ctx, [0, ...b.counts], [bottom, top], { zero: true });
@@ -40,7 +40,7 @@ export function drawHistogram(ctx: Ctx): Scene {
     const y = ax.scale(c);
     const lo = b.start + i * b.width;
     const tip = `${ctx.value(lo, 2)} to ${ctx.value(lo + b.width, 2)} ${unit}: ${c} ${of}`;
-    nodes.push({ t: 'rect', x: x0 + gap / 2, y, w: step - gap, h: ax.scale(0) - y, fill: named.length ? (loudBins.has(i) ? 'ed' : 'quiet') : 'ed', tip });
+    nodes.push({ t: 'rect', x: x0 + gap / 2, y, w: step - gap, h: ax.scale(0) - y, fill: named.length ? 'quiet' : 'ed', tip });
   });
   nodes.push({ t: 'line', x1: left, x2: right, y1: Math.round(ax.scale(0)) + 0.5, y2: Math.round(ax.scale(0)) + 0.5, stroke: 'ink', sw: 1 });
 
@@ -73,21 +73,36 @@ export function drawHistogram(ctx: Ctx): Scene {
     lines.forEach((s, j) => nodes.push(halo(toRight ? x + 5 : x - 5, top + size + j * size * 1.2, s, face, size, a.by === 'editor' ? 'ink' : 'mach', toRight ? 'start' : 'end')));
   }
 
-  // The named rows: each over its bar, with its own value.
+  // The named rows: a pin at each one's value, its dot clear of the bin's top, named beside the dot.
+  // The placer knows every bar and every label already drawn, so a name never sits on a mark.
   const placer = new Placer({ x: 0, y: 0, w: W, h: bottom - 2 });
-  for (const n of nodes) if (n.t === 'text') placer.claim({ x: n.anchor === 'end' ? n.x - textWidth(n.text, n.face, n.size) : n.anchor === 'middle' ? n.x - textWidth(n.text, n.face, n.size) / 2 : n.x, y: n.y - n.size * 0.8, w: textWidth(n.text, n.face, n.size), h: n.size });
+  for (const n of nodes) {
+    if (n.t === 'text') placer.claim({ x: n.anchor === 'end' ? n.x - textWidth(n.text, n.face, n.size) : n.anchor === 'middle' ? n.x - textWidth(n.text, n.face, n.size) / 2 : n.x, y: n.y - n.size * 0.8, w: textWidth(n.text, n.face, n.size), h: n.size });
+    if (n.t === 'rect') placer.claim({ x: n.x, y: n.y - 2, w: n.w, h: n.h + 2 });
+    if (n.t === 'line' && n.x1 === n.x2) placer.claim({ x: n.x1 - 1.5, y: Math.min(n.y1, n.y2), w: 3, h: Math.abs(n.y2 - n.y1) });
+  }
+  // Each pin rises from just above its bin until its name fits beside the dot; only if it never does
+  // is the name set further off on a leader.
+  const r0 = ctx.narrow ? 2.5 : 3;
+  const size = ctx.s.small + 0.5;
   for (const r of named) {
     const v = ctx.num(r, 'y')!;
-    const i = b.index(v);
     const x = sx(v);
-    const y = ax.scale(b.counts[i]!) - 4;
-    placer.claim(dotBox(x, y + 2, 1));
+    const y0 = ax.scale(b.counts[b.index(v)]!) - 9;
     const s = `${ctx.str(r, 'label')} ${ctx.value(v)}`;
-    const p = placePoint(placer, { x, y: y - 2, r: 2, text: s, face: 'sansMedium', size: ctx.s.small + 0.5 }, 90);
-    nodes.push({ t: 'line', x1: x, x2: x, y1: y, y2: y + 4, stroke: 'ink', sw: 1.25 });
+    const it = { x, y: y0, r: r0, text: s, face: 'sansMedium' as const, size };
+    let p = null;
+    let y = y0;
+    for (; y >= size * 2 + r0 && !p; y -= 4) if (placer.free(dotBox(x, y, r0 + 1))) p = placePoint(placer, { ...it, y }, 0);
+    if (p) y += 4;
+    else ((y = y0), (p = placePoint(placer, it, 90)));
+    placer.claim(dotBox(x, y, r0 + 1));
+    placer.claim({ x: x - 1, y, w: 2, h: ax.scale(0) - y });
+    nodes.push({ t: 'line', x1: x, x2: x, y1: Math.round(ax.scale(0)), y2: y, stroke: 'ed', sw: 1.5 });
+    nodes.push({ t: 'circle', cx: x, cy: y, r: r0, fill: 'ed' });
     if (!p) continue;
     if (p.leader) nodes.push({ t: 'line', ...p.leader, stroke: 'ink2', sw: 0.75 });
-    nodes.push(halo(p.x, p.y, s, 'sansMedium', ctx.s.small + 0.5, 'ink', p.anchor));
+    nodes.push(halo(p.x, p.y, s, 'sansMedium', size, 'ink', p.anchor));
   }
   return { width: W, height: H, nodes };
 }

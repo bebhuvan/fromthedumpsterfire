@@ -17,6 +17,9 @@
 //   midpoint minus a round reach to the midpoint plus it, the reach being the smallest round number
 //   at or past the largest distance from the midpoint. Each value takes the nearest of the 41 steps,
 //   so every year is its own shade.
+// - money (any chart with measure.money): the diverging ramps run the other way, so a fall is red and
+//   a rise is blue, as a reader of prices and returns expects. Blue and red, never red and green, so
+//   the two ends stay apart for colour-blind readers.
 
 import { FINE_STEPS, type Paint, type SceneNode } from './scene';
 import type { Ctx } from './frame';
@@ -70,17 +73,17 @@ export function sequentialRamp(values: number[], ramp: 'seq' | 'heat' = 'seq', c
 }
 
 /** The continuous diverging ramp for warming stripes: 41 fine steps over midpoint ± a round reach. */
-export function continuousRamp(values: number[], midpoint: { value: number; label: string }): Ramp {
+export function continuousRamp(values: number[], midpoint: { value: number; label: string }, money = false): Ramp {
   const m = midpoint.value;
   const far = Math.max(...values.map((v) => Math.abs(v - m)), 1e-9);
   const reach = roundUp(far);
   const n = FINE_STEPS - 1;
-  const steps = Array.from({ length: FINE_STEPS }, (_, i) => `dv${i}` as Paint);
+  const steps = Array.from({ length: FINE_STEPS }, (_, i) => `dv${money ? FINE_STEPS - 1 - i : i}` as Paint);
   const index = (v: number) => Math.max(0, Math.min(n, Math.round(((v - m) / reach + 1) * (n / 2))));
   return { kind: 'continuous', edges: [clean(m - reach, reach / 10), clean(m + reach, reach / 10)], steps, step: reach, midpoint, index, paint: (v) => steps[index(v)]! };
 }
 
-export function divergingRamp(values: number[], midpoint: { value: number; label: string }): Ramp {
+export function divergingRamp(values: number[], midpoint: { value: number; label: string }, money = false): Ramp {
   const m = midpoint.value;
   const dev = values.map((v) => Math.abs(v - m)).sort((a, b) => a - b);
   const far = Math.max(dev[dev.length - 1] ?? 0, 1e-9);
@@ -89,7 +92,7 @@ export function divergingRamp(values: number[], midpoint: { value: number; label
   const step = roundUp(bulk / 4.5);
   const open = far > 5.5 * step + 1e-9;
   const edges = Array.from({ length: 12 }, (_, i) => clean(m + (i - 5.5) * step, step / 2));
-  const steps = Array.from({ length: 11 }, (_, i) => `div${i}` as Paint);
+  const steps = Array.from({ length: 11 }, (_, i) => `div${money ? 10 - i : i}` as Paint);
   const index = (v: number) => Math.max(0, Math.min(10, Math.floor((v - m) / step + 5.5 + 1e-9)));
   return { kind: 'diverging', edges, steps, step, midpoint, open, index, paint: (v) => steps[index(v)]! };
 }
@@ -98,7 +101,7 @@ const clean = (v: number, step: number) => Number(v.toFixed(Math.min(10, decimal
 
 /** The ramp the chart asks for (diverging needs options.midpoint; it defaults to zero, labelled "zero"). */
 export function rampFor(ctx: Ctx, values: number[]): Ramp {
-  if (ctx.colour === 'diverging') return divergingRamp(values, ctx.chart.options?.midpoint ?? { value: 0, label: 'zero' });
+  if (ctx.colour === 'diverging') return divergingRamp(values, ctx.chart.options?.midpoint ?? { value: 0, label: 'zero' }, Boolean(ctx.chart.measure?.money));
   const pct = ctx.chart.measure?.basis === 'share' && /^%/.test(ctx.chart.units.trim());
   return sequentialRamp(values, ctx.colour === 'heat' ? 'heat' : 'seq', pct ? 100 : undefined);
 }
