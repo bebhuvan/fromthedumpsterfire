@@ -2,7 +2,7 @@
  "form": "waffle",
  "title": "Coal still makes seven of every ten units of India’s electricity",
  "note": "Solar has passed hydro for the first time.",
- "units": "% of electricity generated",
+ "units": "%",
  "geography": "India",
  "span": {
   "from": "2025",
@@ -84,6 +84,8 @@
   "y": "share"
  },
  "options": {
-  "colour": "categorical"
+  "focus": [
+   "Coal"
+  ]
  }
 }

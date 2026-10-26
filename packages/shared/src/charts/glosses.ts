@@ -32,9 +32,20 @@ export function spanText(v: string): string {
   return m[3] ? `${Number(m[3])} ${month} ${m[1]}` : `${month} ${m[1]}`;
 }
 
-/** A span as words: "1850 to 2025", or just "2025" when it is one moment. */
+/**
+ * A span in whole years when it is whole years: 1 January 2024 to 31 December 2024 is "2024", and
+ * January 1950 to December 2025 is "1950" to "2025". Anything else is left exactly as it is.
+ */
+export function wholeYears(span: { from: string; to: string }): { from: string; to: string } {
+  const a = /^(\d{4})-01(?:-01)?$/.exec(span.from.trim());
+  const b = /^(\d{4})-12(?:-31)?$/.exec(span.to.trim());
+  return a && b ? { from: a[1]!, to: b[1]! } : span;
+}
+
+/** A span as words: "1850 to 2025", or just "2025" when it is one moment (or one whole year). */
 export function spanRange(span: { from: string; to: string }): string {
-  return span.from === span.to ? spanText(span.from) : `${spanText(span.from)} to ${spanText(span.to)}`;
+  const s = wholeYears(span);
+  return s.from === s.to ? spanText(s.from) : `${spanText(s.from)} to ${spanText(s.to)}`;
 }
 
 /** "°C, difference from the 1861–1890 average": what the numbers are, from the editor's fields. */
@@ -50,6 +61,16 @@ export function unitsLine(chart: Chart): string {
   if (m?.basis === 'change' && m.base) parts.push(`change from ${m.base}`);
   if (m?.money) parts.push(m.money.prices === 'real' ? `at ${m.money.baseYear} prices` : 'nominal, not adjusted for inflation');
   return parts.filter(Boolean).join(', ');
+}
+
+/** Where and when, as a reader says it: "World, 1850 to 2025", "New Delhi, 2024". */
+export function placeLine(chart: Chart): string {
+  return [chart.geography, chart.span ? spanRange(chart.span) : ''].filter(Boolean).join(', ');
+}
+
+/** The line over the plot: what the numbers are, then where and when ("°C, difference from …; World, 1850 to 2025"). */
+export function headLine(chart: Chart): string {
+  return [unitsLine(chart), placeLine(chart)].filter(Boolean).join('; ');
 }
 
 /** Numbers from a numeric role, with nulls kept. */
@@ -88,7 +109,9 @@ export function chartGlosses(chart: Chart): string[] {
   const out: string[] = [];
   const spec = FORMS[chart.form];
   if (chart.span && chart.sourceSpan && (chart.span.from !== chart.sourceSpan.from || chart.span.to !== chart.sourceSpan.to)) {
-    out.push(`${chart.span.from === chart.span.to ? `Shown for ${spanText(chart.span.from)}` : `Shown from ${spanText(chart.span.from)} to ${spanText(chart.span.to)}`}; the source runs from ${spanText(chart.sourceSpan.from)} to ${spanText(chart.sourceSpan.to)}.`);
+    const shown = wholeYears(chart.span);
+    const all = wholeYears(chart.sourceSpan);
+    out.push(`${shown.from === shown.to ? `Shown for ${spanText(shown.from)}` : `Shown from ${spanText(shown.from)} to ${spanText(shown.to)}`}; the source runs from ${spanText(all.from)} to ${spanText(all.to)}.`);
   }
   if (chart.scale?.y?.log || chart.scale?.x?.log) out.push(`${chart.scale?.x?.log && chart.scale?.y?.log ? 'Both scales are' : chart.scale?.x?.log ? 'The horizontal scale is' : 'The vertical scale is'} logarithmic: each step is ten times the one before.`);
   if (spec && !spec.zero && !chart.scale?.y?.log && ['line', 'multiples', 'scatter', 'dot', 'dumbbell', 'slope'].includes(chart.form) && chart.scale?.y?.zero !== true) {
@@ -113,6 +136,63 @@ export function chartGlosses(chart: Chart): string[] {
   if (chart.method?.trim()) out.push(chart.method.trim());
   return out;
 }
+
+/** One run of the credit line: words, linked when they name something with a page. */
+export interface CreditPart {
+  text: string;
+  url?: string;
+}
+
+/**
+ * The credit as one clean line, in parts so the website and the app can link them: each maker once
+ * with its datasets, "via" the redistributor, each licence once ("both CC BY 4.0" when they match),
+ * and the day it was fetched.
+ *   Source: Met Office Hadley Centre, HadCRUT5 (Open Government Licence v3). Retrieved 26 October 2026.
+ *   Source: Ember, Yearly Electricity Data, via Our World in Data (both CC BY 4.0). Retrieved …
+ *   Sources: World Bank, World Development Indicators: GDP per capita; Life expectancy (CC BY-4.0). …
+ */
+export function creditParts(chart: Chart): CreditPart[] {
+  const groups: Array<{ maker: string; via?: ChartSourceLike['via']; licence: string; licenceUrl?: string; sets: Array<{ name: string; url: string }> }> = [];
+  for (const s of chart.sources) {
+    const g = groups.find((x) => x.maker === s.maker && x.licence === s.licence && (x.via?.name ?? '') === (s.via?.name ?? ''));
+    if (g) g.sets.push({ name: s.dataset, url: s.url });
+    else groups.push({ maker: s.maker, via: s.via, licence: s.licence, licenceUrl: s.licenceUrl, sets: [{ name: s.dataset, url: s.url }] });
+  }
+  const out: CreditPart[] = [{ text: groups.length > 1 ? 'Sources: ' : 'Source: ' }];
+  groups.forEach((g, i) => {
+    if (i) out.push({ text: '; ' });
+    // Datasets that share a name before a colon print the shared part once.
+    const prefix = g.sets.length > 1 && g.sets.every((d) => d.name.includes(': ')) && new Set(g.sets.map((d) => d.name.split(': ')[0])).size === 1 ? `${g.sets[0]!.name.split(': ')[0]}: ` : '';
+    out.push({ text: `${g.maker}, ${prefix}` });
+    g.sets.forEach((d, j) => {
+      if (j) out.push({ text: '; ' });
+      out.push({ text: prefix ? d.name.slice(prefix.length) : d.name, url: d.url });
+    });
+    const lic = (text: string, url?: string): CreditPart => (url ? { text, url } : { text });
+    if (g.via && g.via.licence === g.licence) {
+      out.push({ text: ', via ' }, { text: g.via.name, url: g.via.url }, { text: ' (both ' }, lic(g.licence, g.licenceUrl), { text: ')' });
+    } else {
+      // A dataset name that already ends in a bracket ("(SP.POP.TOTL)") takes its licence after a comma.
+      const last = g.sets[g.sets.length - 1]!.name;
+      if (last.trim().endsWith(')')) out.push({ text: ', ' }, lic(g.licence, g.licenceUrl));
+      else out.push({ text: ' (' }, lic(g.licence, g.licenceUrl), { text: ')' });
+      if (g.via) out.push({ text: ', via ' }, { text: g.via.name, url: g.via.url }, { text: ` (${g.via.licence})` });
+    }
+  });
+  const when = retrievedLine(chart);
+  if (when) out.push({ text: `. Retrieved ${when}.` });
+  else out.push({ text: '.' });
+  return out;
+}
+
+/** The credit as plain text. */
+export function creditLine(chart: Chart): string {
+  return creditParts(chart)
+    .map((p) => p.text)
+    .join('');
+}
+
+type ChartSourceLike = Chart['sources'][number];
 
 /** "Source: Met Office Hadley Centre, HadCRUT5, via Our World in Data." */
 export function sourceLine(chart: Chart): string {

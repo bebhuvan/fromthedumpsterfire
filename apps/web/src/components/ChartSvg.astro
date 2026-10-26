@@ -10,7 +10,7 @@ interface Props {
 const { nodes } = Astro.props;
 ---
 {nodes.map((n) => {
-  if (n.t === 'g') return <g><Astro.self nodes={n.children} /></g>;
+  if (n.t === 'g') return <g transform={n.dx || n.dy ? `translate(${n.dx ?? 0} ${n.dy ?? 0})` : undefined}><Astro.self nodes={n.children} /></g>;
   const Tag = n.t;
   const attrs = nodeAttrs(n);
   if (n.t === 'text') return <text {...attrs}>{n.text}</text>;

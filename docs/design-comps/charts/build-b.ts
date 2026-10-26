@@ -20,15 +20,15 @@ const daily = csv
   });
 
 const source: ChartSource = {
-  maker: 'ECMWF Copernicus Climate Change Service (ERA5 reanalysis)',
-  dataset: 'Open-Meteo Historical Weather API, daily 2 m temperature maximum and minimum',
+  maker: 'ECMWF Copernicus Climate Change Service',
+  dataset: 'ERA5 reanalysis, daily maximum and minimum temperature at 2 m',
   url: 'https://open-meteo.com/en/docs/historical-weather-api',
   licence: 'CC BY 4.0',
   licenceUrl: 'https://open-meteo.com/en/licence',
   retrieved: '2026-10-25',
   via: { name: 'Open-Meteo.com', url: 'https://open-meteo.com/', licence: 'CC BY 4.0' },
 };
-const geography = 'New Delhi (28.6° N, 77.2° E; ERA5 grid cell)';
+const geography = 'New Delhi (ERA5 grid cell at 28.6° N, 77.2° E)';
 const base = { units: '°C', geography, sources: [source], sourceSpan: { from: '1940-01-01', to: '2025-12-31' } };
 const write = (name: string, c: Chart) => writeFileSync(join(dir, 'data', `${name}.json`), `${JSON.stringify(c, null, 1)}\n`);
 

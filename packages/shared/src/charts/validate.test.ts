@@ -289,6 +289,13 @@ describe('validateHaul with chart blocks', () => {
     expect(r.errors.map((e) => e.rule)).toContain('zero-baseline');
     expect(r.errors[0]!.path).toMatch(/^items\[0\]\.blocks\[0\]\.chart/);
   });
+  it('requires the share card, when there is one, to be published next to the bundle too', () => {
+    const ours = (s: string) => ({ url: `https://files.fromthedumpsterfire.com/hauls/001/media/x-1-chart-${s}.png`, width: s === 'share' ? 1080 : 1125, height: 900 });
+    const ok = validateHaul(withBlock({ kind: 'chart', chart: line(), images: { light: ours('light'), dark: ours('dark'), share: ours('share') } }), undefined, { filesBase: 'https://files.fromthedumpsterfire.com' });
+    expect(ok.errors).toEqual([]);
+    const away = validateHaul(withBlock({ kind: 'chart', chart: line(), images: { light: ours('light'), dark: ours('dark'), share: { url: 'https://example.org/card.png', width: 1080, height: 900 } } }), undefined, { filesBase: 'https://files.fromthedumpsterfire.com' });
+    expect(away.errors.map((e) => e.path)).toContain('items[0].blocks[0].images.share.url');
+  });
   it('requires the app pictures to be published next to the bundle', () => {
     const img = { url: 'https://upload.wikimedia.org/x.png', width: 1125, height: 900 };
     const r = validateHaul(withBlock({ kind: 'chart', chart: line(), images: { light: img, dark: img } }), undefined, { filesBase: 'https://files.fromthedumpsterfire.com' });

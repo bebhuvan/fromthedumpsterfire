@@ -1,10 +1,9 @@
 // Charts in the Desk: the live preview (the shared renderer's scene as inline SVG elements, in the
-// Desk's current theme, with the site's faces) and, at publish, the app's pictures (the same scene
-// rasterised with resvg in WebAssembly, loaded only then). See docs/CHARTS.md.
+// Desk's current theme, with the site's faces). The app's pictures and the share cards are drawn by
+// the Desk Worker at publish. See docs/CHARTS.md.
 
 import { createElement, useEffect, useState, type ReactNode } from 'react';
-import type { Haul } from '@fdf/shared/haul';
-import { APP_PICTURE, drawAppPictures, FACES, nodeAttrs, paintHex, RASTER_FONTS, renderChart, type Chart, type Layout, type Scene, type SceneNode } from '@fdf/shared/charts';
+import { FACES, nodeAttrs, paintHex, renderChart, type Chart, type Layout, type Scene, type SceneNode } from '@fdf/shared/charts';
 import type { Edition, Scheme } from '@fdf/shared/tokens';
 
 /** The Desk's theme right now: the toggle's choice, else the system's. */
@@ -34,7 +33,7 @@ export function useScheme(): Scheme {
 const camel = (k: string) => k.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 
 function element(n: SceneNode, key: number, scheme: Scheme, edition: Edition): ReactNode {
-  if (n.t === 'g') return createElement('g', { key }, n.children.map((c, i) => element(c, i, scheme, edition)));
+  if (n.t === 'g') return createElement('g', { key, transform: n.dx || n.dy ? `translate(${n.dx ?? 0} ${n.dy ?? 0})` : undefined }, n.children.map((c, i) => element(c, i, scheme, edition)));
   const a = nodeAttrs(n);
   const props: Record<string, unknown> = { key };
   for (const [k, v] of Object.entries(a)) if (k !== 'class') props[camel(k)] = v;
@@ -76,58 +75,4 @@ export function ChartPreview({ chart, layout, edition, width }: { chart: Chart; 
     return <p className="small muted">Not drawn yet: {e instanceof Error ? e.message : String(e)}</p>;
   }
   return <SceneSvg scene={scene} scheme={scheme} edition={edition} label={`Preview of ${chart.title || 'the chart'}`} width={width} />;
-}
-
-// ---------------------------------------------------------------- the app's pictures
-
-type Resvg = typeof import('@resvg/resvg-wasm');
-let resvgReady: Promise<{ mod: Resvg; fonts: Uint8Array[] }> | null = null;
-
-/**
- * resvg and the app's own font cuts, loaded once and only when a Haul with charts is published.
- * The fonts are the Desk's copies in /fonts (the same files as apps/mobile/assets/fonts; the share
- * card already loads them), so the pictures are set in exactly the app's type.
- */
-function loadResvg() {
-  resvgReady ??= (async () => {
-    const [mod, wasm] = await Promise.all([import('@resvg/resvg-wasm'), import('@resvg/resvg-wasm/index_bg.wasm?url')]);
-    await mod.initWasm(fetch(wasm.default));
-    const fonts = await Promise.all(
-      RASTER_FONTS.map(async (f) => {
-        const r = await fetch(`/fonts/${f}`);
-        if (!r.ok) throw new Error(`The font ${f} did not load (${r.status})`);
-        return new Uint8Array(await r.arrayBuffer());
-      }),
-    );
-    return { mod, fonts };
-  })();
-  return resvgReady.catch((e) => {
-    resvgReady = null;
-    throw e;
-  });
-}
-
-function toBase64(bytes: Uint8Array): string {
-  let s = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(s);
-}
-
-/**
- * Every chart's app pictures for a Haul (from its preview bundle), as the publish route takes them:
- * base64 PNGs by chart key. Empty when the Haul has no charts (resvg is then never loaded).
- */
-export async function drawChartPictures(haul: Haul): Promise<Record<string, { light: string; dark: string }>> {
-  if (!haul.items.some((it) => it.blocks?.some((b) => b.kind === 'chart'))) return {};
-  const { mod, fonts } = await loadResvg();
-  return drawAppPictures(
-    haul,
-    (svg) => {
-      const r = new mod.Resvg(svg, { fitTo: { mode: 'zoom', value: APP_PICTURE.zoom }, font: { fontBuffers: fonts, loadSystemFonts: false, defaultFontFamily: 'Schibsted-Regular' } });
-      const png = r.render().asPng();
-      r.free();
-      return png;
-    },
-    toBase64,
-  );
 }

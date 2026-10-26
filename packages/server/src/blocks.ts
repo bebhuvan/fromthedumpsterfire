@@ -571,11 +571,13 @@ export function blockQuoteRows(blocks: BlockRow[], source: string | null): Array
   return rows;
 }
 
-/** The app's pictures of a chart, drawn by the Desk or the terminal and sent with the publish: by chartKey. */
-export type ChartPictures = Map<string, { light: Uint8Array; dark: Uint8Array }>;
+/** A chart's pictures, drawn at publish (chartdraw.ts), by chartKey: the app's two and the share card. */
+export type ChartPictures = Map<string, { light: Uint8Array; dark: Uint8Array; share?: Uint8Array }>;
 
 /** The app's pictures are the phone figure (375 wide) at three times: 1125 px wide PNGs. */
 export const CHART_PICTURE = { width: 1125, maxHeight: 4000, maxBytes: 3 * 1024 * 1024 } as const;
+/** The share card: 1080 px wide. */
+export const CHART_SHARE = { width: 1080, maxHeight: 6000, maxBytes: 4 * 1024 * 1024 } as const;
 
 export interface BundleBlocks {
   blocks: Block[];
@@ -678,13 +680,22 @@ export function blocksForBundle(
           else {
             images = { light: { url: '', width: 0, height: 0 }, dark: { url: '', width: 0, height: 0 } };
             for (const s of ['light', 'dark'] as const) {
-              const k = `${to}-${n}-chart-${s}.png`;
+              // The chart's key is in the name: files under hauls/ are cached as immutable, so a changed
+              // chart must get a new address rather than overwrite the old picture.
+              const k = `${to}-${n}-chart-${key}-${s}.png`;
               out.pictures!.push([k, pic[s]]);
               const size = imageSize(pic[s])!;
               images[s] = { url: `${filesBase}/${k}`, width: size.width, height: size.height };
             }
+            // The share card, when it was drawn: a PNG of its own width, linked under the chart.
+            const card = pic.share ? imageSize(pic.share) : null;
+            if (pic.share && card && card.mime === 'image/png' && card.width === CHART_SHARE.width && card.height <= CHART_SHARE.maxHeight && pic.share.byteLength <= CHART_SHARE.maxBytes) {
+              const k = `${to}-${n}-chart-${key}-share.png`;
+              out.pictures!.push([k, pic.share]);
+              images.share = { url: `${filesBase}/${k}`, width: card.width, height: card.height };
+            } else if (pic.share) out.problems.push(`the share picture of the chart "${b.chart.title}" is not a ${CHART_SHARE.width} px wide PNG`);
           }
-        } else if (charts.pictures) out.problems.push(`the chart "${b.chart.title}" has no pictures for the app; publish from the Desk or with npm run editorial -- publish, which draw them`);
+        } else if (charts.pictures) out.problems.push(`the chart "${b.chart.title}" has no pictures for the app; publish it again`);
         else charts.warnings?.push(`The chart "${b.chart.title}" gets its app pictures when it is published.`);
         out.blocks.push({ kind: 'chart', chart: b.chart, ...(images ? { images } : {}) });
         break;

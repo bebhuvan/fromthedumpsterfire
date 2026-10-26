@@ -1,5 +1,6 @@
 // Charts from the terminal, end to end against the real Desk Worker (fake bindings): keep a chart,
-// publish (which draws the app's pictures here with resvg), and find the pictures next to the bundle.
+// publish (the Worker draws the app's pictures and the share card with resvg), and find them next to
+// the bundle.
 import { afterEach, expect, it } from 'vitest';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -29,7 +30,7 @@ const chart = {
   encode: { x: 'year', y: 't' },
 };
 
-it('checks, keeps and publishes a chart with its app pictures from the terminal', async () => {
+it('checks, keeps and publishes a chart with its app pictures and share card from the terminal', async () => {
   const env = await seedHaul(makeEnv(undefined, { DEV_AUTH_BYPASS: '1' }));
   env.INGEST_QUEUE.sendBatch = async (messages) => { env.queue.push(...messages); };
   const fetcher = (url, init) => app.request(url, init, env);
@@ -71,4 +72,6 @@ it('checks, keeps and publishes a chart with its app pictures from the terminal'
   const key = new URL(block.images.dark.url).pathname.slice(1);
   const png = new Uint8Array(await (await env.FILES.get(key)).arrayBuffer());
   expect([...png.slice(1, 4)].map((c) => String.fromCharCode(c)).join('')).toBe('PNG');
+  expect(block.images.share.width).toBe(1080);
+  expect(await env.FILES.head(new URL(block.images.share.url).pathname.slice(1))).toBeTruthy();
 }, 60_000);

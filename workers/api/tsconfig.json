@@ -12,5 +12,5 @@
     "noEmit": true,
     "paths": { "highlight.js/lib/core": ["../../packages/server/types/highlight.d.ts"], "highlight.js/lib/languages/*": ["../../packages/server/types/highlight-language.d.ts"] }
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "types"]
 }

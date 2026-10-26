@@ -330,6 +330,6 @@ export const FORMS: Record<ChartForm, FormSpec> = {
     types: { label: CAT, y: NUM },
     zero: true,
     time: false,
-    colours: ['categorical'],
+    colours: ['focus', 'categorical'],
   },
 };

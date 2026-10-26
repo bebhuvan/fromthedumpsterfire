@@ -7,7 +7,7 @@ import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { createClient, TARGETS, DeskError, redact, waitForItem, deskOrigin } from './editorial/client.mjs';
-import { checkChart, csvData, drawFiles, drawPictures } from './editorial/charts.mjs';
+import { checkChart, csvData, drawFiles } from './editorial/charts.mjs';
 
 export const HELP = `From the Dumpster Fire — editorial client (Node >=22.21)
 
@@ -30,8 +30,8 @@ npm run editorial -- <command> [arguments] [options]
   edit-haul ID                    PATCH Haul with --data haul.json
   order ID                        set Haul items with --data order.json
   preview ID                      assemble/check a Haul without publishing
-  publish ID                      publish with --confirm-publish (fields via --data); draws each
-                                  chart's app pictures here first (resvg, the app's fonts)
+  publish ID                      publish with --confirm-publish (fields via --data); the Desk
+                                  draws each chart's app pictures and share card
   chart ITEM                      add a chart block from --data chart.json (checked by the Desk)
   chart-edit BLOCK                replace a chart block's spec with --data chart.json
   chart-fetch                     data behind a chart from Our World in Data or the World Bank
@@ -158,14 +158,6 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
         path = `/api/hauls/${id()}/publish`; method = 'POST';
         if (data !== undefined && (!data || typeof data !== 'object' || Array.isArray(data))) throw new Error('publish data must be an object');
         data = { ...data, confirm: true };
-        // The app has no SVG: draw each chart's light and dark pictures from the previewed bundle,
-        // as the Desk does. Publish refuses pictures drawn from any other chart or edition ink.
-        if (v['confirm-publish'] && p.length === 2) {
-          const q = data.correction ? `?correction=${encodeURIComponent(data.correction)}` : '';
-          const pv = await client.request('GET', `/api/hauls/${id()}/preview${q}`, {});
-          const charts = pv?.haul ? await drawPictures(pv.haul) : {};
-          if (Object.keys(charts).length) data = { ...data, charts };
-        }
         break;
       case 'chart': path = `/api/items/${id()}/blocks`; method = 'POST'; data = { kind: 'chart', chart: data }; break;
       case 'chart-edit': path = `/api/blocks/${id()}/chart`; method = 'PUT'; data = { chart: data }; break;

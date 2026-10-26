@@ -151,7 +151,10 @@
   "y": "growth"
  },
  "options": {
-  "colour": "focus"
+  "colour": "focus",
+  "focus": [
+   "2020"
+  ]
  },
  "annotations": [
   {

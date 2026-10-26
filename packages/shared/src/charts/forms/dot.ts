@@ -4,7 +4,7 @@
 
 import type { Cell } from '../types';
 import type { Paint, Scene, SceneNode } from '../scene';
-import { Ctx, hline, shortUnit, text } from '../frame';
+import { Ctx, halo, hline, shortUnit, text } from '../frame';
 import { linear, niceTicks } from '../scales';
 import { textWidth } from '../text';
 import { drawKey, drawRowLabel, drawValueAxisTop, labelColumn, orderRows, whisker } from './category';
@@ -104,14 +104,14 @@ export function drawDot(ctx: Ctx): Scene {
       if (ends.length === 1) {
         const p = ends[0]!;
         const right = Math.max(sx(p.v!), p.hi !== null ? sx(p.hi) : 0);
-        nodes.push(text(right + 9, yc + ctx.s.small * 0.35, ctx.value(p.v!), labelFocus(label) ? 'sansMedium' : 'sans', ctx.s.small, labelFocus(label) ? 'ink' : 'ink2'));
+        nodes.push(halo(right + 9, yc + ctx.s.small * 0.35, ctx.value(p.v!), labelFocus(label) ? 'sansMedium' : 'sans', ctx.s.small, labelFocus(label) ? 'ink' : 'ink2'));
       } else if (ends.length > 1) {
         const lo = ends.reduce((a, b) => (b.v! < a.v! ? b : a));
         const hi = ends.reduce((a, b) => (b.v! > a.v! ? b : a));
         const l = Math.min(sx(lo.v!), lo.lo !== null ? sx(lo.lo) : Infinity);
         const r = Math.max(sx(hi.v!), hi.hi !== null ? sx(hi.hi) : 0);
-        nodes.push(text(l - 9, yc + ctx.s.small * 0.35, ctx.value(lo.v!), 'sans', ctx.s.small, 'ink2', 'end'));
-        nodes.push(text(r + 9, yc + ctx.s.small * 0.35, ctx.value(hi.v!), 'sansMedium', ctx.s.small, 'ink'));
+        nodes.push(halo(l - 9, yc + ctx.s.small * 0.35, ctx.value(lo.v!), 'sans', ctx.s.small, 'ink2', 'end'));
+        nodes.push(halo(r + 9, yc + ctx.s.small * 0.35, ctx.value(hi.v!), 'sansMedium', ctx.s.small, 'ink'));
       }
     }
     if (missing.length) {

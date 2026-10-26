@@ -1,6 +1,6 @@
 // Charts from the terminal: the shared chart kit (packages/shared/src/charts) loaded in Node, the
-// local checks (CSV to chart data, the honesty validator), and the app's pictures drawn at publish
-// with resvg (WebAssembly) and the app's own font cuts, exactly as the Desk draws them in the browser.
+// local checks (CSV to chart data, the honesty validator), and chart-draw's PNGs for a look, drawn
+// with resvg (WebAssembly) and the app's own font cuts as the Desk Worker draws them at publish.
 // The kit is TypeScript; it is bundled once per run with esbuild (already in node_modules for Vite).
 
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
@@ -41,14 +41,6 @@ export async function rasteriser() {
   const fontBuffers = k.RASTER_FONTS.map((f) => new Uint8Array(readFileSync(join(ROOT, 'apps/mobile/assets/fonts', f))));
   raster = (svg) => new Resvg(svg, { fitTo: { mode: 'zoom', value: k.APP_PICTURE.zoom }, font: { fontBuffers, loadSystemFonts: false, defaultFontFamily: 'Schibsted-Regular' } }).render().asPng();
   return raster;
-}
-
-/** Every chart in a previewed Haul, drawn for the app: { [chartKey]: { light, dark } } as base64. */
-export async function drawPictures(haul) {
-  const k = await loadKit();
-  if (!k.chartsIn(haul).length) return {};
-  const r = await rasteriser();
-  return k.drawAppPictures(haul, r, (bytes) => Buffer.from(bytes).toString('base64'));
 }
 
 /** CSV or TSV text as chart data, with the problems found (nothing is cleaned or guessed at). */

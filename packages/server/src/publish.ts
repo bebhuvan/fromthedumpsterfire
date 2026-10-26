@@ -23,6 +23,8 @@ import { imageSize, plateForBundle, type PlateRow } from './plates';
 import { formatOfNote } from './voice';
 import { threadsForHaul } from './connect';
 import { blocksFor, blocksForBundle, type ChartPictures } from './blocks';
+import { drawChartPictures, type ChartDrawer } from './chartdraw';
+import { chartKey, validateChart, type Chart } from '@fdf/shared/charts';
 import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
 import { SHELF_PATH, SHELF_VERSION, shelfOrder, validateShelf, type BookNote, type Shelf, type ShelfBook } from '@fdf/shared/shelf';
 import { bookTitle, bookTitleText, linesFor, notesFor, shelfChanges, type BookRow } from './shelf';
@@ -108,7 +110,7 @@ export function bundleItemIds(items: Pick<ItemRow, 'id' | 'title' | 'title_choic
   return idFor;
 }
 
-export async function assembleHaul(env: Env, haulId: string, opts: { correction?: string; card?: Uint8Array; chartPictures?: ChartPictures } = {}): Promise<Assembled> {
+export async function assembleHaul(env: Env, haulId: string, opts: { correction?: string; card?: Uint8Array; chartPictures?: ChartPictures; drawer?: ChartDrawer } = {}): Promise<Assembled> {
   const h = await env.DB.prepare('SELECT * FROM hauls WHERE id = ?').bind(haulId).first<HaulRow>();
   if (!h) throw new Error('No such Haul');
   const problems: PublishProblem[] = [];
@@ -118,9 +120,12 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
   const slug = haulSlug(h.number);
   const filesBase = env.FILES_BASE.replace(/\/$/, '');
   const edition = editionOf(h.number, h.edition ?? undefined);
-  // Charts' app pictures: required at publish (the Desk and the terminal draw them), noted in a preview.
+  // Charts' pictures (the app's two and the share card): drawn here at publish with the drawer the
+  // Desk Worker hands in; a preview, which has none, only notes that they come at publish.
   const pictures: Array<[string, Uint8Array]> = [];
   const chartNotes: string[] = [];
+  const drawn: ChartPictures | undefined = opts.drawer ? new Map() : opts.chartPictures;
+  const site = (env.SITE_BASE ?? '').replace(/^https?:\/\//, '').replace(/\/$/, '');
 
   const items = await haulItemRows(env, haulId);
   const idFor = bundleItemIds(items);
@@ -202,7 +207,25 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     if (it.type === 'image' && !plate) problems.push({ itemId: it.id, itemTitle: label, message: 'a Picture needs its picture: add it with its credit and licence' });
     // The editor's blocks, in order: quotes and code re-verified, code highlighted, posters and
     // pictures copied next to the bundle.
-    const bb = blocksForBundle(await blocksFor(env, it.id), src?.text ?? null, `hauls/${slug}/media/${idFor.get(it.id)}`, filesBase, { edition, pictures: opts.chartPictures, warnings: chartNotes });
+    const blockRows = await blocksFor(env, it.id);
+    if (opts.drawer && drawn) {
+      let figure = 0;
+      for (const r of blockRows) {
+        if (r.status !== 'kept' || r.kind !== 'chart') continue;
+        const b = parseJson<{ kind: 'chart'; chart: Chart } | null>(r.body, null);
+        if (!b || !validateChart(b.chart).ok) continue;
+        figure++;
+        const key = chartKey(b.chart, edition);
+        if (drawn.has(key)) continue;
+        const address = site ? `${site}/haul/${h.number}/${idFor.get(it.id)}` : undefined;
+        try {
+          drawn.set(key, drawChartPictures(opts.drawer, b.chart, edition, { haul: h.number, figure, ...(address ? { address } : {}) }));
+        } catch (e) {
+          problems.push({ itemId: it.id, itemTitle: label, message: `the chart "${b.chart.title}" could not be drawn for the app (${e instanceof Error ? e.message : String(e)})` });
+        }
+      }
+    }
+    const bb = blocksForBundle(blockRows, src?.text ?? null, `hauls/${slug}/media/${idFor.get(it.id)}`, filesBase, { edition, pictures: drawn, warnings: chartNotes });
     copies.push(...bb.copies);
     pictures.push(...(bb.pictures ?? []));
     for (const m of bb.problems) problems.push({ itemId: it.id, itemTitle: label, message: m });
@@ -357,7 +380,7 @@ export interface PublishResult {
   warnings: BundleIssue[];
 }
 
-export async function publishHaul(env: Env, haulId: string, opts: { correction?: string; dryRun?: boolean; card?: Uint8Array; chartPictures?: ChartPictures } = {}): Promise<PublishResult> {
+export async function publishHaul(env: Env, haulId: string, opts: { correction?: string; dryRun?: boolean; card?: Uint8Array; chartPictures?: ChartPictures; drawer?: ChartDrawer } = {}): Promise<PublishResult> {
   const a = await assembleHaul(env, haulId, opts);
   const base = { problems: a.problems, bundleErrors: a.bundleErrors, warnings: a.warnings };
   if (a.problems.length || a.bundleErrors.length || opts.dryRun) return { ok: !a.problems.length && !a.bundleErrors.length, ...base };

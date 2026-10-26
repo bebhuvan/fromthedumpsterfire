@@ -50,3 +50,20 @@ export function fitText(text: string, face: ChartFace, size: number, max: number
   while (s.length > 1 && textWidth(`${s}…`, face, size) > max) s = s.slice(0, -1);
   return `${s.trimEnd()}…`;
 }
+
+/**
+ * Wrap into as few lines as wrapText would, but with the lines as even as they can be (the narrowest
+ * width that still gives that many lines), as CSS's text-wrap: balance does: no word left alone.
+ */
+export function wrapBalanced(text: string, face: ChartFace, size: number, max: number): string[] {
+  const lines = wrapText(text, face, size, max);
+  if (lines.length < 2) return lines;
+  let lo = max / lines.length;
+  let hi = max;
+  for (let i = 0; i < 16; i++) {
+    const mid = (lo + hi) / 2;
+    if (wrapText(text, face, size, mid).length > lines.length) lo = mid;
+    else hi = mid;
+  }
+  return wrapText(text, face, size, hi);
+}

@@ -6,7 +6,7 @@
 import { haulSlug, type Haul, type Item, type Thread } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import { formName, formOf } from './forms';
-import { describeChart, licenceLine, unitsLine } from '@fdf/shared/charts/glosses';
+import { creditParts, describeChart, unitsLine } from '@fdf/shared/charts/glosses';
 import { collectThreads } from './store';
 import {
   absolute,
@@ -83,7 +83,7 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
       ...(c.note ? [c.note, ''] : []),
       `- **What the numbers are**: ${unitsLine(c)}`,
       `- **Description (Machine)**: ${describeChart(c)}`,
-      `- **Source**: ${c.sources.map((s) => `${safeHref(s.url) ? `[${s.maker}, ${s.dataset}](${safeHref(s.url)})` : `${s.maker}, ${s.dataset}`}${s.via ? ` via ${safeHref(s.via.url) ? `[${s.via.name}](${safeHref(s.via.url)})` : s.via.name}` : ''}`).join('; ')}. ${licenceLine(c)}. Retrieved ${c.sources.map((s) => s.retrieved).sort().pop()}.`,
+      `- **Source**: ${creditParts(c).map((p) => (p.url && safeHref(p.url) ? `[${p.text}](${safeHref(p.url)})` : p.text)).join('')}`,
       `- **Data**: ${c.data.rows.length} rows, on the item page`,
     );
   });

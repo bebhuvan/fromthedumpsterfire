@@ -53,8 +53,18 @@ export function waffleParts(ctx: Ctx): { parts: WafflePart[]; missing: string[];
   const count = Math.max(1, Math.min(400, Math.round(total / per)));
   const values = [...items.map((x) => x.value), ...(folded.length ? [folded.reduce((a, b) => a + b.value, 0)] : [])];
   const squares = largestRemainder(values, count);
-  const parts: WafflePart[] = items.map((x, i) => ({ ...x, squares: squares[i]!, paint: `cat${Math.min(5, i)}` as Paint }));
-  if (folded.length) parts.push({ name: 'Other', value: values[values.length - 1]!, squares: squares[squares.length - 1]!, paint: 'quiet', parts: folded });
+  // Neutral first: with a focus, the story's parts take the edition's ink and the rest are grey: a
+  // grey each when there are three or fewer, else one grey for all of them (squares carry no names,
+  // and a repeated grey would pair parts that have nothing to do with each other; the list names
+  // each). Without a focus each part has its categorical colour.
+  const focus = ctx.chart.options?.focus ?? [];
+  const focused = ctx.colour === 'focus' || focus.length > 0;
+  const quietCount = items.filter((x) => !focus.includes(x.name)).length + (folded.length ? 1 : 0);
+  const GREYS: Paint[] = quietCount <= 3 ? ['quiet3', 'quiet', 'quiet2'] : ['quiet'];
+  let g = 0;
+  const paintOf = (name: string, i: number): Paint => (focused ? (focus.includes(name) ? 'ed' : GREYS[g++ % GREYS.length]!) : (`cat${Math.min(5, i)}` as Paint));
+  const parts: WafflePart[] = items.map((x, i) => ({ ...x, squares: squares[i]!, paint: paintOf(x.name, i) }));
+  if (folded.length) parts.push({ name: 'Other', value: values[values.length - 1]!, squares: squares[squares.length - 1]!, paint: focused ? GREYS[g++ % GREYS.length]! : 'quiet', parts: folded });
   return { parts, missing, per, total };
 }
 

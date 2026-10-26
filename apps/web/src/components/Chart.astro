@@ -4,7 +4,7 @@
 // chosen by the width of the column with a container query); the machine's glosses in the blue sans;
 // the source, its licence and the day it was fetched; and the numbers themselves in a table.
 import type { Chart } from '@fdf/shared/charts';
-import { renderChart, spanRange, chartGlosses, chartGrouping, describeChart, formatCell, licenceLine, retrievedLine, unitsLine } from '@fdf/shared/charts';
+import { renderChart, chartGlosses, chartGrouping, creditParts, describeChart, formatCell, headLine } from '@fdf/shared/charts';
 import { safeHref } from '../lib/site';
 import ChartSvg from './ChartSvg.astro';
 
@@ -14,8 +14,11 @@ interface Props {
   n: number;
   /** A stable id for aria references. */
   id: string;
+  /** The chart's share card (drawn at publish), offered under the chart. */
+  share?: string;
 }
-const { chart, n, id } = Astro.props;
+const { chart, n, id, share } = Astro.props;
+const shareHref = share ? safeHref(share) : undefined;
 const layouts = (['wide', 'narrow'] as const).map((layout) => {
   try {
     return { layout, scene: renderChart(chart, layout) };
@@ -36,7 +39,7 @@ const rows = chart.data.rows;
     <p class="ch-n">Figure <span>{n}</span></p>
     <h3 class="ch-t" id={`${id}-t`}>{chart.title}</h3>
     {chart.note ? <p class="ch-note">{chart.note}</p> : null}
-    <p class="ch-units">{unitsLine(chart)}{chart.geography || chart.span ? <span>{[chart.geography, chart.span ? spanRange(chart.span) : ''].filter(Boolean).join(', ')}</span> : null}</p>
+    <p class="ch-units">{headLine(chart)}</p>
   </figcaption>
   <div class="c ch-plot">
     {drawn ? (
@@ -60,16 +63,11 @@ const rows = chart.data.rows;
   <div class="c ch-foot">
     {glosses.length ? <p class="machine ch-gloss">{glosses.join(' ')}</p> : null}
     <p class="ch-src">
-      Source:{' '}
-      {chart.sources.map((s, i) => (
-        <>
-          {i ? '; ' : ''}
-          {safeHref(s.url) ? <a href={safeHref(s.url)} rel="noopener noreferrer" target="_blank">{s.maker}, {s.dataset}<span class="sr"> (opens in a new tab)</span></a> : `${s.maker}, ${s.dataset}`}
-          {s.via ? <>, via {safeHref(s.via.url) ? <a href={safeHref(s.via.url)} rel="noopener noreferrer" target="_blank">{s.via.name}<span class="sr"> (opens in a new tab)</span></a> : s.via.name}</> : null}
-        </>
-      ))}
-      . {licenceLine(chart)}. Retrieved {retrievedLine(chart)}.
+      {creditParts(chart).map((p) =>
+        p.url && safeHref(p.url) ? <a href={safeHref(p.url)} rel="noopener noreferrer" target="_blank">{p.text}<span class="sr"> (opens in a new tab)</span></a> : p.text,
+      )}
     </p>
+    {shareHref ? <p class="ch-share"><a href={shareHref} target="_blank" rel="noopener">The chart as a picture, for sharing<span class="sr"> (opens in a new tab)</span></a></p> : null}
     <details class="ch-data">
       <summary>The numbers <span>{rows.length.toLocaleString('en-IN')} {rows.length === 1 ? 'row' : 'rows'}</span></summary>
       <div class="ch-tbl" tabindex="0" role="region" aria-label={`The data behind ${chart.title}`}>

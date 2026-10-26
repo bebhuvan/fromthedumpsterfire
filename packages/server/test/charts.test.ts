@@ -143,12 +143,18 @@ const chart: Chart = {
 const row: BlockRow = { id: 'bk_1', item_id: 'it_1', kind: 'chart', body: JSON.stringify({ kind: 'chart', chart }), media_key: null, mime: null, status: 'kept', position: 0, created_at: '', updated_at: '' };
 
 describe('publishing a chart', () => {
-  it('attaches the app pictures drawn from this chart and this Haul’s ink', () => {
-    const pictures = new Map([[chartKey(chart, 'teal'), { light: png(1125, 900), dark: png(1125, 900) }]]);
+  it('attaches the app pictures and the share card drawn from this chart and this Haul’s ink', () => {
+    const key = chartKey(chart, 'teal');
+    const pictures = new Map([[key, { light: png(1125, 900), dark: png(1125, 900), share: png(1080, 1400) }]]);
     const out = blocksForBundle([row], null, 'hauls/001/media/rain', 'https://files.example', { edition: 'teal', pictures });
     expect(out.problems).toEqual([]);
-    expect(out.blocks[0]).toEqual({ kind: 'chart', chart, images: { light: { url: 'https://files.example/hauls/001/media/rain-1-chart-light.png', width: 1125, height: 900 }, dark: { url: 'https://files.example/hauls/001/media/rain-1-chart-dark.png', width: 1125, height: 900 } } });
-    expect(out.pictures!.map(([k]) => k)).toEqual(['hauls/001/media/rain-1-chart-light.png', 'hauls/001/media/rain-1-chart-dark.png']);
+    // The chart's key is in each name: files under hauls/ are immutable, so a changed chart gets new addresses.
+    const at = (s: string) => `https://files.example/hauls/001/media/rain-1-chart-${key}-${s}.png`;
+    expect(out.blocks[0]).toEqual({ kind: 'chart', chart, images: { light: { url: at('light'), width: 1125, height: 900 }, dark: { url: at('dark'), width: 1125, height: 900 }, share: { url: at('share'), width: 1080, height: 1400 } } });
+    expect(out.pictures!.map(([k]) => k)).toEqual(['light', 'dark', 'share'].map((s) => `hauls/001/media/rain-1-chart-${key}-${s}.png`));
+    // A share card of the wrong size is refused.
+    const bad = new Map([[key, { light: png(1125, 900), dark: png(1125, 900), share: png(1200, 630) }]]);
+    expect(blocksForBundle([row], null, 'hauls/001/media/rain', 'https://files.example', { edition: 'teal', pictures: bad }).problems[0]).toMatch(/1080 px wide PNG/);
   });
 
   it('refuses pictures drawn from another chart or another ink, or of the wrong size', () => {

@@ -8,7 +8,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { renderChart, nodeAttrs, chartGlosses, describeChart, unitsLine, licenceLine, retrievedLine, spanRange, formatCell, chartGrouping, FORMS, type Chart, type SceneNode } from '../../../packages/shared/src/charts/index.ts';
+import { renderChart, nodeAttrs, chartGlosses, describeChart, headLine, creditParts, formatCell, chartGrouping, FORMS, type Chart, type SceneNode } from '../../../packages/shared/src/charts/index.ts';
 import { tokensCss } from '../../../apps/web/src/lib/tokens-css.ts';
 
 const root = process.cwd();
@@ -67,8 +67,7 @@ function figure(chart: Chart, n: number, file: string): string {
       return `<svg class="ch-svg ch-${layout}" viewBox="0 0 ${s.width} ${s.height}" width="${s.width}" height="${s.height}" role="img" aria-label="${esc(describeChart(chart))}" preserveAspectRatio="xMinYMin meet">${svgNodes(s.nodes)}</svg>`;
     })
     .join('');
-  const place = [chart.geography, chart.span ? spanRange(chart.span) : ''].filter(Boolean).join(', ');
-  const src = chart.sources.map((s) => `<a href="${esc(s.url)}">${esc(s.maker)}, ${esc(s.dataset)}</a>${s.via ? `, via <a href="${esc(s.via.url)}">${esc(s.via.name)}</a>` : ''}`).join('; ');
+  const src = creditParts(chart).map((p) => (p.url ? `<a href="${esc(p.url)}">${esc(p.text)}</a>` : esc(p.text))).join('');
   const cols = chart.data.columns;
   const rows = chart.data.rows.slice(0, 60);
   const glosses = chartGlosses(chart);
@@ -78,12 +77,12 @@ function figure(chart: Chart, n: number, file: string): string {
     <p class="ch-n">Figure <span>${n}</span> <i>${esc(FORMS[chart.form].name)}</i></p>
     <h3 class="ch-t">${esc(chart.title)}</h3>
     ${chart.note ? `<p class="ch-note">${esc(chart.note)}</p>` : ''}
-    <p class="ch-units">${esc(unitsLine(chart))}${place ? `<span>${esc(place)}</span>` : ''}</p>
+    <p class="ch-units">${esc(headLine(chart))}</p>
   </figcaption>
   <div class="ch-plot">${svgs}</div>
   <div class="ch-foot">
     ${glosses.length ? `<p class="machine ch-gloss">${esc(glosses.join(' '))}</p>` : ''}
-    <p class="ch-src">Source: ${src}. ${esc(licenceLine(chart))}. Retrieved ${esc(retrievedLine(chart))}.</p>
+    <p class="ch-src">${src}</p>
     <details class="ch-data"><summary>The numbers <span>${chart.data.rows.length.toLocaleString('en-IN')} rows</span></summary>
       <div class="ch-tbl"><table><thead><tr>${cols.map((c) => `<th${c.type === 'number' ? ' class="num"' : ''}>${esc(c.label)}</th>`).join('')}</tr></thead>
       <tbody>${rows.map((r) => `<tr>${r.map((v, j) => `<td class="${cols[j]!.type === 'number' ? 'num' : ''}${v === null ? ' na' : ''}">${esc(formatCell(v, cols[j]!, g))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>

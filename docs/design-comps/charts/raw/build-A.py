@@ -30,7 +30,7 @@ dump('india-growth-columns.json',{'form':'bar','title':'Twenty-five years of Ind
  'units':'%','geography':'India','span':{'from':str(yrs[0]),'to':str(yrs[-1])},'sourceSpan':{'from':'1961','to':str(yrs[-1])},'sources':[wbsrc('NY.GDP.MKTP.KD.ZG','GDP growth (annual %)')],
  'measure':{'basis':'change','base':'the year before, at constant prices'},
  'data':{'columns':[{'key':'year','label':'Year','type':'year'},{'key':'growth','label':'GDP growth (annual %)','type':'number'}],'rows':rows},
- 'encode':{'x':'year','y':'growth'},'options':{'colour':'focus'},
+ 'encode':{'x':'year','y':'growth'},'options':{'colour':'focus','focus':['2020']},
  'annotations':[{'kind':'point','x':2020,'text':'Lockdown: the economy shrank','by':'editor'}]})
 
 le=wb('SP.DYN.LE00.IN'); fe=wb('SP.DYN.LE00.FE.IN'); ma=wb('SP.DYN.LE00.MA.IN')
@@ -68,8 +68,8 @@ h=e[0]; last=e[-1]; print(last)
 lab={'coal':'Coal','gas':'Gas','hydro':'Hydro','solar':'Solar','wind':'Wind','oil':'Oil','nuclear':'Nuclear','other_renewables_excluding_bioenergy':'Other renewables','bioenergy':'Bioenergy'}
 rows=[[lab[h[i].replace('_share_of_electricity__pct','')],round(float(last[i]),2)] for i in range(3,len(h))]
 rows=[r for r in rows if r[1]>0]
-dump('india-electricity-waffle.json',{'form':'waffle','title':'Coal still makes seven of every ten units of India’s electricity','note':'Solar has passed hydro for the first time.','units':'% of electricity generated','geography':'India','span':{'from':last[2],'to':last[2]},'sourceSpan':{'from':'1985','to':last[2]},
+dump('india-electricity-waffle.json',{'form':'waffle','title':'Coal still makes seven of every ten units of India’s electricity','note':'Solar has passed hydro for the first time.','units':'%','geography':'India','span':{'from':last[2],'to':last[2]},'sourceSpan':{'from':'1985','to':last[2]},
  'sources':[{'maker':'Ember','dataset':'Yearly Electricity Data','url':'https://ember-energy.org/data/yearly-electricity-data/','licence':'CC BY 4.0','retrieved':'2026-10-25','via':{'name':'Our World in Data','url':'https://ourworldindata.org/grapher/share-elec-by-source','licence':'CC BY 4.0'}}],
  'measure':{'basis':'share','denominator':'of all electricity generated in the year'},
  'data':{'columns':[{'key':'source','label':'Source','type':'text'},{'key':'share','label':f'Share of electricity, {last[2]}','type':'number','unit':'%'}],'rows':rows},
- 'encode':{'label':'source','y':'share'},'options':{'colour':'categorical'}})
+ 'encode':{'label':'source','y':'share'},'options':{'focus':['Coal']}})

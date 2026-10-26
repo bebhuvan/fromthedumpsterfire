@@ -5,10 +5,10 @@
 
 import type { Annotation, Cell } from '../types';
 import type { Paint, Scene, SceneNode } from '../scene';
-import { Ctx, drawCallouts, drawPeriods, drawYAxis, hline, text, vline, yLabelWidth, shortUnit, annotX } from '../frame';
+import { Ctx, drawCallouts, drawPeriods, drawYAxis, halo, hline, text, vline, yLabelWidth, shortUnit, annotX } from '../frame';
 import { formatTime, linear, niceTicks, yearTicks } from '../scales';
 import { textWidth, wrapText } from '../text';
-import { yAxisFor } from './line';
+import { tightAxis } from './area';
 import { drawRowLabel, drawValueAxisTop, labelColumn, orderRows, whisker } from './category';
 
 const SMALL_N = 30;
@@ -83,7 +83,7 @@ function drawHorizontal(ctx: Ctx): Scene {
       end = v >= 0 ? Math.max(end, sx(hi)) : Math.min(end, sx(lo));
     }
     const label = ctx.value(v);
-    nodes.push(text(v >= 0 ? end + 6 : end - 6, yc + ctx.s.label * 0.35, label, focus ? 'sansMedium' : 'sans', ctx.s.label, focus ? 'ink' : 'ink2', v >= 0 ? 'start' : 'end'));
+    nodes.push(halo(v >= 0 ? end + 6 : end - 6, yc + ctx.s.label * 0.35, label, focus ? 'sansMedium' : 'sans', ctx.s.label, focus ? 'ink' : 'ink2', v >= 0 ? 'start' : 'end'));
   });
   nodes.push(vline(Math.round(z) + 0.5, top, H - 6, 'ink'));
   // A reference rule on the value axis, drawn vertically.
@@ -159,7 +159,7 @@ function drawColumns(ctx: Ctx): Scene {
     const v = ctx.num(p.r, role);
     if (v !== null) vals.push(v);
   }
-  const ax = yAxisFor(ctx, vals, [bottom, top], { zero: true });
+  const ax = tightAxis(ctx, vals, [bottom, top], { zero: true });
   const unit = shortUnit(ctx.chart.units);
   const left = Math.ceil(yLabelWidth(ctx, ax, unit)) + 10;
   const right = W - 6;
@@ -245,7 +245,7 @@ function drawColumns(ctx: Ctx): Scene {
         boxes.push(box);
         valueW.set(p.x, w);
         rects.push({ x: cx - w / 2 - 2, y: ly - ctx.s.small - 1, w: w + 4, h: ctx.s.small + 4 });
-        nodes.push(text(Math.max(left + w / 2, Math.min(right - w / 2, cx)), ly, s, isFocus(ctx, String(p.raw)) ? 'sansMedium' : 'sans', ctx.s.small, 'ink', 'middle'));
+        nodes.push(halo(Math.max(left + w / 2, Math.min(right - w / 2, cx)), ly, s, isFocus(ctx, String(p.raw)) ? 'sansMedium' : 'sans', ctx.s.small, 'ink', 'middle'));
       }
     }
   }

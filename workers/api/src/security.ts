@@ -12,10 +12,10 @@ const BOOK_COVER = /^\/api\/books\/[a-z0-9-]{1,81}\/cover$/;
 export const isMultipartRoute = (method: string, pathname: string) =>
   MULTIPART_ROUTES.has(pathname) || (method === 'POST' && (ITEM_FILE.test(pathname) || ITEM_PICTURE.test(pathname) || BOOK_COVER.test(pathname)));
 
-// 'wasm-unsafe-eval' lets the Desk compile WebAssembly (resvg, which draws the app's chart pictures at
-// publish). It allows no eval of strings and no inline script; script-src stays 'self'.
+// script-src is 'self' alone: chart pictures are drawn by the Worker at publish, so the Desk compiles
+// no WebAssembly (the 'wasm-unsafe-eval' of 2026-10-25 is gone).
 export const CSP =
-  "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
 /** Stored files (uploads, bundles, audio) are inert: no scripts, no rendering as a page of ours. */
 export const FILE_CSP = "sandbox; default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'";

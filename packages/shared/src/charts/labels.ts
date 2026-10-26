@@ -29,13 +29,13 @@ export function boxOf(x: number, y: number, s: string, face: ChartFace, size: nu
 /** Every text node's box, anywhere in a node tree. */
 export function textBoxes(nodes: SceneNode[]): Array<Box & { text: string }> {
   const out: Array<Box & { text: string }> = [];
-  const walk = (ns: SceneNode[]) => {
+  const walk = (ns: SceneNode[], dx: number, dy: number) => {
     for (const n of ns) {
-      if (n.t === 'g') walk(n.children);
-      else if (n.t === 'text') out.push(boxOf(n.x, n.y, n.text, n.face, n.size, n.anchor));
+      if (n.t === 'g') walk(n.children, dx + (n.dx ?? 0), dy + (n.dy ?? 0));
+      else if (n.t === 'text') out.push(boxOf(n.x + dx, n.y + dy, n.text, n.face, n.size, n.anchor));
     }
   };
-  walk(nodes);
+  walk(nodes, 0, 0);
   return out;
 }
 

@@ -3,11 +3,11 @@
  "title": "Every May day’s high in Delhi, decade by decade",
  "note": "Each ridge holds every May day’s high in one decade. This is reanalysis, a model fitted to observations, not the station record.",
  "units": "°C",
- "geography": "New Delhi (28.6° N, 77.2° E; ERA5 grid cell)",
+ "geography": "New Delhi (ERA5 grid cell at 28.6° N, 77.2° E)",
  "sources": [
   {
-   "maker": "ECMWF Copernicus Climate Change Service (ERA5 reanalysis)",
-   "dataset": "Open-Meteo Historical Weather API, daily 2 m temperature maximum and minimum",
+   "maker": "ECMWF Copernicus Climate Change Service",
+   "dataset": "ERA5 reanalysis, daily maximum and minimum temperature at 2 m",
    "url": "https://open-meteo.com/en/docs/historical-weather-api",
    "licence": "CC BY 4.0",
    "licenceUrl": "https://open-meteo.com/en/licence",

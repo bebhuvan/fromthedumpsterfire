@@ -164,6 +164,8 @@ export const BLOCK_KINDS: readonly BlockKind[] = ['quote', 'code', 'video', 'aud
 export interface ChartImages {
   light: { url: string; width: number; height: number };
   dark: { url: string; width: number; height: number };
+  /** The share card (added 2026-10-26): the chart whole with its title and credit, for social posts. */
+  share?: { url: string; width: number; height: number };
 }
 
 /** The player's address for an embed: youtube-nocookie, Vimeo's player, Spotify's or Apple's embed. */

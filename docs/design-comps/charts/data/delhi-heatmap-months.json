@@ -3,11 +3,11 @@
  "title": "Delhi’s afternoons have not warmed the way the world has",
  "note": "Since 2000, May and June have come in below their 1961–1990 average high in about three years of four, while August has run warm.",
  "units": "°C",
- "geography": "New Delhi (28.6° N, 77.2° E; ERA5 grid cell)",
+ "geography": "New Delhi (ERA5 grid cell at 28.6° N, 77.2° E)",
  "sources": [
   {
-   "maker": "ECMWF Copernicus Climate Change Service (ERA5 reanalysis)",
-   "dataset": "Open-Meteo Historical Weather API, daily 2 m temperature maximum and minimum",
+   "maker": "ECMWF Copernicus Climate Change Service",
+   "dataset": "ERA5 reanalysis, daily maximum and minimum temperature at 2 m",
    "url": "https://open-meteo.com/en/docs/historical-weather-api",
    "licence": "CC BY 4.0",
    "licenceUrl": "https://open-meteo.com/en/licence",

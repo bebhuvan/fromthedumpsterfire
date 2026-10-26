@@ -12,7 +12,6 @@ import { Preview } from './Preview';
 import { PlatesSection } from './Plates';
 import { FormatBadge } from '../ui/parts';
 import { drawCard } from '../lib/card';
-import { drawChartPictures } from '../lib/charts';
 
 
 export function Composer({ id }: { id: string }) {
@@ -414,7 +413,6 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
   const toast = useToast();
   const [check, setCheck] = useState<PreviewResult | PublishResult | null>(null);
   const [busy, setBusy] = useState(false);
-  const [drawing, setDrawing] = useState(false);
   const [correction, setCorrection] = useState('');
   const published = haul.status === 'published';
 
@@ -429,22 +427,9 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
         const pv = await api.get<PreviewResult>(`/api/hauls/${haulId}/preview${published && correction ? `?correction=${encodeURIComponent(correction)}` : ''}`).catch(() => null);
         const card = pv ? await drawCard(pv.haul as Haul) : null;
         if (!card) toast('The share card could not be drawn; publishing without it', true);
-        // The app has no SVG, so each chart goes with two pictures (light and dark) drawn here from
-        // the bundle as it will be published. Without them publish refuses, so a failure stops here.
-        let charts: Record<string, { light: string; dark: string }> = {};
-        if (pv && (pv.haul as Haul).items.some((it) => it.blocks?.some((b) => b.kind === 'chart'))) {
-          setDrawing(true);
-          try {
-            charts = await drawChartPictures(pv.haul as Haul);
-          } catch (e) {
-            toast(`The charts could not be drawn for the app, so nothing was published: ${e instanceof Error ? e.message : String(e)}`, true);
-            return;
-          } finally {
-            setDrawing(false);
-          }
-        }
+        // Charts' pictures for the app and their share cards are drawn by the Desk Worker at publish.
         const r = await api
-          .post<PublishResult>(`/api/hauls/${haulId}/publish`, { confirm: true, ...(published ? { correction } : {}), ...(card ? { card: card.base64 } : {}), ...(Object.keys(charts).length ? { charts } : {}) })
+          .post<PublishResult>(`/api/hauls/${haulId}/publish`, { confirm: true, ...(published ? { correction } : {}), ...(card ? { card: card.base64 } : {}) })
           .catch((e) => (e as { body?: PublishResult }).body ?? Promise.reject(e));
         setCheck(r);
         if (r.ok) {
@@ -481,7 +466,7 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
           {published ? 'Publish correction' : 'Publish to app and web'}
         </button>
       </div>
-      {busy && <Spinner text={drawing ? 'Drawing the charts for the app…' : 'Checking every item and the bundle…'} />}
+      {busy && <Spinner text="Checking every item and the bundle…" />}
       {check && (
         <>
           {problems.length ? (

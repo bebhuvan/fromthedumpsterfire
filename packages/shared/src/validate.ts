@@ -271,9 +271,10 @@ function checkBlock(c: Collector, b: Block, p: string) {
       c.errors.push(...r.errors);
       c.warnings.push(...r.warnings);
       if (c.obj(b.images, `${p}.images`, true)) {
-        for (const scheme of ['light', 'dark'] as const) {
+        // The app's two pictures always; the share card when there is one (bundles before 2026-10-26 have none).
+        for (const scheme of ['light', 'dark', 'share'] as const) {
           const im = b.images[scheme];
-          if (!c.obj(im, `${p}.images.${scheme}`)) continue;
+          if (!c.obj(im, `${p}.images.${scheme}`, scheme === 'share')) continue;
           c.https(im.url, `${p}.images.${scheme}.url`);
           c.hosted(im.url, `${p}.images.${scheme}.url`);
           c.num(im.width, `${p}.images.${scheme}.width`);

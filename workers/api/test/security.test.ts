@@ -217,7 +217,8 @@ describe('output safety', () => {
     const res = await app.request(`${BASE}/`, {}, e);
     const csp = res.headers.get('content-security-policy') ?? '';
     expect(csp).toContain("default-src 'self'");
-    expect(csp).toContain("script-src 'self' 'wasm-unsafe-eval';");
+    expect(csp).toContain("script-src 'self';");
+    expect(csp).not.toContain('wasm-unsafe-eval');
     expect(csp).not.toMatch(/script-src[^;]*unsafe-inline/);
     // WebAssembly only (resvg for chart pictures): never eval of strings.
     expect(csp).not.toMatch(/script-src[^;]*'unsafe-eval'/);

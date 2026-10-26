@@ -1,13 +1,13 @@
 {
  "form": "calendar",
  "title": "Every day of 2024 in Delhi, against its normal",
- "note": "Every day of January ran below its normal. May and June ran above it five days in six.",
+ "note": "Every day of January ran below its normal. May and June ran above it on about five days in six.",
  "units": "°C",
- "geography": "New Delhi (28.6° N, 77.2° E; ERA5 grid cell)",
+ "geography": "New Delhi (ERA5 grid cell at 28.6° N, 77.2° E)",
  "sources": [
   {
-   "maker": "ECMWF Copernicus Climate Change Service (ERA5 reanalysis)",
-   "dataset": "Open-Meteo Historical Weather API, daily 2 m temperature maximum and minimum",
+   "maker": "ECMWF Copernicus Climate Change Service",
+   "dataset": "ERA5 reanalysis, daily maximum and minimum temperature at 2 m",
    "url": "https://open-meteo.com/en/docs/historical-weather-api",
    "licence": "CC BY 4.0",
    "licenceUrl": "https://open-meteo.com/en/licence",

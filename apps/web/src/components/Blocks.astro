@@ -110,7 +110,7 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
       }
       if (b.kind === 'chart') {
         const n = figureOf.get(b) ?? 1;
-        return <Chart chart={b.chart} n={n} id={`fig-${n}`} />;
+        return <Chart chart={b.chart} n={n} id={`fig-${n}`} share={b.images?.share?.url} />;
       }
       if (b.kind === 'image') {
         const src = safeHref(b.plate.url);

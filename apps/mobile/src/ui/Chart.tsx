@@ -4,9 +4,9 @@
 // own scene (one per theme, kept on the phone with the Haul). Without it the table stands in, never a
 // broken image.
 import { memo, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 // The light entry: words and formats only, not the renderer (the app shows the published pictures).
-import { chartGlosses, describeChart, licenceLine, retrievedLine, unitsLine } from '@fdf/shared/charts/glosses';
+import { chartGlosses, creditParts, describeChart, headLine } from '@fdf/shared/charts/glosses';
 import { fonts, usePalette, useScheme, useTextScale } from '@/theme';
 import { chartTable, type ChartBlock } from '@/lib/chart';
 import { pictureUri } from '@/lib/pictures';
@@ -36,7 +36,7 @@ export const Chart = memo(function Chart({ block, lead }: { block: ChartBlock; l
     <View style={[st.wrap, { borderTopColor: p.ink }]}>
       {lead ? null : title}
       {!lead && chart.note ? <Note style={st.note}>{chart.note}</Note> : null}
-      <Meta style={{ marginTop: lead ? 0 : 10 }}>{unitsLine(chart)}</Meta>
+      <Meta style={{ marginTop: lead ? 0 : 10 }}>{headLine(chart)}</Meta>
       {shown ? (
         <Image
           source={{ uri: pictureUri(image!.url) }}
@@ -62,36 +62,36 @@ export const Chart = memo(function Chart({ block, lead }: { block: ChartBlock; l
         </View>
       ) : null}
       <Credit block={block} />
+      {images?.share ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void Share.share({ message: `${chart.title}\n${images.share!.url}`, url: images.share!.url })}
+          hitSlop={6}
+          style={({ pressed }) => [{ marginTop: 12, opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={[st.numbersLabel, { color: p.ink }]}>Share the chart as a picture</Text>
+        </Pressable>
+      ) : null}
       <Numbers block={block} open={!shown} />
     </View>
   );
 });
 
-/** Who made the data and where it lives (each a link), the licences as stated, and when it was fetched. */
+/** Who made the data and where it lives (each a link), the licences as stated, and when it was fetched: one line. */
 function Credit({ block }: { block: ChartBlock }) {
   const p = usePalette();
-  const { chart } = block;
-  const link = (url: string) => () => void openSource(url, p);
+  const parts = useMemo(() => creditParts(block.chart), [block.chart]);
   return (
     <Meta style={{ marginTop: 12 }}>
-      {'Source: '}
-      {chart.sources.map((s, i) => (
-        <Text key={i}>
-          {i ? '; ' : ''}
-          <Text accessibilityRole="link" onPress={link(s.url)} style={st.link}>
-            {`${s.maker}, ${s.dataset}`}
+      {parts.map((c, i) =>
+        c.url ? (
+          <Text key={i} accessibilityRole="link" onPress={() => void openSource(c.url!, p)} style={st.link}>
+            {c.text}
           </Text>
-          {s.via ? (
-            <>
-              {', via '}
-              <Text accessibilityRole="link" onPress={link(s.via.url)} style={st.link}>
-                {s.via.name}
-              </Text>
-            </>
-          ) : null}
-        </Text>
-      ))}
-      {`. ${licenceLine(chart)}. Retrieved ${retrievedLine(chart)}.`}
+        ) : (
+          <Text key={i}>{c.text}</Text>
+        ),
+      )}
     </Meta>
   );
 }

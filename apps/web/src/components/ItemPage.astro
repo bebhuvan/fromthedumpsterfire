@@ -47,10 +47,15 @@ const longTitle = titleText(item.title).length > 34;
 const hw = headword(item.title.text);
 const matched = 'matched word for word against the source';
 const lastmod = haulLastmod(haul);
+// A chart-led item is previewed by its chart's share card (the chart whole, with its title and credit).
+const chartCard = item.type === 'chart' ? item.blocks?.find((b) => b.kind === 'chart' && b.images?.share) : undefined;
+const cardSrc = chartCard?.kind === 'chart' && chartCard.images?.share ? safeHref(chartCard.images.share.url) : undefined;
 const ogImage =
-  item.plate && plateSrc
-    ? { url: plateSrc, width: item.plate.width, height: item.plate.height, alt: item.plate.caption || titleText(item.title) }
-    : haulCoverImage(haul);
+  chartCard?.kind === 'chart' && chartCard.images?.share && cardSrc
+    ? { url: cardSrc, width: chartCard.images.share.width, height: chartCard.images.share.height, alt: chartCard.chart.title }
+    : item.plate && plateSrc
+      ? { url: plateSrc, width: item.plate.width, height: item.plate.height, alt: item.plate.caption || titleText(item.title) }
+      : haulCoverImage(haul);
 ---
 <Base
   title={`${titleText(item.title)}, ${item.creator}`}

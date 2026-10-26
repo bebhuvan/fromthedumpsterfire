@@ -167,6 +167,17 @@ export function makeEnv(ai: AiHandler = () => ({ response: '{}' }), over: Partia
     },
     INGEST_QUEUE: { send: async (m: unknown) => void queue.push(m) },
     ITEM_WORKFLOW: {},
+    // The Desk's assets as the Worker sees them, for what tests need: the chart fonts.
+    ASSETS: {
+      fetch: async (req: Request) => {
+        const name = /^\/fonts\/([\w.-]+\.ttf)$/.exec(new URL(req.url).pathname)?.[1];
+        const fs: Any = await import('node:fs' as string);
+        const path: Any = await import('node:path' as string);
+        const url: Any = await import('node:url' as string);
+        const file = name ? path.join(path.dirname(url.fileURLToPath(import.meta.url)), '../../../apps/desk/public/fonts', name) : '';
+        return file && fs.existsSync(file) ? new Response(fs.readFileSync(file)) : new Response('Not found', { status: 404 });
+      },
+    },
     ENVIRONMENT: 'local',
     SPEND_WARN_USD: '1',
     SPEND_CEILING_USD: '2',

@@ -93,7 +93,8 @@ export type SceneNode =
   | (Mark & { t: 'path'; d: string })
   | (Mark & { t: 'circle'; cx: number; cy: number; r: number })
   | (Mark & { t: 'text'; x: number; y: number; text: string; face: ChartFace; size: number; anchor?: 'start' | 'middle' | 'end' })
-  | { t: 'g'; children: SceneNode[] };
+  /** A group, moved by dx, dy (a figure set inside a share card). */
+  | { t: 'g'; children: SceneNode[]; dx?: number; dy?: number };
 
 export interface Scene {
   width: number;
@@ -173,6 +174,7 @@ export const FACES: Record<ChartFace, { css: string; weight: number; italic: boo
   sansMedium: { css: "'Schibsted Grotesk', system-ui, sans-serif", weight: 500, italic: false, cut: 'Schibsted-Medium' },
   serif: { css: "'Newsreader Text', Georgia, serif", weight: 400, italic: false, cut: 'NewsreaderText-Regular' },
   serifItalic: { css: "'Newsreader Text', Georgia, serif", weight: 400, italic: true, cut: 'NewsreaderText-Italic' },
+  display: { css: "'Newsreader Display', Georgia, serif", weight: 500, italic: false, cut: 'NewsreaderDisplay-Medium' },
 };
 
 /** The font files the PNG renderer must load (from apps/mobile/assets/fonts). */
@@ -228,7 +230,7 @@ export function sceneToSvg(scene: Scene, opts: { scheme: Scheme; edition: Editio
   const walk = (nodes: SceneNode[]) => {
     for (const n of nodes) {
       if (n.t === 'g') {
-        out.push('<g>');
+        out.push(n.dx || n.dy ? `<g transform="translate(${r2(n.dx ?? 0)} ${r2(n.dy ?? 0)})">` : '<g>');
         walk(n.children);
         out.push('</g>');
         continue;

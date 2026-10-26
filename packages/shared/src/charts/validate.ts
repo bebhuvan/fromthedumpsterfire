@@ -250,7 +250,8 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
     if (!Array.isArray(opts.focus) || !opts.focus.every(nonEmpty)) c.err('.options.focus', 'shape', 'a list of names');
     else {
       const names = new Set<string>();
-      for (const role of ['series', 'label', 'facet'] as ChartRole[]) {
+      // A column chart's columns are its years, so a year can be made loud too.
+      for (const role of (chart.form === 'bar' ? ['series', 'label', 'facet', 'x'] : ['series', 'label', 'facet']) as ChartRole[]) {
         const i = idx(role);
         if (i >= 0) for (const r of rows) if (Array.isArray(r) && r[i] !== null) names.add(String(r[i]));
       }

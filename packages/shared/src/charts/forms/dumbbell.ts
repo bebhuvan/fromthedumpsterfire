@@ -3,7 +3,7 @@
 // the two columns. The loud rows are in the edition's ink, the rest quiet.
 
 import type { Paint, Scene, SceneNode } from '../scene';
-import { Ctx, hline, shortUnit, text } from '../frame';
+import { Ctx, halo, hline, shortUnit, text } from '../frame';
 import { linear, niceTicks } from '../scales';
 import { textWidth } from '../text';
 import { drawKey, drawRowLabel, drawValueAxisTop, labelColumn, orderRows } from './category';
@@ -76,8 +76,8 @@ export function drawDumbbell(ctx: Ctx): Scene {
     }
     if (isFocus(label) && a !== null && b !== null) {
       const [lo, hi] = a <= b ? [a, b] : [b, a];
-      nodes.push(text(sx(lo) - 9, yc + ctx.s.small * 0.35, ctx.value(lo), 'sansMedium', ctx.s.small, 'ink', 'end'));
-      nodes.push(text(sx(hi) + 9, yc + ctx.s.small * 0.35, ctx.value(hi), 'sansMedium', ctx.s.small, 'ink'));
+      nodes.push(halo(sx(lo) - 9, yc + ctx.s.small * 0.35, ctx.value(lo), 'sansMedium', ctx.s.small, 'ink', 'end'));
+      nodes.push(halo(sx(hi) + 9, yc + ctx.s.small * 0.35, ctx.value(hi), 'sansMedium', ctx.s.small, 'ink'));
     }
   });
   return { width: W, height: H, nodes };

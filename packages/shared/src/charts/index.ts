@@ -11,3 +11,4 @@ export * from './figures';
 export * from './glosses';
 export * from './key';
 export * from './raster';
+export * from './share';
