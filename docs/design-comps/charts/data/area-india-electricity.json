@@ -837,7 +837,9 @@
   "series": "source"
  },
  "options": {
-  "colour": "categorical"
+  "focus": [
+   "Solar"
+  ]
  },
  "annotations": [
   {

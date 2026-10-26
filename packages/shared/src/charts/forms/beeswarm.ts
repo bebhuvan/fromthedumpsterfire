@@ -4,10 +4,10 @@
 // median marked; the named dots (options.focus) are loud and labelled.
 
 import type { Scene, SceneNode, Paint } from '../scene';
-import { Ctx, hline, text, vline } from '../frame';
+import { Ctx, halo, hline, text, vline } from '../frame';
+import { Placer, dotBox, placePoint, textBoxes } from '../labels';
 import { linear, niceTicks } from '../scales';
-import { textWidth } from '../text';
-import { placeLabels } from './scatter';
+import { textWidth, wrapText } from '../text';
 
 export interface Placed {
   i: number;
@@ -46,7 +46,11 @@ export function drawBeeswarm(ctx: Ctx): Scene {
   const groups = ctx.has('series') ? ctx.groups('series') : [''];
   const values = rows.map((r) => ctx.num(r, 'y')!);
   const t = niceTicks(Math.min(...values), Math.max(...values), ctx.narrow ? 4 : 6);
-  const left = 8;
+  // Wide: the group names in a column on the left, each beside its swarm. Phone: over each swarm.
+  const side = !ctx.narrow && groups.length > 1;
+  const nameLines = new Map(groups.map((g) => [g, side ? wrapText(g, 'sans', ctx.s.label, 150) : [g]]));
+  const nameW = side ? Math.ceil(Math.max(...[...nameLines.values()].flat().map((l) => textWidth(l, 'sans', ctx.s.label)))) : 0;
+  const left = side ? nameW + 20 : 8;
   const right = W - 8;
   const sx = linear(t.domain, [left + 4, right - 4]);
   const r0 = ctx.narrow ? 3.1 : 4;
@@ -55,7 +59,8 @@ export function drawBeeswarm(ctx: Ctx): Scene {
   const unit = ctx.chart.units;
 
   // Swarm each group, then stack the rows with their names above.
-  const titleH = groups.length > 1 ? ctx.s.label + 10 : 0;
+  const titleH = groups.length > 1 && !side ? ctx.s.label + 10 : 0;
+  const lh = ctx.s.label * 1.2;
   const labelPad = ctx.s.label + 8;
   let y = 6;
   const nodes: SceneNode[] = [];
@@ -69,8 +74,10 @@ export function drawBeeswarm(ctx: Ctx): Scene {
     const down = Math.max(0, ...pl.map((p) => p.dy)) + r0;
     const hasLoud = gr.some(isLoud) && focus.length > 0;
     const top = y + titleH + (hasLoud ? labelPad * 0.6 : 2);
-    const mid = top + up;
-    const bottom = mid + down + 12 + (hasLoud ? labelPad * 0.4 : 0);
+    // Beside a swarm, its name needs its own lines' height around the swarm's axis.
+    const nameH = side ? (nameLines.get(g)!.length * lh) / 2 : 0;
+    const mid = top + Math.max(up, nameH);
+    const bottom = mid + Math.max(down + 12, nameH) + (hasLoud ? labelPad * 0.4 : 0);
     const vs = gr.map((r) => ctx.num(r, 'y')!).sort((a, b) => a - b);
     const median = vs.length % 2 ? vs[(vs.length - 1) / 2]! : (vs[vs.length / 2 - 1]! + vs[vs.length / 2]!) / 2;
     bands.push({ name: g, top: y, mid, low: mid + down, bottom, median });
@@ -95,7 +102,10 @@ export function drawBeeswarm(ctx: Ctx): Scene {
   nodes.push(hline(left, right, axisY + 0.5, 'ink2'));
   // Group names, and each group's median as a tick under its swarm.
   bands.forEach((b, k) => {
-    if (groups.length > 1) nodes.push(text(left, b.top + ctx.s.label, b.name, 'sans', ctx.s.label, 'ink'));
+    if (side) {
+      const ls = nameLines.get(b.name)!;
+      ls.forEach((l, i) => nodes.push(text(0, b.mid - ((ls.length - 1) * lh) / 2 + ctx.s.label * 0.35 + i * lh, l, 'sans', ctx.s.label, 'ink')));
+    } else if (groups.length > 1) nodes.push(text(left, b.top + ctx.s.label, b.name, 'sans', ctx.s.label, 'ink'));
     const mx = sx(b.median);
     nodes.push({ t: 'line', x1: mx, x2: mx, y1: b.low + 2, y2: b.low + 9, stroke: 'ink', sw: 1.5 });
     const lab = `${k === 0 ? 'median ' : ''}${ctx.value(b.median)}`;
@@ -107,21 +117,19 @@ export function drawBeeswarm(ctx: Ctx): Scene {
   for (const d of [...dots].sort((a, b) => Number(a.loud) - Number(b.loud))) {
     nodes.push({ t: 'circle', cx: d.x, cy: d.y, r: d.loud ? r0 + 0.75 : r0, fill: d.paint, stroke: 'bg', sw: 1, tip: `${d.label}: ${ctx.value(d.v)}` });
   }
-  // Names of the loud dots, placed clear of each other and of the loud dots.
+  // Names of the loud dots: beside the dot when a spot is free, else further out on a leader; clear of
+  // each other, the loud dots, the group names and the medians. Quiet dots may pass under a name
+  // (its halo keeps it clean).
   const loud = dots.filter((d) => d.loud && d.label);
-  const obstacles = [
-    ...loud.map((d) => ({ x: d.x - r0 - 1, y: d.y - r0 - 1, w: 2 * r0 + 2, h: 2 * r0 + 2 })),
-    ...bands.map((b) => ({ x: left, y: b.top, w: groups.length > 1 ? textWidth(b.name, 'sans', ctx.s.label) + 4 : 0, h: ctx.s.label + 4 })),
-    ...bands.map((b) => ({ x: sx(b.median) - 60, y: b.low, w: 120, h: 12 })),
-  ];
-  const placed = placeLabels(
-    loud.map((d) => ({ x: d.x, y: d.y, r: r0 + 2, text: d.label, size: ctx.s.small + 0.5, face: 'sans' as const })),
-    { x: 0, y: 0, w: W, h: axisY },
-    obstacles.filter((o) => o.w > 0),
-  );
-  loud.forEach((d, k) => {
-    const p = placed[k];
-    if (p) nodes.push(text(p.x, p.y, d.label, 'sans', ctx.s.small + 0.5, 'ink', p.anchor));
-  });
+  const placer = new Placer({ x: 0, y: 0, w: W, h: axisY - 2 }, [
+    ...loud.map((d) => dotBox(d.x, d.y, r0 + 1.5)),
+    ...textBoxes(nodes.filter((n) => n.t === 'text')),
+  ]);
+  for (const d of loud) {
+    const p = placePoint(placer, { x: d.x, y: d.y, r: r0 + 1, text: d.label, face: 'sans', size: ctx.s.small + 0.5 });
+    if (!p) continue;
+    if (p.leader) nodes.push({ t: 'line', ...p.leader, stroke: 'ink2', sw: 0.75 });
+    nodes.push(halo(p.x, p.y, d.label, 'sans', ctx.s.small + 0.5, 'ink', p.anchor));
+  }
   return { width: W, height: H, nodes };
 }

@@ -42,6 +42,23 @@ describe('validateChart', () => {
     expect(validateChart(line()).errors).toEqual([]);
   });
 
+  it('keeps the warm heat ramp for temperatures, and departures from a baseline on the diverging ramp', () => {
+    const heatmap = (units: string, basis: Chart['measure']['basis'] = 'absolute'): Chart =>
+      line({
+        form: 'heatmap',
+        units,
+        span: undefined,
+        sourceSpan: undefined,
+        measure: basis === 'anomaly' ? { basis, base: 'the 1961–1990 average' } : { basis },
+        data: { columns: [{ key: 'm', label: 'Month', type: 'text' }, { key: 'y', label: 'Year', type: 'year' }, { key: 'v', label: 'Average high', type: 'number' }], rows: [['Jan', 2001, 21.2], ['Feb', 2001, 24]] },
+        encode: { label: 'm', x: 'y', y: 'v' },
+        options: { colour: 'heat' },
+      });
+    expect(rules(heatmap('°C'))).not.toContain('heat');
+    expect(rules(heatmap('mm'))).toContain('heat');
+    expect(rules(heatmap('°C', 'anomaly'))).toContain('heat');
+  });
+
   it('needs a title, units and a stated geography', () => {
     expect(rules(line({ title: ' ' }))).toContain('title');
     expect(rules(line({ units: '' }))).toContain('units');

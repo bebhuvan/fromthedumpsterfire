@@ -6,7 +6,7 @@ import type { Chart } from './types';
 import type { Edition } from '../tokens';
 
 /** Bump when the renderer's output changes, so pictures drawn by an older renderer are redrawn. */
-export const CHART_RENDER_VERSION = 1;
+export const CHART_RENDER_VERSION = 2;
 
 /** JSON with object keys sorted, so the same chart always serialises the same way. */
 export function stableJson(v: unknown): string {

@@ -35,6 +35,7 @@ const DATE = /^\d{4}-\d{2}(-\d{2})?$/;
 const UNCERTAINTY = /(\blower\b|\bupper\b|\blow(er)? bound|\bhigh(er)? bound|confidence|\bci\b|\bci_|_ci\b|std\.? ?err|standard error|margin of error|\bmoe\b|\bse\b|_lo$|_hi$|\blo\b|\bhi\b|uncertainty|interval|percentile|\bp\d{1,2}\b)/i;
 const SAMPLE = /(sample size|\bn\b|^n_|_n$|respondents|observations|\bobs\b|count of responses)/i;
 const MONEY = /(₹|\$|€|£|¥|\bINR\b|\bUSD\b|\bEUR\b|\bGBP\b|\brupees?\b|\bdollars?\b|\beuros?\b|\bpounds sterling\b|\byen\b|\blakh\b|\bcrores?\b)/i;
+const TEMPERATURE = /°|\bdegrees?\b|\bkelvin\b|^\s*K\s*$/i;
 const INDEX_BASE = /^\s*(\d{4})(?:[-–]\d{2,4})?\s*=\s*(\d+(?:\.\d+)?)\s*$/;
 
 class Issues {
@@ -218,7 +219,7 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
     else c.err(`.options.${k}`, 'unknown-field', `"${k}" is not an option.`);
   }
   const colour = opts.colour ?? spec.colours[0];
-  if (opts.colour !== undefined && !CHART_COLOURS.includes(opts.colour)) c.err('.options.colour', 'colour', 'focus, categorical, sequential or diverging (there is no rainbow).');
+  if (opts.colour !== undefined && !CHART_COLOURS.includes(opts.colour)) c.err('.options.colour', 'colour', 'focus, categorical, sequential, heat or diverging (there is no rainbow).');
   else if (colour && !spec.colours.includes(colour)) c.err('.options.colour', 'colour', `A ${spec.name.toLowerCase()} chart is coloured ${spec.colours.join(' or ')}.`);
   if (colour === 'categorical') {
     const role: ChartRole | null = enc.series ? 'series' : enc.label ? 'label' : null;
@@ -230,6 +231,12 @@ export function validateChart(chart: Chart, base = 'chart'): ChartReport {
       // A waffle folds its smallest parts into a quiet "Other" block, each still listed with its value.
       if (chart.form === 'waffle' ? n > 12 : n > CHART_LIMITS.series) c.err('.options.colour', 'too-many-series', `${n} series is more than six colours can tell apart. Fold the rest into "Other", make one series loud (focus), or use small multiples.`);
     }
+  }
+  // Warm colours mean heat: the heat ramp is for temperatures, and a temperature's departure from a
+  // baseline is polarity, which takes the diverging ramp.
+  if (colour === 'heat') {
+    if (!TEMPERATURE.test(chart.units ?? '')) c.err('.options.colour', 'heat', 'The heat ramp is for temperatures only (units in °C, °F or kelvin). Use the sequential ramp.');
+    else if (isObj(chart.measure) && ['anomaly', 'change'].includes(chart.measure.basis)) c.err('.options.colour', 'heat', 'A difference from a baseline runs both ways: use the diverging ramp around it.');
   }
   if (colour === 'diverging') {
     const mid = opts.midpoint;

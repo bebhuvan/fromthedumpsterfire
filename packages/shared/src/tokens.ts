@@ -137,25 +137,37 @@ export const editionOf = (n: number, chosen?: string): Edition =>
   chosen && (EDITIONS as readonly string[]).includes(chosen) ? (chosen as Edition) : EDITIONS[(Math.max(1, n) - 1) % EDITIONS.length]!;
 
 /**
- * Chart colours (docs/CHARTS.md). Every hex here was run through the dataviz palette validator
- * (OKLCH lightness band, chroma floor, protan/deutan separation, normal-vision floor, contrast) on
- * this theme's ground; the results are in docs/CHARTS.md. A chart's one loud colour is the Haul's
- * edition ink; these carry everything else. None is machine blue or ember: blue sans is the
- * machine's voice and ember is never a fill.
+ * Chart colours (docs/CHARTS.md). Neutral first: greys and ink carry the context, the Haul's edition
+ * ink marks the story, and a second colour comes in only when a comparison needs it. The ramps are
+ * generated in OKLCH by scripts/chart-ramps.mjs (even lightness steps) and every one was run through
+ * the dataviz palette validator on this theme's ground, 2026-10-26; the results are in
+ * docs/CHARTS.md. None is machine blue or ember: blue sans is the machine's voice and ember is
+ * never a fill.
  */
 export interface ChartInk {
   /** Six series in a fixed order: teal, crimson, ochre, plum, green, steel. Never cycled. */
   cat: readonly string[];
-  /** Magnitude, light to dark (a heat ramp: butter through ochre to oxblood); flipped in dark mode. */
+  /**
+   * Magnitude, the default ramp: seven steps of one cool hue, low to high (pale to deep in light
+   * mode, deep to pale in dark). The lowest step clears 2:1 against the ground, so no value reads as
+   * a gap.
+   */
   seq: readonly string[];
-  /** Polarity: five cool steps, a neutral middle, five warm steps. */
+  /** Magnitude where heat is the meaning (temperatures only; the validator enforces it): orange to deep red. */
+  heat: readonly string[];
+  /**
+   * Polarity: five cool steps, a grey middle, five warm steps, equal in lightness step for step so a
+   * departure looks as strong either side. The first tint on each arm clears 2:1 against the ground.
+   */
   div: readonly string[];
-  /** Series that recede when one is loud. */
+  /** Series that recede when one is loud, and the greys that tell quiet parts apart (light, mid, dark). */
   quiet: string;
-  /** Record range and normal range on the temperature band. */
+  quiet2: string;
+  quiet3: string;
+  /** Record range and normal range on the temperature band: quiet greys, so the year reads over them. */
   record: string;
   normal: string;
-  /** Record highs and lows marked on the temperature band. */
+  /** Record highs and lows marked on the temperature band: the diverging ramp's strong steps. */
   hot: string;
   cold: string;
 }
@@ -163,22 +175,28 @@ export interface ChartInk {
 export const chartInk: Record<Scheme, ChartInk> = {
   light: {
     cat: ['#008A7A', '#A4313F', '#C38323', '#914A8C', '#518B44', '#227CB1'],
-    seq: ['#FFF4C6', '#F9D68B', '#EFB764', '#E19949', '#CE7C3A', '#B66336', '#9A4E37', '#773F39', '#582F31'],
-    div: ['#00488A', '#336AA0', '#638CB6', '#92AECB', '#C2D0DF', '#F3F3F3', '#E4C8C5', '#D39E99', '#BF746E', '#A94944', '#90101A'],
-    quiet: '#C4C4CB',
-    record: '#EFEBE3',
-    normal: '#D3CABB',
-    hot: '#A4313F',
-    cold: '#227CB1',
+    seq: ['#8EBED4', '#72A5C0', '#588CAC', '#3F7498', '#265C84', '#0D4571', '#002E59'],
+    heat: ['#EAAA6B', '#D78F55', '#C47441', '#AF5A2E', '#9B401E', '#85250F', '#6E0104'],
+    div: ['#024077', '#055CA5', '#3D7BBD', '#659AD5', '#8DBAED', '#ECEBE9', '#EB9F96', '#D27B71', '#B7564E', '#9C302A', '#7D0008'],
+    quiet: '#C2C4C8',
+    quiet2: '#DDDEE1',
+    quiet3: '#96989D',
+    record: '#ECEDEF',
+    normal: '#D1D2D6',
+    hot: '#9C302A',
+    cold: '#055CA5',
   },
   dark: {
     cat: ['#00A89F', '#C54F59', '#BA8B25', '#B167AB', '#639E56', '#388EC4'],
-    seq: ['#421519', '#681D19', '#853219', '#A04B19', '#B86721', '#CC8534', '#DCA550', '#EAC576', '#F3E5B0'],
-    div: ['#59AAF8', '#478FD6', '#3676B3', '#275D91', '#1C466D', '#262626', '#6E2924', '#92352F', '#B4443D', '#D7564D', '#FA695E'],
-    quiet: '#4B4B54',
-    record: '#211F1C',
-    normal: '#3B362F',
-    hot: '#E66E68',
-    cold: '#5AA3EC',
+    seq: ['#305275', '#436A8D', '#5683A5', '#6B9CBD', '#80B6D6', '#96D1EF', '#BCE9FE'],
+    heat: ['#972620', '#AD442D', '#C1613E', '#D57C51', '#E89866', '#FBB47E', '#FFD5B0'],
+    div: ['#B0D5FE', '#76B6FD', '#5D97D8', '#447AB4', '#2C5D91', '#333331', '#8C4039', '#AF5A52', '#D4756B', '#F99085', '#FEBFB7'],
+    quiet: '#4C4D50',
+    quiet2: '#343539',
+    quiet3: '#707175',
+    record: '#222325',
+    normal: '#38393C',
+    hot: '#F99085',
+    cold: '#76B6FD',
   },
 };

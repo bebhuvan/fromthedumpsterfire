@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import type { Chart } from '../types';
 import type { SceneNode } from '../scene';
 import { renderChart } from '../render';
-import { divergingRamp, sequentialRamp } from '../ramp';
+import { continuousRamp, divergingRamp, sequentialRamp } from '../ramp';
+import { labelOn, paintHex, PAINTS, type Paint } from '../scene';
 import { kde, silverman } from './ridgeline';
 
 import stripes from '../../../../../docs/design-comps/charts/data/temperature-stripes.json';
@@ -44,13 +45,25 @@ describe('value forms render the comps data', () => {
 });
 
 describe('stripes', () => {
-  it('draws one stripe per year, coloured by the diverging ramp around the midpoint', () => {
+  it('draws one stripe per year, each its own shade of the continuous ramp around the midpoint', () => {
     const chart = fixture('temperature-stripes');
     const scene = renderChart(chart, 'wide');
     const stripes = flat(scene.nodes).filter((n): n is Extract<SceneNode, { t: 'rect' }> => n.t === 'rect' && Boolean(n.tip));
     expect(stripes).toHaveLength(chart.data.rows.length);
-    const ramp = divergingRamp(chart.data.rows.map((r) => r[1] as number), chart.options!.midpoint!);
+    const ramp = continuousRamp(chart.data.rows.map((r) => r[1] as number), chart.options!.midpoint!);
     chart.data.rows.forEach((r, i) => expect(stripes[i]!.fill).toBe(ramp.paint(r[1] as number)));
+    // Neighbouring stripes overlap by a hair, so no seam of the ground shows between them.
+    for (let i = 1; i < stripes.length; i++) expect(stripes[i - 1]!.x + stripes[i - 1]!.w).toBeGreaterThan(stripes[i]!.x);
+  });
+
+  it('spreads the continuous ramp symmetrically to a round reach past the farthest year', () => {
+    const r = continuousRamp([-0.6, 1.19], { value: 0, label: 'the 1961–1990 average' });
+    expect(r.step).toBe(1.2);
+    expect(r.paint(0)).toBe('dv20');
+    expect(r.paint(1.2)).toBe('dv40');
+    expect(r.paint(-1.2)).toBe('dv0');
+    expect(r.index(0.6)).toBe(30);
+    expect(r.index(-0.6)).toBe(10);
   });
 
   it('leaves a missing year blank and says so in the key', () => {
@@ -75,11 +88,24 @@ describe('calendar', () => {
 });
 
 describe('heatmap', () => {
-  it('has one cell per row of data, on the sequential ramp', () => {
+  it('has one cell per row of data, on the ramp the chart asks for', () => {
     const chart = fixture('delhi-heatmap-months');
     const cells = flat(renderChart(chart, 'wide').nodes).filter((n): n is Extract<SceneNode, { t: 'rect' }> => n.t === 'rect' && Boolean(n.tip));
     expect(cells).toHaveLength(chart.data.rows.length);
-    expect(cells.every((c) => /^seq\d$/.test(c.fill ?? ''))).toBe(true);
+    expect(cells.every((c) => /^div\d+$/.test(c.fill ?? ''))).toBe(true);
+    const asSeq = { ...fixture('delhi-heatmap-months'), options: { colour: 'sequential' as const, sort: 'given' as const } };
+    const seq = flat(renderChart(asSeq, 'wide').nodes).filter((n): n is Extract<SceneNode, { t: 'rect' }> => n.t === 'rect' && Boolean(n.tip));
+    expect(seq.every((c) => /^seq\d$/.test(c.fill ?? ''))).toBe(true);
+  });
+
+  it('turns a long, short table on its side on a phone, keeping every cell', () => {
+    const chart = fixture('delhi-heatmap-months');
+    const scene = renderChart(chart, 'narrow');
+    const cells = flat(scene.nodes).filter((n): n is Extract<SceneNode, { t: 'rect' }> => n.t === 'rect' && Boolean(n.tip));
+    expect(cells).toHaveLength(chart.data.rows.length);
+    // Twelve months across, so every cell is wide enough to read.
+    expect(Math.min(...cells.map((c) => c.w))).toBeGreaterThan(20);
+    expect(scene.height).toBeGreaterThan(scene.width);
   });
 });
 
@@ -101,12 +127,28 @@ describe('band', () => {
 });
 
 describe('ramps', () => {
-  it('bins sequential values into nine round-width steps that cover the data', () => {
+  it('bins sequential values into seven round-width steps that cover the data', () => {
     const r = sequentialRamp([12.3, 44.9]);
+    expect(r.steps).toHaveLength(7);
     expect(r.edges[0]).toBeLessThanOrEqual(12.3);
-    expect(r.edges[9]).toBeGreaterThan(44.9);
+    expect(r.edges[7]).toBeGreaterThan(44.9);
     expect(r.index(12.3)).toBe(0);
-    expect(r.index(44.9)).toBe(8);
+    expect(r.index(44.9)).toBe(6);
+    expect(sequentialRamp([12.3, 44.9], 'heat').paint(44.9)).toBe('heat6');
+  });
+
+  it('sizes diverging bins to the bulk of the values and opens the ends for the few beyond', () => {
+    // Ninety-five values within ±2 and five far out: the bins follow the ninety-five.
+    const vals = [...Array.from({ length: 95 }, (_, i) => -2 + (4 * i) / 94), -9, 9, 8, -8, 7];
+    const r = divergingRamp(vals, { value: 0, label: 'zero' });
+    expect(r.open).toBe(true);
+    expect(r.step).toBeLessThanOrEqual(0.5);
+    expect(r.index(9)).toBe(10);
+    expect(r.index(-9)).toBe(0);
+    // Without outliers the end bins are closed and hold the extremes.
+    const c = divergingRamp([-2, -1, 0, 1, 2], { value: 0, label: 'zero' });
+    expect(c.open).toBe(false);
+    expect(c.edges[11]).toBeGreaterThanOrEqual(2);
   });
 
   it('centres the diverging ramp on the midpoint', () => {
@@ -128,5 +170,22 @@ describe('ridgeline density', () => {
     const d = kde(vals, h, grid);
     const area = d.reduce((a, b) => a + b, 0) * (30 / 2000);
     expect(area).toBeCloseTo(1, 2);
+  });
+});
+
+describe('labels inside fills', () => {
+  const lum = (hex: string) => {
+    const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
+  };
+  const contrast = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+  it('reads at 3:1 or better on every filled step, in both themes', () => {
+    const fills = PAINTS.filter((p) => /^(cat|seq|heat|div)\d+$|^quiet|^ed$/.test(p)) as Paint[];
+    for (const f of fills) {
+      const l = labelOn(f);
+      for (const sch of ['light', 'dark'] as const) for (const e of ['oxblood', 'teal', 'ochre', 'slate'] as const) {
+        expect(contrast(paintHex(l, sch, e), paintHex(f, sch, e)), `${l} on ${f} (${sch}, ${e})`).toBeGreaterThanOrEqual(3);
+      }
+    }
   });
 });

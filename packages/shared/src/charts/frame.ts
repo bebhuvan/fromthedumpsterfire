@@ -156,6 +156,8 @@ export { dayNumber };
 // ---------------------------------------------------------------- shapes
 
 export const text = (x: number, y: number, s: string, face: ChartFace, size: number, fill: Paint, anchor?: 'start' | 'middle' | 'end'): SceneNode => ({ t: 'text', x, y, text: s, face, size, fill, ...(anchor ? { anchor } : {}) });
+/** A label with a halo of the ground under its letters, for text set over gridlines or marks. */
+export const halo = (x: number, y: number, s: string, face: ChartFace, size: number, fill: Paint, anchor?: 'start' | 'middle' | 'end'): SceneNode => ({ ...(text(x, y, s, face, size, fill, anchor) as Extract<SceneNode, { t: 'text' }>), stroke: 'bg', sw: 3 });
 export const hline = (x1: number, x2: number, y: number, stroke: Paint, sw = 1): SceneNode => ({ t: 'line', x1, x2, y1: y, y2: y, stroke, sw });
 export const vline = (x: number, y1: number, y2: number, stroke: Paint, sw = 1): SceneNode => ({ t: 'line', x1: x, x2: x, y1, y2, stroke, sw });
 
@@ -376,53 +378,56 @@ export function drawCallouts(ctx: Ctx, f: AnnotFrame, avoid: Array<{ x: number; 
         });
         const best = opts.reduce((a2, b2) => (b2.n < a2.n ? b2 : a2));
         taken.push({ x: best.anchor === 'start' ? best.x : best.x - w, y: best.above ? y - h : y, w, h });
-        lines.forEach((s, i) => out.push(text(best.x, best.above ? y - 5 - (lines.length - 1 - i) * lh : y + size + 3 + i * lh, s, face, size, paint, best.anchor)));
+        lines.forEach((s, i) => out.push(halo(best.x, best.above ? y - 5 - (lines.length - 1 - i) * lh : y + size + 3 + i * lh, s, face, size, paint, best.anchor)));
       } else if (a.axis === 'x') {
         const x = f.sx(a.value);
         if (x === null || x < f.x0 || x > f.x1) continue;
         out.push(vline(x, f.y0, f.y1, 'ink2', 1));
         const lines = wrapText(a.text, face, size, ctx.narrow ? 110 : 160);
         const right = x + 6 + Math.max(...lines.map((s) => textWidth(s, face, size))) <= f.x1;
-        lines.forEach((s, i) => out.push(text(right ? x + 5 : x - 5, f.y0 + size + i * lh, s, face, size, paint, right ? 'start' : 'end')));
+        lines.forEach((s, i) => out.push(halo(right ? x + 5 : x - 5, f.y0 + size + i * lh, s, face, size, paint, right ? 'start' : 'end')));
       }
       continue;
     }
     if (a.kind !== 'point' || !f.point) continue;
     const p = f.point(a);
     if (!p) continue;
-    const maxW = ctx.narrow ? 120 : 170;
+    const maxW = ctx.narrow ? 124 : 176;
     const lines = wrapText(a.text, face, size, maxW);
     const w = Math.max(...lines.map((s) => textWidth(s, face, size)));
     const h = lines.length * lh;
-    // Try above-left, above-right, below-left, below-right; keep inside the plot and off other labels.
-    const cands = [
-      { dx: -1, dy: -1 },
-      { dx: 1, dy: -1 },
-      { dx: -1, dy: 1 },
-      { dx: 1, dy: 1 },
-    ].map(({ dx, dy }) => {
-      const ring = Math.max(4.5, (p.r ?? 0) + 2.5);
-      const off = 21 + ring;
-      const bx = dx < 0 ? p.x - 6 - w : p.x + 6;
-      const by = dy < 0 ? p.y - off - h : p.y + off;
-      return { bx, by, dx, dy };
-    });
-    const score = (c: { bx: number; by: number }) => {
-      let s = 0;
-      if (c.bx < f.x0 - 30 || c.bx + w > f.x1 + 30) s += 1000;
-      if (c.by < f.y0 - 20 || c.by + h > f.y1 + 10) s += 500;
-      for (const t of taken) if (c.bx < t.x + t.w && c.bx + w > t.x && c.by < t.y + t.h && c.by + h > t.y) s += 100;
-      for (const [mx, my] of f.marks ?? []) if (mx >= c.bx - 3 && mx <= c.bx + w + 3 && my >= c.by - 3 && my <= c.by + h + 3) s += 5;
+    const ring = Math.max(4.5, (p.r ?? 0) + 3);
+    // Spots around the point, in eight directions at two distances: the text keeps a clear gap from
+    // its ring, stays inside the plot, and covers no mark and no other label. A short leader joins them.
+    const cands: Array<{ bx: number; by: number; dx: number; dy: number; d: number }> = [];
+    for (const d of [ring + 16, ring + 34]) {
+      for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+        const bx = dx < 0 ? p.x - d * (dy ? 0.72 : 1) - w : dx > 0 ? p.x + d * (dy ? 0.72 : 1) : p.x - w / 2;
+        const by = dy < 0 ? p.y - d * (dx ? 0.72 : 1) - h : dy > 0 ? p.y + d * (dx ? 0.72 : 1) : p.y - h / 2;
+        cands.push({ bx, by, dx, dy, d });
+      }
+    }
+    const score = (c: { bx: number; by: number; d: number }) => {
+      let s = c.d > ring + 20 ? 3 : 0;
+      if (c.bx < f.x0 - 30 || c.bx + w > f.x1 + 30 || c.bx < 0 || c.bx + w > ctx.W) s += 1000;
+      if (c.by < f.y0 - 20 || c.by + h > f.y1 + 6) s += 500;
+      for (const t of taken) if (c.bx - 4 < t.x + t.w && c.bx + w + 4 > t.x && c.by - 4 < t.y + t.h && c.by + h + 4 > t.y) s += 100;
+      for (const [mx, my] of f.marks ?? []) if (mx >= c.bx - 5 && mx <= c.bx + w + 5 && my >= c.by - 5 && my <= c.by + h + 5) s += 8;
       return s;
     };
     const best = cands.reduce((a2, b2) => (score(b2) < score(a2) ? b2 : a2));
     taken.push({ x: best.bx, y: best.by, w, h });
-    const ring = Math.max(4.5, (p.r ?? 0) + 2.5);
     out.push({ t: 'circle', cx: p.x, cy: p.y, r: ring, stroke: 'ink', sw: 1.25 });
-    const ly = best.dy < 0 ? best.by + h + 1 : best.by - size + 1;
-    const lx = best.dx < 0 ? best.bx + w : best.bx;
-    out.push({ t: 'line', x1: p.x + (best.dx < 0 ? -1 : 1) * ring * 0.6, y1: p.y + (best.dy < 0 ? -1 : 1) * ring * 0.8, x2: lx, y2: ly + (best.dy < 0 ? -2 : -size * 0.2), stroke: 'ink', sw: 0.75 });
-    lines.forEach((s, i) => out.push(text(best.dx < 0 ? best.bx + w : best.bx, best.by + size + i * lh, s, face, size, paint, best.dx < 0 ? 'end' : 'start')));
+    // The leader: from the ring's edge towards the nearest point of the text block, stopping short of it.
+    const tx = Math.max(best.bx, Math.min(p.x, best.bx + w));
+    const ty = Math.max(best.by, Math.min(p.y, best.by + h));
+    const len = Math.hypot(tx - p.x, ty - p.y) || 1;
+    const ux = (tx - p.x) / len;
+    const uy = (ty - p.y) / len;
+    if (len > ring + 6) out.push({ t: 'line', x1: p.x + ux * ring, y1: p.y + uy * ring, x2: tx - ux * 3, y2: ty - uy * 3, stroke: 'ink', sw: 0.75 });
+    const anchor = best.dx < 0 ? 'end' : best.dx > 0 ? 'start' : 'middle';
+    const ax = anchor === 'end' ? best.bx + w : anchor === 'start' ? best.bx : best.bx + w / 2;
+    lines.forEach((s, i) => out.push(halo(ax, best.by + size * 0.8 + i * lh, s, face, size, paint, anchor)));
   }
   return out;
 }

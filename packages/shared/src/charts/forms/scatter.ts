@@ -3,7 +3,8 @@
 // each label placed where it collides with nothing (or left to the table). Log axes say so.
 
 import type { Scene, SceneNode, Paint } from '../scene';
-import { Ctx, drawCallouts, hline, text, vline } from '../frame';
+import { Ctx, drawCallouts, halo, hline, text, vline } from '../frame';
+import { Placer, dotBox, placePoint } from '../labels';
 import { linear, logScale, niceTicks, type Scale } from '../scales';
 import { textWidth, wrapText } from '../text';
 import type { Cell } from '../types';
@@ -193,26 +194,21 @@ export function drawScatter(ctx: Ctx): Scene {
     keyBoxes.push({ x: right - Math.max(textWidth(label, 'sans', ctx.s.small), rr[0]! * 2 + 40), y: ky - rr[0]! * 2 - 8 - ctx.s.small, w: W, h: rr[0]! * 2 + 8 + ctx.s.small + 10 });
   }
 
-  // Labels: the focus rows (or every row when there are few), loudest and biggest first.
-  const want = dots.filter((d) => d.label && (focus.length ? focus.includes(d.label) : rows.length <= 12));
-  want.sort((a, b) => b.r - a.r);
-  const bounds = { x: 0, y: top - 4, w: W, h: bottom - top + 4 };
-  const dotBoxes = dots.filter((d) => d.loud).map((d) => ({ x: d.x - d.r, y: d.y - d.r, w: d.r * 2, h: d.r * 2 }));
-  // Each label may sit over quiet dots but never over a loud dot other than its own.
-  const labelBoxes: Box[] = [...calloutBoxes, ...keyBoxes];
-  const placed = want.map((d) => {
-    const others = dotBoxes.filter((b) => !(Math.abs(b.x + b.w / 2 - d.x) < 0.01 && Math.abs(b.y + b.h / 2 - d.y) < 0.01));
-    const p = placeLabels([{ x: d.x, y: d.y, r: d.r, text: d.label, size: ctx.s.label, face: 'sans' }], bounds, [...others, ...labelBoxes])[0];
-    if (p) labelBoxes.push(p.box);
-    return p;
-  });
-  // Annotations aside, labels whose dot is the subject of a callout are left to the callout.
+  // Labels: the focus rows (or every row when there are few), biggest first. Each sits beside its
+  // dot when a spot is free, else further out on a leader; loud dots and the callouts are kept clear,
+  // quiet dots may pass under a label (its halo keeps it clean).
   const called = new Set((ctx.chart.annotations ?? []).filter((a) => a.kind === 'point').map((a) => String((a as { x: Cell }).x)));
-  want.forEach((d, k) => {
-    const p = placed[k];
-    if (!p || called.has(d.label)) return;
-    nodes.push(text(p.x, p.y, d.label, 'sans', ctx.s.label, 'ink', p.anchor));
-  });
+  const want = dots.filter((d) => d.label && !called.has(d.label) && (focus.length ? focus.includes(d.label) : rows.length <= 12));
+  want.sort((a, b) => b.r - a.r);
+  const placer = new Placer({ x: 0, y: top - 4, w: W, h: bottom - top + 4 }, [...calloutBoxes, ...keyBoxes]);
+  const loudDots = dots.filter((d) => d.loud);
+  for (const d of loudDots) placer.claim(dotBox(d.x, d.y, d.r + 1));
+  for (const d of want) {
+    const p = placePoint(placer, { x: d.x, y: d.y, r: d.r, text: d.label, face: 'sans', size: ctx.s.label });
+    if (!p) continue;
+    if (p.leader) nodes.push({ t: 'line', ...p.leader, stroke: 'ink2', sw: 0.75 });
+    nodes.push(halo(p.x, p.y, d.label, 'sans', ctx.s.label, 'ink', p.anchor));
+  }
 
   nodes.push(...callouts);
   return { width: W, height: H, nodes };

@@ -64,6 +64,7 @@ const COLOUR_LABEL: Record<ChartColour, string> = {
   focus: 'One loud series in the Haul’s ink, the rest grey',
   categorical: 'A colour per series (at most six)',
   sequential: 'A ramp from low to high',
+  heat: 'A warm ramp, for temperatures only',
   diverging: 'Two ramps either side of a midpoint',
 };
 

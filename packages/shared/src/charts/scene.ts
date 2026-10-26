@@ -13,6 +13,8 @@ export type Paint =
   | 'ink2'
   | 'rule'
   | 'quiet'
+  | 'quiet2'
+  | 'quiet3'
   | 'ed'
   | 'bg'
   | 'plate'
@@ -24,15 +26,55 @@ export type Paint =
   | 'white'
   | 'black'
   | `cat${0 | 1 | 2 | 3 | 4 | 5}`
-  | `seq${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`
-  | `div${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`;
+  | `seq${0 | 1 | 2 | 3 | 4 | 5 | 6}`
+  | `heat${0 | 1 | 2 | 3 | 4 | 5 | 6}`
+  | `div${0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`
+  /** The diverging ramp at a fine grain (41 steps, every fourth one of div's), for warming stripes. */
+  | `dv${number}`;
+
+/** Steps in the fine diverging ramp: dv0 is div0, dv20 the middle, dv40 is div10. */
+export const FINE_STEPS = 41;
 
 export const PAINTS: readonly Paint[] = [
-  'ink', 'ink2', 'rule', 'quiet', 'ed', 'bg', 'plate', 'mach', 'record', 'normal', 'hot', 'cold', 'white', 'black',
+  'ink', 'ink2', 'rule', 'quiet', 'quiet2', 'quiet3', 'ed', 'bg', 'plate', 'mach', 'record', 'normal', 'hot', 'cold', 'white', 'black',
   ...([0, 1, 2, 3, 4, 5] as const).map((i) => `cat${i}` as Paint),
-  ...([0, 1, 2, 3, 4, 5, 6, 7, 8] as const).map((i) => `seq${i}` as Paint),
+  ...([0, 1, 2, 3, 4, 5, 6] as const).map((i) => `seq${i}` as Paint),
+  ...([0, 1, 2, 3, 4, 5, 6] as const).map((i) => `heat${i}` as Paint),
   ...([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const).map((i) => `div${i}` as Paint),
+  ...Array.from({ length: FINE_STEPS }, (_, i) => `dv${i}` as Paint),
 ];
+
+// OKLab, for the fine ramp: interpolating there keeps the steps even to the eye.
+const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const gam = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
+function toLab(hex: string): [number, number, number] {
+  const [r, g, b] = [1, 3, 5].map((i) => lin(parseInt(hex.slice(i, i + 2), 16) / 255)) as [number, number, number];
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
+}
+function fromLab([L, A, B]: [number, number, number]): string {
+  const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3;
+  const m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3;
+  const s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3;
+  const rgb = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s];
+  return `#${rgb.map((v) => Math.round(Math.max(0, Math.min(1, gam(Math.max(0, v)))) * 255).toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+}
+const fine: Partial<Record<Scheme, string[]>> = {};
+/** The fine diverging ramp of a theme, interpolated in OKLab between the validated steps of div. */
+export function fineRamp(scheme: Scheme): string[] {
+  return (fine[scheme] ??= Array.from({ length: FINE_STEPS }, (_, i) => {
+    const p = (i / (FINE_STEPS - 1)) * 10;
+    const a = Math.floor(p);
+    const b = Math.min(10, a + 1);
+    if (p === a) return chartInk[scheme].div[a]!;
+    const la = toLab(chartInk[scheme].div[a]!);
+    const lb = toLab(chartInk[scheme].div[b]!);
+    const t = p - a;
+    return fromLab([la[0] + (lb[0] - la[0]) * t, la[1] + (lb[1] - la[1]) * t, la[2] + (lb[2] - la[2]) * t]);
+  }));
+}
 
 interface Mark {
   fill?: Paint;
@@ -80,6 +122,10 @@ export function paintHex(p: Paint, scheme: Scheme, edition: Edition): string {
       return editionInk[scheme][edition];
     case 'quiet':
       return ink.quiet;
+    case 'quiet2':
+      return ink.quiet2;
+    case 'quiet3':
+      return ink.quiet3;
     case 'record':
       return ink.record;
     case 'normal':
@@ -93,26 +139,32 @@ export function paintHex(p: Paint, scheme: Scheme, edition: Edition): string {
     case 'black':
       return palettes.light.ink;
   }
-  const m = /^(cat|seq|div)(\d+)$/.exec(p)!;
-  return ink[m[1] as 'cat' | 'seq' | 'div'][Number(m[2])]!;
+  const m = /^(cat|seq|heat|div|dv)(\d+)$/.exec(p)!;
+  if (m[1] === 'dv') return fineRamp(scheme)[Number(m[2])]!;
+  return ink[m[1] as 'cat' | 'seq' | 'heat' | 'div'][Number(m[2])]!;
 }
 
+const luminance = (hex: string) => {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
+};
+const contrast = (a: string, b: string) => {
+  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p) as [number, number];
+  return (x + 0.05) / (y + 0.05);
+};
+
 /**
- * The colour of a label set inside a filled mark: white or near-black, the same in both themes, by
- * the fill's contrast (categorical and ramp steps keep their lightness across themes). The edition's
- * ink is deep in light mode and pale in dark mode, so a label on it takes the ground.
+ * The colour of a label set inside a filled mark. A fill may keep its lightness across themes (the
+ * categorical and ramp steps) or flip with them (the edition's ink, the greys), so the label tries
+ * white, near-black, the ink and the ground, and takes whichever reads best on the fill in its worse
+ * theme. One label colour then works in both themes, with every edition's ink.
  */
 export function labelOn(fill: Paint): Paint {
-  if (fill === 'ed') return 'bg';
-  const lum = (hex: string) => {
-    const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
-    return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
-  };
-  const worst = Math.min(...(['light', 'dark'] as const).map((sch) => lum(paintHex(fill, sch, 'oxblood'))));
-  const best = Math.max(...(['light', 'dark'] as const).map((sch) => lum(paintHex(fill, sch, 'oxblood'))));
-  const onWhite = 1.05 / (worst + 0.05);
-  const onBlack = (best + 0.05) / (lum(palettes.light.ink) + 0.05);
-  return onWhite >= onBlack ? 'white' : 'black';
+  const cands: Paint[] = ['white', 'black', 'ink', 'bg'];
+  const editions = Object.keys(editionInk.light) as Edition[];
+  const worst = (label: Paint) =>
+    Math.min(...(['light', 'dark'] as const).flatMap((sch) => (fill === 'ed' ? editions : (['oxblood'] as Edition[])).map((e) => contrast(paintHex(label, sch, e), paintHex(fill, sch, e)))));
+  return cands.reduce((a, b) => (worst(b) > worst(a) + 1e-9 ? b : a));
 }
 
 /** The faces: the website's CSS family and weight, and the family name of the app's static cut. */
@@ -159,6 +211,9 @@ export function nodeAttrs(n: Exclude<SceneNode, { t: 'g' }>): Record<string, str
       cls.push(`t-${n.face}`);
       Object.assign(a, { x: r2(n.x), y: r2(n.y), 'font-size': n.size });
       if (n.anchor && n.anchor !== 'start') a['text-anchor'] = n.anchor;
+      // A stroked label is a halo: the ground drawn under the letters, so a label set over gridlines
+      // or quiet marks stays clean.
+      if (n.stroke) Object.assign(a, { 'paint-order': 'stroke', 'stroke-linejoin': 'round' });
       break;
   }
   if (n.t === 'line') a['stroke-linecap'] = 'butt';

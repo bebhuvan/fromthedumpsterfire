@@ -93,10 +93,11 @@ export type ChartEncode = Partial<Record<ChartRole, string>>;
 /**
  * How colour is used. focus: one loud series (the Haul's edition ink), the rest quiet grey.
  * categorical: up to six named series in the fixed order. sequential and diverging: values on a
- * ramp (diverging only around a stated midpoint). There is no rainbow.
+ * ramp (diverging only around a stated midpoint). heat: the warm sequential ramp, for temperatures
+ * only, so warm colours keep their meaning. There is no rainbow.
  */
-export type ChartColour = 'focus' | 'categorical' | 'sequential' | 'diverging';
-export const CHART_COLOURS: readonly ChartColour[] = ['focus', 'categorical', 'sequential', 'diverging'];
+export type ChartColour = 'focus' | 'categorical' | 'sequential' | 'heat' | 'diverging';
+export const CHART_COLOURS: readonly ChartColour[] = ['focus', 'categorical', 'sequential', 'heat', 'diverging'];
 
 export interface ChartOptions {
   colour?: ChartColour;
@@ -199,7 +200,7 @@ export const FORMS: Record<ChartForm, FormSpec> = {
     types: { x: TIMEISH, y: NUM, series: CAT },
     zero: true,
     time: true,
-    colours: ['categorical'],
+    colours: ['focus', 'categorical'],
   },
   bar: {
     name: 'Bars',
@@ -289,7 +290,7 @@ export const FORMS: Record<ChartForm, FormSpec> = {
     types: { x: ['date'], y: NUM },
     zero: false,
     time: true,
-    colours: ['sequential', 'diverging'],
+    colours: ['diverging', 'sequential', 'heat'],
   },
   heatmap: {
     name: 'Heatmap',
@@ -299,7 +300,7 @@ export const FORMS: Record<ChartForm, FormSpec> = {
     types: { x: CATISH, label: CATISH, y: NUM },
     zero: false,
     time: false,
-    colours: ['sequential', 'diverging'],
+    colours: ['sequential', 'diverging', 'heat'],
   },
   ridgeline: {
     name: 'Ridgeline',

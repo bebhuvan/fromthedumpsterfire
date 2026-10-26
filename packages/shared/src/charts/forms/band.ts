@@ -71,7 +71,8 @@ export function drawBand(ctx: Ctx): Scene {
   for (const d of days) if (d.nlo !== null && d.nhi !== null) nodes.push({ t: 'rect', x: sx(d.d), y: sy(d.nhi), w: recW, h: sy(d.nlo) - sy(d.nhi), fill: 'normal' });
   // Gridlines cut through the bands in the ground colour, as on the printed weather chart.
   for (const tk of ax.ticks) if (tk !== ax.ticks[0]) nodes.push(hline(left, right, Math.round(sy(tk)) + 0.5, 'bg', 1));
-  const barW = Math.max(0.9, dayW * 0.62);
+  // A fine bar for each day, half a day wide, so the normal band shows between the days.
+  const barW = Math.max(0.55, dayW * 0.5);
   for (const d of days) {
     if (d.lo === null || d.hi === null) continue;
     nodes.push({ t: 'rect', x: sx(d.d) + (dayW - barW) / 2, y: sy(d.hi), w: barW, h: Math.max(0.8, sy(d.lo) - sy(d.hi)), fill: 'ed', tip: `${fmtDate(d.d)}: low ${ctx.value(d.lo, 1)}${deg}, high ${ctx.value(d.hi, 1)}${deg}` });

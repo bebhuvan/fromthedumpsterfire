@@ -64,6 +64,9 @@ export function stackOf(ctx: Ctx): Stack {
   return { xs, names, bands, totals };
 }
 
+/** Greys for the quiet parts of a focused stack, in turn, so neighbours always differ. */
+const GREYS: Paint[] = ['quiet3', 'quiet', 'quiet2'];
+
 export function drawArea(ctx: Ctx): Scene {
   const W = ctx.W;
   const H = ctx.narrow ? 320 : 420;
@@ -76,34 +79,70 @@ export function drawArea(ctx: Ctx): Scene {
   const ax = tightAxis(ctx, [0, ...totals], [bottom, top], { zero: true });
   const unit = shortUnit(ctx.chart.units);
   const left = Math.ceil(yLabelWidth(ctx, ax, unit)) + 10;
-  const paints: Paint[] = st.names.map((n) => ctx.paintFor(n, st.names));
-  // Use categorical colours unless the editor chose a focus.
-  const paintOf = (i: number): Paint => (ctx.chart.options?.focus?.length ? paints[i]! : (`cat${Math.min(5, i)}` as Paint));
+  // Neutral first: with a focus, the story's parts take the edition's ink and the rest are greys.
+  const focus = ctx.chart.options?.focus ?? [];
+  const focused = ctx.colour === 'focus' || focus.length > 0;
+  const greyOf: number[] = [];
+  let g = 0;
+  st.names.forEach((n, i) => (greyOf[i] = focus.includes(n) ? -1 : g++ % GREYS.length));
+  const paintOf = (i: number): Paint => (focused ? (greyOf[i]! < 0 ? 'ed' : GREYS[greyOf[i]!]!) : (`cat${Math.min(5, i)}` as Paint));
 
-  // Where each part's label goes: inside its band at the right edge when the band is tall enough there.
   const lastI = st.totals.length - 1 - [...st.totals].reverse().findIndex((t) => t !== null);
-  const lh = ctx.s.label * 1.2;
-  const outside: number[] = [];
+  const size = ctx.s.label;
+  const lh = size * 1.2;
   const sy = ax.scale;
-  // A name fits inside when its band is tall enough everywhere under the name, at the right edge.
-  const insideFits = (i: number, sxp: (v: number) => number) => {
-    const xr = sxp(st.xs[lastI]!);
-    const w = textWidth(st.names[i]!, 'sansMedium', ctx.s.label) + 12;
-    for (let k = lastI; k >= 0 && sxp(st.xs[k]!) >= xr - w - (sxp(st.xs[1] ?? 0) - sxp(st.xs[0] ?? 0)); k--) {
+  // A name goes inside its band where the whole word fits inside the band at every point under it,
+  // as far right as it can; the band's edges are followed exactly, so a sloping band never lets
+  // the word slip over its neighbour.
+  const inside = (i: number, sxp: (v: number) => number, x0: number, x1: number): { xr: number; cy: number } | null => {
+    const w = textWidth(st.names[i]!, 'sansMedium', size);
+    const need = size * 0.98 + 6;
+    const edges = (px: number): [number, number] | null => {
+      const t = xmin + ((px - x0) / (x1 - x0)) * (xmax - xmin);
+      let k = st.xs.findIndex((x) => x >= t - 1e-9);
+      if (k < 0) return null;
+      if (k === 0) k = 1;
+      const a = st.bands[i]![k - 1];
       const b = st.bands[i]![k];
-      if (!b || sy(b[0]) - sy(b[1]) < ctx.s.label + 5) return false;
+      if (!a || !b) return null;
+      const f = (t - st.xs[k - 1]!) / (st.xs[k]! - st.xs[k - 1]! || 1);
+      const lo = a[0] + (b[0] - a[0]) * f;
+      const hi = a[1] + (b[1] - a[1]) * f;
+      return [sy(hi), sy(lo)];
+    };
+    for (let k = lastI; k >= 1; k--) {
+      const xr = sxp(st.xs[k]!) - 6;
+      const xl = xr - w;
+      if (xl < x0 + 4) break;
+      const samples = [xl, xr, ...st.xs.map(sxp).filter((px) => px > xl && px < xr)];
+      let maxTop = -Infinity;
+      let minBot = Infinity;
+      let ok = true;
+      for (const px of samples) {
+        const e = edges(px);
+        if (!e) {
+          ok = false;
+          break;
+        }
+        maxTop = Math.max(maxTop, e[0]);
+        minBot = Math.min(minBot, e[1]);
+      }
+      if (ok && minBot - maxTop >= need) return { xr, cy: (maxTop + minBot) / 2 };
     }
-    return true;
+    return null;
   };
   const labelMax = ctx.narrow ? 92 : 150;
-  const fitsAll = (sxp: (v: number) => number) => st.names.map((_, i) => i).filter((i) => !insideFits(i, sxp));
+  const place = (x1: number) => {
+    const sxp = linear([xmin, xmax], [left, x1]);
+    return st.names.map((_, i) => inside(i, sxp, left, x1));
+  };
   let right = W - 8;
-  outside.push(...fitsAll(linear([xmin, xmax], [left, right])));
-  if (outside.length) {
-    const wOut = Math.min(labelMax, Math.max(...outside.map((i) => textWidth(st.names[i]!, 'sans', ctx.s.label))));
+  let spots = place(right);
+  if (spots.some((p) => !p)) {
+    const outs = st.names.filter((_, i) => !spots[i]);
+    const wOut = Math.min(labelMax, Math.max(...outs.map((n) => textWidth(n, 'sans', size))));
     right = W - wOut - 24;
-    outside.length = 0;
-    outside.push(...fitsAll(linear([xmin, xmax], [left, right])));
+    spots = place(right);
   }
   const sx = linear([xmin, xmax], [left, right]);
 
@@ -148,20 +187,19 @@ export function drawArea(ctx: Ctx): Scene {
     } else if (n.t === 'text') nodes.push({ ...n, x: n.anchor === 'end' ? n.x - 2 : n.x + 2 });
   }
 
-  const span = xmax - xmin;
   const ticks = yearTicks(xmin, xmax, ctx.narrow ? 4 : 8);
   nodes.push(...drawXYears(ctx, sx, ticks.length ? ticks : [xmin, xmax], bottom));
-  void span;
 
-  // Labels: inside at the right edge (in the text colour that reads on the fill), or outside with a leader.
+  // Labels: inside where they fit (in the text colour that reads on the fill), or beside the plot on a leader.
   if (lastI >= 0) {
     const xr = sx(st.xs[lastI]!);
+    const outside = st.names.map((_, i) => i).filter((i) => !spots[i]);
     const outs = outside.map((i) => {
       const b = st.bands[i]![lastI]!;
       return { i, y: sy((b[0] + b[1]) / 2) };
     });
-    const wrapped = outs.map((o) => wrapText(st.names[o.i]!, 'sans', ctx.s.label, W - right - 24));
-    const gap = Math.max(...wrapped.map((l) => l.length)) * lh + 2;
+    const wrapped = outs.map((o) => wrapText(st.names[o.i]!, 'sans', size, W - right - 24));
+    const gap = Math.max(1, ...wrapped.map((l) => l.length)) * lh + 2;
     const ys = spread(outs.map((o) => ({ y: o.y, text: st.names[o.i]! })), gap, top, bottom);
     outs.forEach((o, k) => {
       const ly = ys[k]!;
@@ -169,14 +207,13 @@ export function drawArea(ctx: Ctx): Scene {
       const y0 = ly - ((lines.length - 1) * lh) / 2;
       nodes.push({ t: 'rect', x: right + 8, y: y0 - 4, w: 8, h: 8, fill: paintOf(o.i) });
       nodes.push({ t: 'path', d: `M${(xr + 1).toFixed(2)},${o.y.toFixed(2)}L${(right + 6).toFixed(2)},${y0.toFixed(2)}`, stroke: 'ink2', sw: 0.75 });
-      lines.forEach((s2, j) => nodes.push(text(right + 20, y0 + ctx.s.label * 0.35 + j * lh, s2, 'sans', ctx.s.label, 'ink')));
+      lines.forEach((s2, j) => nodes.push(text(right + 20, y0 + size * 0.35 + j * lh, s2, focus.includes(st.names[o.i]!) ? 'sansMedium' : 'sans', size, 'ink')));
     });
     st.names.forEach((name, i) => {
-      if (outside.includes(i)) return;
-      const b = st.bands[i]![lastI]!;
-      const mid = sy((b[0] + b[1]) / 2);
+      const p = spots[i];
+      if (!p) return;
       // White or near-black by the fill's own contrast (labelOn), the same in both themes.
-      nodes.push(text(xr - 6, mid + ctx.s.label * 0.35, name, 'sansMedium', ctx.s.label, labelOn(paintOf(i)), 'end'));
+      nodes.push(text(p.xr, p.cy + size * 0.27, name, 'sansMedium', size, labelOn(paintOf(i)), 'end'));
     });
   }
 

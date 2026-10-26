@@ -87,7 +87,7 @@ write('area-india-electricity', {
     'measure': {'basis': 'absolute'},
     'method': 'Gas and oil are added together; so are nuclear, bioenergy and other renewables.',
     'data': {'columns': [{'key': 'year', 'label': 'Year', 'type': 'year'}, {'key': 'source', 'label': 'Source', 'type': 'text'}, {'key': 'twh', 'label': 'Electricity generated', 'type': 'number', 'unit': 'TWh'}], 'rows': rows},
-    'encode': {'x': 'year', 'y': 'twh', 'series': 'source'}, 'options': {'colour': 'categorical'},
+    'encode': {'x': 'year', 'y': 'twh', 'series': 'source'}, 'options': {'focus': ['Solar']},
     'annotations': [{'kind': 'rule', 'axis': 'x', 'value': 2020, 'text': 'Covid lockdown', 'by': 'editor'}],
 })
 print('ok')
