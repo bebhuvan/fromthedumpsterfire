@@ -127,4 +127,19 @@ For the editor to decide:
 
 ## Screenshots
 
-(below)
+All in `docs/design-comps/lives/shots/`.
+
+- **Comps** (`life-a`, `life-b`, `life-deep`, `life-ink`, each at 390 and 1280, light and dark): A
+  (the stacked name) was chosen over B (a run-in dictionary entry, whose large blue epithet was the
+  loudest thing on the page). `life-deep` and `life-ink` are the two readings of long machine prose.
+- **The built website** (`web/`): the Sen page and the Haul 002 cover with its specimen, from the
+  built Worker (`astro build`, `wrangler dev`). Chrome on this laptop cannot load `http://` pages (it
+  hangs, as Firefox does), so each page was fetched from the Worker with its CSS and fonts and shot
+  from disk: the same HTML the Worker served.
+- **The Desk** (`desk/`): the Life review screen from the built Desk, given the real API answers for
+  the Sen draft from the Worker's own routes on a test store (the judge mocked to "supported"; the
+  real judge has not run). Keep, Cut and Where under each line; the portrait; the sources.
+- **The app** (`app/`): the release APK (x86_64) on the Android emulator, deep-linked to the Sen item
+  in development Haul 002, light and dark. The portrait shows as a grey plate in the development
+  build because it is hotlinked from Wikimedia, which refuses the app's image requests; published
+  plates are copied to our files host, as every plate is.

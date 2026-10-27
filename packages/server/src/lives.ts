@@ -345,9 +345,10 @@ export async function approveLife(env: Env, itemId: string, approve: boolean): P
 async function recheck(env: Env, itemId: string, draft: LifeDraft): Promise<string[]> {
   const texts = await lifeTexts(env, itemId);
   const { problems } = checkLifeDraft(draft, texts);
-  const out = problems
-    .filter((p) => !p.lineId || ['kept'].includes(lifeLines(draft).find((x) => x.line.id === p.lineId)?.line.status ?? 'kept'))
-    .map((p) => `${p.path}: ${p.message}`);
+  // A line's problem matters only if the line prints; problems of the whole (sources, years, the
+  // person's words) always do.
+  const status = new Map(lifeLines(draft).map((x) => [x.line.id, x.line.status]));
+  const out = problems.filter((p) => !p.lineId || status.get(p.lineId) === 'kept').map((p) => `${p.path}: ${p.message}`);
   for (const { line } of lifeLines(draft)) if (line.status === 'kept' && line.verdict !== 'supported') out.push(`A kept line is not confirmed by its sources: “${line.text.slice(0, 60)}”`);
   // Offsets must still hold: the stored quotes are the source's characters at those places.
   for (const { line } of lifeLines(draft)) {
