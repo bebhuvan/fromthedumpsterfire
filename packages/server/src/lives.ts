@@ -45,6 +45,8 @@ export interface LifeSourceRow {
   extractor: string | null;
   meta: string | null;
   snapshot_key: string | null;
+  /** A PDF the editor uploaded because the link is too large or slow to fetch; the link stays the source. */
+  file_key: string | null;
   position: number;
   fetched_at: string | null;
   created_at: string;
@@ -141,7 +143,7 @@ export async function fetchLifeSources(env: Env, itemId: string, onlyKey?: strin
     if (onlyKey ? r.key !== onlyKey : r.status === 'fetched') continue;
     try {
       const d = detectUrl(r.url);
-      const outcome = await fetchSource(env, { id: itemId, kind: d.kind, type: 'essay', url: r.url, file_key: null, capture_text: null, source_name: null, title: null });
+      const outcome = await fetchSource(env, { id: itemId, kind: r.file_key ? 'pdf' : d.kind, type: 'essay', url: r.url, file_key: r.file_key, capture_text: null, source_name: null, title: null });
       if (outcome.kind !== 'text') throw new Error(outcome.kind === 'none' ? outcome.reason : 'This source is a recording; a Life is written from texts');
       let snapshotKey: string | null = null;
       if (outcome.snapshot) {
@@ -165,6 +167,19 @@ export async function fetchLifeSources(env: Env, itemId: string, onlyKey?: strin
     .bind(failed.length ? 'failed' : 'ready', failed.length ? `Could not fetch ${failed.map((r) => `${r.key} (${r.detail ?? 'not fetched'})`).join('; ')}` : null, nowIso(), itemId)
     .run();
   return rows;
+}
+
+/**
+ * The editor's own copy of a source whose link is too large or slow to fetch (a scanned report of
+ * hundreds of pages): kept in MEDIA and read in place of the link, which stays the source readers get.
+ */
+export async function setLifeSourceFile(env: Env, itemId: string, key: string, file: { stream: ReadableStream; name: string }): Promise<LifeSourceRow[]> {
+  const row = (await lifeSourceRows(env, itemId)).find((r) => r.key === key);
+  if (!row) throw new LifeError(`This Life has no source "${key}"`, 404);
+  const fileKey = `uploads/${itemId}/life-${key}.pdf`;
+  await env.MEDIA.put(fileKey, file.stream, { httpMetadata: { contentType: 'application/pdf' }, customMetadata: { name: file.name } });
+  await env.DB.prepare(`UPDATE life_sources SET file_key = ?, status = 'queued', detail = NULL WHERE id = ?`).bind(fileKey, row.id).run();
+  return fetchLifeSources(env, itemId, key);
 }
 
 /** The stored text of each fetched source, by the key the profile cites. */

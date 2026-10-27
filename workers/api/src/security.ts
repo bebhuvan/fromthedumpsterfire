@@ -9,8 +9,10 @@ const ITEM_FILE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/file$/;
 const ITEM_PICTURE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/picture$/;
 /** A shelf book's cover (an upload, or a link the server fetches). POST only. */
 const BOOK_COVER = /^\/api\/books\/[a-z0-9-]{1,81}\/cover$/;
+/** The editor's copy of a Life's source, read in place of a link too large or slow to fetch. POST only. */
+const LIFE_SOURCE_FILE = /^\/api\/items\/[A-Za-z0-9_-]{1,64}\/life\/sources\/[a-z0-9-]{1,41}\/file$/;
 export const isMultipartRoute = (method: string, pathname: string) =>
-  MULTIPART_ROUTES.has(pathname) || (method === 'POST' && (ITEM_FILE.test(pathname) || ITEM_PICTURE.test(pathname) || BOOK_COVER.test(pathname)));
+  MULTIPART_ROUTES.has(pathname) || (method === 'POST' && (ITEM_FILE.test(pathname) || ITEM_PICTURE.test(pathname) || BOOK_COVER.test(pathname) || LIFE_SOURCE_FILE.test(pathname)));
 
 // script-src is 'self' alone: chart pictures are drawn by the Worker at publish, so the Desk compiles
 // no WebAssembly (the 'wasm-unsafe-eval' of 2026-10-25 is gone).

@@ -162,6 +162,9 @@ describe('cross-site requests', () => {
     // A shelf book's cover: multipart, POST only; its edits are JSON.
     expect(checkCsrf(req('/api/books/the-coal-question/cover', { method: 'POST', headers: mp, body: '' })).ok).toBe(true);
     expect(checkCsrf(req('/api/books/the-coal-question/cover', { method: 'POST', headers: good, body: '{}' })).status).toBe(415);
+    // A Life source's PDF: multipart, POST only.
+    expect(checkCsrf(req('/api/items/it_1/life/sources/eci-report/file', { method: 'POST', headers: mp, body: '' })).ok).toBe(true);
+    expect(checkCsrf(req('/api/items/it_1/life/sources/eci-report/file', { method: 'POST', headers: good, body: '{}' })).status).toBe(415);
     expect(checkCsrf(req('/api/books/the-coal-question/cover', { method: 'PATCH', headers: mp, body: '' })).status).toBe(415);
     expect(checkCsrf(req('/api/books/the-coal-question/notes', { method: 'POST', headers: mp, body: '' })).status).toBe(415);
   });

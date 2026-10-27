@@ -80,7 +80,45 @@ async function makeLife(env: TestEnv) {
   return r.body.itemId as string;
 }
 
+/** A one-page PDF whose text layer is `text` (enough of a PDF for the extractor). */
+function tinyPdf(text: string): Uint8Array {
+  const stream = `BT /F1 10 Tf 20 700 Td (${text.replace(/[()\\]/g, '')}) Tj ET`;
+  const objs = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 2000 800] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let out = '%PDF-1.4\n';
+  const offs: number[] = [];
+  objs.forEach((o, i) => {
+    offs.push(out.length);
+    out += `${i + 1} 0 obj\n${o}\nendobj\n`;
+  });
+  const xref = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offs.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')}`;
+  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new TextEncoder().encode(out);
+}
+
 describe('Lives on the Desk', () => {
+  it('reads the editor’s PDF of a source too slow to fetch, keeping the link as the source', async () => {
+    const env = await deskEnv();
+    const id = await makeLife(env);
+    const line = 'The Chini and Pangi Assembly constituencies were the first to go to the polls before snow-fall. '.repeat(10);
+    const form = new FormData();
+    form.append('file', new File([tinyPdf(line)], 'report.pdf', { type: 'application/pdf' }));
+    const r = await app.request(`${BASE}/api/items/${id}/life/sources/eci/file`, { method: 'POST', headers: { origin: BASE, 'sec-fetch-site': 'same-origin', 'x-desk': '1' }, body: form }, env);
+    const body = (await r.json()) as any;
+    expect(r.status).toBe(200);
+    const eci = body.sources.find((s: any) => s.key === 'eci');
+    expect(eci).toMatchObject({ status: 'fetched', url: 'https://example.org/report' });
+    const row = await env.DB.prepare(`SELECT text, file_key FROM life_sources WHERE item_id = ? AND key = 'eci'`).bind(id).first<any>();
+    expect(row.file_key).toBe(`uploads/${id}/life-eci.pdf`);
+    expect(row.text).toContain('Chini and Pangi');
+  });
+
   it('creates a Life and fetches its sources by code, keeping their text private', async () => {
     const env = await deskEnv();
     const id = await makeLife(env);

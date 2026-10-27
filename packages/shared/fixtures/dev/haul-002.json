@@ -417,10 +417,14 @@
       "paragraphs": [
        [
         {
-         "text": "India set up an Election Commission two years after independence, and in March 1950 Sukumar Sen became its chief.",
+         "text": "India set up an Election Commission two years after independence, and on 21 March 1950 Sukumar Sen took charge as its chief.",
          "cites": [
           {
            "source": "guha"
+          },
+          {
+           "source": "eci-report",
+           "at": "PDF p. 34"
           }
          ]
         },
@@ -887,10 +891,11 @@
      {
       "year": "1950",
       "line": {
-       "text": "Chief Election Commissioner, from March",
+       "text": "Takes charge as Chief Election Commissioner, 21 March",
        "cites": [
         {
-         "source": "guha"
+         "source": "eci-report",
+         "at": "PDF p. 34"
         }
        ]
       }

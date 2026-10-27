@@ -22,6 +22,7 @@ CREATE TABLE life_sources (
   extractor    TEXT,
   meta         TEXT,                        -- JSON SourceMeta: page offsets, where the text came from
   snapshot_key TEXT,                        -- MEDIA key of the fetched bytes
+  file_key     TEXT,                        -- MEDIA key of a PDF the editor uploaded (read in place of the link)
   position     INTEGER NOT NULL DEFAULT 0,
   fetched_at   TEXT,
   created_at   TEXT NOT NULL,

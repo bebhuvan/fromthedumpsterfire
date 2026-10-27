@@ -16,6 +16,7 @@ import {
   parseJson,
   runChecks,
   setAllLines,
+  setLifeSourceFile,
   setLineStatus,
   submitLife,
   type Env,
@@ -147,6 +148,20 @@ livesApi.post('/api/items/:id/life/fetch', async (c) => {
   await lifeItem(c.env, id);
   const b = await body(c, z.object({ key: z.string().max(41).optional() }));
   await fetchLifeSources(c.env, id, b.key);
+  return c.json(await view(c.env, id));
+});
+
+// The editor's PDF of a source too large or slow to fetch (multipart, `file`); the link stays the source.
+livesApi.post('/api/items/:id/life/sources/:key/file', async (c) => {
+  const id = c.req.param('id');
+  await lifeItem(c.env, id);
+  const form = await c.req.formData();
+  const f = form.get('file');
+  if (!f || typeof f === 'string') return c.json({ error: 'Choose a PDF' }, 400);
+  if (f.size > 60 * 1024 * 1024) return c.json({ error: 'Files over 60 MB are not supported' }, 413);
+  if (String.fromCharCode(...new Uint8Array(await f.slice(0, 5).arrayBuffer())) !== '%PDF-') return c.json({ error: 'That file is not a PDF' }, 415);
+  const r = await attempt(c, () => setLifeSourceFile(c.env, id, c.req.param('key'), { stream: f.stream(), name: f.name }));
+  if (r instanceof Response) return r;
   return c.json(await view(c.env, id));
 });
 
