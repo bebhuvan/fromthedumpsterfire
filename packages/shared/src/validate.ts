@@ -222,6 +222,8 @@ function checkItem(c: Collector, item: Item, p: string) {
   if (item.type === 'life') {
     if (item.life === undefined) c.err(`${p}.life`, 'life', 'a Life carries its profile');
     else checkLife(c, item.life, `${p}.life`);
+    // A portrait names who made it, as every picture does.
+    if (item.plate && (typeof item.plate.creator !== 'string' || !item.plate.creator.trim())) c.err(`${p}.plate.creator`, 'credit', 'a portrait names who made it');
   } else if (item.life !== undefined) c.err(`${p}.life`, 'life', 'only a Life carries a profile');
 }
 
@@ -319,10 +321,6 @@ function checkLife(c: Collector, life: Life, p: string) {
       if (r.url !== undefined) c.https(r.url, `${rp}.url`);
     });
   for (const id of ids) if (!used.has(id)) c.err(`${p}.sources`, 'life', `"${id}" is listed but nothing cites it; the label names only what the profile was written from`);
-  if (life.portrait !== undefined) {
-    c.plate(life.portrait, `${p}.portrait`);
-    if (typeof life.portrait?.creator !== 'string' || !life.portrait.creator.trim()) c.err(`${p}.portrait.creator`, 'credit', 'a picture names who made it');
-  }
 }
 
 function checkBlock(c: Collector, b: Block, p: string) {

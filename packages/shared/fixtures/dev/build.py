@@ -4,6 +4,7 @@ import json, os
 # The Sukumar Sen Life, assembled from the session's draft (life-sen.json), and the editor's note on it (fillers cut).
 WHY_SEN = "I wanted to add a profile of Sukumar Sen, India's first election commissioner. The context here is the debates about the special intensive revision, SIR, and all the debates about disenfranchisement. I think it's important to know how far we have come. It's important to know how radical and revolutionary our past elections were, and how monumentally challenging they were, and yet how far we have come: how we started at a place where we protected the sacred right of people to vote and express their democratic choice at all costs. There's that anecdote in Guha's book that four months before that, in the glacier somewhere, there were election booths, and the general election happened much later across the country. How Sukumar Sen was radical, how he included the women's names in the rolls, and how he struck them off."
 LIFE = json.load(open(os.path.join(os.path.dirname(__file__), "life-sen.json")))
+SEN_PORTRAIT = json.load(open(os.path.join(os.path.dirname(__file__), "sen-portrait.json")))
 WAVE = {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/1280px-Tsunami_by_hokusai_19th_century.jpg", "width": 1280, "height": 860, "caption": "Under the Wave off Kanagawa, about 1831.", "credit": "Wikimedia Commons", "licence": "public domain", "creator": "Katsushika Hokusai", "date": "about 1831", "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tsunami_by_hokusai_19th_century.jpg"}
 def item(id, type, title, creator, src, date, url, why, **kw):
     d = {"id": id, "type": type, "title": title if isinstance(title, dict) else {"text": title}, "creator": creator,
@@ -47,7 +48,7 @@ h2 = {
        "Sample note. On my desk for a month. Every chapter is a case of a plan that could only see what it could count.",
        excerpt={"text": "Certain forms of knowledge and control require a narrowing of vision.", "locator": "Chapter 1"}, shelf="seeing-like-a-state"),
   item("sukumar-sen", "life", "Sukumar Sen", "Ramachandra Guha", "India After Gandhi", "2007", "https://amzn.in/d/07BIgTop",
-       WHY_SEN, year=1951, life=LIFE),
+       WHY_SEN, year=1951, life=LIFE, plate=SEN_PORTRAIT),
   item("sample-pod", "podcast", "A podcast episode", "Sample Host", "Spotify", "2026", "https://open.spotify.com/show/2MAi0BvDc6GTFvKFPXnkCL",
        "Sample note. A podcast with its official player, and an audio file played by the browser.", minutes=95,
        blocks=[{"kind": "audio", "provider": "spotify", "url": "https://open.spotify.com/show/2MAi0BvDc6GTFvKFPXnkCL", "title": "The show on Spotify"},

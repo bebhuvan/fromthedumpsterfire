@@ -406,7 +406,7 @@ const ogImage =
 
     <Ideas ideas={item.ideas ?? []} />
 
-    {item.plate && plateSrc && form !== 'card' && form !== 'print' && form !== 'jacket' ? (
+    {item.plate && plateSrc && form !== 'card' && form !== 'print' && form !== 'jacket' && form !== 'life' ? (
       <div class="wrap g">
         <figure class="c plate">
           <img src={plateSrc} width={item.plate.width} height={item.plate.height} alt={item.plate.caption || `Plate for ${titleText(item.title)}`} loading="lazy" decoding="async" />

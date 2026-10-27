@@ -264,8 +264,6 @@ export interface LifeShape<L, C> {
   reading: LifeReading[];
   /** The model that wrote it, as the label names it: "Claude". */
   writer: string;
-  /** A portrait, only if it is public domain or openly licensed, credited like any picture. */
-  portrait?: Plate;
 }
 
 export type Life = LifeShape<LifeLine, LifeCite>;
@@ -301,7 +299,7 @@ export interface Item {
   place?: string;
   /** For a book: its id on the shelf (shelf.ts), where the editor's notes on it live. */
   shelf?: string;
-  /** For a Life: the profile (added 2026-10-27). */
+  /** For a Life: the profile (added 2026-10-27). Its portrait, if one cleared the credit rule, is the item's plate. */
   life?: Life;
 }
 

@@ -22,7 +22,9 @@ const life = item.life;
 const years = lifeYears(life);
 const byline = lifeByline(life);
 const sourceOf = new Map(life.sources.map((s) => [s.id, s]));
-const portrait = life.portrait ? { ...life.portrait, src: safeHref(life.portrait.url) } : undefined;
+// The portrait is the item's plate: chosen on the Desk with its maker, holder and licence, copied to
+// our files at publish like every plate.
+const portrait = item.plate ? { ...item.plate, src: safeHref(item.plate.url) } : undefined;
 const where = (lines: LifeLine[]) => whereFrom(life, lines);
 const wholeWork = (kind: string) => kind === 'book' || kind === 'report';
 // The pull quote follows the second section and the numbers the third (a short profile puts both
@@ -39,7 +41,7 @@ const figuresAfter = Math.min(2, life.sections.length - 1);
   {portrait?.src ? (
     <figure class="lf-portrait">
       <img src={portrait.src} width={portrait.width} height={portrait.height} alt={portrait.caption || `A portrait of ${life.name}`} decoding="async" />
-      <figcaption><Credit plate={portrait} /></figcaption>
+      <figcaption><Credit plate={item.plate!} /></figcaption>
     </figure>
   ) : null}
 </header>

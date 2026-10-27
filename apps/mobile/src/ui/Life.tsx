@@ -3,7 +3,7 @@
 // note, the label naming the machine and every source (lifeByline, never typed), the profile in the
 // machine's sans in its reading blue with each paragraph's sources under it, the person's words as
 // the pull quote, the numbers as a ledger, a life in dates, further reading and what it was written
-// from. A portrait only if one cleared the credit rule; the page is complete without one.
+// from. A portrait (the item's plate) only if one cleared the credit rule; the page is complete without one.
 import { Fragment, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Item, Life as LifeData, LifeLine } from '@fdf/shared/haul';
@@ -41,11 +41,11 @@ export function LifeForm({ item, life, why }: { item: Item; life: LifeData; why:
       </Text>
       {years ? <Text maxFontSizeMultiplier={1.2} style={[st.years, { color: p.ink2 }]} accessibilityLabel={`Lived ${years}`}>{years}</Text> : null}
       <Text selectable style={[st.epithet, { color: p.machine, fontSize: 16 * k, lineHeight: 22 * k }]}>{life.epithet.text}</Text>
-      {life.portrait ? (
+      {item.plate ? (
         <View style={{ marginTop: 22, width: '62%' }}>
-          <Picture plate={{ ...life.portrait, caption: '' }} />
-          <Meta style={{ marginTop: 6 }}>{life.portrait.caption}</Meta>
-          <Credit plate={life.portrait} />
+          <Picture plate={{ ...item.plate, caption: '' }} />
+          <Meta style={{ marginTop: 6 }}>{item.plate.caption}</Meta>
+          <Credit plate={item.plate} />
         </View>
       ) : null}
 

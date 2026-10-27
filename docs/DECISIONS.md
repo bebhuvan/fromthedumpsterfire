@@ -339,3 +339,46 @@ Dated, newest last. Don't reopen these without a new reason.
 - **Money's diverging colour is mirrored (2026-10-26):** on a chart with `measure.money`, a fall is red and
   a rise is blue. Temperatures keep blue for cooler, red for warmer. Rejected: red and green (colour-blind
   readers cannot tell them apart) and one convention for every chart (a red gain reads as a loss).
+
+## 2026-10-27 (Lives: a profile of one person per Haul)
+
+- **A new recurring section, Lives**: one person per Haul, a profile written by a model from named,
+  fetched sources, with the editor's note on top (the editor asked for it: "should we create a new
+  category of style for, let's say, interesting people? … every Haul"). Sukumar Sen is the first. The
+  name is the session's, after Plutarch's *Lives* and Aubrey's *Brief Lives*; it is one string
+  (`typeLabel.life` in tokens.ts). It shares lilac with the letter and the book (a person's things).
+- **A long piece of machine prose is new for the magazine, so every line carries its evidence.** The
+  profile is stored as lines (sentences, the epithet, each date, each figure), each citing one or more
+  stored sources with a quote. Code finds every quote word for word in the fetched text (no match, no
+  ship); every number in a line must be in its quotes, rounded no finer than written, figures spelled
+  as words included (fail-closed, as chart annotations are traced to rows); headings are labels with no
+  figures in them; every line passes `checkStyle`. A draft that fails any of these is refused whole,
+  so the writer fixes it rather than the Desk guessing which half to keep. The judge then reads each
+  line against its quotes and the text around them; whatever it does not call "supported" (or an error,
+  or no verdict) is set aside unseen. The editor keeps or cuts each line and approves the whole; any
+  change clears the approval; publish checks it all again against the stored texts.
+- **The label is generated, never typed**: "Written by Claude from Ramachandra Guha’s *India After
+  Gandhi*, the Election Commission of India’s *Report…*" comes from the sources the printed lines cite
+  (`lifeByline`), and a source that no printed line cites drops out of it. The bundle refuses a listed
+  source nothing cites, a line without a citation, and a source that does not name its maker.
+- **The quotes stay on the Desk.** The bundle carries each line's source and place (a page, "PDF
+  p. 78"), not the passages: forty passages from one chapter would add up to more of Guha than the
+  excerpt guide allows. Readers get the sources named in the margin and linked in "Written from".
+- **Sources are fetched by the Desk, never supplied as text.** A Life names its sources (maker,
+  title, kind, where it was read, the work itself); the Desk fetches each through the article fetch
+  order and keeps the text privately. A source too large or slow to fetch (the 1955 report is a
+  24 MB scan that took 102 s to download) can be uploaded by the editor and is read in place of the
+  link, which stays the source readers see, as for any item's PDF.
+- **Long machine prose takes a deeper blue** (`machineText`: `#2B3593` light, `#C3C8FA` dark, about
+  10:1 and 12:1 on the ground against 6:1 and 9:1 for the margin blue). The editor found the margin
+  blue hard to read at length. It stays blue and stays sans, so the rule that blue sans is the machine
+  holds. Rejected for now: setting the profile in ink with a blue rule down its edge (the easiest to
+  read, but the page would stop looking like machine text at a glance). Both were shown to the editor.
+- **The portrait is the item's plate**, chosen through the existing picture route with its maker,
+  holder and licence and copied to our files at publish. Sen's is the National Archives (UK)
+  Colonial Office photograph of 1953 (CO 1069/14, Open Government Licence v1.0), shown as the file
+  sheet it was found on. The page is complete without one.
+- **Profiles are written in an editorial session for now** (`npm run editorial -- life`, `life-draft`),
+  with the writer recorded, as session-written margin notes are. No pipeline drafter yet: one profile
+  per Haul is a session's work, and the rules above hold whoever writes it.
+- **Unknown makers are credited without "By"**: "Unknown photographer, 1953." (`creditLine`).

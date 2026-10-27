@@ -296,7 +296,6 @@ export function assembleLife(draft: LifeDraft): { life?: Life; problems: string[
     sources: [],
     reading: draft.reading.map((r): LifeReading => ({ ...r })),
     writer: draft.writer.trim(),
-    ...(draft.portrait ? { portrait: draft.portrait } : {}),
   };
   const cited = new Set(lifeCites(life).map((c) => c.source));
   life.sources = draft.sources.filter((s) => cited.has(s.id)).map((s): LifeSource => ({ ...s }));

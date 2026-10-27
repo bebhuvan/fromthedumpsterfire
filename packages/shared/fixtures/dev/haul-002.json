@@ -1113,18 +1113,18 @@
       "url": "https://www.eci.gov.in/EBooks/Leap-of-Faith/"
      }
     ],
-    "writer": "Claude",
-    "portrait": {
-     "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/The_National_Archives_UK_-_CO_1069-14-8.jpg",
-     "width": 759,
-     "height": 774,
-     "caption": "Sukumar Sen in 1953, on a Colonial Office file sheet from the time of the Sudan election.",
-     "credit": "The National Archives UK, CO 1069/14",
-     "licence": "Open Government Licence v1.0",
-     "creator": "Unknown photographer",
-     "date": "1953",
-     "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_National_Archives_UK_-_CO_1069-14-8.jpg"
-    }
+    "writer": "Claude"
+   },
+   "plate": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/The_National_Archives_UK_-_CO_1069-14-8.jpg",
+    "width": 759,
+    "height": 774,
+    "caption": "Sukumar Sen in 1953, on a Colonial Office file sheet from the time of the Sudan election.",
+    "credit": "The National Archives UK, CO 1069/14",
+    "licence": "Open Government Licence v1.0",
+    "creator": "Unknown photographer",
+    "date": "1953",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:The_National_Archives_UK_-_CO_1069-14-8.jpg"
    }
   },
   {
