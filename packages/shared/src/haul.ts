@@ -194,6 +194,82 @@ export function videoHref(b: Extract<Block, { kind: 'video' }>): string {
   return b.provider === 'youtube' ? `https://www.youtube.com/watch?v=${b.id}${t ? `&t=${t}s` : ''}` : `https://vimeo.com/${b.id}${t ? `#t=${t}s` : ''}`;
 }
 
+/**
+ * Lives (added 2026-10-27): a profile of one person, written by a model from named, fetched sources.
+ * Machine prose throughout, so every factual line carries citations to the sources listed with it;
+ * the Desk checked each citation word for word against the stored text (and every figure in the line
+ * against its quotes) before the editor approved the profile. The quotes themselves stay on the Desk:
+ * the bundle carries where each line comes from, not a second copy of the books (see life.ts).
+ */
+export interface LifeCite {
+  /** The id of one of life.sources. */
+  source: string;
+  /** Where in it: a chapter, page or section, as a reader would look it up. */
+  at?: string;
+}
+
+/** One machine sentence or caption and where it comes from. Nothing uncited ships. */
+export interface LifeLine {
+  text: string;
+  cites: LifeCite[];
+}
+
+export interface LifeSource {
+  id: string;
+  /** Who made it, named: "Ramachandra Guha", "Election Commission of India". */
+  author: string;
+  title: string;
+  /** Book, report, article or reference: set in italic when it is a whole work. */
+  kind: 'book' | 'report' | 'article' | 'reference';
+  publisher?: string;
+  year?: string;
+  /** Where the text was read (fetched by code), e.g. an extract reproduced by a magazine. */
+  url: string;
+  /** How it was read when that is not the work itself: "An extract at The Caravan, 2014". */
+  via?: string;
+  /** The work itself, to buy or borrow, when the text was read elsewhere. */
+  workUrl?: string;
+}
+
+/** A book or document for the reader to go on to. Named, never only linked. */
+export interface LifeReading {
+  author: string;
+  title: string;
+  kind: LifeSource['kind'];
+  publisher?: string;
+  year?: string;
+  url?: string;
+}
+
+/**
+ * The shape of a Life, over the type of its lines and citations: the bundle's Life below, and the
+ * Desk's draft (life.ts), whose lines carry their verbatim quotes and the editor's ticks.
+ */
+export interface LifeShape<L, C> {
+  /** The person, as they are known. */
+  name: string;
+  born?: { year: number; place?: string; cites: C[] };
+  died?: { year: number; place?: string; cites: C[] };
+  /** One line saying who they were: "India's first Chief Election Commissioner". */
+  epithet: L;
+  /** The profile in short titled sections. Headings are labels and carry no facts or figures. */
+  sections: Array<{ heading: string; paragraphs: L[][] }>;
+  /** The person's own words, verbatim as a source records them: the page's pull quote. */
+  words?: { text: string; context: L; cites: C[] };
+  /** A life in dates. */
+  dates: Array<{ year: string; line: L }>;
+  /** A few numbers, each traced to its source: "176 million" over what it counts. */
+  figures?: { title: string; rows: Array<{ value: string; line: L }> };
+  sources: LifeSource[];
+  reading: LifeReading[];
+  /** The model that wrote it, as the label names it: "Claude". */
+  writer: string;
+  /** A portrait, only if it is public domain or openly licensed, credited like any picture. */
+  portrait?: Plate;
+}
+
+export type Life = LifeShape<LifeLine, LifeCite>;
+
 export interface Item {
   id: string;
   type: ContentType;
@@ -225,6 +301,8 @@ export interface Item {
   place?: string;
   /** For a book: its id on the shelf (shelf.ts), where the editor's notes on it live. */
   shelf?: string;
+  /** For a Life: the profile (added 2026-10-27). */
+  life?: Life;
 }
 
 /** The year a work comes from: its own year if given, else the first year in its date, else the rhyme's "then". */
@@ -294,6 +372,7 @@ export function sourceAction(item: Pick<Item, 'type' | 'creator' | 'source' | 'm
   const url = item.media?.url ?? item.source.url;
   // Things that are not read: a tool is visited, a picture seen, a book looked up.
   if (item.type === 'tool') return `Visit ${titled}`;
+  if (item.type === 'life') return place ? `Read ${who ? `${who}’s ` : ''}${place}` : 'The sources';
   if (item.type === 'chart') return place ? `The data at ${place}` : 'The data behind the chart';
   if (item.type === 'image') return place ? `See it in ${place}` : 'See the original';
   if (item.type === 'book') return place ? `The book at ${place}` : 'More on the book';

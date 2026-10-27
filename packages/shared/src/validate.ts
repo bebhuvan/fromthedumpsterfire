@@ -2,11 +2,13 @@
 // It checks the shape (bundles are JSON assembled from a database, so types alone prove nothing)
 // and the invariants in test/fixtures.test.ts, plus the house rules that apply to published copy.
 
-import type { Block, Haul, HaulIndex, Item, Title } from './haul';
+import type { Block, Haul, HaulIndex, Item, Life, LifeCite, LifeLine, Title } from './haul';
 import { AUDIO_FORMATS, BLOCK_KINDS, BUNDLE_VERSION, embedSrc, haulSlug } from './haul';
 import { CODE_ROLES, EDITIONS, SWATCHES as SWATCH_LIST, typeSwatch } from './tokens';
 import { checkStyle } from './style';
 import { validateChart } from './charts/validate';
+import { figuresIn } from './charts/figures';
+import { lifeLines, wordNumbersIn } from './life';
 
 export interface BundleIssue {
   /** JSON path to the offending value, e.g. "items[2].excerpt.highlight". */
@@ -217,6 +219,110 @@ function checkItem(c: Collector, item: Item, p: string) {
   if (c.str(item.shelf, `${p}.shelf`, { optional: true }) && !/^[a-z0-9][a-z0-9-]{0,80}$/.test(item.shelf)) c.err(`${p}.shelf`, 'shape', 'a shelf id');
   if (item.type === 'image' && typeof item.creator === 'string' && !item.creator.trim()) c.err(`${p}.creator`, 'credit', 'a picture names who made it');
   if (item.blocks !== undefined && c.arr(item.blocks, `${p}.blocks`)) item.blocks.forEach((b, k) => checkBlock(c, b, `${p}.blocks[${k}]`));
+  if (item.type === 'life') {
+    if (item.life === undefined) c.err(`${p}.life`, 'life', 'a Life carries its profile');
+    else checkLife(c, item.life, `${p}.life`);
+  } else if (item.life !== undefined) c.err(`${p}.life`, 'life', 'only a Life carries a profile');
+}
+
+const LIFE_KINDS = ['book', 'report', 'article', 'reference'];
+
+/**
+ * A Life is machine prose from named sources (life.ts). Here: every line cites a listed source, every
+ * source listed is cited (the label names exactly what it was written from) and names its maker,
+ * every line passes the style check, headings carry no figures, a portrait names its maker. The
+ * quotes and figures were checked against the stored sources on the Desk and again at publish.
+ */
+function checkLife(c: Collector, life: Life, p: string) {
+  if (!c.obj(life, p)) return;
+  c.str(life.name, `${p}.name`);
+  c.str(life.writer, `${p}.writer`);
+  const ids = new Set<string>();
+  if (c.arr(life.sources, `${p}.sources`)) {
+    if (!life.sources.length) c.err(`${p}.sources`, 'life', 'a Life is written from named sources');
+    life.sources.forEach((s, k) => {
+      const sp = `${p}.sources[${k}]`;
+      if (!c.obj(s, sp)) return;
+      if (c.str(s.id, `${sp}.id`)) {
+        if (ids.has(s.id)) c.err(`${sp}.id`, 'life', 'source ids are unique');
+        ids.add(s.id);
+      }
+      if (typeof s.author !== 'string' || !s.author.trim()) c.err(`${sp}.author`, 'credit', 'every source names who made it');
+      c.str(s.title, `${sp}.title`);
+      if (!LIFE_KINDS.includes(s.kind)) c.err(`${sp}.kind`, 'shape', `one of ${LIFE_KINDS.join(', ')}`);
+      c.str(s.publisher, `${sp}.publisher`, { optional: true });
+      c.str(s.year, `${sp}.year`, { optional: true });
+      c.https(s.url, `${sp}.url`);
+      c.str(s.via, `${sp}.via`, { optional: true });
+      if (s.workUrl !== undefined) c.https(s.workUrl, `${sp}.workUrl`);
+    });
+  }
+  const used = new Set<string>();
+  const cites = (v: unknown, path: string) => {
+    if (!c.arr(v, path)) return;
+    if (!v.length) c.err(path, 'citation', 'every line of a Life cites a source');
+    (v as LifeCite[]).forEach((x, k) => {
+      if (!c.obj(x, `${path}[${k}]`)) return;
+      if (!ids.has(x.source)) c.err(`${path}[${k}].source`, 'citation', `no source "${String(x.source)}" in this Life`);
+      used.add(x.source);
+      c.str(x.at, `${path}[${k}].at`, { optional: true });
+    });
+  };
+  const line = (l: LifeLine, path: string) => {
+    if (!c.obj(l, path)) return;
+    c.str(l.text, `${path}.text`);
+    c.machineProse(l.text, `${path}.text`);
+    cites(l.cites, `${path}.cites`);
+  };
+  if (c.arr(life.sections, `${p}.sections`)) {
+    if (!life.sections.length) c.err(`${p}.sections`, 'life', 'the profile has at least one section');
+    life.sections.forEach((s, k) => {
+      const sp = `${p}.sections[${k}]`;
+      if (!c.obj(s, sp)) return;
+      if (c.str(s.heading, `${sp}.heading`)) {
+        if (figuresIn(s.heading).length || wordNumbersIn(s.heading).length) c.err(`${sp}.heading`, 'life', 'headings are labels: no figures in them');
+        c.machineProse(s.heading, `${sp}.heading`);
+      }
+      if (c.arr(s.paragraphs, `${sp}.paragraphs`)) s.paragraphs.forEach((para, j) => c.arr(para, `${sp}.paragraphs[${j}]`) && !para.length && c.err(`${sp}.paragraphs[${j}]`, 'shape', 'an empty paragraph'));
+    });
+  }
+  if (!c.obj(life.epithet, `${p}.epithet`)) return;
+  if (!c.arr(life.dates, `${p}.dates`)) return;
+  life.dates.forEach((d, k) => c.obj(d, `${p}.dates[${k}]`) && c.str(d.year, `${p}.dates[${k}].year`));
+  if (c.obj(life.figures, `${p}.figures`, true)) {
+    c.str(life.figures.title, `${p}.figures.title`);
+    if (c.arr(life.figures.rows, `${p}.figures.rows`))
+      life.figures.rows.forEach((r, k) => {
+        if (c.obj(r, `${p}.figures.rows[${k}]`) && c.str(r.value, `${p}.figures.rows[${k}].value`) && !figuresIn(r.value).length && !wordNumbersIn(r.value).length)
+          c.err(`${p}.figures.rows[${k}].value`, 'life', 'a figure');
+      });
+  }
+  if (c.obj(life.words, `${p}.words`, true)) {
+    c.str(life.words.text, `${p}.words.text`);
+    cites(life.words.cites, `${p}.words.cites`);
+  }
+  for (const x of lifeLines(life)) line(x.line, `${p}.${x.path}`);
+  for (const end of ['born', 'died'] as const) {
+    const e = life[end];
+    if (!c.obj(e, `${p}.${end}`, true)) continue;
+    if (!Number.isInteger(e.year)) c.err(`${p}.${end}.year`, 'shape', 'a whole year');
+    c.str(e.place, `${p}.${end}.place`, { optional: true });
+    cites(e.cites, `${p}.${end}.cites`);
+  }
+  if (c.arr(life.reading, `${p}.reading`))
+    life.reading.forEach((r, k) => {
+      const rp = `${p}.reading[${k}]`;
+      if (!c.obj(r, rp)) return;
+      if (typeof r.author !== 'string' || !r.author.trim()) c.err(`${rp}.author`, 'credit', 'further reading names who made it');
+      c.str(r.title, `${rp}.title`);
+      if (!LIFE_KINDS.includes(r.kind)) c.err(`${rp}.kind`, 'shape', `one of ${LIFE_KINDS.join(', ')}`);
+      if (r.url !== undefined) c.https(r.url, `${rp}.url`);
+    });
+  for (const id of ids) if (!used.has(id)) c.err(`${p}.sources`, 'life', `"${id}" is listed but nothing cites it; the label names only what the profile was written from`);
+  if (life.portrait !== undefined) {
+    c.plate(life.portrait, `${p}.portrait`);
+    if (typeof life.portrait?.creator !== 'string' || !life.portrait.creator.trim()) c.err(`${p}.portrait.creator`, 'credit', 'a picture names who made it');
+  }
 }
 
 function checkBlock(c: Collector, b: Block, p: string) {

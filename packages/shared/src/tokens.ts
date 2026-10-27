@@ -96,6 +96,7 @@ export const typeSwatch = {
   book: 'lilac',
   tool: 'mint',
   chart: 'sky',
+  life: 'lilac',
 } as const satisfies Record<string, Swatch>;
 
 export type ContentType = keyof typeof typeSwatch;
@@ -119,6 +120,7 @@ export const typeLabel: Record<ContentType, string> = {
   book: 'Book',
   tool: 'Tool',
   chart: 'Chart',
+  life: 'Lives',
 };
 
 /**

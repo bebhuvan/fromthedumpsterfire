@@ -16,6 +16,7 @@
     "./highlight": "./src/highlight.ts",
     "./fingerprint": "./src/fingerprint.ts",
     "./shelf": "./src/shelf.ts",
+    "./life": "./src/life.ts",
     "./about": "./src/about.ts",
     "./charts": "./src/charts/index.ts",
     "./charts/glosses": "./src/charts/glosses.ts",
