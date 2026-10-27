@@ -5,9 +5,9 @@
 import type { Item } from '@fdf/shared/haul';
 import type { ContentType } from '@fdf/shared/tokens';
 
-export type Form = 'opening' | 'offprint' | 'transcript' | 'broadside' | 'facing' | 'card' | 'page' | 'epigraph' | 'letter' | 'clipping' | 'print' | 'jacket' | 'label' | 'figure';
+export type Form = 'opening' | 'offprint' | 'transcript' | 'broadside' | 'facing' | 'card' | 'page' | 'epigraph' | 'letter' | 'clipping' | 'print' | 'jacket' | 'label' | 'figure' | 'life';
 
-export function formOf(item: Pick<Item, 'type' | 'excerpt' | 'plate' | 'rhyme' | 'blocks'>): Form {
+export function formOf(item: Pick<Item, 'type' | 'excerpt' | 'plate' | 'rhyme' | 'blocks' | 'life'>): Form {
   switch (item.type) {
     case 'paper':
       return 'offprint';
@@ -38,6 +38,8 @@ export function formOf(item: Pick<Item, 'type' | 'excerpt' | 'plate' | 'rhyme' |
       return 'page';
     case 'chart':
       return item.blocks?.some((b) => b.kind === 'chart') ? 'figure' : 'opening';
+    case 'life':
+      return item.life ? 'life' : 'opening';
     default:
       return 'opening';
   }
@@ -59,6 +61,7 @@ export const formName: Record<Form, string> = {
   jacket: 'The jacket',
   label: 'Specimen label',
   figure: 'The figure',
+  life: 'The life',
 };
 
 /** Index form of a title: "The Great Stink" becomes "Great Stink," with "The" set after it. */
@@ -93,5 +96,6 @@ export const formGuide: { type: ContentType; name: string; form: Form; how: stri
   { type: 'image', name: 'Pictures', form: 'print', how: 'as mounted prints with a museum label.', detail: 'The picture in its mount, then a label with the maker, the date, the holder and the licence.' },
   { type: 'book', name: 'Books', form: 'jacket', how: 'as their jackets, with a line from inside.', detail: 'The jacket set in type, a line from the book, and why it is on the desk.' },
   { type: 'tool', name: 'Tools', form: 'label', how: 'as specimen labels: what it is, who makes it, in its own words.', detail: 'A ruled label: the name, the maker, what it runs on, its own description and where to get it.' },
+  { type: 'life', name: 'Lives', form: 'life', how: 'as a life: the name, a profile with every source named, a life in dates.', detail: 'One person per Haul: the name set large, a profile written by the machine from named sources and checked line by line, their own words, a life in dates and further reading.' },
   { type: 'chart', name: 'Charts', form: 'figure', how: 'as figures: the chart drawn from its data, the numbers beside it.', detail: 'The chart drawn large from its own rows, its source and licence under it, and the numbers a tap away.' },
 ];

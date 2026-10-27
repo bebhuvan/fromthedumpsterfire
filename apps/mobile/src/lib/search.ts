@@ -1,6 +1,7 @@
 // On-device search over every Haul on the phone. A few hundred items at most, so a plain scan with
 // field weights is instant and needs no index library or server.
 
+import { lifeParagraphs } from '@fdf/shared/life';
 import type { Haul, Item } from '@fdf/shared/haul';
 
 export interface Hit {
@@ -33,6 +34,7 @@ function fields(item: Item): Field[] {
     { text: item.marginalia.map((m) => m.text).join(' '), weight: 1, snippet: true },
     { text: (item.ideas ?? []).map((m) => m.text).join(' '), weight: 1, snippet: true },
     { text: item.connections.map((c) => `${c.title} ${c.note}`).join(' '), weight: 1, snippet: true },
+    { text: item.life ? [item.life.epithet.text, ...lifeParagraphs(item.life)].join(' ') : '', weight: 1, snippet: true },
   ];
 }
 

@@ -25,6 +25,7 @@ import { Screen } from '@/ui/screen';
 import { Blocks, Credit, Picture } from '@/ui/Blocks';
 import { Chart } from '@/ui/Chart';
 import { firstChart } from '@/lib/chart';
+import { LifeForm } from '@/ui/Life';
 
 /** Index form of a two-word name: "Joseph Bazalgette" becomes "Bazalgette, Joseph". */
 const inverted = (n: string) => {
@@ -62,6 +63,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
     jacket: <Jacket item={item} />,
     label: <Label item={item} haul={haul} n={at + 1} />,
     figure: <Figure item={item} />,
+    life: item.life ? <LifeForm item={item} life={item.life} why={<Why item={item} />} /> : null,
   };
   // The figure form sets its first chart large itself; the rest follow as blocks.
   const lead = form === 'figure' ? firstChart(item.blocks) : undefined;

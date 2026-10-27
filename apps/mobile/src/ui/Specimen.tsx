@@ -11,6 +11,7 @@ import { pictureUri } from '@/lib/pictures';
 import { readKey, useReader } from '@/lib/store';
 import { formOf, headword, speaker, titleText, type Form } from '@/lib/forms';
 import { Highlighted, Title } from './type';
+import { lifeYears } from '@fdf/shared/life';
 
 const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim();
 const yearOf = (d: string) => /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(d)?.[1] ?? d;
@@ -109,6 +110,17 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
   switch (form) {
     case 'figure':
       return <FigureSpecimen item={item} n={n} />;
+    case 'life': {
+      // A Life: the name set large, the years, the epithet in the machine's blue.
+      const life = item.life!;
+      return (
+        <View style={{ borderTopWidth: 2, borderTopColor: p.ink, paddingTop: 10 }}>
+          <Text maxFontSizeMultiplier={1} style={[st.lifeName, { color: p.ink }]}>{life.name}</Text>
+          {lifeYears(life) ? <Text style={[st.lifeYears, { color: p.ink2 }]}>{lifeYears(life)}</Text> : null}
+          <Text numberOfLines={3} style={[st.small, { color: p.machine, marginTop: 6, fontFamily: fonts.sansMedium }]}>{life.epithet.text}</Text>
+        </View>
+      );
+    }
     case 'facing': {
       const r = item.rhyme!;
       return (
@@ -260,6 +272,8 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
 
 const hair = StyleSheet.hairlineWidth;
 const st = StyleSheet.create({
+  lifeName: { fontFamily: fonts.display, fontSize: 44, lineHeight: 44, letterSpacing: -1.4 },
+  lifeYears: { fontFamily: fonts.displayItalic, fontSize: 20, lineHeight: 26 },
   cap: { flexDirection: 'row', gap: 10, marginTop: 10 },
   capN: { fontFamily: fonts.displayRegular, fontSize: 18, lineHeight: 21, includeFontPadding: false, fontVariant: ['lining-nums'] },
   capType: { fontFamily: fonts.sansMedium, fontSize: 12.5, lineHeight: 19 },
