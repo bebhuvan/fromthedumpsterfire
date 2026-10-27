@@ -1,0 +1,156 @@
+---
+// The life (docs/DESIGN.md): a profile of one person, written by the machine from named sources.
+// The name set large is the page's loud thing; the editor's note comes first in their serif; the
+// label names the machine and every source it wrote from (lifeByline, never typed); the profile is
+// the machine's sans in its deeper reading blue, each paragraph's sources and pages in the margin;
+// the person's own words as the pull quote; numbers as a ledger; a life in dates; further reading;
+// and what it was written from. A portrait only if one cleared the credit rule; complete without.
+// Mirrors apps/mobile/src/screens/ItemScreen.tsx (LifeForm).
+import type { Item, Life, LifeLine } from '@fdf/shared/haul';
+import { lifeByline, lifeYears, sourceKey, whereFrom } from '@fdf/shared/life';
+import Voice from './Voice.astro';
+import Credit from './Credit.astro';
+import { safeHref } from '../lib/site';
+
+interface Props {
+  item: Item & { life: Life };
+  n: number;
+  haulLabel: string;
+}
+const { item, n, haulLabel } = Astro.props;
+const life = item.life;
+const years = lifeYears(life);
+const byline = lifeByline(life);
+const sourceOf = new Map(life.sources.map((s) => [s.id, s]));
+const portrait = life.portrait ? { ...life.portrait, src: safeHref(life.portrait.url) } : undefined;
+const where = (lines: LifeLine[]) => whereFrom(life, lines);
+const wholeWork = (kind: string) => kind === 'book' || kind === 'report';
+// The pull quote follows the second section and the numbers the third (a short profile puts both
+// after its last); the order of a Life's sections is the writer's to make that land.
+const quoteAfter = Math.min(1, life.sections.length - 1);
+const wordsBy = life.words ? [...new Set(life.words.cites.map((c) => c.source))].map((id) => sourceOf.get(id)).filter((s) => s !== undefined) : [];
+const figuresAfter = Math.min(2, life.sections.length - 1);
+---
+<header class="wrap g lf-head">
+  <p class="m meta"><span><span class="key" aria-hidden="true"></span>Lives</span><span>{haulLabel}, item {n}</span></p>
+  <h1 class="mc lf-name" id="item-title">{life.name}</h1>
+  {years ? <p class="mc lf-years"><span class="sr">Lived </span>{years}</p> : null}
+  <p class="c lf-epi">{life.epithet.text}</p>
+  {portrait?.src ? (
+    <figure class="lf-portrait">
+      <img src={portrait.src} width={portrait.width} height={portrait.height} alt={portrait.caption || `A portrait of ${life.name}`} decoding="async" />
+      <figcaption><Credit plate={portrait} /></figcaption>
+    </figure>
+  ) : null}
+</header>
+
+<section class="wrap g why" aria-labelledby="why-title">
+  <div class="m"><h2 class="mh" id="why-title">Why it's here</h2></div>
+  <div class="c">
+    <p class="standfirst">{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+    {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
+  </div>
+</section>
+
+<div class="wrap g lf-label">
+  <p class="c">
+    <span class="lf-lead">{byline.lead}</span>{' '}
+    {byline.parts.map((p, i) => (
+      <>{i > 0 ? (i === byline.parts.length - 1 ? ' and ' : ', ') : ''}{p.author} {p.italic ? <cite class="wt">{p.title}</cite> : <>“{p.title}”</>}</>
+    ))}.
+  </p>
+</div>
+
+{life.sections.map((s, i) => (
+  <>
+    <section class="wrap lf-sec" aria-labelledby={`lf-s${i}`}>
+      <div class="g"><h2 class="c lf-h" id={`lf-s${i}`}>{s.heading}</h2></div>
+      {s.paragraphs.map((p) => (
+        <div class="g lf-p">
+          <p class="c lf-text">{p.map((l) => l.text).join(' ')}</p>
+          <p class="m lf-cite"><span class="sr">Sources: </span>{where(p)}</p>
+        </div>
+      ))}
+    </section>
+    {life.words && i === quoteAfter ? (
+      <figure class="wrap g lf-words">
+        <div class="c">
+          <blockquote class="pq lf-q"><p>{life.words.text.charAt(0).toUpperCase() + life.words.text.slice(1)}</p></blockquote>
+          <figcaption class="lf-wcap">
+            <span class="lf-ctx">{life.words.context.text}</span>
+            <span class="pq-cap">
+              {wordsBy.map((s) => (
+                <>As {s.author} records it{wholeWork(s.kind) ? <> in <cite class="wt">{s.title}</cite></> : null}, </>
+              ))}matched word for word
+            </span>
+          </figcaption>
+        </div>
+      </figure>
+    ) : null}
+    {life.figures && i === figuresAfter ? (
+      <section class="wrap g lf-fig" aria-labelledby="lf-fig">
+        <h2 class="m mh lf-mh" id="lf-fig">{life.figures.title}</h2>
+        <dl class="c lf-ledger">
+          {life.figures.rows.map((r) => (
+            <div><dt>{r.value}</dt><dd><span>{r.line.text}</span><span class="lf-k"><span class="sr">Source: </span>{where([r.line])}</span></dd></div>
+          ))}
+        </dl>
+      </section>
+    ) : null}
+  </>
+))}
+
+{life.dates.length ? (
+  <section class="wrap lf-dates" aria-labelledby="lf-dates">
+    <div class="g"><h2 class="m mh" id="lf-dates">A life in dates</h2></div>
+    <ol>
+      {life.dates.map((d) => (
+        <li class="g"><span class="m lf-y">{d.year}</span><span class="c lf-e">{d.line.text}</span></li>
+      ))}
+    </ol>
+  </section>
+) : null}
+
+{life.reading.length ? (
+  <section class="wrap g lf-read" aria-labelledby="lf-read">
+    <h2 class="m mh" id="lf-read">Further reading</h2>
+    <ul class="c">
+      {life.reading.map((r) => {
+        const href = safeHref(r.url);
+        return (
+          <li>
+            {href ? <a class="lf-rt" href={href} rel="noopener noreferrer" target="_blank">{r.title}<span class="sr"> (opens in a new tab)</span></a> : <span class="lf-rt">{r.title}</span>}
+            <span class="lf-ra">{r.author}{r.publisher ? `. ${r.publisher}` : ''}{r.year ? `, ${r.year}` : ''}.</span>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+) : null}
+
+<section class="wrap g lf-src" aria-labelledby="lf-src">
+  <h2 class="m mh" id="lf-src">Written from</h2>
+  <div class="c">
+    <ol>
+      {life.sources.map((s) => {
+        const href = safeHref(s.url);
+        const work = safeHref(s.workUrl);
+        return (
+          <li>
+            <span class="lf-sk">{sourceKey(s)}</span>
+            <span>
+              {s.author}, {wholeWork(s.kind) ? <cite class="wt">{s.title}</cite> : <>“{s.title}”</>}{s.publisher ? `, ${s.publisher}` : ''}{s.year ? `, ${s.year}` : ''}.{s.via ? ` ${s.via}.` : ''}{' '}
+              {href ? <a href={href} rel="noopener noreferrer" target="_blank">Where we read it<span class="sr"> (opens in a new tab)</span></a> : null}
+              {work ? <>{' '}<a href={work} rel="noopener noreferrer" target="_blank">The {s.kind === 'book' ? 'book' : 'work'}<span class="sr"> (opens in a new tab)</span></a></> : null}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+    <p class="lf-how">
+      {life.writer} wrote this profile from these sources only. Code found every cited passage word for word in the text we fetched, and checked every number
+      against it; a second model read each sentence against its passages, and anything it could not confirm was left out. The editor read every sentence and
+      approved the profile before it was published.
+    </p>
+  </div>
+</section>

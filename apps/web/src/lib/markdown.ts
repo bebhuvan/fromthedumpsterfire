@@ -6,6 +6,7 @@
 import { haulSlug, type Haul, type Item, type Thread } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import { formName, formOf } from './forms';
+import { lifeBylineText, lifeYears, whereFrom } from '@fdf/shared/life';
 import { creditParts, describeChart, unitsLine } from '@fdf/shared/charts/glosses';
 import { collectThreads } from './store';
 import {
@@ -87,6 +88,21 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
       `- **Data**: ${c.data.rows.length} rows, on the item page`,
     );
   });
+
+  // A Life: the machine's profile, labelled with what it was written from, each paragraph's sources.
+  if (item.life) {
+    const life = item.life;
+    lines.push('', `${h2} ${life.name}${lifeYears(life) ? ` (${lifeYears(life)})` : ''}: ${life.epithet.text} (Machine)`, '', `*${lifeBylineText(life)}*`);
+    for (const s of life.sections) {
+      lines.push('', `${h3} ${s.heading}`);
+      for (const p of s.paragraphs) lines.push('', `${p.map((l) => l.text).join(' ')} *(${whereFrom(life, p)})*`);
+    }
+    if (life.words) lines.push('', `> "${life.words.text}"`, `> — ${life.words.context.text} *(${whereFrom(life, [life.words.context])})*`);
+    if (life.figures) lines.push('', `${h3} ${life.figures.title}`, '', ...life.figures.rows.map((r) => `- **${r.value}** ${r.line.text} *(${whereFrom(life, [r.line])})*`));
+    if (life.dates.length) lines.push('', `${h3} A life in dates`, '', ...life.dates.map((d) => `- **${d.year}** ${d.line.text}`));
+    if (life.reading.length) lines.push('', `${h3} Further reading`, '', ...life.reading.map((r) => `- ${r.author}, *${r.title}*${r.publisher ? `, ${r.publisher}` : ''}${r.year ? `, ${r.year}` : ''}${r.url && safeHref(r.url) ? ` (${safeHref(r.url)})` : ''}`));
+    lines.push('', `${h3} Written from`, '', ...life.sources.map((s) => `- ${s.author}, *${s.title}*${s.year ? `, ${s.year}` : ''}${s.via ? `. ${s.via}` : ''}: ${safeHref(s.url) ?? ''}`));
+  }
 
   if (item.rhyme) {
     lines.push(

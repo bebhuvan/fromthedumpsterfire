@@ -3,6 +3,7 @@
 // prefix-match a word in the item, and the score sums the best field weight for each word, with a
 // small bonus for whole-word matches. A few hundred items at most, so a plain scan is instant.
 
+import { lifeParagraphs } from '@fdf/shared/life';
 import type { Haul, Item } from '@fdf/shared/haul';
 import type { ContentType } from '@fdf/shared/tokens';
 
@@ -49,6 +50,7 @@ function fields(item: Item): Field[] {
     [(item.ideas ?? []).map((m) => m.text).join(' '), 1, 1],
     [[(item.ideas ?? []).map((m) => m.reaction ?? '').join(' '), item.startHere?.note ?? ''].join(' '), 1.5, 1],
     [item.connections.map((c) => `${c.title} ${c.note}`).join(' '), 1, 1],
+    [item.life ? [item.life.epithet.text, ...lifeParagraphs(item.life)].join(' ') : '', 1, 1],
   ];
   return f.filter(([text]) => text.trim().length > 0);
 }

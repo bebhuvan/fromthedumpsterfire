@@ -405,5 +405,7 @@ export function creditLine(plate: Pick<Plate, 'credit' | 'licence' | 'creator' |
   const by = opts.noBy ? '' : (plate.creator || opts.maker || '').trim();
   const holder = plate.credit.trim() && plate.credit.trim() !== by ? plate.credit.trim() : '';
   const licence = plate.licence.charAt(0).toUpperCase() + plate.licence.slice(1);
-  return [by ? `By ${by}${plate.date ? `, ${plate.date}` : ''}.` : '', holder ? `${holder}.` : '', `${licence}.`].filter(Boolean).join(' ');
+  // "Unknown photographer, 1953." reads as a credit; "By Unknown photographer" does not.
+  const made = by ? `${/^(unknown|anonymous)\b/i.test(by) ? by.charAt(0).toUpperCase() + by.slice(1) : `By ${by}`}${plate.date ? `, ${plate.date}` : ''}.` : '';
+  return [made, holder ? `${holder}.` : '', `${licence}.`].filter(Boolean).join(' ');
 }

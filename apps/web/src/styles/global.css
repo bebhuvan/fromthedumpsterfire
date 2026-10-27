@@ -883,3 +883,69 @@ blockquote > p + p { margin-top: 0.65em; }
 .sp-fig-svg { display: block; width: 100%; height: auto; }
 .sp-fig-src { font: 400 12px/1.4 var(--sans); color: var(--ink2); }
 @media (min-width: 700px) { .sp-figure { grid-column: span 7; } }
+
+/* ---------- The life (Lives): one person, the machine's profile from named sources. ---------- */
+/* The name set large is the loud thing; the years under it in the display italic, a headstone's line. */
+.lf-head { padding-block: clamp(20px, 5vw, 56px) 4px; }
+.lf-name { font: 500 clamp(64px, 20vw, 168px)/0.86 var(--display); letter-spacing: -0.035em; margin-top: 14px; text-wrap: balance; }
+.lf-years { font: 400 clamp(30px, 7vw, 64px)/1 var(--display); font-style: italic; color: var(--ink2); font-variant-numeric: lining-nums; margin-top: 0.22em; }
+.lf-epi { font: 500 17px/1.4 var(--sans); color: var(--machine); margin-top: 18px; max-width: 30ch; }
+/* A portrait only when it cleared the credit rule: small, in the air beside the name on wide screens. */
+.lf-portrait { margin-top: 22px; max-width: 240px; }
+.lf-portrait img { width: 100%; outline: 1px solid var(--rule); outline-offset: -1px; }
+.lf-portrait figcaption { margin-top: 8px; display: grid; gap: 3px; font: 400 12px/1.45 var(--sans); color: var(--ink2); }
+@media (min-width: 1000px) { .lf-portrait { grid-column: 3; grid-row: 2 / span 3; margin-top: 18px; max-width: 280px; } }
+/* The label: a rule, then the machine and every source it wrote from. Whole works in the serif. */
+.lf-label p { border-top: 2px solid var(--ink); padding-top: 12px; font: 400 15px/1.5 var(--sans); color: var(--machine); }
+.lf-lead { font-weight: 600; }
+.wt { font-family: var(--serif); font-style: italic; color: var(--ink); font-size: 1.06em; }
+/* The profile: the machine's sans in its reading blue; each paragraph's sources in the margin. */
+.lf-sec { padding-top: 30px; }
+.lf-h { font: 600 18px/1.3 var(--sans); color: var(--machine-text); margin-bottom: 10px; }
+.lf-p { margin-bottom: 18px; row-gap: 6px; }
+.lf-text { font: 400 18px/1.62 var(--sans); color: var(--machine-text); }
+.lf-cite { font: 400 13px/1.5 var(--sans); color: var(--machine); }
+@media (min-width: 1000px) { .lf-cite { grid-row: 1; text-align: right; padding-top: 0.3em; } }
+/* The person's own words: the pull quote, larger, in the display italic. */
+.lf-words { padding-block: 34px 26px; }
+.lf-q p { font: 400 clamp(32px, 7.4vw, 54px)/1.08 var(--display); font-style: italic; letter-spacing: -0.012em; }
+.lf-wcap { display: grid; gap: 4px; margin-top: 12px; }
+.lf-ctx { font: 400 14px/1.45 var(--sans); color: var(--machine); }
+.lf-wcap .wt { color: var(--ink2); }
+/* Numbers as a ledger: the figure in display, what it counts in the machine's sans. */
+.lf-fig { padding-block: 30px 10px; }
+.lf-mh { color: var(--machine); }
+.lf-ledger { border-top: 1px solid var(--ink); }
+.lf-ledger div { display: grid; gap: 2px 20px; align-items: baseline; padding-block: 10px; border-bottom: 1px solid var(--rule); }
+.lf-ledger dt { font: 500 26px/1.1 var(--display); font-variant-numeric: lining-nums tabular-nums; }
+.lf-ledger dd { display: flex; justify-content: space-between; gap: 12px; font: 400 15px/1.4 var(--sans); color: var(--machine-text); }
+.lf-k { color: var(--machine); font-size: 13px; white-space: nowrap; }
+@media (min-width: 640px) { .lf-ledger div { grid-template-columns: 210px minmax(0, 1fr); } .lf-ledger dt { font-size: 32px; } }
+/* A life in dates: years hang in the margin, a hairline under each line. */
+.lf-dates { padding-block: 34px 10px; }
+.lf-dates ol { margin-top: 10px; border-top: 1px solid var(--ink); }
+.lf-dates li { grid-template-columns: 4.2ch minmax(0, 1fr); column-gap: 14px; align-items: baseline; padding-block: 7px; border-bottom: 1px solid var(--rule); }
+.lf-y { font: 400 22px/1.2 var(--display); font-variant-numeric: lining-nums; }
+.lf-e { font: 400 15px/1.4 var(--sans); color: var(--machine-text); }
+@media (min-width: 1000px) {
+  .lf-dates ol { margin-top: -1.6em; border: 0; }
+  .lf-dates li { grid-template-columns: minmax(0, 17rem) minmax(0, 38rem) minmax(0, 1fr); column-gap: var(--colgap); border: 0; padding-block: 0; }
+  .lf-y { text-align: right; padding-block: 7px; }
+  .lf-e { border-bottom: 1px solid var(--rule); padding-block: 9px 7px; }
+}
+/* Further reading and what it was written from. */
+.lf-read, .lf-src { padding-block: 34px 0; }
+.lf-read ul, .lf-src ol { border-top: 1px solid var(--ink); }
+.lf-read li { display: grid; gap: 2px; padding-block: 12px; border-bottom: 1px solid var(--rule); }
+.lf-rt { font: 400 20px/1.3 var(--serif); font-style: italic; text-decoration-color: var(--rule); }
+.lf-ra { font: 400 14px/1.4 var(--sans); color: var(--ink2); }
+.lf-src li { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--rule); font: 400 14px/1.5 var(--sans); color: var(--machine); }
+.lf-sk { font-weight: 600; }
+.lf-how { margin-top: 14px; font: 400 14px/1.55 var(--sans); color: var(--machine); }
+@media (min-width: 1000px) { .lf-read .mh, .lf-src .mh, .lf-fig .mh, .lf-dates .mh { padding-top: 0.5em; } }
+/* A Life on the cover: the name set large, the years, the epithet in the machine's blue. */
+.sp-life .sp-obj { border-top: 2px solid var(--ink); padding-top: 12px; gap: 4px; }
+.sp-lf-n { font: 500 clamp(36px, 4.4vw, 56px)/0.92 var(--display); letter-spacing: -0.03em; }
+.sp-lf-y { font: 400 22px/1.1 var(--display); font-style: italic; color: var(--ink2); }
+.sp-lf-e { margin-top: 6px; font: 500 14px/1.4 var(--sans); color: var(--machine); max-width: 30ch; }
+@media (min-width: 700px) { .sp-life { grid-column: span 5; } }

@@ -15,6 +15,7 @@ import Blocks from './Blocks.astro';
 import Credit from './Credit.astro';
 import StartHere from './StartHere.astro';
 import SeeAlso from './SeeAlso.astro';
+import Life from './Life.astro';
 import { formName, formOf, headword, quoteLength, speaker } from '../lib/forms';
 import {
   absolute,
@@ -143,6 +144,8 @@ const ogImage =
         </div>
       </header>
     ) : null}
+
+    {form === 'life' && item.life ? <Life item={{ ...item, life: item.life }} n={n} haulLabel={H} /> : null}
 
     {item.startHere && ['opening', 'offprint', 'transcript', 'page'].includes(form) ? <StartHere start={item.startHere} /> : null}
 

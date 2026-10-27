@@ -93,3 +93,21 @@ describe('a Life in the bundle', () => {
     expect(validateHaul(styled).errors.some((e) => e.rule.startsWith('style:') && e.path.endsWith('epithet.text'))).toBe(true);
   });
 });
+
+describe('places in the margin', () => {
+  it('folds PDF pages into one phrase', async () => {
+    const { placesText } = await import('./life');
+    expect(placesText(['PDF p. 75', 'PDF p. 74'])).toBe('PDF pp. 74, 75');
+    expect(placesText(['ch. 7'])).toBe('ch. 7');
+  });
+});
+
+describe('the portrait credit', () => {
+  it('names an unknown maker without "By"', async () => {
+    const { creditLine } = await import('./haul');
+    expect(creditLine({ creator: 'Unknown photographer', date: '1953', credit: 'The National Archives UK, CO 1069/14', licence: 'Open Government Licence v1.0' })).toBe(
+      'Unknown photographer, 1953. The National Archives UK, CO 1069/14. Open Government Licence v1.0.',
+    );
+    expect(creditLine({ creator: 'Katsushika Hokusai', credit: 'Wikimedia Commons', licence: 'public domain' })).toBe('By Katsushika Hokusai. Wikimedia Commons. Public domain.');
+  });
+});

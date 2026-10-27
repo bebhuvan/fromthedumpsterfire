@@ -319,6 +319,20 @@ export function citedIn(life: Life, lines: LifeLine[]): Array<{ source: LifeSour
     .filter((x): x is { source: LifeSource; at: string[] } => x !== null);
 }
 
+/** A source's places as one phrase: "PDF pp. 74, 75" rather than "PDF p. 74 PDF p. 75". */
+export function placesText(at: string[]): string {
+  const pages = at.map((a) => /^PDF p\. (\d+)$/.exec(a)?.[1]);
+  if (at.length > 1 && pages.every(Boolean)) return `PDF pp. ${[...new Set(pages)].sort((a, b) => Number(a) - Number(b)).join(', ')}`;
+  return at.join(', ');
+}
+
+/** "Guha; ECI PDF p. 78": where the given lines come from, for the margin. */
+export function whereFrom(life: Life, lines: LifeLine[]): string {
+  return citedIn(life, lines)
+    .map((c) => [sourceKey(c.source), placesText(c.at)].filter(Boolean).join(' '))
+    .join('; ');
+}
+
 /** Short names for sources in the margin: the maker's surname or the institution's initials. */
 export function sourceKey(s: LifeSource): string {
   const words = s.author.replace(/^the\s+/i, '').split(/\s+/);

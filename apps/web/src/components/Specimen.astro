@@ -7,6 +7,7 @@ import { typeLabel } from '@fdf/shared/tokens';
 import Highlighted from './Highlighted.astro';
 import { formOf, headword, quoteLength, speaker } from '../lib/forms';
 import { renderChart } from '@fdf/shared/charts';
+import { lifeYears } from '@fdf/shared/life';
 import ChartSvg from './ChartSvg.astro';
 import { firstSentence, paths, safeHref, titleText } from '../lib/site';
 
@@ -135,6 +136,14 @@ try {
       </>
     ) : null}
 
+    {form === 'life' && item.life ? (
+      <>
+        <span class="sp-lf-n">{item.life.name}</span>
+        {lifeYears(item.life) ? <span class="sp-lf-y">{lifeYears(item.life)}</span> : null}
+        <span class="sp-lf-e">{item.life.epithet.text}</span>
+      </>
+    ) : null}
+
     {form === 'label' ? (
       <>
         <span class="sp-lbt">{titleText(item.title)}</span>
@@ -146,7 +155,7 @@ try {
   </a>
   <p class="sp-cap">
     <span class="sp-n">{String(n).padStart(2, '0')}</span>
-    <span>{typeLabel[item.type]}{!['opening', 'offprint', 'card', 'label'].includes(form) ? <> · <span class="sp-ct">{titleText(item.title)}</span></> : null}</span>
+    <span>{typeLabel[item.type]}{!['opening', 'offprint', 'card', 'label', 'life'].includes(form) ? <> · <span class="sp-ct">{titleText(item.title)}</span></> : null}</span>
     <span class="sp-why">{firstSentence(item.why.text)}</span>
   </p>
 </li>
