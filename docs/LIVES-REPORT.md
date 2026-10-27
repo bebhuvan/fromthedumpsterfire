@@ -17,13 +17,16 @@ sources, every line checked, the editor's note on top. Sukumar Sen is the first.
 | Desk storage: `life_sources`, `lives` | `migrations/0009_lives.sql` | done (not applied anywhere but tests) |
 | Fetching sources, the editor's PDF for a slow source, refusing a failing draft whole, the judge (fail-closed), keep/cut, approval, recheck at publish | `packages/server/src/lives.ts`, `publish.ts`, `steps.ts` | done |
 | Routes | `workers/api/src/lives.ts` | done, 7 route tests on the real Worker |
-| Desk review screen, line by line | `apps/desk/src/screens/Life.tsx` | done |
+| Desk review screen, line by line, with the portrait (the credited picture form) | `apps/desk/src/screens/Life.tsx` | done |
 | Terminal: `life`, `life-draft`, `life-show` | `scripts/editorial.mjs` | done, 1 test through the real Worker |
 | Website form, cover specimen, Markdown, search | `apps/web/src/components/Life.astro` and friends | done, screenshots below |
 | App form, cover specimen, search | `apps/mobile/src/ui/Life.tsx` | done, emulator screenshots below |
 | `machineText`: the machine's blue, deepened for long prose | tokens, `--machine-text` | done |
 
-`npm run verify`: 749 tests pass.
+`npm run verify`: 749 tests pass. The website Worker is 380 KiB gzipped (`npm run size -w @fdf/web`).
+
+The whole Sen draft also went through the real submit route on a test store with the stored texts:
+every line passed the server's checks (the judge there was mocked).
 
 ## Sukumar Sen
 
