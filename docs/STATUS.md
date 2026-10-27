@@ -884,7 +884,19 @@ then an OTA for the app (JavaScript only). No migration is needed. On the first 
 every chart's pictures are drawn afresh under new names (`CHART_RENDER_VERSION` is 2).
 
 
-## Lives (2026-10-27, branch `lives`; not deployed, not merged)
+## Lives (2026-10-27, branch `lives`; merged and deployed the same day)
+
+**Deployed 2026-10-27 (the editor's go):** `lives` fast-forwarded into `launch-2026-10-24`.
+Migrations 0008 (the library tables, pending since 2026-10-25) and 0009 applied to production. Desk
+`fdf-desk` 4fd49cd0, pipeline `fdf-pipeline` bbfb1d08, web `fdf-web` 648fdd88, app over-the-air
+update d3f01321 for runtime `e903061b` (published from the main checkout: this worktree's generated
+`android/` gives another fingerprint), signature and assets checked live. Sukumar Sen submitted:
+item `it_01m5xq006v6e4qaf681m`, all four sources fetched on Cloudflare (the 24 MB report included),
+54 of 54 lines confirmed by the judge, the 1953 portrait as its plate; added last to Haul 001 (20
+items). Waiting for the editor: read and approve the profile, then publish Haul 001. Fixed on the
+way: the judge reads dates and figures as printed and runs its batches together; the link check asks
+again with GET after any failed HEAD (Amazon's links failed it) and counts a 406 as a refusal.
+
 
 From `docs/LIVES-BRIEF.md`; the report is `docs/LIVES-REPORT.md`.
 
