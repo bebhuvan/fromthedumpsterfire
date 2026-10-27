@@ -143,6 +143,8 @@ All in `docs/design-comps/lives/shots/`.
   the Sen draft from the Worker's own routes on a test store (the judge mocked to "supported"; the
   real judge has not run). Keep, Cut and Where under each line; the portrait; the sources.
 - **The app** (`app/`): the release APK (x86_64) on the Android emulator, deep-linked to the Sen item
-  in development Haul 002, light and dark. The portrait shows as a grey plate in the development
-  build because it is hotlinked from Wikimedia, which refuses the app's image requests; published
-  plates are copied to our files host, as every plate is.
+  in development Haul 002: `sen-light-strip.png` and `sen-dark-strip.png` (twelve screens each, top
+  to bottom) and the cover specimen (`cover-light-spec.png`). The portrait does not load in the
+  development build because it is hotlinked from Wikimedia, which refuses the app's image requests;
+  its caption and credit show. Published plates are copied to our files host, as every plate is.
+  Fixed on the emulator: the type label printed twice and the credit printed twice.
