@@ -41,6 +41,12 @@ npm run editorial -- <command> [arguments] [options]
   chart-check                     the honesty validator on --data chart.json (local)
   chart-draw DIR                  draw --data chart.json to PNGs in DIR (local): wide and phone,
                                   light and dark, and the share card (chart-share.png)
+  life                            a new Life with --data life.json ({name, why, year, sources}); the
+                                  Desk fetches every source itself
+  life-draft ITEM                 submit the profile with --data profile.json; refused whole unless
+                                  every quote is in its source and every figure in its quotes, then
+                                  judged line by line (what the judge cannot confirm is set aside)
+  life-show ITEM                  a Life's sources (no text), draft, approval and problems
   request METHOD /api/PATH         any Desk JSON API route, or --upload file=PATH
   login                           owner login using cloudflared; saves token privately
 
@@ -163,14 +169,22 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
       case 'chart': path = `/api/items/${id()}/blocks`; method = 'POST'; data = { kind: 'chart', chart: data }; break;
       case 'chart-edit': path = `/api/blocks/${id()}/chart`; method = 'PUT'; data = { chart: data }; break;
       case 'chart-fetch': path = '/api/charts/fetch'; method = 'POST'; break;
+      case 'life': path = '/api/lives'; method = 'POST'; break;
+      case 'life-draft': {
+        path = `/api/items/${id()}/life`; method = 'POST';
+        // The sources are the Desk's (fetched by it); the draft cites them by key.
+        if (data && typeof data === 'object') { const { sources: _sources, ...rest } = data; data = rest; }
+        break;
+      }
+      case 'life-show': path = `/api/items/${id()}/life`; break;
       case 'request': method = p[1] ?? ''; path = p[2] ?? ''; break;
       default: throw new Error(`Unknown command. Use --help`);
     }
     // Catch accidental positional arguments rather than silently ignoring supplied content.
-    const expected = ['capture', 'request'].includes(command) ? null : ['status', 'items', 'hauls', 'new-haul', 'chart-fetch'].includes(command) ? 1 : 2;
+    const expected = ['capture', 'request'].includes(command) ? null : ['status', 'items', 'hauls', 'new-haul', 'chart-fetch', 'life'].includes(command) ? 1 : 2;
     if (expected !== null && p.length !== expected) throw new Error('Unexpected or missing arguments; use --help');
     if (command === 'request' && p.length !== 3) throw new Error('request requires METHOD and /api/PATH');
-    if (['edit', 'source', 'edit-haul', 'order', 'chart-fetch'].includes(command) && data === undefined) throw new Error('Supply --data FILE or --data -');
+    if (['edit', 'source', 'edit-haul', 'order', 'chart-fetch', 'life', 'life-draft'].includes(command) && data === undefined) throw new Error('Supply --data FILE or --data -');
     if (['chart', 'chart-edit'].includes(command) && !data?.chart) throw new Error('Supply the chart with --data chart.json');
     let form;
     if (uploads.length) {

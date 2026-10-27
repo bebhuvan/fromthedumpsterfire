@@ -443,3 +443,17 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
 @media (max-width: 420px) {
   .cover-figure { grid-template-columns: minmax(0, 110px) minmax(0, 1fr); }
 }
+
+/* A Life (screens/Life.tsx): the machine's lines to keep or cut, each with its passages on request. */
+.life-desk .machine-h { color: var(--machine); }
+.life-sources { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 6px; font-size: 14px; }
+.life-sources .btn { margin-left: 6px; }
+.life-para { display: grid; gap: 2px; padding-block: 6px; border-bottom: 1px solid var(--rule); }
+.life-line { padding: 6px 0 6px 10px; border-left: 3px solid transparent; }
+.life-line.kept { border-left-color: var(--machine); }
+.life-line.cut .life-text { text-decoration: line-through; opacity: 0.55; }
+.life-text { margin: 0; font-size: 16px; line-height: 1.5; }
+.life-label { color: var(--ink); font-weight: 600; }
+.life-cites { margin: 4px 0 6px; padding-left: 16px; display: grid; gap: 4px; font-size: 14px; }
+.life-cites q { font-style: italic; }
+.life-approve { display: grid; gap: 10px; }

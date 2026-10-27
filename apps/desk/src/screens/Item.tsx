@@ -15,6 +15,7 @@ import { TrayList } from './Tray';
 import { PlatesSection } from './Plates';
 import { ItemSuggestions } from './Links';
 import { RhymeEditor } from './Rhyme';
+import { LifeEditor } from './Life';
 import { BlocksSection, PictureForm } from './Blocks';
 import { ShelfLink } from './Shelf';
 
@@ -23,6 +24,7 @@ const IN_FLIGHT = /queued|fetching|reading|drafting|checking/;
 export function ItemReview({ id }: { id: string }) {
   const { data } = useLoad(() => api.get<ItemDetail>(`/api/items/${id}`), [id]);
   if (data?.item.kind === 'rhyme') return <RhymeEditor id={id} />;
+  if (data?.item.kind === 'life') return <LifeEditor id={id} />;
   return <ItemReviewInner id={id} />;
 }
 

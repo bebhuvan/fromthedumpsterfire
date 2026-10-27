@@ -140,3 +140,36 @@ it('bounds polling and stops on failed/paused items', async () => {
   expect(client.request).toHaveBeenCalledTimes(2);
   await expect(waitForItem({ request: async () => ({ item: { status: 'paused' } }) }, 'it_one')).rejects.toThrow(/paused/);
 });
+
+it('makes a Life and submits its profile from the terminal, sources fetched by the Desk', async () => {
+  const text = 'Born in 1899, he was educated at Presidency College and at London University, where he was awarded a gold medal in mathematics. '.repeat(8);
+  vi.stubGlobal('fetch', async (input) => {
+    const u = new URL(String(input));
+    if (u.hostname === 'cloudflare-dns.com') return json({ Answer: u.searchParams.get('type') === 'A' ? [{ type: 1, data: '93.184.216.34' }] : [] });
+    return new Response(`<html><head><title>India After Gandhi</title></head><body><article><h1>An extract</h1><p>${text}</p></article></body></html>`, { headers: { 'content-type': 'text/html' } });
+  });
+  const env = await seedHaul(makeEnv((_m, input) => answer({ verdicts: [...JSON.stringify(input).matchAll(/NOTE (\d+):/g)].map((m) => ({ index: Number(m[1]), verdict: 'supported', reason: 'ok' })) }), { DEV_AUTH_BYPASS: '1' }));
+  const fetcher = (url, init) => app.request(url, init, env);
+  const d = temp();
+  const payload = (name, data) => { const path = join(d, name); writeFileSync(path, JSON.stringify(data)); return path; };
+  const source = { id: 'guha', author: 'Ramachandra Guha', title: 'India After Gandhi', kind: 'book', url: 'https://example.org/guha' };
+  const made = await cli(['life', '--data', payload('life.json', { name: 'Sukumar Sen', why: 'My note.', sources: [source] })], fetcher);
+  expect(made.code).toBe(0);
+  const itemId = JSON.parse(made.stdout).itemId;
+  const line = (id, t, quote) => ({ id, text: t, cites: [{ source: 'guha', quote }] });
+  // The draft file may carry the sources too (the session's working copy); the Desk's own are used.
+  const profile = {
+    name: 'Sukumar Sen', writer: 'claude-opus-5-5', sources: [source],
+    epithet: line('e', 'A mathematician in the civil service', 'awarded a gold medal in mathematics'),
+    sections: [{ heading: 'Early life', paragraphs: [[line('a', 'Born in 1899, he studied at Presidency College.', 'Born in 1899, he was educated at Presidency College')]] }],
+  };
+  const sent = await cli(['life-draft', itemId, '--data', payload('profile.json', profile)], fetcher);
+  expect(sent.code).toBe(0);
+  expect(JSON.parse(sent.stdout)).toMatchObject({ judged: 2, setAside: 0, writer: 'claude-opus-5-5 (session)' });
+  const bad = await cli(['life-draft', itemId, '--data', payload('bad.json', { ...profile, epithet: line('e', 'Born in 1898', 'Born in 1899') })], fetcher);
+  expect(bad.code).toBe(1);
+  expect(bad.stderr).toMatch(/1898/);
+  const shown = await cli(['life-show', itemId], fetcher);
+  expect(JSON.parse(shown.stdout).sources[0]).toMatchObject({ key: 'guha', status: 'fetched' });
+  expect(shown.stdout).not.toMatch(/gold medal in mathematics\. Born/);
+});

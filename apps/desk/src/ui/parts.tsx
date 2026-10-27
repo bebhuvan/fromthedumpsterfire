@@ -270,7 +270,7 @@ export function NoteCompare({ note, onUse }: { note: Note; onUse?: (text: string
 // ---------------------------------------------------------------- checks
 
 const MARK: Record<CheckStatus, string> = { pass: '✓', warn: '◦', fail: '✕' };
-const ORDER = ['why', 'links', 'quotes', 'citations', 'style', 'drafting'];
+const ORDER = ['why', 'life', 'links', 'quotes', 'citations', 'style', 'drafting'];
 const NAMES: Record<string, string> = { why: 'Your note', links: 'Links', quotes: 'Quotes', citations: 'Citations', style: 'Style', drafting: 'Drafting' };
 
 export function ChecksPanel({ checks, onRecheck, busy }: { checks: Check[]; onRecheck?: () => void; busy?: boolean }) {
