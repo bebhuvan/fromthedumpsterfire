@@ -83,7 +83,7 @@ export function LifeEditor({ id }: { id: string }) {
         <ul className="life-sources">
           {data.sources.map((s) => (
             <li key={s.id}>
-              <b>{s.key}</b> {s.author}, <i>{s.title}</i>
+              <b>{s.key}</b> {s.author}, {s.kind === 'book' || s.kind === 'report' ? <i>{s.title}</i> : `“${s.title}”`}
               {s.year ? `, ${s.year}` : ''}. {s.via ? `${s.via}. ` : ''}
               <a href={safeHref(s.url)} target="_blank" rel="noopener noreferrer">
                 Where it was read
