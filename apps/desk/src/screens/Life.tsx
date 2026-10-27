@@ -10,6 +10,7 @@ import { lifeLines, lifeYears } from '@fdf/shared/life';
 import { api, type ItemDetail } from '../api';
 import { navigate, safeHref, SaveNote, useAutosave, useLoad, usePoll, useToast } from '../lib/core';
 import { ChecksPanel, TextArea } from '../ui/parts';
+import { PictureForm } from './Blocks';
 
 interface LifeSourceUi {
   id: string;
@@ -74,6 +75,8 @@ export function LifeEditor({ id }: { id: string }) {
         {draft ? <p className="serif" style={{ fontStyle: 'italic', fontSize: 22, color: 'var(--ink2)', margin: '6px 0 0' }}>{lifeYears(draft)}</p> : null}
         <WhyNote detail={item.data} />
       </section>
+
+      <Portrait detail={item.data} onDone={() => void item.reload()} />
 
       <section className="section">
         <div className="label">Written from</div>
@@ -205,6 +208,34 @@ export function LifeEditor({ id }: { id: string }) {
   );
 }
 
+/**
+ * A portrait, only one that clears the credit rule: who made it, who holds it, the licence. It is the
+ * item's plate, so publish copies it to our files as it does every plate. The page is complete without.
+ */
+function Portrait({ detail, onDone }: { detail: ItemDetail; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const chosen = detail.plates.find((p) => p.status === 'chosen');
+  return (
+    <section className="section">
+      <div className="row between">
+        <div className="label">Portrait</div>
+        <button className="btn quiet small" onClick={() => setOpen(!open)}>
+          {chosen ? 'Replace' : 'Add one'}
+        </button>
+      </div>
+      {chosen ? (
+        <p className="small">
+          {chosen.caption || chosen.title}. {[chosen.creator, chosen.date].filter(Boolean).join(', ')}. {chosen.institution}. {chosen.licence}.
+        </p>
+      ) : (
+        <p className="small">None. Only a public-domain or openly licensed picture, with its maker named.</p>
+      )}
+      {open ? <PictureForm itemId={detail.item.id} busy={busy} setBusy={setBusy} asPlate onDone={() => (onDone(), setOpen(false))} /> : null}
+    </section>
+  );
+}
+
 /** The editor's note, autosaved, in their serif. Dictated notes come in through the voice-note path. */
 function WhyNote({ detail }: { detail: ItemDetail }) {
   const why = useAutosave(`why:${detail.item.id}`, detail.item.why_text ?? '', (v) => api.patch(`/api/items/${detail.item.id}`, { why_text: v }));
@@ -223,23 +254,21 @@ function LineView({ line, label, onSet }: { line: DraftLine; label?: string; onS
   if (line.status === 'rejected') return null;
   return (
     <div className={`life-line ${line.status}`}>
-      <div className="row between" style={{ alignItems: 'flex-start', gap: 12 }}>
-        <p className="machine life-text">
-          {label ? <b className="life-label">{label} </b> : null}
-          {line.text}
-        </p>
-        <div className="row" style={{ gap: 4, flex: 'none' }}>
-          <button className={`btn small ${line.status === 'kept' ? 'primary' : 'quiet'}`} aria-pressed={line.status === 'kept'} onClick={() => onSet(line.id, line.status === 'kept' ? 'proposed' : 'kept')}>
-            Keep
-          </button>
-          <button className={`btn small ${line.status === 'cut' ? 'primary' : 'quiet'}`} aria-pressed={line.status === 'cut'} onClick={() => onSet(line.id, line.status === 'cut' ? 'proposed' : 'cut')}>
-            Cut
-          </button>
-        </div>
+      <p className="machine life-text">
+        {label ? <b className="life-label">{label} </b> : null}
+        {line.text}
+      </p>
+      <div className="row" style={{ gap: 4 }}>
+        <button className={`btn small ${line.status === 'kept' ? 'primary' : 'quiet'}`} aria-pressed={line.status === 'kept'} onClick={() => onSet(line.id, line.status === 'kept' ? 'proposed' : 'kept')}>
+          Keep
+        </button>
+        <button className={`btn small ${line.status === 'cut' ? 'primary' : 'quiet'}`} aria-pressed={line.status === 'cut'} onClick={() => onSet(line.id, line.status === 'cut' ? 'proposed' : 'cut')}>
+          Cut
+        </button>
+        <button className="btn quiet small" onClick={() => setOpen(!open)} aria-expanded={open}>
+          Where{line.cites.length > 1 ? ` (${line.cites.length})` : ''}
+        </button>
       </div>
-      <button className="btn quiet small" onClick={() => setOpen(!open)} aria-expanded={open}>
-        Where{line.cites.length > 1 ? ` (${line.cites.length})` : ''}
-      </button>
       {open ? (
         <ul className="life-cites">
           {line.cites.map((c, i) => (

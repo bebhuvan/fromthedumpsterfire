@@ -308,7 +308,7 @@ A source is `{"id":"guha","author":"Ramachandra Guha","title":"India After Gandh
 fetch; the link stays the source. The profile (`.editorial/lives-sen/profile.json` is a full example)
 has `name`, `born`/`died` (`{year, cites}`), `epithet`, `sections` (`{heading, paragraphs: [[line]]}`),
 `words` (the person's own words, with the quote that records them), `dates`, `figures`, `reading`
-and `writer`; every line is `{"id":"l1","text":"…","cites":[{"source":"guha","quote":"exact words"}]}`.
+`writer` (the name the label prints, "Claude") and `model` (the model id, for the record); every line is `{"id":"l1","text":"…","cites":[{"source":"guha","quote":"exact words"}]}`.
 Write each sentence so its quotes hold every fact and every number in it; write transitions so they
 need no fact. The draft is refused whole if any quote is not in its source, a figure is not in its
 quotes, or a line fails the style check, with every problem listed. Lines the judge does not confirm

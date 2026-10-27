@@ -69,6 +69,8 @@ const draftSchema = z.object({
     .max(12)
     .default([]),
   writer: z.string().trim().min(1).max(60),
+  /** The model that wrote it, for the record ("claude-opus-5-5"); the label prints `writer`. */
+  model: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,58}$/).optional(),
 });
 
 /** The sources as the Desk shows them: everything but the text. */
@@ -170,7 +172,7 @@ livesApi.post('/api/items/:id/life', async (c) => {
   const id = c.req.param('id');
   await lifeItem(c.env, id);
   const b = await body(c, draftSchema);
-  const r = await attempt(c, () => submitLife(c.env, id, { name: b.name, ...(b.born ? { born: b.born } : {}), ...(b.died ? { died: b.died } : {}), reading: b.reading, writer: b.writer, ...withStatus(b) }, `${b.writer} (session)`));
+  const r = await attempt(c, () => submitLife(c.env, id, { name: b.name, ...(b.born ? { born: b.born } : {}), ...(b.died ? { died: b.died } : {}), reading: b.reading, writer: b.writer, ...withStatus(b) }, `${b.model ?? b.writer} (session)`));
   if (r instanceof Response) return r;
   await runChecks(c.env, id, { links: false });
   return c.json({ judged: r.judged, setAside: r.setAside, ...(await view(c.env, id)) });
