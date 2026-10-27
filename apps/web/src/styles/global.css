@@ -918,7 +918,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .lf-ledger { border-top: 1px solid var(--ink); }
 .lf-ledger div { display: grid; gap: 2px 20px; align-items: baseline; padding-block: 10px; border-bottom: 1px solid var(--rule); }
 .lf-ledger dt { font: 500 26px/1.1 var(--display); font-variant-numeric: lining-nums tabular-nums; }
-.lf-ledger dd { display: flex; justify-content: space-between; gap: 12px; font: 400 15px/1.4 var(--sans); color: var(--machine-text); }
+.lf-ledger dd { margin: 0; display: flex; justify-content: space-between; gap: 12px; font: 400 15px/1.4 var(--sans); color: var(--machine-text); }
 .lf-k { color: var(--machine); font-size: 13px; white-space: nowrap; }
 @media (min-width: 640px) { .lf-ledger div { grid-template-columns: 210px minmax(0, 1fr); } .lf-ledger dt { font-size: 32px; } }
 /* A life in dates: years hang in the margin, a hairline under each line. */
