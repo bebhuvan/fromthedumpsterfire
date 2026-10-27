@@ -126,3 +126,18 @@ cite { font-style: normal; }
 .lf-mh { font: 500 14px/1.4 var(--sans); color: var(--ink2); }
 .lf-mh.machine { color: var(--machine); }
 @media (max-width: 999px) { .lf-mh { margin-bottom: 4px; } }
+
+/* The portrait: the archive's own sheet, small, beside the name (in the air on wide screens). */
+.lf-portrait { margin-top: 22px; max-width: 220px; }
+.lf-portrait img { width: 100%; height: auto; display: block; }
+.lf-portrait figcaption { margin-top: 8px; font: 400 12px/1.45 var(--sans); color: var(--ink2); }
+@media (min-width: 1000px) { .lf-head { position: relative; } .lf-portrait { grid-column: 3; grid-row: 2 / span 3; margin-top: 18px; max-width: 250px; } }
+
+/* Long machine prose, option one: a deeper machine blue for reading at length. */
+.v-deep { --mtext: #2B3593; }
+@media (prefers-color-scheme: dark) { .v-deep { --mtext: #C3C8FA; } }
+.v-deep .lf-text, .v-deep .lf-e, .v-deep .lf-ledger dd { color: var(--mtext); }
+/* Option two: the body in ink, in the machine's sans, with the machine's rule down its edge. */
+.v-ink .lf-text, .v-ink .lf-e, .v-ink .lf-ledger dd { color: var(--ink); }
+.v-ink .lf-text { border-left: 2px solid var(--machine); padding-left: 16px; }
+@media (min-width: 1000px) { .v-ink .lf-text { margin-left: -18px; } }

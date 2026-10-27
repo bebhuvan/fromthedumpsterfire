@@ -115,6 +115,10 @@ ${sources}
 <script>matchMedia('(prefers-color-scheme: dark)')</script>
 </body></html>`;
 
+const portrait = `<figure class="lf-portrait"><img src="sen-1953.jpg" width="759" height="774" alt="Sukumar Sen in 1953: a studio portrait in round spectacles and a checked jacket, mounted on a Colonial Office file sheet marked Photo No. AA/5242"><figcaption>Sukumar Sen in 1953, as the Colonial Office filed him during the Sudan election. By an unknown photographer. The National Archives UK, CO 1069/14. Open Government Licence v1.0.</figcaption></figure>`;
+const headerP = headerA.replace('<p class="c lf-epi">', portrait + '<p class="c lf-epi">');
 writeFileSync(join(here, 'life-a.html'), head('a') + body(headerA));
 writeFileSync(join(here, 'life-b.html'), head('b') + body(headerB));
-console.log('built life-a.html, life-b.html');
+writeFileSync(join(here, 'life-deep.html'), head('deep') + body(headerP));
+writeFileSync(join(here, 'life-ink.html'), head('ink') + body(headerP));
+console.log('built');
