@@ -156,6 +156,10 @@ describe('Lives on the Desk', () => {
     // The quote is re-anchored to the source's own characters.
     expect(lines[0].cites[0]).toMatchObject({ quote: 'of whom about 85 percent could not read or write' });
     expect(typeof lines[0].cites[0].start).toBe('number');
+    // The judge read the date and the figure as printed: with their year and value.
+    const prompt = JSON.stringify(env.aiCalls.at(-1)?.input ?? '');
+    expect(prompt).toContain('1899: Born');
+    expect(prompt).toContain('2.8 million women struck off the rolls');
   });
 
   it('fails closed when the judge errors: nothing is offered', async () => {

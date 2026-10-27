@@ -244,7 +244,12 @@ export async function submitLife(env: Env, itemId: string, input: Omit<LifeDraft
   // placeCites copies lines; judge on the copies so the verdicts land in what is stored.
   const byId = new Map(lifeLines(placed).map((x) => [x.line.id, x.line]));
   const judging = toJudge.map((l) => byId.get(l.id)!).filter(Boolean);
-  await judgeLines(env, itemId, judging, texts);
+  // The judge reads a line as the reader does: a date with its year, a figure with its value.
+  const asPrinted = new Map<string, string>([
+    ...placed.dates.map((d) => [d.line.id, `${d.year}: ${d.line.text}`] as [string, string]),
+    ...(placed.figures?.rows ?? []).map((r) => [r.line.id, `${r.value} ${r.line.text}`] as [string, string]),
+  ]);
+  await judgeLines(env, itemId, judging, texts, asPrinted);
   const setAside = judging.filter((l) => l.status === 'rejected').length;
   const now = nowIso();
   await env.DB.prepare(
@@ -260,33 +265,37 @@ export async function submitLife(env: Env, itemId: string, input: Omit<LifeDraft
  * The judge reads each line with its quotes and the text around them. Only "supported" keeps a line
  * on offer; anything else, or no verdict, or an error, sets it aside. Mutates the lines.
  */
-export async function judgeLines(env: Env, itemId: string, lines: DraftLine[], texts: Record<string, string>): Promise<void> {
-  for (let i = 0; i < lines.length; i += JUDGE_BATCH) {
-    const batch = lines.slice(i, i + JUDGE_BATCH);
-    const evidence = (l: DraftLine) =>
-      l.cites
-        .map((c) => {
-          const t = texts[c.source] ?? '';
-          const from = Math.max(0, (c.start ?? 0) - JUDGE_CONTEXT);
-          const to = Math.min(t.length, (c.end ?? 0) + JUDGE_CONTEXT);
-          return `From ${c.source}: """${t.slice(from, to)}"""`;
-        })
-        .join('\n');
-    const prompt = batch.map((l, k) => `NOTE ${k}: ${l.text}\nEVIDENCE ${k}:\n${evidence(l)}`).join('\n\n');
-    let verdicts: Array<{ index: number; verdict: 'supported' | 'partly' | 'unsupported'; reason: string }> = [];
-    try {
-      const { data } = await generateJson(env, { task: 'judge', system: JUDGE_SYSTEM, prompt, schema: judgeSchema, itemId });
-      verdicts = data.verdicts;
-    } catch (e) {
-      console.error(JSON.stringify({ event: 'life-judge-failed', itemId, error: errorMessage(e) }));
-    }
-    batch.forEach((l, k) => {
-      const v = verdicts.find((x) => x.index === k);
-      l.verdict = v?.verdict ?? 'unchecked';
-      l.reason = v?.reason || (v ? '' : 'The checker returned no verdict.');
-      if (l.verdict !== 'supported') l.status = 'rejected';
-    });
-  }
+export async function judgeLines(env: Env, itemId: string, lines: DraftLine[], texts: Record<string, string>, asPrinted: Map<string, string> = new Map()): Promise<void> {
+  const evidence = (l: DraftLine) =>
+    l.cites
+      .map((c) => {
+        const t = texts[c.source] ?? '';
+        const from = Math.max(0, (c.start ?? 0) - JUDGE_CONTEXT);
+        const to = Math.min(t.length, (c.end ?? 0) + JUDGE_CONTEXT);
+        return `From ${c.source}: """${t.slice(from, to)}"""`;
+      })
+      .join('\n');
+  const batches: DraftLine[][] = [];
+  for (let i = 0; i < lines.length; i += JUDGE_BATCH) batches.push(lines.slice(i, i + JUDGE_BATCH));
+  // The batches go together: one after another, a profile's judging outran the terminal's wait.
+  await Promise.all(
+    batches.map(async (batch) => {
+      const prompt = batch.map((l, k) => `NOTE ${k}: ${asPrinted.get(l.id) ?? l.text}\nEVIDENCE ${k}:\n${evidence(l)}`).join('\n\n');
+      let verdicts: Array<{ index: number; verdict: 'supported' | 'partly' | 'unsupported'; reason: string }> = [];
+      try {
+        const { data } = await generateJson(env, { task: 'judge', system: JUDGE_SYSTEM, prompt, schema: judgeSchema, itemId });
+        verdicts = data.verdicts;
+      } catch (e) {
+        console.error(JSON.stringify({ event: 'life-judge-failed', itemId, error: errorMessage(e) }));
+      }
+      batch.forEach((l, k) => {
+        const v = verdicts.find((x) => x.index === k);
+        l.verdict = v?.verdict ?? 'unchecked';
+        l.reason = v?.reason || (v ? '' : 'The checker returned no verdict.');
+        if (l.verdict !== 'supported') l.status = 'rejected';
+      });
+    }),
+  );
 }
 
 async function saveDraft(env: Env, itemId: string, draft: LifeDraft): Promise<void> {
