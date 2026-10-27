@@ -532,7 +532,7 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
     const rows: CheckSummary['rows'] = [];
     for (const t of targets) {
       const r = await checkLink(t.url);
-      const blocked = [401, 403, 429, 999].includes(r.status);
+      const blocked = [401, 403, 406, 429, 999].includes(r.status);
       rows.push({ label: t.label, status: r.ok ? 'pass' : blocked ? 'warn' : 'fail', detail: r.ok ? `${r.status}` : blocked ? `${r.status}: the site refused our checker; open it yourself` : r.status ? `returned ${r.status}` : 'did not respond' });
       if ('id' in t && t.id) await env.DB.prepare('UPDATE wiki_cards SET http_status = ?, checked_at = ? WHERE id = ?').bind(r.status, nowIso(), t.id).run();
     }
