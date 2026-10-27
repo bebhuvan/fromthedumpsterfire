@@ -11,7 +11,7 @@ import { lifeByline, lifeYears, sourceKey, whereFrom } from '@fdf/shared/life';
 import { fonts, usePalette, useTextScale } from '@/theme';
 import { openSource } from '@/lib/open';
 import { Apparatus, Key } from '@/ui/parts';
-import { Credit, Picture } from '@/ui/Blocks';
+import { Picture } from '@/ui/Blocks';
 import { Meta } from '@/ui/type';
 
 const wholeWork = (kind: string) => kind === 'book' || kind === 'report';
@@ -33,7 +33,6 @@ export function LifeForm({ item, life, why }: { item: Item; life: LifeData; why:
     <View>
       <View style={st.metaLine}>
         <Key type={item.type} />
-        <Meta>Lives</Meta>
       </View>
       {/* The name is the loud thing: fixed in size so it never clips at a large text setting. */}
       <Text accessibilityRole="header" maxFontSizeMultiplier={1} style={[st.name, { color: p.ink }]}>
@@ -43,9 +42,7 @@ export function LifeForm({ item, life, why }: { item: Item; life: LifeData; why:
       <Text selectable style={[st.epithet, { color: p.machine, fontSize: 16 * k, lineHeight: 22 * k }]}>{life.epithet.text}</Text>
       {item.plate ? (
         <View style={{ marginTop: 22, width: '62%' }}>
-          <Picture plate={{ ...item.plate, caption: '' }} />
-          <Meta style={{ marginTop: 6 }}>{item.plate.caption}</Meta>
-          <Credit plate={item.plate} />
+          <Picture plate={item.plate} />
         </View>
       ) : null}
 
