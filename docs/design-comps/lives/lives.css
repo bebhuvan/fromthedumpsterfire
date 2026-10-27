@@ -1,0 +1,128 @@
+/* Lives comp: the Salvage system (tokens from packages/shared/src/tokens.ts) plus the Life form. */
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-SemiBold.woff2') format('woff2'); font-weight: 600; }
+
+:root { --bg: #FFFFFF; --ink: #141416; --ink2: #55555C; --rule: #E6E6EA; --plate: #F4F4F6; --machine: #4651D2; --ember: #FF4F1F; --lilac: #ECE4FA; --ed: #8C2333; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0F0F12; --ink: #F3F3F1; --ink2: #A2A2AA; --rule: #2A2A31; --plate: #1B1B20; --machine: #A3ACFF; --ember: #FF6A3D; --lilac: #33284A; --ed: #EE8E99; color-scheme: dark; } }
+:root { --serif: 'Newsreader Text', Georgia, serif; --display: 'Newsreader Display', Georgia, serif; --sans: 'Schibsted Grotesk', system-ui, sans-serif; --gut: 16px; --colgap: 0px; }
+@media (min-width: 640px) { :root { --gut: 28px; } }
+@media (min-width: 1000px) { :root { --gut: 48px; --colgap: clamp(40px, 5vw, 72px); } }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 18px/1.55 var(--serif); font-synthesis: none; -webkit-font-smoothing: antialiased; border-top: 6px solid var(--ed); }
+h1, h2, p, ol, ul, dl, dd, figure, blockquote { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.18em; text-decoration-color: var(--ink2); }
+cite { font-style: normal; }
+.it { font-style: italic; }
+.ink2 { color: var(--ink2); }
+.wrap { max-width: 1280px; margin-inline: auto; padding-inline: var(--gut); }
+.g { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 10px; }
+@media (min-width: 1000px) {
+  .g { grid-template-columns: minmax(0, 17rem) minmax(0, 38rem) minmax(0, 1fr); column-gap: var(--colgap); row-gap: 0; align-items: start; }
+  .m { grid-column: 1; } .c { grid-column: 2; } .mc { grid-column: 1 / 3; }
+}
+.top { display: flex; justify-content: space-between; align-items: center; padding-block: 18px; font: 500 14px/1 var(--sans); color: var(--ink2); }
+.top a { text-decoration: none; }
+.top-home { display: inline-flex; gap: 10px; align-items: center; color: var(--ink); }
+.mast-s { font: 400 18px/1 var(--display); white-space: nowrap; }
+.mast-s s { color: var(--ink2); text-decoration-color: var(--ember); }
+.top-nav { display: flex; gap: 22px; }
+@media (max-width: 520px) { .top-nav { display: none; } }
+.flame { width: 9px; height: 9px; background: var(--ember); border-radius: 0 50% 50% 50%; transform: rotate(45deg); display: inline-block; }
+.runhead { display: flex; justify-content: space-between; padding-top: 9px; border-top: 1px solid var(--rule); font: 400 13px/1.4 var(--sans); color: var(--ink2); }
+.runhead a { text-decoration: none; color: var(--ed); }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 400 14px/1.45 var(--sans); color: var(--ink2); }
+@media (min-width: 1000px) { .meta { flex-direction: column; padding-top: 0.6em; } }
+.key { display: inline-block; width: 0.7em; height: 0.7em; background: var(--lilac); margin-right: 0.5em; outline: 1px solid var(--rule); outline-offset: -1px; }
+.mh { font: 500 14px/1.4 var(--sans); color: var(--ink2); }
+.standfirst { font-size: 21px; line-height: 1.5; font-style: italic; }
+.sign-in { font-family: var(--display); font-style: italic; color: var(--ember); }
+.voice { margin-top: 14px; display: flex; gap: 10px; align-items: center; font: 400 14px/1 var(--sans); }
+.play { width: 0; height: 0; border-left: 10px solid var(--ink); border-block: 6px solid transparent; }
+.folio { display: flex; justify-content: space-between; padding-block: 40px; font: 500 13px/1 var(--sans); color: var(--ink2); }
+.folio-n { font: 400 24px/1 var(--display); color: var(--ember); }
+.wt { font-family: var(--serif); font-style: italic; color: var(--ink); }
+
+/* ---------------------------------------------------------------- the Life */
+
+/* A: the name as the loud thing, the years under it as a headstone's line. */
+.lf-head { padding-block: clamp(28px, 6vw, 64px) 8px; }
+.lf-name { font: 500 clamp(64px, 21vw, 168px)/0.86 var(--display); letter-spacing: -0.035em; margin-top: 14px; }
+.lf-years { font: 400 clamp(30px, 7vw, 64px)/1 var(--display); font-style: italic; color: var(--ink2); font-variant-numeric: lining-nums; margin-top: 0.22em; }
+.lf-years .dash { padding-inline: 0.06em; }
+.lf-epi { font: 500 17px/1.4 var(--sans); color: var(--machine); margin-top: 18px; max-width: 30ch; }
+@media (min-width: 1000px) { .lf-epi { margin-top: 22px; } }
+
+/* B: a dictionary entry run in, the name, years and epithet as one sentence. */
+.lf-entry { font: 400 clamp(34px, 8.4vw, 76px)/1.04 var(--display); letter-spacing: -0.02em; margin-top: 12px; }
+.lf-entry .lf-n { font-weight: 500; }
+.lf-entry .lf-yy { font-style: italic; color: var(--ink2); }
+.lf-entry .lf-e2 { font: 500 0.56em/1.2 var(--sans); letter-spacing: -0.01em; color: var(--machine); }
+
+.why { padding-block: 36px 28px; }
+
+/* The machine label: a rule, and what it was written from. */
+.lf-label { padding-block: 0 8px; }
+.lf-label p { border-top: 2px solid var(--ink); padding-top: 12px; font: 400 15px/1.5 var(--sans); color: var(--machine); }
+.lf-label .lb-lead { font-weight: 600; }
+.lf-label .wt { font-size: 16px; }
+
+.lf-sec { padding-top: 30px; }
+.lf-h { font: 600 18px/1.3 var(--sans); color: var(--machine); margin-bottom: 10px; }
+.lf-p { margin-bottom: 18px; }
+.lf-text { font: 400 18px/1.62 var(--sans); color: var(--machine); max-width: 38rem; }
+.lf-cite { font: 400 13px/1.5 var(--sans); color: var(--machine); opacity: 0.85; order: 2; }
+@media (min-width: 1000px) { .lf-cite { order: 0; text-align: right; padding-top: 0.3em; } }
+
+/* The person's own words: display type between ink rules, the mark hanging. */
+.lf-words { padding-block: 40px 30px; }
+.lf-q { border-block: 1px solid var(--ink); padding-block: 26px 22px; }
+.lf-q p { font: 400 clamp(32px, 7.4vw, 54px)/1.08 var(--display); font-style: italic; letter-spacing: -0.012em; }
+.hang { margin-left: -0.42em; }
+.lf-words figcaption { display: grid; gap: 4px; margin-top: 12px; font: 400 14px/1.45 var(--sans); }
+.lf-ctx { color: var(--machine); }
+.lf-rec { color: var(--ink2); }
+.lf-rec .wt { color: var(--ink2); }
+
+/* Numbers as a ledger: the figure in display, what it counts in the machine's sans. */
+.lf-fig { padding-block: 34px 10px; }
+.lf-ledger { border-top: 1px solid var(--ink); }
+.lf-ledger div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 20px; align-items: baseline; padding-block: 10px; border-bottom: 1px solid var(--rule); }
+.lf-ledger dt { font: 500 26px/1.1 var(--display); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.lf-ledger dd { font: 400 15px/1.4 var(--sans); color: var(--machine); display: flex; justify-content: space-between; gap: 12px; }
+.lf-k { color: var(--machine); opacity: 0.7; font-size: 13px; white-space: nowrap; }
+@media (min-width: 640px) { .lf-ledger div { grid-template-columns: 210px minmax(0, 1fr); } .lf-ledger dt { font-size: 32px; } }
+
+.lf-dates { padding-block: 36px 10px; }
+.lf-dates ol { border-top: 1px solid var(--ink); margin-top: 10px; }
+.lf-dates li { padding-block: 7px; border-bottom: 1px solid var(--rule); grid-template-columns: 4.2ch minmax(0, 1fr); column-gap: 14px; align-items: baseline; }
+.lf-y { font: 400 22px/1.2 var(--display); font-variant-numeric: lining-nums; }
+.lf-e { font: 400 15px/1.4 var(--sans); color: var(--machine); }
+@media (min-width: 1000px) {
+  .lf-dates ol { margin-top: -1.8em; }
+  .lf-dates li { grid-template-columns: minmax(0, 17rem) minmax(0, 38rem) minmax(0, 1fr); column-gap: var(--colgap); border: 0; }
+  .lf-dates ol { border: 0; }
+  .lf-y { text-align: right; } .lf-e { border-bottom: 1px solid var(--rule); padding-bottom: 7px; }
+}
+
+.lf-read, .lf-src { padding-block: 36px 0; }
+.lf-read ul { border-top: 1px solid var(--ink); }
+.lf-read li { padding-block: 12px; border-bottom: 1px solid var(--rule); display: grid; gap: 2px; }
+.lf-rt { font: 400 20px/1.3 var(--serif); font-style: italic; text-decoration: none; }
+.lf-ra { font: 400 14px/1.4 var(--sans); color: var(--ink2); }
+.lf-src ol { border-top: 1px solid var(--ink); }
+.lf-src li { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--rule); font: 400 14px/1.5 var(--sans); color: var(--machine); }
+.lf-src .wt { font-size: 15px; }
+.lf-sk { font-weight: 600; }
+.lf-how { margin-top: 14px; font: 400 14px/1.55 var(--sans); color: var(--machine); }
+@media (min-width: 1000px) { .lf-read .m, .lf-src .m, .lf-fig .m { padding-top: 0.5em; } }
+
+.lf-mh { font: 500 14px/1.4 var(--sans); color: var(--ink2); }
+.lf-mh.machine { color: var(--machine); }
+@media (max-width: 999px) { .lf-mh { margin-bottom: 4px; } }

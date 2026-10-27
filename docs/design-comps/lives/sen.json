@@ -1,0 +1,887 @@
+{
+ "name": "Sukumar Sen",
+ "born": {
+  "year": 1899,
+  "cites": [
+   {
+    "source": "guha",
+    "quote": "Born in 1899"
+   }
+  ]
+ },
+ "died": {
+  "year": 1963,
+  "cites": [
+   {
+    "source": "wikipedia",
+    "quote": "13 May 1963"
+   }
+  ]
+ },
+ "epithet": {
+  "id": "l1",
+  "text": "India’s first Chief Election Commissioner, who ran the republic’s first general election",
+  "cites": [
+   {
+    "source": "wikipedia",
+    "quote": "was the 1st Chief Election Commissioner of India"
+   },
+   {
+    "source": "guha",
+    "quote": "In March 1950 Sukumar Sen was appointed chief election commissioner."
+   },
+   {
+    "source": "wikipedia",
+    "quote": "the Election Commission successfully administered and oversaw independent India's first two general elections, in 1951–52 and in 1957"
+   }
+  ],
+  "status": "proposed"
+ },
+ "sections": [
+  {
+   "heading": "The man who had to make it happen",
+   "paragraphs": [
+    [
+     {
+      "id": "l2",
+      "text": "India set up an Election Commission two years after independence, and in March 1950 Sukumar Sen became its chief.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "India became free in August 1947, and two years later set up an Election Commission. In March 1950 Sukumar Sen was appointed chief election commissioner."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l3",
+      "text": "He came to it from the post of chief secretary of West Bengal, having joined the Indian Civil Service in 1921 and served in a number of districts and as a judge.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "He joined the Indian Civil Service (ICS) in 1921 and served in various districts and as a judge before being appointed chief secretary of West Bengal, from where he was sent on deputation as chief election commissioner."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l4",
+      "text": "Born in 1899, he had studied at Presidency College and at London University, which gave him a gold medal in mathematics.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "Born in 1899, he was educated at Presidency College and at London University, where he was awarded a gold medal in mathematics."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l5",
+      "text": "He left no memoirs and few papers, and Guha regrets how little is known of him.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "It is a pity we know so little about Sukumar Sen. He left no memoirs and few papers either."
+       }
+      ],
+      "status": "proposed"
+     }
+    ],
+    [
+     {
+      "id": "l6",
+      "text": "Jawaharlal Nehru hoped the country could vote as early as the spring of 1951.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "While proposing the act, the prime minister, Jawaharlal Nehru, expressed the hope that elections would be held as early as the spring of 1951."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l7",
+      "text": "Sen, who would have to run the election, asked the prime minister to wait.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "it was viewed with some alarm by the man who had to make the election possible"
+       },
+       {
+        "source": "guha",
+        "quote": "It was perhaps the mathematician in Sen which made him ask the prime minister to wait."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l8",
+      "text": "The polls were set for the first months of 1952, with some outlying districts to vote before that.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "The polls were finally scheduled for the first months of 1952, although some outlying districts would vote earlier."
+       }
+      ],
+      "status": "proposed"
+     }
+    ]
+   ]
+  },
+  {
+   "heading": "Every adult, by name",
+   "paragraphs": [
+    [
+     {
+      "id": "l9",
+      "text": "About 85 per cent of the electorate could not read or write, and every voter had to be found, named and registered before anything else could be done.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "of whom about 85 percent could not read or write. Each one had to be identified, named and registered. The registration of voters was merely the first step."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l10",
+      "text": "Of about 180 million adults, the rolls held 173 million names, in every state except Jammu and Kashmir.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "The total number of voters enrolled in the whole of India (excluding Jammu & Kashmir) was 17,32,13,635."
+       },
+       {
+        "source": "eci-report",
+        "quote": "Out of a total adult population of 18,03,07,684, therefore, the electoral rolls included 17,32,13,635."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l11",
+      "text": "About 45 per cent of the names were women’s.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "Of these, approximately 45 per cent were women voters."
+       }
+      ],
+      "status": "proposed"
+     }
+    ],
+    [
+     {
+      "id": "l12",
+      "text": "In several northern states many women would not give their own names to strangers, and asked to be entered as somebody’s mother or somebody’s wife.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "the diffidence of many women in northern India to give their own names, instead of which they wished to register themselves as A’s mother or B’s wife."
+       },
+       {
+        "source": "eci-report",
+        "quote": "women in these areas were averse to disclosing their proper names to strangers."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l13",
+      "text": "Sen would not accept it, and directed his officials to put the women’s names on the rolls in place of the descriptions.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "Sukumar Sen was outraged by this practice, a ‘curious senseless relic of the past’, and directed his officials to correct the rolls by inserting the names of the women ‘in the place of mere descriptions of such voters’."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l14",
+      "text": "The Commission’s rule was that a name is an essential part of a voter’s identity, and a woman who refused to give hers was not to be registered.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "essential part of his or her identity, must be included in the electoral rolls"
+       },
+       {
+        "source": "eci-report",
+        "quote": "Directions were also issued to the effect that any woman who refused to give her proper name should not be registered as a voter"
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l15",
+      "text": "Bihar was given an extra month to correct its rolls and used it well; Rajasthan was given the same, and the response there was poor.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "A special extension of one month was given in Bihar for filing such applications"
+       },
+       {
+        "source": "eci-report",
+        "quote": "This extension was made good use of and the rolls were considerably improved in that State."
+       },
+       {
+        "source": "eci-report",
+        "quote": "the response there was poor"
+       }
+      ],
+      "status": "proposed"
+     }
+    ],
+    [
+     {
+      "id": "l16",
+      "text": "In the end about 2.8 million women were struck off the rolls, out of nearly 80 million women voters, practically all of them in Bihar, Uttar Pradesh, Madhya Bharat, Rajasthan and Vindhya Pradesh.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "some 2.8 million women voters had finally to be struck off the list."
+       },
+       {
+        "source": "eci-report",
+        "quote": "Out of a total of nearly 80 million"
+       },
+       {
+        "source": "eci-report",
+        "quote": "Practically all such cases were from the States of Bihar, Uttar Pradesh, Madhya Bharat, Rajasthan and Vindhya Pradesh."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l17",
+      "text": "Sen thought the uproar over their omission a good thing: it might help the prejudice vanish before the next elections, when the women could be put back on the rolls under their own names.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "The resulting furore over their omission was considered by Sen to be a ‘good thing’, for it might help the prejudice vanish before the next elections, by which time the women could be reinstated under their own names."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l18",
+      "text": "When his report on the election went to press, it recorded that no state was having any difficulty enrolling women by their proper names.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "Recent reports indicate that no difficulty is being experienced in any State in enrolling women voters by their proper names."
+       }
+      ],
+      "status": "proposed"
+     }
+    ]
+   ]
+  },
+  {
+   "heading": "Boxes, symbols and ink",
+   "paragraphs": [
+    [
+     {
+      "id": "l19",
+      "text": "There were about 4,500 seats to fill, some 500 in Parliament and the rest in the provincial assemblies.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "At stake were 4,500 seats—about 500 for Parliament, the rest for the provincial assemblies."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l20",
+      "text": "The Commission set up 224,000 polling booths and supplied them with 2 million steel ballot boxes, which took 8,200 tons of steel to make.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "224,000 polling booths were constructed, and equipped with 2 million steel ballot boxes, to make which 8,200 tons of steel were consumed"
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l21",
+      "text": "It took 56,000 presiding officers, another 280,000 helpers and 224,000 policemen to run the vote.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "56,000 presiding officers were chosen to supervise the voting, these aided by another 280,000 helpers; 224,000 policemen were put on duty to guard against violence and intimidation."
+       }
+      ],
+      "status": "proposed"
+     }
+    ],
+    [
+     {
+      "id": "l22",
+      "text": "Since most voters could not read a party’s name, each party was given a picture from daily life: a pair of bullocks, a hut, an elephant, an earthenware lamp.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "Where in Western democracies most voters could recognize the parties by name, here pictorial symbols were used to make their task easier. Drawn from daily life, these symbols were easily recognizable: a pair of bullocks for one party, a hut for a second, an elephant for a third, an earthenware lamp for a fourth."
+       },
+       {
+        "source": "guha",
+        "quote": "of whom about 85 percent could not read or write"
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l23",
+      "text": "Each polling station had a separate box for every party, marked with its symbol, so that a voter only had to drop the ballot paper into the right one.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "each party had a ballot box with its symbol marked in each polling station, so that voters could simply drop their paper in it."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l24",
+      "text": "To stop anyone voting in another person’s name, Indian scientists developed an ink that stayed on the finger for a week, and 389,816 phials of it were used.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "To avoid impersonation, Indian scientists had developed a variety of indelible ink which, applied on the voter’s finger, stayed there for a week. A total of 389,816 phials of this ink were used in the election."
+       }
+      ],
+      "status": "proposed"
+     }
+    ],
+    [
+     {
+      "id": "l25",
+      "text": "Through 1951 the Commission explained the vote with a documentary shown in more than 3,000 cinemas, and with programmes on All-India Radio about the constitution, adult franchise, the rolls and how to vote.",
+      "cites": [
+       {
+        "source": "guha",
+        "quote": "Throughout 1951 the Election Commission used the media of film and radio to educate the public about the novel exercise in democracy. A documentary on the franchise and its functions, and the duties of the electorate, was shown in more than 3,000 cinemas."
+       },
+       {
+        "source": "guha",
+        "quote": "Many more Indians were reached via All-India Radio, which broadcast numerous programmes on the constitution, the purpose of adult franchise, the preparation of electoral rolls and the process of voting."
+       }
+      ],
+      "status": "proposed"
+     }
+    ]
+   ]
+  },
+  {
+   "heading": "The first votes",
+   "paragraphs": [
+    [
+     {
+      "id": "l26",
+      "text": "The first constituencies to vote were Chini and Pangi in the hills of Himachal Pradesh, where polling had to be finished before the snow that usually falls in early November.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "were the first to go to the polls, as it was necessary to complete the polling in those areas before snow-fall which is usual there in early November."
+       },
+       {
+        "source": "eci-report",
+        "quote": "Elections to the Chini and Pangi Assembly constituencies, and the corresponding portions of the Parliamentary constituencies, had therefore to be arranged in a hurry before snow-fall."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l27",
+      "text": "Polling there began on 25 October 1951; most of the remaining states voted in January 1952.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "Polling took place on the 25th, 27th, 29'th and 31st October, and the 2nd November, 1951, in these two constituencies."
+       },
+       {
+        "source": "eci-report",
+        "quote": "All the remaining States went to the polls during January, 1952."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l28",
+      "text": "Even so, it took about a week to carry the ballot boxes down to Chamba and Kasumpti to be counted.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "it took about a week after the poll to transport the ballot boxes to Chamba and Kasumpti, the headquarters of the respective Returning Officers, for the counting of votes."
+       }
+      ],
+      "status": "proposed"
+     }
+    ],
+    [
+     {
+      "id": "l29",
+      "text": "Shyam Saran Negi of Kalpa, in Kinnaur, is recognised as the country’s first voter, from the poll of 25 October 1951.",
+      "cites": [
+       {
+        "source": "pti",
+        "quote": "Shyam Saran Negi became the first voter of the country when elections were held for the first time on October 25, 1951 in Kinnaur."
+       },
+       {
+        "source": "pti",
+        "quote": "cast his vote at a polling booth in his native place Kalpa."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l30",
+      "text": "At ninety-seven he was still voting, at a booth in the school from which he had retired after 23 years.",
+      "cites": [
+       {
+        "source": "pti",
+        "quote": "The 97-year-old Negi reached the polling booth at 6.55 a.m."
+       },
+       {
+        "source": "pti",
+        "quote": "Incidentally, the booth was set up in the school from where he had retired after serving for 23 years."
+       }
+      ],
+      "status": "proposed"
+     }
+    ],
+    [
+     {
+      "id": "l31",
+      "text": "In Lahaul and Spiti the Commission had warned the state government in June 1951 to hold an early poll, and the government let the matter slide.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "Although the State Government had been warned by the Commission in June, 1951, about the desirability of holding the elections in the hilly tracts of the Kangra district in October"
+       },
+       {
+        "source": "eci-report",
+        "quote": "the State Government allowed the matter to slide and the opportunity to hold an early poll in the area was lost."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l32",
+      "text": "Its polling stations were then placed outside the snow-bound area, far from the voters’ homes, and the voters could not reach them.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "at polling stations located within the constituency but outside the snow-bound areas at places far away from the voters' homes. The voters naturally failed to reach such polling stations"
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l33",
+      "text": "The Commission’s report called it a virtual denial of the right to vote to 6,348 voters, and said it very much regretted it.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "The Commission very much regrets this instance of virtual denial of the exercise of the right to vote to a large body of voters who"
+       },
+       {
+        "source": "eci-report",
+        "quote": "numbered 6,348."
+       }
+      ],
+      "status": "proposed"
+     }
+    ]
+   ]
+  },
+  {
+   "heading": "Afterwards",
+   "paragraphs": [
+    [
+     {
+      "id": "l34",
+      "text": "Sen signed the preface to that report in February 1955.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "The 4th February, 1955,"
+       },
+       {
+        "source": "eci-report",
+        "quote": "SUKUMAR SEN, Chief Election Commissioner."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l35",
+      "text": "It was late, he wrote, partly because he had spent more than a year abroad after the elections, serving in the Sudan as chairman of its International Electoral Commission.",
+      "cites": [
+       {
+        "source": "eci-report",
+        "quote": "Unfortunately, however, there has been a good deal of regrettable delay in bringing out this report."
+       },
+       {
+        "source": "eci-report",
+        "quote": "I was serving in the Sudan as the Chairman of the International Electoral Commission."
+       },
+       {
+        "source": "eci-report",
+        "quote": "Before that, I had to remain abroad for more than"
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l36",
+      "text": "He was among the first people awarded the Padma Bhushan.",
+      "cites": [
+       {
+        "source": "wikipedia",
+        "quote": "He was among the first recipients of the civilian honour of Padma Bhushan."
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l37",
+      "text": "He ran the second general election too, in 1957, and served until December 1958.",
+      "cites": [
+       {
+        "source": "wikipedia",
+        "quote": "Sen also oversaw the 1957 Indian General Election"
+       },
+       {
+        "source": "wikipedia",
+        "quote": "serving from 21 March 1950 to 19 December 1958"
+       }
+      ],
+      "status": "proposed"
+     },
+     {
+      "id": "l38",
+      "text": "He died in 1963.",
+      "cites": [
+       {
+        "source": "wikipedia",
+        "quote": "13 May 1963"
+       }
+      ],
+      "status": "proposed"
+     }
+    ]
+   ]
+  }
+ ],
+ "words": {
+  "text": "curious senseless relic of the past",
+  "context": {
+   "id": "l39",
+   "text": "Sukumar Sen, on women entered on the electoral rolls as somebody’s mother or wife instead of by name",
+   "cites": [
+    {
+     "source": "guha",
+     "quote": "the diffidence of many women in northern India to give their own names, instead of which they wished to register themselves as A’s mother or B’s wife."
+    }
+   ],
+   "status": "proposed"
+  },
+  "cites": [
+   {
+    "source": "guha",
+    "quote": "Sukumar Sen was outraged by this practice, a ‘curious senseless relic of the past’"
+   }
+  ]
+ },
+ "dates": [
+  {
+   "year": "1899",
+   "line": {
+    "id": "l40",
+    "text": "Born",
+    "cites": [
+     {
+      "source": "guha",
+      "quote": "Born in 1899"
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1921",
+   "line": {
+    "id": "l41",
+    "text": "Joins the Indian Civil Service",
+    "cites": [
+     {
+      "source": "guha",
+      "quote": "He joined the Indian Civil Service (ICS) in 1921"
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1950",
+   "line": {
+    "id": "l42",
+    "text": "Chief Election Commissioner, from March",
+    "cites": [
+     {
+      "source": "guha",
+      "quote": "In March 1950 Sukumar Sen was appointed chief election commissioner."
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1951",
+   "line": {
+    "id": "l43",
+    "text": "The first votes, at Chini and Pangi, on 25 October",
+    "cites": [
+     {
+      "source": "eci-report",
+      "quote": "Polling took place on the 25th, 27th, 29'th and 31st October, and the 2nd November, 1951, in these two constituencies."
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1952",
+   "line": {
+    "id": "l44",
+    "text": "Most of the country votes, in January",
+    "cites": [
+     {
+      "source": "eci-report",
+      "quote": "All the remaining States went to the polls during January, 1952."
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1955",
+   "line": {
+    "id": "l45",
+    "text": "Signs the report on the first election",
+    "cites": [
+     {
+      "source": "eci-report",
+      "quote": "The 4th February, 1955,"
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1957",
+   "line": {
+    "id": "l46",
+    "text": "Runs the second general election",
+    "cites": [
+     {
+      "source": "wikipedia",
+      "quote": "Sen also oversaw the 1957 Indian General Election"
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1958",
+   "line": {
+    "id": "l47",
+    "text": "Leaves office in December",
+    "cites": [
+     {
+      "source": "wikipedia",
+      "quote": "serving from 21 March 1950 to 19 December 1958"
+     }
+    ],
+    "status": "proposed"
+   }
+  },
+  {
+   "year": "1963",
+   "line": {
+    "id": "l48",
+    "text": "Dies",
+    "cites": [
+     {
+      "source": "wikipedia",
+      "quote": "13 May 1963"
+     }
+    ],
+    "status": "proposed"
+   }
+  }
+ ],
+ "figures": {
+  "title": "The first general election, in numbers",
+  "rows": [
+   {
+    "value": "173 million",
+    "line": {
+     "id": "l49",
+     "text": "names on the electoral rolls",
+     "cites": [
+      {
+       "source": "eci-report",
+       "quote": "The total number of voters enrolled in the whole of India (excluding Jammu & Kashmir) was 17,32,13,635."
+      }
+     ],
+     "status": "proposed"
+    }
+   },
+   {
+    "value": "85 per cent",
+    "line": {
+     "id": "l50",
+     "text": "of the electorate could not read or write",
+     "cites": [
+      {
+       "source": "guha",
+       "quote": "of whom about 85 percent could not read or write"
+      }
+     ],
+     "status": "proposed"
+    }
+   },
+   {
+    "value": "224,000",
+    "line": {
+     "id": "l51",
+     "text": "polling booths",
+     "cites": [
+      {
+       "source": "guha",
+       "quote": "224,000 polling booths were constructed"
+      }
+     ],
+     "status": "proposed"
+    }
+   },
+   {
+    "value": "2 million",
+    "line": {
+     "id": "l52",
+     "text": "steel ballot boxes",
+     "cites": [
+      {
+       "source": "guha",
+       "quote": "equipped with 2 million steel ballot boxes"
+      }
+     ],
+     "status": "proposed"
+    }
+   },
+   {
+    "value": "389,816",
+    "line": {
+     "id": "l53",
+     "text": "phials of indelible ink",
+     "cites": [
+      {
+       "source": "guha",
+       "quote": "A total of 389,816 phials of this ink were used in the election."
+      }
+     ],
+     "status": "proposed"
+    }
+   },
+   {
+    "value": "2.8 million",
+    "line": {
+     "id": "l54",
+     "text": "women struck off the rolls for want of their own names",
+     "cites": [
+      {
+       "source": "guha",
+       "quote": "some 2.8 million women voters had finally to be struck off the list."
+      }
+     ],
+     "status": "proposed"
+    }
+   }
+  ]
+ },
+ "sources": [
+  {
+   "id": "guha",
+   "author": "Ramachandra Guha",
+   "title": "India After Gandhi",
+   "kind": "book",
+   "publisher": "Ecco/HarperCollins",
+   "year": "2007",
+   "url": "https://caravanmagazine.in/vantage/ramachandra-guha-indias-first-election-commissioner",
+   "via": "An extract reproduced with the author’s permission at The Caravan, 2014",
+   "workUrl": "https://amzn.in/d/07BIgTop"
+  },
+  {
+   "id": "eci-report",
+   "author": "Election Commission of India",
+   "title": "Report on the First General Elections in India 1951-52, Volume I",
+   "kind": "report",
+   "publisher": "Government of India Press",
+   "year": "1955",
+   "url": "https://cdn.downtoearth.org.in/library/0.61706000_1558592806_first-general-elections-in-india%2C-vol.pdf",
+   "via": "A scanned copy in Down To Earth’s library"
+  },
+  {
+   "id": "pti",
+   "author": "Press Trust of India",
+   "title": "India’s first voter fulfils his duty again",
+   "kind": "article",
+   "publisher": "The Morung Express",
+   "year": "2014",
+   "url": "https://morungexpress.com/indias-first-voter-fulfils-his-duty-again"
+  },
+  {
+   "id": "wikipedia",
+   "author": "Wikipedia",
+   "title": "Sukumar Sen (civil servant)",
+   "kind": "reference",
+   "year": "2026",
+   "url": "https://en.wikipedia.org/wiki/Sukumar_Sen_(civil_servant)"
+  }
+ ],
+ "reading": [
+  {
+   "author": "Ramachandra Guha",
+   "title": "India After Gandhi: The History of the World’s Largest Democracy",
+   "kind": "book",
+   "publisher": "Picador",
+   "year": "2007",
+   "url": "https://amzn.in/d/07BIgTop"
+  },
+  {
+   "author": "Ornit Shani",
+   "title": "How India Became Democratic: Citizenship and the Making of the Universal Franchise",
+   "kind": "book",
+   "publisher": "Cambridge University Press",
+   "year": "2017"
+  },
+  {
+   "author": "Election Commission of India",
+   "title": "Report on the First General Elections in India 1951-52",
+   "kind": "report",
+   "publisher": "Government of India Press",
+   "year": "1955",
+   "url": "https://cdn.downtoearth.org.in/library/0.61706000_1558592806_first-general-elections-in-india%2C-vol.pdf"
+  },
+  {
+   "author": "Election Commission of India",
+   "title": "Leap of Faith: Journey of Indian Elections",
+   "kind": "book",
+   "url": "https://www.eci.gov.in/EBooks/Leap-of-Faith/"
+  }
+ ],
+ "writer": "Claude"
+}
