@@ -55,9 +55,10 @@ workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
                   threads (connect.ts), rhymes, blocks, the shelf (shelf.ts), the editor's library
-                  (library.ts), publish, FCM
+                  (library.ts), Lives (lives.ts), publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
-                  validator, quoting (excerpt length guide, when to draw out big ideas), highlight
+                  validator, quoting (excerpt length guide, when to draw out big ideas), life (a Life's
+                  rules: checkLifeDraft, assembleLife, lifeByline, figures traced to quotes), highlight
                   (code tokens at publish), fingerprint, shelf (the books the editor is reading:
                   Shelf, validateShelf, shelfOrder), charts (src/charts: spec, validateChart,
                   renderer with one file per form in forms/, labels, glosses, CSV, bandSummary, maps in
@@ -119,6 +120,12 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - Machine notes and big ideas the judge cannot fully confirm are set aside (`rejected`) and never
   shown; only lines the editor ticks are published. Excerpt length follows `excerptCap` in
   `@fdf/shared/quoting`; links to originals name the person (`sourceAction`).
+- Lives (`docs/DECISIONS.md` 2026-10-27): a profile of one person from named sources, every line
+  citing stored sources with quotes found word for word and every figure in its quotes
+  (`@fdf/shared/life`). Sources are fetched by the Desk (`lives.ts`), never supplied as text; a
+  draft failing any check is refused whole; the judge sets aside what it cannot confirm; only lines
+  the editor keeps print, after the editor approves; the label is generated from the cited sources.
+  The quotes stay on the Desk; the bundle carries source and place. The portrait is the item's plate.
 - Never render stored or model text as HTML in the UI (no `dangerouslySetInnerHTML`); links go
   through `safeHref`.
 - Local: `workers/api/.dev.vars` with `ENVIRONMENT=local` and `DEV_AUTH_BYPASS=1`, then
@@ -165,7 +172,7 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   `npx expo-modules-autolinking resolve -p android --json`. No Expo Router, Reanimated, SVG runtime,
   icon fonts or UI kits; icons are drawn with views.
 - `src/App.tsx` (navigator + deep links in `src/nav.ts`), `src/routes.tsx` (params to data),
-  `src/screens/*`, `src/ui/*` (type roles in `type.tsx`), `src/lib/data.ts` (offline-first bundles).
+  `src/screens/*`, `src/ui/*` (type roles in `type.tsx`, a Life in `Life.tsx`), `src/lib/data.ts` (offline-first bundles).
   The bar is the website's nav (Latest, Threads, Archive, Search, Menu; `ui/TabBar.tsx`); Menu
   (`screens/Menu.tsx`) reaches Saved, About and Settings. Forms in `lib/forms.ts` (the website's
   choice), blocks in `ui/Blocks.tsx`, the fingerprint in `ui/Fingerprint.tsx` + `lib/fpGeometry.ts`,

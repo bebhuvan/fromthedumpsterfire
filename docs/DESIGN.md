@@ -38,6 +38,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Rhymes | the two years facing each other |
 | Rabbit hole | the catalogue card |
 | Paper, talk, passage | the marked line (abstract, the speaker's words, the page) |
+| Life | the name, set large, with the years under it |
 
 ## Forms
 
@@ -57,6 +58,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | image | mounted print | the picture in a plate-grey mount, a museum label beside it (from 1000px) or under it: title, maker and date, where it is from, credit and licence |
 | book | jacket | the book set in type as a 2:3 jacket in lilac in the margin (or its cover, if the editor uploaded one), the title as a heading, a line from inside under a rule |
 | tool | specimen label | a ruled box with a tint strip on its top edge: the name huge, then fields (Made by, What it is, Since, In its own words, Where) |
+| life | the life | the name set huge and stacked (display 500, to 168px) with the years under it in the display italic, the epithet in the blue sans; a portrait only if one cleared the credit rule (the item's plate, small, in the air); the editor's note as the standfirst; a 2pt ink rule and the label, generated from the sources ("Written by Claude from …", whole works in the serif italic); the profile in short sections, sans in the deeper reading blue (`machineText`), each paragraph's sources and pages in the margin; the person's own words as the pull quote in the display italic; numbers as a ledger (figure in display, what it counts in sans); a life in dates with the years hanging in the margin; further reading; what it was written from, and how it was checked |
 | chart | the figure | a magazine opening whose loud thing is the chart: the title, the why as standfirst, then the first chart drawn large from its data. On the cover its specimen is its own chart, drawn small |
 
 Shared by every item page: the running head (Haul and title, then the form's name), a thumb tab on
@@ -221,7 +223,12 @@ Defined in `packages/shared/src/tokens.ts`.
 | lilac (letter, book) | #ECE4FA | #33284A |
 | aqua (post, picture) | #D3EFF0 | #123B3D |
 
-Charts share sky with Rhymes (a figure is cool-headed); their own colours are `chartInk`.
+Charts share sky with Rhymes (a figure is cool-headed); their own colours are `chartInk`. Lives share
+lilac with the letter and the book.
+
+Long machine prose (a Life's profile) is set in `machineText` (#2B3593 light, #C3C8FA dark), the
+machine's blue deepened to about 10:1 so a page of it reads as easily as body text; margin notes,
+labels and provenance keep `machine`.
 
 Code colours (`palette.code`) and the eight edition inks (`editionInk`) are in tokens.ts. Talk, video,
 podcast and speech share butter; paper and tool share mint; poem, passage and quotation share coral.

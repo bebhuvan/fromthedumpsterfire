@@ -290,6 +290,30 @@ comes from the source's rows; never type, round or "clean" a value. Machine anno
 Worker draws each chart's app pictures and share picture when it publishes; `chart-draw` writes the
 same pictures locally (`chart-share.png` is the share picture) for a look first.
 
+## Lives: a profile written in a session
+
+A Life is one person, profiled by a model from named sources (`docs/DECISIONS.md`, 2026-10-27). The
+Desk fetches the sources; the session writes the profile from the stored text and cites it.
+
+```sh
+npm run editorial -- life --data .editorial/life.json            # {name, why, year, sources: [...]}
+npm run editorial -- life-show it_ID                              # sources fetched? (no text shown)
+npm run editorial -- request POST /api/items/it_ID/life/sources/KEY/file --upload file=/private/source.pdf
+npm run editorial -- life-draft it_ID --data .editorial/profile.json
+```
+
+A source is `{"id":"guha","author":"Ramachandra Guha","title":"India After Gandhi","kind":"book",
+"year":"2007","url":"https://where-the-text-is-read","via":"An extract at …","workUrl":"https://the-book"}`;
+`kind` is book, report, article or reference. Upload a PDF only when the link is too large or slow to
+fetch; the link stays the source. The profile (`.editorial/lives-sen/profile.json` is a full example)
+has `name`, `born`/`died` (`{year, cites}`), `epithet`, `sections` (`{heading, paragraphs: [[line]]}`),
+`words` (the person's own words, with the quote that records them), `dates`, `figures`, `reading`
+and `writer`; every line is `{"id":"l1","text":"…","cites":[{"source":"guha","quote":"exact words"}]}`.
+Write each sentence so its quotes hold every fact and every number in it; write transitions so they
+need no fact. The draft is refused whole if any quote is not in its source, a figure is not in its
+quotes, or a line fails the style check, with every problem listed. Lines the judge does not confirm
+are set aside. The editor's note follows the dictation rules above; the profile is never theirs.
+
 ## Machine notes written in a session
 
 A note of context that the pipeline did not draft (a timeline, a definition the editor asked for)

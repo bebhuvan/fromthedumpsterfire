@@ -883,3 +883,35 @@ Before charts go live: merge `charts-kit`, deploy the Desk (routes, CSP, server 
 then an OTA for the app (JavaScript only). No migration is needed. On the first publish after deploy,
 every chart's pictures are drawn afresh under new names (`CHART_RENDER_VERSION` is 2).
 
+
+## Lives (2026-10-27, branch `lives`; not deployed, not merged)
+
+From `docs/LIVES-BRIEF.md`; the report is `docs/LIVES-REPORT.md`.
+
+- **A new type, `life`** (label "Lives", lilac): a profile of one person per Haul, written by a model
+  from named sources, every line checked. Schema in `packages/shared/src/haul.ts` (`Life`,
+  `LifeLine`, `LifeCite`, `LifeSource`); the rules in `packages/shared/src/life.ts` (`checkLifeDraft`:
+  quotes word for word, figures in the quotes including spelled-out numbers, style, headings without
+  figures; `assembleLife`: kept lines only, quotes left out, uncited sources dropped; `lifeByline`);
+  `validateHaul` rules for a Life. Old bundles validate unchanged.
+- **The Desk**: migration `0009_lives.sql` (`life_sources`, `lives`); `packages/server/src/lives.ts`
+  (sources fetched by the article fetch order, an editor's PDF for a source too slow to fetch, the
+  draft refused whole on any failed check, the judge setting aside what it cannot confirm and failing
+  closed, keep/cut per line, approval cleared by any change, a recheck at publish); routes in
+  `workers/api/src/lives.ts`; the review screen `apps/desk/src/screens/Life.tsx`; a `life` check in
+  the checks panel; a Life stays a Life (no capture or type change makes one).
+- **The terminal**: `npm run editorial -- life`, `life-draft ITEM`, `life-show ITEM` (`docs/EDITORIAL.md`).
+- **The website**: `apps/web/src/components/Life.astro`, the cover specimen, Markdown, search.
+- **The app**: `apps/mobile/src/ui/Life.tsx`, the cover specimen, search.
+- **Tokens**: `machineText` (the machine's blue, deepened for long prose), in tokens.css as
+  `--machine-text`.
+- **Sukumar Sen**, the first Life: 54 lines from Ramachandra Guha's *India After Gandhi* (the
+  extract at The Caravan), the Election Commission's 1955 *Report on the First General Elections*
+  (which Sen signed), a PTI report on Shyam Saran Negi, and Wikipedia for his last years. Checked
+  against the texts the Desk's own fetch code stored: 0 problems. Payload ready, private, in
+  `.editorial/lives-sen/`; in the development Haul 002 so every form can be seen.
+- `npm run verify`: 749 tests pass.
+
+Before it goes live: merge `lives`, apply migration 0009 (`npm run db:migrate:production`), deploy the
+Desk and the site, then an over-the-air update for the app (JavaScript only; no native change). Then
+submit Sen from `.editorial/lives-sen/README.md`, read and approve on the Desk, and add it to Haul 001.
