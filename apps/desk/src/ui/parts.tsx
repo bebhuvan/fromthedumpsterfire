@@ -67,6 +67,7 @@ export const deskTypeLabel: Record<ContentType, string> = {
   book: 'Book (printed as its jacket)',
   tool: 'Tool or app (printed as a specimen label)',
   chart: 'Chart or data (printed as the figure)',
+  life: 'Lives: a profile of one person (written from named sources)',
 };
 
 /** How each type is printed, so the choice reads as a layout decision. */
@@ -89,11 +90,12 @@ export const deskTypeForm: Record<ContentType, string> = {
   book: 'Printed as its jacket: title, author, year, your note on the flap.',
   tool: 'Printed as a specimen label: what it is, what it does, your note.',
   chart: 'Printed as the figure: your title, the chart drawn large from its data, your note, the source and the numbers. Add the chart below.',
+  life: 'Printed as the life: the name set large, your note, the machine’s profile with every source named, a life in dates and further reading. Made from the terminal; review it below.',
 };
 
 export function TypeSelect({ value, onChange, className = 'select' }: { value: ContentType; onChange: (t: ContentType) => void; className?: string }) {
-  // Rhymes are made with their own button; offer the type only to an item that already is one.
-  const types = CONTENT_TYPES.filter((t) => t !== 'rhymes' || value === 'rhymes');
+  // Rhymes and Lives are made their own way; offer the type only to an item that already is one.
+  const types = CONTENT_TYPES.filter((t) => (t !== 'rhymes' && t !== 'life') || value === t);
   return (
     <select className={className} value={value} onChange={(e) => onChange(e.target.value as ContentType)} aria-label="Type">
       {types.map((t) => (

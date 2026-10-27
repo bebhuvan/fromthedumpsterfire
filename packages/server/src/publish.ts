@@ -28,6 +28,8 @@ import { chartKey, validateChart, type Chart } from '@fdf/shared/charts';
 import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
 import { SHELF_PATH, SHELF_VERSION, shelfOrder, validateShelf, type BookNote, type Shelf, type ShelfBook } from '@fdf/shared/shelf';
 import { bookTitle, bookTitleText, linesFor, notesFor, shelfChanges, type BookRow } from './shelf';
+import { lifeForBundle } from './lives';
+import type { Life } from '@fdf/shared/haul';
 
 /** Sources that are transcripts of speech, where punctuation decides whether a quote is printable. */
 const TRANSCRIPTS = new Set(['captions-auto', 'captions', 'transcript', 'whisper']);
@@ -241,6 +243,14 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       }
     }
 
+    // A Life prints only as the editor approved it, checked again against its stored sources.
+    let life: Life | undefined;
+    if (it.type === 'life') {
+      const lf = await lifeForBundle(env, it.id);
+      for (const m of lf.problems) problems.push({ itemId: it.id, itemTitle: label, message: m });
+      life = lf.life;
+    }
+
     const title = parseJson<Title | null>(it.title_choice, null) ?? { text: it.title ?? '' };
     const item: Item = {
       id: idFor.get(it.id)!,
@@ -280,6 +290,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       ...(it.recipient?.trim() ? { recipient: it.recipient.trim() } : {}),
       ...(it.place?.trim() ? { place: it.place.trim() } : {}),
       ...(shelf ? { shelf } : {}),
+      ...(life ? { life } : {}),
       wiki: cards.map((c) => ({ title: c.title, summary: c.summary, url: c.url })),
       connections: conns.map((c) => ({
         type: c.type,

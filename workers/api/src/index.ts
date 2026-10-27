@@ -50,6 +50,7 @@ import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY
 import { m6, platesFor } from './milestone6';
 import { blocksApi } from './blocks';
 import { shelfApi } from './shelf';
+import { livesApi } from './lives';
 import { assetResponse, manifestResponse } from './updates';
 
 type App = { Bindings: Env; Variables: { owner: string; canPublish: boolean; ownerLogin: boolean } };
@@ -352,8 +353,10 @@ const itemPatch = z.object({
 
 app.patch('/api/items/:id', async (c) => {
   const id = c.req.param('id');
-  await itemOr404(c.env, id);
+  const current = await itemOr404(c.env, id);
   const p = await body(c, itemPatch);
+  // A Life is made with its sources (POST /api/lives) and stays one; nothing else becomes one.
+  if (p.type !== undefined && (p.type === 'life') !== (current.kind === 'life')) return c.json({ error: current.kind === 'life' ? 'A Life stays a Life' : 'Make a Life from the terminal with its sources (npm run editorial -- life)' }, 409);
   const sets: string[] = [];
   const vals: unknown[] = [];
   for (const [k, v] of Object.entries(p)) {
@@ -497,14 +500,18 @@ app.post('/api/items/:id/file', async (c) => {
 });
 
 app.post('/api/items/:id/refetch', async (c) => {
-  if ((await itemOr404(c.env, c.req.param('id'))).kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own; change its ends instead' }, 409);
+  const kind = (await itemOr404(c.env, c.req.param('id'))).kind;
+  if (kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own; change its ends instead' }, 409);
+  if (kind === 'life') return c.json({ error: 'A Life has its own sources: fetch them again on the Life' }, 409);
   await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = NULL WHERE id = ?`).bind(c.req.param('id')).run();
   await c.env.INGEST_QUEUE.send({ kind: 'ingest', itemId: c.req.param('id') });
   return c.json({ ok: true });
 });
 
 app.post('/api/items/:id/redraft', async (c) => {
-  if ((await itemOr404(c.env, c.req.param('id'))).kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own; change its ends instead' }, 409);
+  const kind = (await itemOr404(c.env, c.req.param('id'))).kind;
+  if (kind === 'rhyme') return c.json({ error: 'A Rhyme has no source of its own; change its ends instead' }, 409);
+  if (kind === 'life') return c.json({ error: 'A Life has its own sources: fetch them again on the Life' }, 409);
   await c.env.DB.prepare(`UPDATE items SET status = 'queued', status_detail = 'Redrafting' WHERE id = ?`).bind(c.req.param('id')).run();
   await c.env.INGEST_QUEUE.send({ kind: 'redraft', itemId: c.req.param('id') });
   return c.json({ ok: true });
@@ -892,6 +899,7 @@ app.post('/api/hauls/:id/publish', async (c) => {
 app.route('/', m6);
 app.route('/', blocksApi);
 app.route('/', shelfApi);
+app.route('/', livesApi);
 
 // Stored files, behind the lock. Published paths (hauls/..., shelf/...) come from the public FILES bucket, so a
 // preview deployment can check its bundles (production readers get them from R2 directly); private

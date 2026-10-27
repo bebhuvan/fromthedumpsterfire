@@ -20,6 +20,7 @@ import { pageAt } from './extract/pdf';
 import { msToClock } from './extract/youtube';
 import { rhymeQuoteRows } from './rhymes';
 import { blockQuoteRows, blocksFor } from './blocks';
+import { lifeLinks, lifeRow } from './lives';
 
 const D1_TEXT_LIMIT = 1_500_000;
 
@@ -518,6 +519,8 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
       ...(item.canonical_url || item.url ? [{ label: 'Source', url: (item.canonical_url || item.url)! }] : []),
       ...(media?.url ? [{ label: 'Media', url: media.url }] : []),
       ...cards.map((c) => ({ label: `Wikipedia: ${c.title}`, url: c.url, id: c.id })),
+      // A Life's sources and further reading.
+      ...(item.type === 'life' ? await lifeLinks(env, itemId) : []),
       // Videos and recordings the editor added: readers follow these links too.
       ...(await blocksFor(env, itemId)).flatMap((r) => {
         if (r.status !== 'kept' || (r.kind !== 'video' && r.kind !== 'audio')) return [];
@@ -599,6 +602,18 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
       status: worst(citeRows),
       summary: citeRows.length ? `${citeRows.filter((r) => r.status === 'pass').length} of ${citeRows.length} kept notes and ideas checked against their sources` : 'No machine notes kept',
       rows: citeRows,
+    };
+  }
+
+  // A Life: its profile, approved by the editor (the lines themselves are checked in lives.ts).
+  if (item.type === 'life') {
+    const row = await lifeRow(env, itemId);
+    const problems = parseJson<string[]>(row?.problems, []);
+    const status = !row ? 'fail' : row.approved_at ? 'pass' : 'warn';
+    results.life = {
+      status,
+      summary: !row ? 'No profile yet' : row.approved_at ? 'Profile approved' : problems.length ? `${problems.length} problems before it can be approved` : 'Read the profile and approve it',
+      rows: problems.map((p) => ({ label: 'Profile', status: 'fail' as const, detail: p })),
     };
   }
 

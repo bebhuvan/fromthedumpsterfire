@@ -18,6 +18,7 @@ export * from './rhymes';
 export * from './blocks';
 export { fetchOwid, fetchWorldBank, owidSlug, wbUnits, type FetchedChartData } from './charts';
 export * from './shelf';
+export * from './lives';
 export { fromLibrary, libraryProviders, normaliseLibraryUrl, syncLibrary } from './library';
 export { planAudio, fetchRange, fetchChunk, joinTranscript, stitchTranscript, MAX_SECONDS, type AudioPlan, type AudioChunk, type ChunkTranscript } from './extract/audio';
 export { browserAvailable } from './extract/browser';

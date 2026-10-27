@@ -18,6 +18,7 @@ const vars = (p: Palette, scheme: Scheme) =>
     `--rule:${p.rule}`,
     `--plate:${p.plate}`,
     `--machine:${p.machine}`,
+    `--machine-text:${p.machineText}`,
     `--ember:${p.ember}`,
     `--inv-bg:${p.invBg}`,
     `--inv-ink:${p.invInk}`,

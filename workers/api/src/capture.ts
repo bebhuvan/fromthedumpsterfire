@@ -25,7 +25,8 @@ export interface Captured {
   duplicateOf?: string;
 }
 
-const isType = (t: unknown): t is ContentType => typeof t === 'string' && t in typeSwatch;
+// A Life is made with its sources (POST /api/lives), never captured as one.
+const isType = (t: unknown): t is ContentType => typeof t === 'string' && t in typeSwatch && t !== 'life';
 
 async function insertItem(
   env: Env,

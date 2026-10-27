@@ -13,6 +13,11 @@ export interface Palette {
   rule: string;
   plate: string;
   machine: string;
+  /**
+   * Machine prose read at length (a Life's profile): the machine's blue, deepened so a page of it
+   * reads as easily as body text (about 10:1 on the ground, against 6:1 for the margin blue).
+   */
+  machineText: string;
   /** The brand's fire, small and on purpose: the flame, the masthead strike, the editor's "B.", the folio. Never body or machine text, never a fill. */
   ember: string;
   invBg: string;
@@ -37,6 +42,7 @@ export const palettes: Record<Scheme, Palette> = {
     rule: '#E6E6EA',
     plate: '#F4F4F6',
     machine: '#4651D2',
+    machineText: '#2B3593',
     ember: '#FF4F1F',
     invBg: '#141416',
     invInk: '#FFFFFF',
@@ -59,6 +65,7 @@ export const palettes: Record<Scheme, Palette> = {
     rule: '#2A2A31',
     plate: '#1B1B20',
     machine: '#A3ACFF',
+    machineText: '#C3C8FA',
     ember: '#FF6A3D',
     invBg: '#F3F3F1',
     invInk: '#0F0F12',
