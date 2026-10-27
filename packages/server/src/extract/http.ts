@@ -84,14 +84,16 @@ export function decode(bytes: Uint8Array, contentType: string): string {
   }
 }
 
-/** Whether a link resolves: a 2xx after redirects. HEAD first, then GET for servers that refuse HEAD. */
+/** Whether a link resolves: a 2xx after redirects. HEAD first, then GET whenever HEAD fails. */
 export async function checkLink(url: string): Promise<{ ok: boolean; status: number; finalUrl: string }> {
   for (const method of ['HEAD', 'GET']) {
     try {
       const res = await guardedFetch(url, { method, headers: { 'user-agent': BROWSER_UA, accept: '*/*' }, timeoutMs: 15_000 });
       await res.body?.cancel();
       if (res.ok) return { ok: true, status: res.status, finalUrl: finalUrlOf(res, url) };
-      if (method === 'GET' || ![403, 405, 400, 501].includes(res.status)) return { ok: false, status: res.status, finalUrl: finalUrlOf(res, url) };
+      // Servers mishandle HEAD in every way (404, 406, 405…), so a failed HEAD is only a reason to ask
+      // again with GET; only GET's answer decides.
+      if (method === 'GET') return { ok: false, status: res.status, finalUrl: finalUrlOf(res, url) };
     } catch (e) {
       if (e instanceof Error && e.message.startsWith('Blocked URL')) return { ok: false, status: 0, finalUrl: url };
       if (method === 'GET') return { ok: false, status: 0, finalUrl: url };
