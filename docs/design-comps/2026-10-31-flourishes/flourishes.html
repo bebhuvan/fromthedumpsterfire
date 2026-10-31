@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- Flourish comps (2026-10-31): the drop capital on the editor's letter, the editor's highlight as a
+     hand-drawn ember underline, the flame as a section ornament and end mark, and favicon options.
+     Real fonts and tokens; before on the left, proposal on the right, at phone width. -->
+<html lang="en"><head><meta charset="utf-8">
+<style>
+@font-face { font-family: 'ND'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Medium.woff2'); font-weight: 500; }
+@font-face { font-family: 'ND'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2'); font-weight: 400; }
+@font-face { font-family: 'ND'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Italic.woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'NT'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2'); }
+@font-face { font-family: 'NT'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2'); font-style: italic; }
+@font-face { font-family: 'SG'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2'); font-weight: 400; }
+@font-face { font-family: 'SG'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2'); font-weight: 500; }
+:root { --ink: #141416; --ink2: #55555C; --rule: #E6E6EA; --ed: #8C2333; --ember: #FF4F1F; --tint: #FFD8D0; --machine: #4651D2; }
+* { box-sizing: border-box; margin: 0; }
+body { background: #E9E9EC; font-family: 'NT', serif; color: var(--ink); padding: 32px; width: 1000px; }
+h1 { font: 500 30px/1.1 'ND'; margin-bottom: 6px; }
+.lede { font: 400 15px/1.5 'SG'; color: var(--ink2); margin-bottom: 26px; max-width: 760px; }
+.pair { display: grid; grid-template-columns: 390px 390px; gap: 40px; margin-bottom: 44px; }
+.lab { font: 500 12px 'SG'; color: var(--ink2); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.ph { background: #fff; padding: 24px 16px 28px; height: 100%; }
+.h { font: 500 28px/1.1 'ND'; letter-spacing: -.01em; margin-bottom: 12px; }
+.p { font-size: 19px; line-height: 1.6; }
+.p + .p { margin-top: .8em; }
+/* 1. The drop capital: three lines deep, display face, in the Haul's ink. */
+.dc::first-letter { float: left; font: 400 5.05em/0.8 'ND'; color: var(--ed); margin: 0.07em 0.08em 0 -0.03em; }
+/* 2. The highlight. */
+mark.flat { background: var(--tint); color: inherit; padding: 0 .1em; }
+mark.hand { background: none; color: inherit; padding-bottom: .12em;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 40' preserveAspectRatio='none'%3E%3Cpath fill='%23FF4F1F' d='M4.5 27.2C46 23.8 103 20.4 166 17.6c72-3.2 150-7.3 226.4-12.4 3.5-.2 5.4 2.6 3.4 5.2-1.3 1.6-3 2.4-5.2 2.7-25 3.6-52 6.6-80 9.6 27.5-.6 53.3-1.2 77-2.4 2.6-.1 3.6 2.6 1.6 4.2-1.2 1-2.8 1.6-4.6 1.8C310 31 236 33 166 34.8 106 36.3 52 37.4 6.6 38.3 2.4 38.4.3 36.4.6 33.4c.3-3 1.6-5.8 3.9-6.2Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-size: 100% .28em; background-position: 0 100%; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.q { font: 400 26px/1.32 'ND'; }
+.qm { font: 400 64px/0.6 'ND'; color: var(--ed); display: block; height: 28px; }
+.cap { margin-top: 14px; font: 400 13px 'SG'; color: var(--ink2); }
+.cap::before { content: ''; display: block; width: 36px; height: 1px; background: var(--ink); margin-bottom: 8px; }
+/* 3. The flame as an ornament. */
+.flame { display: block; width: 14px; height: 26px; background: var(--ember); -webkit-mask: url('../../../apps/web/public/marks/flame.svg') center / contain no-repeat; }
+.orn { display: flex; justify-content: center; align-items: center; gap: 18px; margin: 34px 0; }
+.orn::before, .orn::after { content: ''; width: 46px; height: 1px; background: var(--rule); }
+.ruled { border-top: 1px solid var(--ink); margin: 34px 0 0; padding-top: 10px; font: 500 13px 'SG'; color: var(--ink2); }
+.sign { font: italic 400 1.25em 'ND'; color: var(--ember); }
+.endm { display: inline-block; width: .5em; height: .95em; vertical-align: -0.12em; margin-left: .35em; background: var(--ember); -webkit-mask: url('../../../apps/web/public/marks/flame.svg') center / contain no-repeat; }
+.folio { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--rule); padding-top: 12px; margin-top: 36px; font: 400 13px 'SG'; color: var(--ink2); }
+.folio b { font: 400 22px 'ND'; color: var(--ember); }
+/* 4. Favicons. */
+.icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; background: #fff; padding: 24px; }
+.icons figure { display: grid; gap: 10px; justify-items: start; }
+.icons figcaption { font: 400 13px/1.4 'SG'; color: var(--ink2); }
+.row { display: flex; gap: 14px; align-items: end; }
+.tab { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font: 400 12px 'SG'; width: 190px; }
+.tab.d { background: #35363a; color: #eee; } .tab.l { background: #f1f3f4; }
+</style></head><body>
+
+<h1>Flourishes, proposed</h1>
+<p class="lede">Before on the left, proposal on the right, at phone width. Your words are untouched in every one; these change only how the page is set.</p>
+
+<div class="pair">
+  <div><p class="lab">1 · The letter now</p><div class="ph">
+    <p class="h">Hello, you doomed human</p>
+    <p class="p">Hello, you doomed human. Thanks for reading the first Haul of From the Dumpster Fire. The idea behind it is simple. Yes, the internet is a stinking, raging dumpster fire laying waste to everything in its way.</p>
+  </div></div>
+  <div><p class="lab">1 · With a drop capital in the Haul's ink</p><div class="ph">
+    <p class="h">Hello, you doomed human</p>
+    <p class="p dc">Hello, you doomed human. Thanks for reading the first Haul of From the Dumpster Fire. The idea behind it is simple. Yes, the internet is a stinking, raging dumpster fire laying waste to everything in its way.</p>
+  </div></div>
+</div>
+
+<div class="pair">
+  <div><p class="lab">2 · Your highlight now</p><div class="ph">
+    <span class="qm">&#8220;</span>
+    <p class="q">Tiny droplets of the molten tin are fired out of a cannon into a vacuum chamber, where they are <mark class="flat">shot—sixty thousand times a second—by unerring lasers.</mark></p>
+    <p class="cap">Gideon Lewis-Kraus, The New Yorker</p>
+  </div></div>
+  <div><p class="lab">2 · Underlined in your hand (ember)</p><div class="ph">
+    <span class="qm">&#8220;</span>
+    <p class="q">Tiny droplets of the molten tin are fired out of a cannon into a vacuum chamber, where they are <mark class="hand">shot—sixty thousand times a second—by unerring lasers.</mark></p>
+    <p class="cap">Gideon Lewis-Kraus, The New Yorker</p>
+  </div></div>
+</div>
+
+<div class="pair">
+  <div><p class="lab">3 · Between sections and at an item's end now</p><div class="ph">
+    <p class="p">…To borrow from Dickens, it is the best of times and it is the worst of times. Wild, wild times. Welcome to the dumpster fire. <span class="sign">B.</span></p>
+    <p class="ruled">In this Haul</p>
+    <p class="p" style="margin-top:60px">…humanity never ceases to amaze me. <span class="sign">B.</span></p>
+    <div class="folio" style="border:0"><span>Haul 001</span><b>9</b></div>
+  </div></div>
+  <div><p class="lab">3 · The flame as ornament and end mark</p><div class="ph">
+    <p class="p">…To borrow from Dickens, it is the best of times and it is the worst of times. Wild, wild times. Welcome to the dumpster fire. <span class="sign">B.</span></p>
+    <div class="orn"><span class="flame"></span></div>
+    <p class="ruled" style="margin-top:0">In this Haul</p>
+    <p class="p" style="margin-top:40px">…humanity never ceases to amaze me. <span class="sign">B.</span></p>
+    <div class="folio"><span class="flame" style="width:10px;height:18px"></span><span>Haul 001 · 9 of 23</span></div>
+  </div></div>
+</div>
+
+<p class="lab">4 · The favicon</p>
+<div class="icons">
+  <figure><div class="row"><img src="fav-now.svg" width="16"><img src="fav-now.svg" width="32"><img src="fav-now.svg" width="96"></div><div class="tab d"><img src="fav-now.svg" width="16">From the Dumpster Fire</div><div class="tab l"><img src="fav-now.svg" width="16">From the Dumpster Fire</div><figcaption><b>Now.</b> A thin flame on a dark tile; at 16 px the globe turns to mush and the mark disappears on dark tabs.</figcaption></figure>
+  <figure><div class="row"><img src="fav-a.svg" width="16"><img src="fav-a.svg" width="32"><img src="fav-a.svg" width="96"></div><div class="tab d"><img src="fav-a.svg" width="16">From the Dumpster Fire</div><div class="tab l"><img src="fav-a.svg" width="16">From the Dumpster Fire</div><figcaption><b>A. Bigger flame, bolder globe.</b> Same mark on the same tile, filling it, with the globe cut thick enough to survive 16 px.</figcaption></figure>
+  <figure><div class="row"><img src="fav-b.svg" width="16"><img src="fav-b.svg" width="32"><img src="fav-b.svg" width="96"></div><div class="tab d"><img src="fav-b.svg" width="16">From the Dumpster Fire</div><div class="tab l"><img src="fav-b.svg" width="16">From the Dumpster Fire</div><figcaption><b>B. Ember tile.</b> The tile is the fire; the flame is cut out of it in paper white. Loudest in a row of tabs.</figcaption></figure>
+  <figure><div class="row"><img src="fav-c.svg" width="16"><img src="fav-c.svg" width="32"><img src="fav-c.svg" width="96"></div><div class="tab d"><img src="fav-c.svg" width="16">From the Dumpster Fire</div><div class="tab l"><img src="fav-c.svg" width="16">From the Dumpster Fire</div><figcaption><b>C. The flame alone.</b> No tile: just the mark, as in the masthead. Quietest; reads on light and dark tabs.</figcaption></figure>
+</div>
+</body></html>
