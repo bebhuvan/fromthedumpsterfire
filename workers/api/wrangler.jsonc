@@ -67,7 +67,7 @@
         "ACCESS_AUD": "fb6c6d7db7c68cb8be14e68af742081fe5ee0582d8c2eafc622ce36d735519c5",
         "OWNER_EMAIL": "owner@example.com",
         // Exact Access service Client IDs; empty keeps machine access off. See docs/EDITORIAL.md.
-        "ACCESS_SERVICE_CLIENT_IDS": "9346d4d5af5f18122365892814b58aa0.access",
+        "ACCESS_SERVICE_CLIENT_IDS": "9346d4d5af5f18122365892814b58aa0.access,79001c9b73ca2b771db68d94ec18969b.access",
         "ACCESS_SERVICE_PUBLISH_CLIENT_IDS": ""
       },
       "d1_databases": [
