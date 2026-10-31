@@ -68,7 +68,8 @@
         "OWNER_EMAIL": "owner@example.com",
         // Exact Access service Client IDs; empty keeps machine access off. See docs/EDITORIAL.md.
         "ACCESS_SERVICE_CLIENT_IDS": "9346d4d5af5f18122365892814b58aa0.access,79001c9b73ca2b771db68d94ec18969b.access",
-        "ACCESS_SERVICE_PUBLISH_CLIENT_IDS": ""
+        // The editor's own machine (claude-omarchy) may publish, on the editor's explicit "approved" (2026-10-31).
+        "ACCESS_SERVICE_PUBLISH_CLIENT_IDS": "79001c9b73ca2b771db68d94ec18969b.access"
       },
       "d1_databases": [
         { "binding": "DB", "database_name": "fdf-desk", "database_id": "73a6d440-5bc9-4583-9a67-e8be10f23c7a", "migrations_dir": "../../migrations" }
