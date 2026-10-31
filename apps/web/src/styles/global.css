@@ -346,23 +346,31 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .src { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline; padding-block: 14px 8px; font-size: 1.0625rem; }
 .src > span { font: 400 0.875rem var(--sans); color: var(--ink2); }
 
-/* The original: a stub torn from a ticket, in a wash of the item's colour. Where it lives, the
-   action that names the person, the date and length; nothing fetched from the other site. */
-.orig { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; row-gap: 6px; padding: 16px 22px 26px; background: color-mix(in srgb, var(--tint) 36%, var(--bg)); border-top: 2px solid var(--ink); color: var(--ink); text-decoration: none; }
-.orig::after { content: ''; position: absolute; left: 0; right: 0; bottom: -5px; height: 10px; background: radial-gradient(circle at 7px 5px, var(--bg) 3.6px, transparent 4.2px) 0 0 / 14px 10px repeat-x; }
-.orig-k { grid-column: 1 / -1; font: 500 0.8125rem/1.5 var(--sans); color: var(--ink2); letter-spacing: 0.01em; overflow-wrap: anywhere; }
-.orig-t { grid-column: 1; font: 500 clamp(1.5rem, 3.4vw, 2.125rem)/1.12 var(--display); letter-spacing: -0.012em; text-wrap: balance; padding-top: 4px; }
-.orig-long { font-size: clamp(1.25rem, 2.6vw, 1.625rem); line-height: 1.2; }
+/* The original: a ticket in a wash of the item's colour, under an ink rule. Above the tear, where it
+   lives and the action that names the person (the name in italic); on the stub below, the date and the
+   length, and the arrow out. Notches are cut where it tears. Built from the bundle alone. */
+.orig { display: grid; background: color-mix(in srgb, var(--tint) 34%, var(--bg)); border-top: 2px solid var(--ink); color: var(--ink); text-decoration: none; }
+.orig-b { display: grid; gap: 10px; padding: 18px 24px 22px; }
+.orig-k { display: flex; align-items: baseline; font: 500 0.8125rem/1.4 var(--sans); color: var(--ink2); letter-spacing: 0.01em; overflow-wrap: anywhere; }
+.orig-t { font: 500 clamp(1.5rem, 3.4vw, 2.125rem)/1.14 var(--display); letter-spacing: -0.012em; text-wrap: balance; }
+.orig-t em { font-family: var(--display); font-style: italic; font-weight: 400; letter-spacing: -0.005em; }
+.orig-long { font-size: clamp(1.25rem, 2.6vw, 1.625rem); line-height: 1.22; }
 .orig .nw { white-space: nowrap; }
-.orig-d { grid-column: 1; font: 400 0.875rem/1.5 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; }
-.orig-ar { grid-column: 2; grid-row: 2 / span 2; align-self: start; padding-top: 2px; font: 400 clamp(1.75rem, 3.6vw, 2.375rem)/1 var(--sans); transition: transform 160ms ease; }
+.orig-f { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px 14px; }
+/* Notches cut where it tears; the tear line stops short of them. */
+.orig-f::before, .orig-f::after { content: ''; position: absolute; top: -10px; width: 20px; height: 20px; border-radius: 50%; background: var(--bg); }
+.orig-f::before { left: -10px; }
+.orig-f::after { right: -10px; }
+.orig-tear { position: absolute; top: -0.75px; left: 18px; right: 18px; border-top: 1.5px dashed color-mix(in srgb, var(--ink) 32%, transparent); }
+.orig-d { font: 400 0.875rem/1.4 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; }
+.orig-ar { font: 400 1.5rem/1 var(--sans); transition: transform 160ms ease; }
 @media (hover: hover) {
   .orig:hover .orig-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.14em; }
   .orig:hover .orig-ar { transform: translate(3px, -3px); }
 }
 @media (prefers-reduced-motion: reduce) { .orig-ar { transition: none; } }
 .orig:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
-@media (max-width: 599px) { .orig { padding: 14px 16px 24px; column-gap: 14px; } }
+@media (max-width: 599px) { .orig-b { padding: 16px 18px 20px; } .orig-f { padding: 11px 18px 12px; } }
 
 /* Next in the Haul: its place and type, its title, and the first line of the editor's note on it. */
 .next { padding-bottom: 8px; }

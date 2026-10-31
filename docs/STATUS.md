@@ -1037,11 +1037,11 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
 
 ### The original, and each item's share card (2026-10-31, the editor: "make it look absolutely beautiful")
 
-- The link to the original is a stub torn from a ticket at the foot of every item (web `.orig` in
-  `ItemPage.astro`, app `Source` in `ItemScreen.tsx`): a wash of the item's type colour under an ink rule,
-  the host, `sourceAction` set large (the person's name never breaks at its hyphen; a long label a size
-  down), the date and length (a date already in the label and a one-minute length left out), and a
-  perforated edge. Text only, from the bundle: no picture or preview is fetched from the other site.
+- The link to the original is a ticket at the foot of every item (web `.orig` in `ItemPage.astro`, app
+  `Source` in `ItemScreen.tsx`): a wash of the item's type colour under an ink rule; above a dashed tear
+  with notches, the host and `sourceAction` set large (the person's name in italic and never broken, the
+  short tail "in 404 Media" kept on one line, a long label a size down); on the stub, the date and length
+  (a date already in the label and a one-minute length left out) and the arrow. Text only, from the bundle: no picture or preview is fetched from the other site.
 - Next shows the first sentence of the editor's note on the next item, under its title (web and app).
 - Each item has its own share card (`drawItemCard` in `apps/desk/src/lib/card.ts`): the Haul card's frame,
   the item's number in a block of its type colour, its title as large as fits, maker and place, and the

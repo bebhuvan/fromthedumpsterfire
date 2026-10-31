@@ -52,6 +52,8 @@ const origMeta = [sourceLabel.includes(item.source.date) ? '' : item.source.date
 // The person's name never breaks at its hyphen; a long label is set a size down.
 const who = item.creator.trim();
 const origParts = who && who.length <= 22 && sourceLabel.includes(who) ? sourceLabel.split(who) : null;
+// A short tail (" in 404 Media") stays on one line, so the break falls before "in", not after it.
+const origTail = origParts ? origParts.slice(1).join(who) : '';
 const plateSrc = item.plate ? safeHref(item.plate.url) : undefined;
 const plainWhy = notePlain(item.why);
 const description = plainWhy.length > 200 ? plainWhy.slice(0, plainWhy.lastIndexOf(' ', 197)) + '…' : plainWhy;
@@ -460,10 +462,15 @@ const ogImage =
       <div class="wrap g row">
         <p class="m mh">The original</p>
         <a class:list={['c', 'orig', `t-${item.type}`]} href={source} rel="noopener noreferrer" target="_blank">
-          <span class="orig-k"><span class="key" aria-hidden="true"></span>{hostOf(source)}</span>
-          <span class:list={['orig-t', { 'orig-long': sourceLabel.length > 46 }]}>{origParts ? <>{origParts[0]}<span class="nw">{who}</span>{origParts.slice(1).join(who)}</> : sourceLabel}<span class="sr"> (opens in a new tab)</span></span>
-          {origMeta ? <span class="orig-d">{origMeta}</span> : null}
-          <span class="orig-ar" aria-hidden="true">↗</span>
+          <span class="orig-b">
+            <span class="orig-k"><span class="key" aria-hidden="true"></span>{hostOf(source)}</span>
+            <span class:list={['orig-t', { 'orig-long': sourceLabel.length > 46 }]}>{origParts ? <>{origParts[0]}<em class="nw">{who}</em>{origTail.length <= 28 && origTail.startsWith(' ') ? <> <span class="nw">{origTail.slice(1)}</span></> : origTail}</> : sourceLabel}<span class="sr"> (opens in a new tab)</span></span>
+          </span>
+          <span class="orig-f">
+            <span class="orig-tear" aria-hidden="true"></span>
+            <span class="orig-d">{origMeta || 'Opens in a new tab'}</span>
+            <span class="orig-ar" aria-hidden="true">↗</span>
+          </span>
         </a>
       </div>
     ) : null}

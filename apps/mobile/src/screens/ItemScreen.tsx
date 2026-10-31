@@ -787,14 +787,17 @@ function SeeAlso({ haul, item, bare }: { haul: Haul; item: Item; bare?: boolean 
   );
 }
 
-/** The original: a stub torn from a ticket, in a wash of the item's colour (the website's .orig). Where it
- * lives, the action that names the person, the date and the length; nothing fetched from the other site. */
+/** The original: a ticket in a wash of the item's colour under an ink rule (the website's .orig). Above
+ * the tear, where it lives and the action that names the person (the name in italic); on the stub, the
+ * date and length and the arrow out; notches cut where it tears. Nothing is fetched from the other site. */
 function Source({ item }: { item: Item }) {
   const p = usePalette();
   const label = sourceAction(item);
   const url = item.media?.url ?? item.source.url;
   const date = label.includes(item.source.date) ? '' : item.source.date;
   const meta = joinMeta(date, item.minutes && item.minutes > 1 ? minutes(item.minutes) : undefined);
+  const who = item.creator.trim();
+  const at = who ? label.indexOf(who) : -1;
   return (
     <View style={{ marginTop: 38 }}>
       <Meta>The original</Meta>
@@ -804,18 +807,32 @@ function Source({ item }: { item: Item }) {
         onPress={() => openSource(url, p)}
         style={({ pressed }) => [styles.orig, { borderTopColor: p.ink, backgroundColor: p.bg, opacity: pressed ? 0.7 : 1 }]}
       >
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: typeColor(p, item.type), opacity: 0.36 }]} />
-        <View style={styles.origK}>
-          <Key type={item.type} />
-          <Text style={[styles.origHost, { color: p.ink2 }]} numberOfLines={1}>{hostOf(url)}</Text>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: typeColor(p, item.type), opacity: 0.34 }]} />
+        <View style={styles.origB}>
+          <View style={styles.origK}>
+            <Key type={item.type} />
+            <Text style={[styles.origHost, { color: p.ink2 }]} numberOfLines={1}>{hostOf(url)}</Text>
+          </View>
+          <Text style={[styles.origT, label.length > 46 && styles.origLong, { color: p.ink }]}>
+            {at >= 0 ? (
+              <>
+                {label.slice(0, at)}
+                <Text style={styles.origWho}>{who}</Text>
+                {label.slice(at + who.length)}
+              </>
+            ) : (
+              label
+            )}
+          </Text>
         </View>
-        <View style={styles.origRow}>
-          <Text style={[styles.origT, label.length > 46 && styles.origLong, { color: p.ink }]}>{label}</Text>
+        <View style={styles.origF}>
+          <View style={styles.tear} pointerEvents="none">
+            {Array.from({ length: 60 }, (_, i) => <View key={i} style={[styles.dash, { backgroundColor: p.ink2 }]} />)}
+          </View>
+          <View style={[styles.notch, { left: -10, backgroundColor: p.bg }]} />
+          <View style={[styles.notch, { right: -10, backgroundColor: p.bg }]} />
+          <Text style={[styles.origD, { color: p.ink2 }]}>{meta || 'Opens in your browser'}</Text>
           <Text style={[styles.origAr, { color: p.ink }]}>↗</Text>
-        </View>
-        {meta ? <Text style={[styles.origD, { color: p.ink2 }]}>{meta}</Text> : null}
-        <View style={styles.perf} pointerEvents="none">
-          {Array.from({ length: 40 }, (_, i) => <View key={i} style={[styles.hole, { backgroundColor: p.bg }]} />)}
         </View>
       </Pressable>
     </View>
@@ -989,15 +1006,18 @@ const styles = StyleSheet.create({
   saveText: { fontFamily: fonts.sansBold, fontSize: 13 },
   next: { marginTop: 34, paddingTop: 14, borderTopWidth: 1 },
   nextWhy: { fontFamily: fonts.textItalic, fontSize: 17, lineHeight: 25, marginTop: 10 },
-  orig: { marginTop: 10, borderTopWidth: 2, paddingHorizontal: 18, paddingTop: 14, paddingBottom: 24, overflow: 'hidden' },
+  orig: { marginTop: 10, borderTopWidth: 2, overflow: 'hidden' },
+  origB: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 20, gap: 10 },
   origK: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   origHost: { fontFamily: fonts.sansMedium, fontSize: 13, flexShrink: 1 },
-  origRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 8 },
-  origT: { flex: 1, fontFamily: fonts.display, fontSize: 25, lineHeight: 30, includeFontPadding: false },
+  origT: { fontFamily: fonts.display, fontSize: 25, lineHeight: 30, includeFontPadding: false },
+  origWho: { fontFamily: fonts.displayItalic },
   origLong: { fontSize: 21, lineHeight: 26 },
-  origAr: { fontFamily: fonts.sans, fontSize: 28, lineHeight: 30 },
-  origD: { fontFamily: fonts.sans, fontSize: 14, lineHeight: 20, marginTop: 8, fontVariant: ['tabular-nums'] },
-  perf: { position: 'absolute', left: 0, right: 0, bottom: -4, height: 8, flexDirection: 'row', gap: 7 },
-  hole: { width: 7, height: 7, borderRadius: 3.5 },
+  origF: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 13 },
+  origD: { flexShrink: 1, fontFamily: fonts.sans, fontSize: 14, lineHeight: 20, fontVariant: ['tabular-nums'] },
+  origAr: { fontFamily: fonts.sans, fontSize: 22, lineHeight: 24 },
+  tear: { position: 'absolute', top: -1, left: 18, right: 18, height: 1.5, flexDirection: 'row', gap: 4, overflow: 'hidden', opacity: 0.45 },
+  dash: { width: 5, height: 1.5 },
+  notch: { position: 'absolute', top: -10, width: 20, height: 20, borderRadius: 10 },
   colophon: { fontFamily: fonts.text, fontSize: 15.5, lineHeight: 23, marginTop: 10 },
 });
