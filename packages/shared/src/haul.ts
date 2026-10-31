@@ -315,6 +315,8 @@ export interface Item {
   rhyme?: Rhyme;
   media?: Media;
   plate?: Plate;
+  /** Its share card (1200 x 630 PNG on the files host), drawn by the Desk at publish (added 2026-10-31). */
+  card?: { url: string; width: number; height: number };
   marginalia: Marginal[];
   /** Big ideas, for long items (added 2026-10-17). */
   ideas?: Idea[];

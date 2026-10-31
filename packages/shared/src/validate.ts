@@ -169,6 +169,12 @@ function checkItem(c: Collector, item: Item, p: string) {
     c.str(item.media.label, `${p}.media.label`);
   }
   c.plate(item.plate, `${p}.plate`);
+  if (c.obj(item.card, `${p}.card`, true)) {
+    c.https(item.card.url, `${p}.card.url`);
+    c.hosted(item.card.url, `${p}.card.url`);
+    c.num(item.card.width, `${p}.card.width`);
+    c.num(item.card.height, `${p}.card.height`);
+  }
   if (c.obj(item.rhyme, `${p}.rhyme`, true)) {
     for (const end of ['then', 'now'] as const) {
       const e = item.rhyme[end];

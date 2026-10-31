@@ -881,6 +881,11 @@ app.post('/api/hauls/:id/publish', async (c) => {
       correction: z.string().max(1000).optional(),
       confirm: z.literal(true),
       card: z.string().max(3_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/).optional(),
+      // Each item's share card, by item id, drawn the same way.
+      cards: z
+        .record(z.string().max(120), z.string().max(3_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/))
+        .refine((r) => Object.keys(r).length <= 80, 'At most 80 item cards')
+        .optional(),
     }),
   );
   let card: Uint8Array | undefined;
@@ -891,8 +896,16 @@ app.post('/api/hauls/:id/publish', async (c) => {
       card = undefined;
     }
   }
+  const cards: Record<string, Uint8Array> = {};
+  for (const [id, b64] of Object.entries(b.cards ?? {})) {
+    try {
+      cards[id] = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+    } catch {
+      // Left out; publish.ts warns about nothing it never received, and the item falls back.
+    }
+  }
   const { chartDrawer } = await import('./draw');
-  const r = await publishHaul(c.env, c.req.param('id'), { correction: b.correction, card, drawer: await chartDrawer(c.env) });
+  const r = await publishHaul(c.env, c.req.param('id'), { correction: b.correction, card, cards, drawer: await chartDrawer(c.env) });
   return c.json(r, r.ok ? 200 : 422);
 });
 

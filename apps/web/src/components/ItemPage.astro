@@ -24,6 +24,7 @@ import {
   EDITOR_NAME,
   haulCoverImage,
   haulLastmod,
+  firstSentence,
   minutesLong,
   paths,
   safeHref,
@@ -44,6 +45,13 @@ const H = `Haul ${haulSlug(haul.number)}`;
 const source = safeHref(item.media?.url ?? item.source.url);
 // Name the person, never only link them (sourceAction in @fdf/shared/haul).
 const sourceLabel = form === 'card' ? 'Go down the hole' : sourceAction(item);
+// The slip to the original: where it lives, then the date and the length, from the bundle alone.
+const hostOf = (url: string) => /^https?:\/\/([^/?#]+)/i.exec(url)?.[1]?.replace(/^www\./, '') ?? '';
+// A date already in the label is not said twice; a minute's reading is not worth saying.
+const origMeta = [sourceLabel.includes(item.source.date) ? '' : item.source.date, item.minutes && item.minutes > 1 ? minutesLong(item.minutes) : ''].filter(Boolean).join(' · ');
+// The person's name never breaks at its hyphen; a long label is set a size down.
+const who = item.creator.trim();
+const origParts = who && who.length <= 22 && sourceLabel.includes(who) ? sourceLabel.split(who) : null;
 const plateSrc = item.plate ? safeHref(item.plate.url) : undefined;
 const plainWhy = notePlain(item.why);
 const description = plainWhy.length > 200 ? plainWhy.slice(0, plainWhy.lastIndexOf(' ', 197)) + '…' : plainWhy;
@@ -64,10 +72,14 @@ const lastmod = haulLastmod(haul);
 // A chart-led item is previewed by its chart's share card (the chart whole, with its title and credit).
 const chartCard = item.type === 'chart' ? item.blocks?.find((b) => b.kind === 'chart' && b.images?.share) : undefined;
 const cardSrc = chartCard?.kind === 'chart' && chartCard.images?.share ? safeHref(chartCard.images.share.url) : undefined;
+// Otherwise its own card (its number, title and maker), then its plate, then the Haul's card.
+const itemCard = item.card ? safeHref(item.card.url) : undefined;
 const ogImage =
   chartCard?.kind === 'chart' && chartCard.images?.share && cardSrc
     ? { url: cardSrc, width: chartCard.images.share.width, height: chartCard.images.share.height, alt: chartCard.chart.title }
-    : item.plate && plateSrc
+    : item.card && itemCard
+      ? { url: itemCard, width: item.card.width, height: item.card.height, alt: `${titleText(item.title)}, ${item.creator}, in From the Dumpster Fire` }
+      : item.plate && plateSrc
       ? { url: plateSrc, width: item.plate.width, height: item.plate.height, alt: item.plate.caption || titleText(item.title) }
       : haulCoverImage(haul);
 ---
@@ -445,8 +457,14 @@ const ogImage =
     ) : null}
 
     {source && form !== 'card' ? (
-      <div class="wrap g">
-        <p class="c src"><a href={source} rel="noopener noreferrer" target="_blank">{sourceLabel}<span class="sr"> (opens in a new tab)</span></a><span>{item.source.date}{item.minutes ? ` · ${minutesLong(item.minutes)}` : ''}</span></p>
+      <div class="wrap g row">
+        <p class="m mh">The original</p>
+        <a class:list={['c', 'orig', `t-${item.type}`]} href={source} rel="noopener noreferrer" target="_blank">
+          <span class="orig-k"><span class="key" aria-hidden="true"></span>{hostOf(source)}</span>
+          <span class:list={['orig-t', { 'orig-long': sourceLabel.length > 46 }]}>{origParts ? <>{origParts[0]}<span class="nw">{who}</span>{origParts.slice(1).join(who)}</> : sourceLabel}<span class="sr"> (opens in a new tab)</span></span>
+          {origMeta ? <span class="orig-d">{origMeta}</span> : null}
+          <span class="orig-ar" aria-hidden="true">↗</span>
+        </a>
       </div>
     ) : null}
 
@@ -459,6 +477,7 @@ const ogImage =
       <a class:list={['c', 'next-a', `t-${next.type}`]} href={paths.item(haul.number, next.id)}>
         <span class="next-k"><span class="key" aria-hidden="true"></span>{at + 2} · {typeLabel[next.type]}</span>
         <Title title={next.title} as="span" class="next-t" />
+        <span class="next-why">{curlQuotes(firstSentence(notePlain(next.why)))}</span>
       </a>
     ) : (
       <a class="c next-a" href={paths.haul(haul.number)}><span class="next-k">The contents</span><Title title={haul.title} as="span" class="next-t" /></a>

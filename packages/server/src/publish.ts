@@ -129,7 +129,7 @@ export function bundleItemIds(items: Pick<ItemRow, 'id' | 'title' | 'title_choic
   return idFor;
 }
 
-export async function assembleHaul(env: Env, haulId: string, opts: { correction?: string; card?: Uint8Array; chartPictures?: ChartPictures; drawer?: ChartDrawer } = {}): Promise<Assembled> {
+export async function assembleHaul(env: Env, haulId: string, opts: { correction?: string; card?: Uint8Array; cards?: Record<string, Uint8Array>; chartPictures?: ChartPictures; drawer?: ChartDrawer } = {}): Promise<Assembled> {
   const h = await env.DB.prepare('SELECT * FROM hauls WHERE id = ?').bind(haulId).first<HaulRow>();
   if (!h) throw new Error('No such Haul');
   const problems: PublishProblem[] = [];
@@ -404,6 +404,24 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     hauls: [...current.hauls.filter((x) => x.number !== h.number), entry].sort((a, b) => b.number - a.number),
   };
 
+  // Each item's share card, drawn by the Desk the same way and kept under the same rule; an item
+  // without one is previewed by its chart's card, its plate or the Haul's card.
+  const itemCards = new Set<string>();
+  for (const it of haul.items) {
+    const bytes = opts.cards?.[it.id];
+    if (!bytes) continue;
+    const size = bytes.byteLength <= CARD_MAX_BYTES ? imageSize(bytes) : null;
+    if (size?.mime !== 'image/png' || size.width !== CARD_SIZE.width || size.height !== CARD_SIZE.height) {
+      warnings.push({ path: `items.${it.id}.card`, rule: 'card', message: `The share card for ${it.id} was not a ${CARD_SIZE.width} × ${CARD_SIZE.height} PNG under 2 MB; published without one.` });
+      continue;
+    }
+    const key = `hauls/${slug}/v${version}/cards/${it.id}.png`;
+    pictures.push([key, bytes]);
+    it.card = { url: `${filesBase}/${key}`, ...CARD_SIZE };
+    itemCards.add(it.id);
+  }
+  for (const id of Object.keys(opts.cards ?? {})) if (!itemCards.has(id) && !haul.items.some((i) => i.id === id)) warnings.push({ path: 'items', rule: 'card', message: `A share card for ${id}, which is not in this Haul, was left out.` });
+
   for (const m of chartNotes) warnings.push({ path: 'items', rule: 'chart-pictures', message: m });
   const report = validateHaul(haul, index, { filesBase });
   return { haul, index, problems, bundleErrors: report.errors, warnings: [...warnings, ...report.warnings], copies, pictures, ...(card ? { card } : {}) };
@@ -419,7 +437,7 @@ export interface PublishResult {
   warnings: BundleIssue[];
 }
 
-export async function publishHaul(env: Env, haulId: string, opts: { correction?: string; dryRun?: boolean; card?: Uint8Array; chartPictures?: ChartPictures; drawer?: ChartDrawer } = {}): Promise<PublishResult> {
+export async function publishHaul(env: Env, haulId: string, opts: { correction?: string; dryRun?: boolean; card?: Uint8Array; cards?: Record<string, Uint8Array>; chartPictures?: ChartPictures; drawer?: ChartDrawer } = {}): Promise<PublishResult> {
   const a = await assembleHaul(env, haulId, opts);
   const base = { problems: a.problems, bundleErrors: a.bundleErrors, warnings: a.warnings };
   if (a.problems.length || a.bundleErrors.length || opts.dryRun) return { ok: !a.problems.length && !a.bundleErrors.length, ...base };

@@ -105,7 +105,7 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   source text), embeds parsed from the editor's link by code, a post's words, author and date taken
   from X's public oEmbed record (never typed or model-written) and drawn as a clipping, never X's
   embed or script, posters and pictures fetched through `guardedFetch` with a byte cap and kept in
-  MEDIA, pictures only with the editor's credit and licence. `publish.ts` copies them to FILES, with the share card the Desk draws in the browser.
+  MEDIA, pictures only with the editor's credit and licence. `publish.ts` copies them to FILES, with the share cards (the Haul's and each item's, `card.ts`) the Desk draws in the browser.
 - Charts (`docs/CHARTS.md`) are blocks too: stored with their rows, checked by `validateChart` (shared)
   on the Desk, at publish and in `validateHaul`. Provider data comes only through
   `packages/server/src/charts.ts` (Our World in Data, World Bank; `guardedFetch`, byte caps, licence as

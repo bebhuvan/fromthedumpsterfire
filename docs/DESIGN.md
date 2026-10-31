@@ -141,6 +141,13 @@ ember and the type above it and the first sentence of the why under it. Across t
 three small ones 4, 4, 4; the second of a row sits a little lower, so the table stays uneven but every row
 is full and nothing jumps the queue (the card carries its plate like a clipped print). On phones they
 stack in order on one left edge. Then the thread as a list of years, and the colophon.
+At the foot of an item, **the original** is a stub torn from a ticket: a wash of the item's type colour
+under an ink rule, the host, the action that names the person set large, the date and length, and a
+perforated edge. It is built from the bundle alone; no picture or preview is fetched from the other site.
+**Next** gives the next item's title and the first sentence of the editor's note on it. Each item's
+share card is the Haul card's frame with the item's number in a block of its type colour, its title and
+maker, and the fingerprint with its mark picked out.
+
 The archive lists back issues as a run of editions, each with its number in its edition ink, a band down its edge and its mini fingerprint, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
 
 ## The app's navigation

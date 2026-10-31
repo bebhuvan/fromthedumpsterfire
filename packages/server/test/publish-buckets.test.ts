@@ -269,6 +269,25 @@ describe('the share card', () => {
     const b = await assembleHaul(env, 'hl_1', { correction: 'Fixed a date.' });
     expect(b.haul.card).toBeUndefined();
   });
+
+  it("writes each item's card under the version and into the item; a wrong one or a stranger is left out", async () => {
+    const env = await seedHaul(makeEnv());
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const id = (await assembleHaul(env, 'hl_1')).haul.items[0]!.id;
+    const wrong = await assembleHaul(env, 'hl_1', { cards: { [id]: png(800, 600), 'not-here': png(1200, 630) } });
+    expect(wrong.haul.items[0]!.card).toBeUndefined();
+    expect(wrong.warnings.filter((w) => w.rule === 'card')).toHaveLength(2);
+
+    const r = await publishHaul(env, 'hl_1', { cards: { [id]: png(1200, 630) } });
+    expect(r.ok).toBe(true);
+    const haul = (await (await env.FILES.get('hauls/001/v1/haul.json'))!.json()) as Haul;
+    expect(haul.items[0]!.card).toEqual({ url: `https://files.example.org/hauls/001/v1/cards/${id}.png`, width: 1200, height: 630 });
+    expect(env.FILES.objects.get(`hauls/001/v1/cards/${id}.png`)?.httpMetadata?.contentType).toBe('image/png');
+    expect(validateHaul(haul, undefined, { filesBase: env.FILES_BASE }).errors).toEqual([]);
+    // A card on another host fails the bundle.
+    haul.items[0]!.card = { url: 'https://elsewhere.example.com/x.png', width: 1200, height: 630 };
+    expect(validateHaul(haul, undefined, { filesBase: env.FILES_BASE }).errors.map((e) => e.path)).toContain('items[0].card.url');
+  });
 });
 
 describe('item ids', () => {

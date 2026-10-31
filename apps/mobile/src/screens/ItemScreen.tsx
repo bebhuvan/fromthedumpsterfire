@@ -7,7 +7,7 @@
 import { memo, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
-import { curlQuotes, haulSlug, quoteLength, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, notePlain, quoteLength, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
 import { useEditionInk } from '@/ui/edition';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
 import { fonts, GUTTER, typeColor, useEdition, usePalette, useScheme, useTextScale } from '@/theme';
@@ -22,7 +22,7 @@ import { Jacket as BookJacket } from '@/ui/Jacket';
 import { useShelf } from '@/lib/data';
 import { statusLine } from '@/lib/shelf';
 import { spineColours, spineOf } from '@fdf/shared/shelf';
-import { Action, Apparatus, Arrow, Folio, Key, RunHead, TopBar, VoiceNote } from '@/ui/parts';
+import { Apparatus, Arrow, Folio, Key, RunHead, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Blocks, Credit, Picture } from '@/ui/Blocks';
 import { Chart } from '@/ui/Chart';
@@ -787,10 +787,39 @@ function SeeAlso({ haul, item, bare }: { haul: Haul; item: Item; bare?: boolean 
   );
 }
 
+/** The original: a stub torn from a ticket, in a wash of the item's colour (the website's .orig). Where it
+ * lives, the action that names the person, the date and the length; nothing fetched from the other site. */
 function Source({ item }: { item: Item }) {
   const p = usePalette();
   const label = sourceAction(item);
-  return <Action label={label} external onPress={() => openSource(item.media?.url ?? item.source.url, p)} style={{ marginTop: 34 }} />;
+  const url = item.media?.url ?? item.source.url;
+  const date = label.includes(item.source.date) ? '' : item.source.date;
+  const meta = joinMeta(date, item.minutes && item.minutes > 1 ? minutes(item.minutes) : undefined);
+  return (
+    <View style={{ marginTop: 38 }}>
+      <Meta>The original</Meta>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={`${label}${meta ? `, ${meta}` : ''}. Opens ${hostOf(url)}.`}
+        onPress={() => openSource(url, p)}
+        style={({ pressed }) => [styles.orig, { borderTopColor: p.ink, backgroundColor: p.bg, opacity: pressed ? 0.7 : 1 }]}
+      >
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: typeColor(p, item.type), opacity: 0.36 }]} />
+        <View style={styles.origK}>
+          <Key type={item.type} />
+          <Text style={[styles.origHost, { color: p.ink2 }]} numberOfLines={1}>{hostOf(url)}</Text>
+        </View>
+        <View style={styles.origRow}>
+          <Text style={[styles.origT, label.length > 46 && styles.origLong, { color: p.ink }]}>{label}</Text>
+          <Text style={[styles.origAr, { color: p.ink }]}>↗</Text>
+        </View>
+        {meta ? <Text style={[styles.origD, { color: p.ink2 }]}>{meta}</Text> : null}
+        <View style={styles.perf} pointerEvents="none">
+          {Array.from({ length: 40 }, (_, i) => <View key={i} style={[styles.hole, { backgroundColor: p.bg }]} />)}
+        </View>
+      </Pressable>
+    </View>
+  );
 }
 
 function Actions({ haul, item }: { haul: Haul; item: Item }) {
@@ -827,6 +856,7 @@ function NextItem({ n, at, item }: { n: number; at: number; item: Item }) {
       </View>
       <Title title={item.title} size={28} style={{ marginTop: 8 }} />
       <Text style={[styles.byline, { color: p.ink2, fontSize: 16, marginTop: 6 }]}>{item.creator}</Text>
+      <Text style={[styles.nextWhy, { color: p.ink2 }]}>{curlQuotes(firstSentence(notePlain(item.why)))}</Text>
     </Pressable>
   );
 }
@@ -843,6 +873,9 @@ function Finished({ haul }: { haul: Haul }) {
     </View>
   );
 }
+
+// The first sentence of a note, for the Next card.
+const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim();
 
 const styles = StyleSheet.create({
   sr: { position: 'absolute', width: 1, height: 1, opacity: 0 },
@@ -955,5 +988,16 @@ const styles = StyleSheet.create({
   save: { minHeight: 44, minWidth: 92, paddingHorizontal: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   saveText: { fontFamily: fonts.sansBold, fontSize: 13 },
   next: { marginTop: 34, paddingTop: 14, borderTopWidth: 1 },
+  nextWhy: { fontFamily: fonts.textItalic, fontSize: 17, lineHeight: 25, marginTop: 10 },
+  orig: { marginTop: 10, borderTopWidth: 2, paddingHorizontal: 18, paddingTop: 14, paddingBottom: 24, overflow: 'hidden' },
+  origK: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  origHost: { fontFamily: fonts.sansMedium, fontSize: 13, flexShrink: 1 },
+  origRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, marginTop: 8 },
+  origT: { flex: 1, fontFamily: fonts.display, fontSize: 25, lineHeight: 30, includeFontPadding: false },
+  origLong: { fontSize: 21, lineHeight: 26 },
+  origAr: { fontFamily: fonts.sans, fontSize: 28, lineHeight: 30 },
+  origD: { fontFamily: fonts.sans, fontSize: 14, lineHeight: 20, marginTop: 8, fontVariant: ['tabular-nums'] },
+  perf: { position: 'absolute', left: 0, right: 0, bottom: -4, height: 8, flexDirection: 'row', gap: 7 },
+  hole: { width: 7, height: 7, borderRadius: 3.5 },
   colophon: { fontFamily: fonts.text, fontSize: 15.5, lineHeight: 23, marginTop: 10 },
 });

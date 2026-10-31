@@ -1033,4 +1033,20 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   the ember tile (option B).
 - App: the flame ornament and the new folio. The drop capital and the drawn underline are web only
   (React Native cannot float a letter or colour an underline on Android); the app keeps its tint.
-- Not yet: the app icon (needs a new APK), per-item share cards, the app checked on a device.
+- Not yet: the app icon (needs a new APK), the app checked on a device.
+
+### The original, and each item's share card (2026-10-31, the editor: "make it look absolutely beautiful")
+
+- The link to the original is a stub torn from a ticket at the foot of every item (web `.orig` in
+  `ItemPage.astro`, app `Source` in `ItemScreen.tsx`): a wash of the item's type colour under an ink rule,
+  the host, `sourceAction` set large (the person's name never breaks at its hyphen; a long label a size
+  down), the date and length (a date already in the label and a one-minute length left out), and a
+  perforated edge. Text only, from the bundle: no picture or preview is fetched from the other site.
+- Next shows the first sentence of the editor's note on the next item, under its title (web and app).
+- Each item has its own share card (`drawItemCard` in `apps/desk/src/lib/card.ts`): the Haul card's frame,
+  the item's number in a block of its type colour, its title as large as fits, maker and place, and the
+  fingerprint with its own mark picked out. The Desk draws them at publish (and shows them under the
+  Haul's card in the preview), `publish.ts` checks each like the Haul card and writes
+  `hauls/<n>/v<version>/cards/<item>.png`, the bundle carries `item.card` (checked by `validateHaul`), and
+  the item page uses it for link previews before its plate (a chart's own card still comes first).
+  Haul 001 has none until it is published again.

@@ -139,8 +139,6 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .page-head { padding-block: clamp(28px, 6vw, 72px) 24px; row-gap: 14px; }
 .h-title { font: 500 clamp(2.25rem, 5vw, 3.5rem)/1.02 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
 .deck { margin-top: 14px; font-size: 1.3125rem; line-height: 1.45; color: var(--ink2); max-width: 32em; }
-.src { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline; padding-block: 14px 8px; font-size: 1.0625rem; }
-.src > span { font: 400 0.875rem var(--sans); color: var(--ink2); }
 
 /* ---------- The waiting page: the struck masthead is the one loud thing. ---------- */
 .mast { padding-block: clamp(28px, 6vw, 72px) clamp(36px, 6vw, 80px); font-family: var(--display); font-weight: 500; line-height: 0.88; letter-spacing: -0.03em; font-size: clamp(2.75rem, 12.6vw, 8rem); row-gap: 0; }
@@ -345,12 +343,34 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .sa-g i { color: var(--ink); }
 .ptr { font: 400 0.8125rem var(--sans); color: var(--ink2); }
 
-/* Next in the Haul. */
+.src { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline; padding-block: 14px 8px; font-size: 1.0625rem; }
+.src > span { font: 400 0.875rem var(--sans); color: var(--ink2); }
+
+/* The original: a stub torn from a ticket, in a wash of the item's colour. Where it lives, the
+   action that names the person, the date and length; nothing fetched from the other site. */
+.orig { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; row-gap: 6px; padding: 16px 22px 26px; background: color-mix(in srgb, var(--tint) 36%, var(--bg)); border-top: 2px solid var(--ink); color: var(--ink); text-decoration: none; }
+.orig::after { content: ''; position: absolute; left: 0; right: 0; bottom: -5px; height: 10px; background: radial-gradient(circle at 7px 5px, var(--bg) 3.6px, transparent 4.2px) 0 0 / 14px 10px repeat-x; }
+.orig-k { grid-column: 1 / -1; font: 500 0.8125rem/1.5 var(--sans); color: var(--ink2); letter-spacing: 0.01em; overflow-wrap: anywhere; }
+.orig-t { grid-column: 1; font: 500 clamp(1.5rem, 3.4vw, 2.125rem)/1.12 var(--display); letter-spacing: -0.012em; text-wrap: balance; padding-top: 4px; }
+.orig-long { font-size: clamp(1.25rem, 2.6vw, 1.625rem); line-height: 1.2; }
+.orig .nw { white-space: nowrap; }
+.orig-d { grid-column: 1; font: 400 0.875rem/1.5 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; }
+.orig-ar { grid-column: 2; grid-row: 2 / span 2; align-self: start; padding-top: 2px; font: 400 clamp(1.75rem, 3.6vw, 2.375rem)/1 var(--sans); transition: transform 160ms ease; }
+@media (hover: hover) {
+  .orig:hover .orig-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.14em; }
+  .orig:hover .orig-ar { transform: translate(3px, -3px); }
+}
+@media (prefers-reduced-motion: reduce) { .orig-ar { transition: none; } }
+.orig:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+@media (max-width: 599px) { .orig { padding: 14px 16px 24px; column-gap: 14px; } }
+
+/* Next in the Haul: its place and type, its title, and the first line of the editor's note on it. */
 .next { padding-bottom: 8px; }
 .next-a { display: grid; gap: 4px; text-decoration: none; padding-top: 12px; border-top: 1px solid var(--ink); }
 .next-k { font: 500 0.8125rem/1.5 var(--sans); color: var(--ink2); }
 .next-t { font: 500 clamp(1.625rem, 3vw, 2.125rem)/1.1 var(--display); letter-spacing: -0.01em; }
-.next-a:hover .next-t { text-decoration: underline; text-decoration-thickness: 1px; }
+.next-why { margin-top: 6px; max-width: 34em; font: italic 400 1.0625rem/1.5 var(--serif); color: var(--ink2); text-wrap: pretty; }
+@media (hover: hover) { .next-a:hover .next-t { text-decoration: underline; text-decoration-thickness: 1px; } }
 
 /* Magazine opening (essay, post): the title is the moment. */
 .open { padding-block: clamp(24px, 5vw, 64px) 8px; row-gap: 14px; }

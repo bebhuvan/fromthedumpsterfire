@@ -11,7 +11,7 @@ import { NoteCompare, Spinner, TextArea, VoiceNote } from '../ui/parts';
 import { Preview } from './Preview';
 import { PlatesSection } from './Plates';
 import { FormatBadge } from '../ui/parts';
-import { drawCard } from '../lib/card';
+import { drawCard, drawItemCard, drawItemCards } from '../lib/card';
 
 
 export function Composer({ id }: { id: string }) {
@@ -427,9 +427,11 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
         const pv = await api.get<PreviewResult>(`/api/hauls/${haulId}/preview${published && correction ? `?correction=${encodeURIComponent(correction)}` : ''}`).catch(() => null);
         const card = pv ? await drawCard(pv.haul as Haul) : null;
         if (!card) toast('The share card could not be drawn; publishing without it', true);
+        // Each item's card the same way; an item without one is previewed by its plate or the Haul's card.
+        const cards = pv ? await drawItemCards(pv.haul as Haul) : {};
         // Charts' pictures for the app and their share cards are drawn by the Desk Worker at publish.
         const r = await api
-          .post<PublishResult>(`/api/hauls/${haulId}/publish`, { confirm: true, ...(published ? { correction } : {}), ...(card ? { card: card.base64 } : {}) })
+          .post<PublishResult>(`/api/hauls/${haulId}/publish`, { confirm: true, ...(published ? { correction } : {}), ...(card ? { card: card.base64 } : {}), ...(Object.keys(cards).length ? { cards } : {}) })
           .catch((e) => (e as { body?: PublishResult }).body ?? Promise.reject(e));
         setCheck(r);
         if (r.ok) {
@@ -527,6 +529,30 @@ function CardPreview({ haul }: { haul: Haul }) {
     <figure className="card-preview" style={{ margin: 0 }}>
       <div className="label" style={{ marginBottom: 6 }}>Share card · link previews</div>
       {data ? <img src={data.dataUrl} width={1200} height={630} alt={`The share card for Haul ${haulSlug(haul.number)}`} /> : error || drawn ? <p className="small warn">The card could not be drawn here; the Haul publishes without one.</p> : <Spinner text="Drawing the card…" />}
+      {haul.items.length ? <ItemCards haul={haul} /> : null}
     </figure>
+  );
+}
+
+/** Each item's share card, drawn when asked for (they are drawn again at publish). */
+function ItemCards({ haul }: { haul: Haul }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details className="item-cards" onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+      <summary className="small">Each item's card ({haul.items.length})</summary>
+      {open ? <ItemCardGrid haul={haul} /> : null}
+    </details>
+  );
+}
+
+function ItemCardGrid({ haul }: { haul: Haul }) {
+  const { data } = useLoad(() => Promise.all(haul.items.map(async (item) => ({ item, card: await drawItemCard(haul, item) }))), [haul]);
+  if (!data) return <Spinner text="Drawing the cards…" />;
+  return (
+    <div className="item-card-grid">
+      {data.map(({ item, card }) =>
+        card ? <img key={item.id} src={card.dataUrl} width={1200} height={630} alt={`The share card for ${[item.title.text, item.title.italic].filter(Boolean).join(" ")}`} /> : <p key={item.id} className="small warn">{[item.title.text, item.title.italic].filter(Boolean).join(" ")}: not drawn; it falls back to its plate or the Haul's card.</p>,
+      )}
+    </div>
   );
 }

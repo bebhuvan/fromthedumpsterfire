@@ -392,6 +392,9 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
   .blocks li { padding-left: 12px; }
 }
 .card-preview img { width: 100%; height: auto; display: block; border: 1px solid var(--rule); border-radius: 8px; }
+.item-cards { margin-top: 10px; }
+.item-cards summary { cursor: pointer; }
+.item-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
 
 /* ---- the shelf (2026-10-24): books as spines, a page per book ---- */
 .shelf-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr); gap: 36px; align-items: start; }
