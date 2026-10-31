@@ -1,6 +1,6 @@
-// "Add to this item": pull quotes, code, video, podcasts and audio, pictures, charts. Each addition is
-// checked by the server before it is kept (quotes and code word for word against the piece, links
-// resolved by code, pictures measured and credited); what is added shows as a compact row that can
+// "Add to this item": pull quotes, code, video, podcasts and audio, X posts, pictures, charts. Each
+// addition is checked by the server before it is kept (quotes and code word for word against the
+// piece, links resolved by code, a post's words from X's own record, pictures measured and credited); what is added shows as a compact row that can
 // be moved or removed. Every string here is rendered as text, never as HTML.
 
 import { useMemo, useState } from 'react';
@@ -12,9 +12,9 @@ import { editionOf, type Edition } from '@fdf/shared/tokens';
 import { ChartPreview } from '../lib/charts';
 import { ChartEditor } from './ChartEditor';
 
-type Kind = 'quote' | 'code' | 'video' | 'audio' | 'image' | 'chart';
+type Kind = 'quote' | 'code' | 'video' | 'audio' | 'post' | 'image' | 'chart';
 
-const KIND_LABEL: Record<Kind, string> = { quote: 'Pull quote', code: 'Code', video: 'Video', audio: 'Podcast or audio', image: 'Picture', chart: 'Chart' };
+const KIND_LABEL: Record<Kind, string> = { quote: 'Pull quote', code: 'Code', video: 'Video', audio: 'Podcast or audio', post: 'X post', image: 'Picture', chart: 'Chart' };
 
 const clock = (s?: number) => (s ? `${Math.floor(s / 3600) ? `${Math.floor(s / 3600)}:` : ''}${String(Math.floor((s % 3600) / 60)).padStart(Math.floor(s / 3600) ? 2 : 1, '0')}:${String(s % 60).padStart(2, '0')}` : '');
 
@@ -91,6 +91,7 @@ export function BlocksSection({ detail, onChange }: { detail: ItemDetail; onChan
       {open === 'code' && <CodeForm busy={busy} hasSource={hasSource} onAdd={(b) => add({ kind: 'code', ...b }, 'Code added. Found in the piece.')} />}
       {open === 'video' && <LinkForm kind="video" busy={busy} onAdd={(b) => add({ kind: 'video', ...b }, 'Video added')} />}
       {open === 'audio' && <LinkForm kind="audio" busy={busy} onAdd={(b) => add({ kind: 'audio', ...b }, 'Recording added')} />}
+      {open === 'post' && <PostForm busy={busy} onAdd={(url) => add({ kind: 'post', url }, 'Post added, in X’s own words')} />}
       {open === 'image' && <PictureForm itemId={id} busy={busy} setBusy={setBusy} onDone={async () => (await onChange(), setOpen(null))} />}
       {open === 'chart' && <ChartEditor itemId={id} edition={edition} onCancel={() => setOpen(null)} onDone={async () => (await onChange(), setOpen(null))} />}
       {editing &&
@@ -147,6 +148,16 @@ function BlockSummary({ block, edition, onEdit }: { block: BlockUi; edition: Edi
           {head([{ file: 'Audio file', spotify: 'Spotify', apple: 'Apple Podcasts' }[b.provider], clock(b.start) && `from ${clock(b.start)}`].filter(Boolean).join(' · '))}
           <a className="serif" href={safeHref(b.url)} target="_blank" rel="noreferrer noopener">
             {b.title} ↗
+          </a>
+        </span>
+      );
+    case 'post':
+      return (
+        <span className="block-sum">
+          {head([`${b.author} @${b.handle}`, b.date, b.truncated ? 'X gives the start only' : ''].filter(Boolean).join(' · '))}
+          <span className="serif" style={{ whiteSpace: 'pre-line' }}>{b.text}</span>
+          <a className="small" href={safeHref(b.url)} target="_blank" rel="noreferrer noopener">
+            The post on X ↗
           </a>
         </span>
       );
@@ -304,6 +315,28 @@ function LinkForm({ kind, busy, onAdd }: { kind: 'video' | 'audio'; busy: boolea
         </label>
         <button type="button" className="btn primary small" disabled={busy || !/^https?:\/\//i.test(url.trim())} onClick={() => onAdd({ url: url.trim(), ...(title.trim() ? { title: title.trim() } : {}), ...(start.trim() ? { start: start.trim() } : {}) })}>
           {busy ? 'Checking…' : video ? 'Add video' : 'Add recording'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** An X post: the link alone. Its words, author and date come from X's own record of it. */
+function PostForm({ busy, onAdd }: { busy: boolean; onAdd: (url: string) => void }) {
+  const [url, setUrl] = useState('');
+  const ok = /^https?:\/\/(www\.|mobile\.)?(x|twitter)\.com\/\w{1,15}\/status(es)?\/\d+/i.test(url.trim());
+  return (
+    <div className="panel line stack" style={{ gap: 10 }}>
+      <p className="small muted" style={{ margin: 0 }}>
+        Paste the link to a post on X. Its words, who posted it and the date come from X’s own public record; it prints as a clipping, never X’s embed. X gives a long post only to “…”, and readers are sent to the post for the rest. Add a picture from it separately, with its credit.
+      </p>
+      <div className="row" style={{ alignItems: 'flex-end' }}>
+        <label className="field" style={{ flex: '1 1 260px' }}>
+          <span className="label">Post link</span>
+          <input className="input" type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://x.com/…/status/…" />
+        </label>
+        <button type="button" className="btn primary small" disabled={busy || !ok} onClick={() => onAdd(url.trim())}>
+          {busy ? 'Fetching…' : 'Add post'}
         </button>
       </div>
     </div>

@@ -152,9 +152,42 @@ export type Block =
   | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { url: string; width: number; height: number } }
   | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number; seconds?: number }
   | { kind: 'image'; plate: Plate }
-  | { kind: 'chart'; chart: Chart; images?: ChartImages };
+  | { kind: 'chart'; chart: Chart; images?: ChartImages }
+  | PostBlock;
 export type BlockKind = Block['kind'];
-export const BLOCK_KINDS: readonly BlockKind[] = ['quote', 'code', 'video', 'audio', 'image', 'chart'];
+export const BLOCK_KINDS: readonly BlockKind[] = ['quote', 'code', 'video', 'audio', 'image', 'chart', 'post'];
+
+/**
+ * A social post set inside another item (added 2026-10-31): the words as the platform's own public
+ * record gives them (X's oEmbed), who posted it and when, and the link to it. Drawn as a clipping by
+ * the site and the app, never the platform's embed or script. `truncated` when the platform's record
+ * stops short of the whole post (X ends long posts with "…"); readers are sent to the post for the rest.
+ */
+export type PostBlock = {
+  kind: 'post';
+  platform: 'x';
+  url: string;
+  author: string;
+  handle: string;
+  date?: string;
+  text: string;
+  truncated?: boolean;
+};
+
+/** An X post's canonical address, https://x.com/<handle>/status/<id>, or null for anything else. */
+export function xPostUrl(raw: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(raw.trim());
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+  const host = u.hostname.toLowerCase().replace(/^(www|mobile)\./, '');
+  if (host !== 'x.com' && host !== 'twitter.com') return null;
+  const m = /^\/([A-Za-z0-9_]{1,15})\/status(?:es)?\/(\d{1,25})\/?$/.exec(u.pathname.replace(/\/(photo|video)\/\d+\/?$/, ''));
+  return m ? `https://x.com/${m[1]}/status/${m[2]}` : null;
+}
 
 /**
  * A chart's pictures for the app, which has no SVG: the phone figure drawn from the same scene as the

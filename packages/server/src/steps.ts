@@ -521,12 +521,13 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
       ...cards.map((c) => ({ label: `Wikipedia: ${c.title}`, url: c.url, id: c.id })),
       // A Life's sources and further reading.
       ...(item.type === 'life' ? await lifeLinks(env, itemId) : []),
-      // Videos and recordings the editor added: readers follow these links too.
+      // Videos, recordings and posts the editor added: readers follow these links too.
       ...(await blocksFor(env, itemId)).flatMap((r) => {
-        if (r.status !== 'kept' || (r.kind !== 'video' && r.kind !== 'audio')) return [];
-        const b = parseJson<{ link?: string; url?: string; title?: string } | null>(r.body, null);
+        if (r.status !== 'kept' || (r.kind !== 'video' && r.kind !== 'audio' && r.kind !== 'post')) return [];
+        const b = parseJson<{ link?: string; url?: string; title?: string; author?: string } | null>(r.body, null);
         const url = r.kind === 'video' ? b?.link : b?.url;
-        return url ? [{ label: `${r.kind === 'video' ? 'Video' : 'Audio'}: ${b?.title ?? url}`, url }] : [];
+        const label = r.kind === 'post' ? `Post: ${b?.author ?? url}` : `${r.kind === 'video' ? 'Video' : 'Audio'}: ${b?.title ?? url}`;
+        return url ? [{ label, url }] : [];
       }),
     ];
     const rows: CheckSummary['rows'] = [];

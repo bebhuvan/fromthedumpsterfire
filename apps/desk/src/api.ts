@@ -144,7 +144,8 @@ export type BlockBody =
   | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { width: number; height: number }; link: string }
   | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number }
   | { kind: 'image'; caption: string; credit: string; licence: string; sourceUrl?: string; creator?: string; date?: string; width: number; height: number }
-  | { kind: 'chart'; chart: Chart };
+  | { kind: 'chart'; chart: Chart }
+  | { kind: 'post'; platform: 'x'; url: string; author: string; handle: string; date?: string; text: string; truncated?: boolean };
 
 /** What POST /api/charts/fetch returns: a provider's rows and what is known about them. */
 export interface FetchedChartData {

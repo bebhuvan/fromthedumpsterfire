@@ -382,3 +382,21 @@ Dated, newest last. Don't reopen these without a new reason.
   with the writer recorded, as session-written margin notes are. No pipeline drafter yet: one profile
   per Haul is a session's work, and the rules above hold whoever writes it.
 - **Unknown makers are credited without "By"**: "Unknown photographer, 1953." (`creditLine`).
+
+## 2026-10-31 (X posts inside an item; the licence)
+
+- **A post inside an item is a clipping we draw, never X's embed.** The editor wanted the Chainalysis
+  and Joe Weisenthal posts at the end of the Binance item "so that it shows the tweet preview". X's
+  widget needs its script on the page (the CSP is `script-src 'self'`), tracks readers, and the app
+  has no web views, so the `post` block takes the words, author and date from X's public oEmbed and
+  the site and app set them as the clipping form, smaller. Rejected: X's embed; a screenshot of the
+  post (a picture of words cannot be checked, searched or read aloud).
+- **X's own record is the source, and it is sometimes short.** oEmbed ends long posts with "…" (the
+  Chainalysis post stops at "From 2021…"). The block prints what X gives, says it is the start, and
+  links to the rest. The editor's pasted copy of the full post is not used: a post's words come from
+  a fetch, as every excerpt does.
+- **Words written for the magazine are CC BY 4.0, commercial use included** (the editor's choice):
+  a line in the website's footer and at the foot of the app's About, from `LICENCE` in
+  `@fdf/shared/about`; `rel="license"` on the link. Quotations, excerpts, pictures and every other
+  work shown stay with their makers under their own terms. No separate licence page (the editor: a
+  footer mention is enough).

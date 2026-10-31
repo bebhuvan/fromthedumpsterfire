@@ -927,3 +927,23 @@ From `docs/LIVES-BRIEF.md`; the report is `docs/LIVES-REPORT.md`.
 Before it goes live: merge `lives`, apply migration 0009 (`npm run db:migrate:production`), deploy the
 Desk and the site, then an over-the-air update for the app (JavaScript only; no native change). Then
 submit Sen from `.editorial/lives-sen/README.md`, read and approve on the Desk, and add it to Haul 001.
+
+## X posts inside an item; the licence line (2026-10-31; not deployed)
+
+- **`post` block**: an X post set inside another item as a small clipping in X's own words, from
+  X's public oEmbed (`addPost`, `xPostUrl`, `houseDate`); never X's embed. Desk: "X post" under Add
+  to this item. Site `Blocks.astro`, app `ui/Blocks.tsx`; validator rules; link check; a sample in
+  development Haul 002. X ends long posts with "…": stored `truncated`, readers sent to the post.
+- **Licence**: "Words written for this magazine are licensed CC BY 4.0 …" in the site's footer and
+  at the foot of the app's About (`LICENCE` in `@fdf/shared/about`).
+- **Access**: a draft-only editorial service token for this machine (`claude-omarchy`, expires
+  2027-01-29), allowlisted in production and deployed (Desk e84c0848).
+- **Desk content today**: the editor's note on the Binance item gained the Chainalysis security
+  incident line; "The Second Coming" (Yeats, Cuala Press 1920 text) captured whole as item 22 of
+  Haul 001 with the editor's proofread note (raw kept in `.editorial/yeats/`) and a proposed,
+  judged Yeats note; Shantanu Goel's SIR Bangalore lookup captured (`it_01m68d5hx0nx7nv22cxw`).
+- `npm run verify`: 754 tests pass.
+
+To go live: deploy the site first (it validates every bundle; an older site would refuse a bundle
+with a post block), then the Desk, then an over-the-air app update (JavaScript only). Then add the
+Chainalysis and Weisenthal posts to the Binance item.

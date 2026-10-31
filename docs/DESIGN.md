@@ -55,6 +55,11 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | quote | epigraph | the words alone in Display Medium at 40–88px, hanging quotation marks, the speaker in spaced caps over the occasion. Only a line or two is set that large: past 30 words the type steps down, and past 80 words it reads as a passage at 21–26px (`quoteLength` in `lib/forms.ts`), on the item page and in the Haul's list alike |
 | letter | the letter | a sheet in lilac: place and date ranged right, "From … to …" in sans, the body in Newsreader Text keeping its line breaks, the name it was signed with in display italic at the foot, the holder under a hairline |
 | social | clipping | a sheet in aqua headed by fields (From, with name and handle; On, the platform; Date) over a rule, the post in display at 25–36px. Never the platform's embed |
+
+An X post inside another item (the `post` block, 2026-10-31) is the same clipping, smaller: aqua,
+the From/On/Date fields over an ink rule, the words in display at 20–25px (21px in the app), then
+"Read the post on X" under it in grey sans. When X gives only the start of a long post the line says
+so. Never X's embed.
 | image | mounted print | the picture in a plate-grey mount, a museum label beside it (from 1000px) or under it: title, maker and date, where it is from, credit and licence |
 | book | jacket | the book set in type as a 2:3 jacket in lilac in the margin (or its cover, if the editor uploaded one), the title as a heading, a line from inside under a rule |
 | tool | specimen label | a ruled box with a tint strip on its top edge: the name huge, then fields (Made by, What it is, Since, In its own words, Where) |

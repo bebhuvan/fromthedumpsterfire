@@ -237,6 +237,16 @@
        "height": 1473
       }
      }
+    },
+    {
+     "kind": "post",
+     "platform": "x",
+     "url": "https://x.com/samplewriter/status/1000000000000000001",
+     "author": "Sample Writer",
+     "handle": "samplewriter",
+     "date": "3 October 2026",
+     "text": "Sample post, set inside another item as a clipping in its own words.\n\nWhen X gives only the start of a long post, the card says so and sends readers to the rest…",
+     "truncated": true
     }
    ]
   },

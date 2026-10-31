@@ -3,7 +3,7 @@
 // and the invariants in test/fixtures.test.ts, plus the house rules that apply to published copy.
 
 import type { Block, Haul, HaulIndex, Item, Life, LifeCite, LifeLine, Title } from './haul';
-import { AUDIO_FORMATS, BLOCK_KINDS, BUNDLE_VERSION, embedSrc, haulSlug } from './haul';
+import { AUDIO_FORMATS, BLOCK_KINDS, BUNDLE_VERSION, embedSrc, haulSlug, xPostUrl } from './haul';
 import { CODE_ROLES, EDITIONS, SWATCHES as SWATCH_LIST, typeSwatch } from './tokens';
 import { checkStyle } from './style';
 import { validateChart } from './charts/validate';
@@ -367,6 +367,16 @@ function checkBlock(c: Collector, b: Block, p: string) {
         // Name the person: every picture says who made it ("Unknown" only when nobody can say).
         if (typeof b.plate.creator !== 'string' || !b.plate.creator.trim()) c.err(`${p}.plate.creator`, 'credit', 'a picture names who made it');
       }
+      break;
+    case 'post':
+      // A post is drawn by us from X's public record, never X's embed: the link must be the post's own address.
+      if (b.platform !== 'x') c.err(`${p}.platform`, 'shape', 'x');
+      if (c.str(b.url, `${p}.url`) && xPostUrl(b.url) !== b.url) c.err(`${p}.url`, 'embed', 'the post’s address, https://x.com/<handle>/status/<id>');
+      c.str(b.author, `${p}.author`);
+      if (c.str(b.handle, `${p}.handle`) && !/^[A-Za-z0-9_]{1,15}$/.test(b.handle)) c.err(`${p}.handle`, 'shape', 'an X handle without the @');
+      c.str(b.date, `${p}.date`, { optional: true });
+      c.str(b.text, `${p}.text`);
+      if (b.truncated !== undefined && typeof b.truncated !== 'boolean') c.err(`${p}.truncated`, 'shape', 'true or false');
       break;
     case 'chart': {
       // The honesty rules (charts/validate.ts): sources and licences, zero baselines, no dual axes,

@@ -4,7 +4,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { embedSrc, type Block } from '@fdf/shared/haul';
-import { addAudio, addCode, addPicture, addQuote, addVideo, BlockRefused, blocksFor, deleteBlock, parseAudioLink, patchBlock, parseClock, parseVideoLink, reorderBlocks, setPicturePlate, trimCode } from '../src/blocks';
+import { addAudio, addCode, addPicture, addPost, addQuote, addVideo, BlockRefused, blocksForBundle, houseDate, blocksFor, deleteBlock, parseAudioLink, patchBlock, parseClock, parseVideoLink, reorderBlocks, setPicturePlate, trimCode } from '../src/blocks';
 import type { ItemRow } from '../src/db';
 import { fetchSource } from '../src/ingest';
 import { draftLimits, quoteWhole } from '../src/steps';
@@ -258,5 +258,67 @@ describe('the pipeline on the new types', () => {
     expect(await quoteWhole(env, await item(env, 'it_jevons'), { text: JEVONS, word_count: 40 })).toBe(false);
     for (const type of ['social', 'quote', 'image', 'tool']) expect(draftLimits({ type, minutes: 90 }, 20_000).ideas).toBe(0);
     expect(draftLimits({ type: 'speech', minutes: 40 }, 6000).ideas).toBeGreaterThan(0);
+  });
+});
+
+describe('X posts', () => {
+  const oembed = (author: string, handle: string, words: string, date: string) =>
+    Response.json({
+      url: `https://x.com/${handle}/status/2116240300486349117`,
+      author_name: author,
+      author_url: `https://x.com/${handle}`,
+      html: `<blockquote class="twitter-tweet"><p lang="en" dir="ltr">${words} <a href="https://t.co/zT4nFqqvWK">pic.twitter.com/zT4nFqqvWK</a></p>&mdash; ${author} (@${handle}) <a href="https://x.com/${handle}/status/2116240300486349117?ref_src=twsrc%5Etfw">${date}</a></blockquote>`,
+    });
+
+  it('takes the words, author and date from X’s record, and marks a post X cuts short', async () => {
+    const env = await seedHaul(makeEnv());
+    const calls = stubNet((url) =>
+      url.startsWith('https://publish.twitter.com/oembed?') ? oembed('Chainalysis', 'chainalysis', 'Nearly 89% of losses so far this year.<br><br>From 2021…', 'October 30, 2026') : undefined,
+    );
+    await addPost(env, await item(env), { url: 'https://x.com/chainalysis/status/2116240300486349117?a=O3UfzVOCfd_k65Pj4Ko&s=19' });
+    const [b] = await blocksFor(env, 'it_jevons');
+    const body = JSON.parse(b!.body);
+    expect(body).toEqual({
+      kind: 'post',
+      platform: 'x',
+      url: 'https://x.com/chainalysis/status/2116240300486349117',
+      author: 'Chainalysis',
+      handle: 'chainalysis',
+      date: '30 October 2026',
+      text: 'Nearly 89% of losses so far this year.\n\nFrom 2021…',
+      truncated: true,
+    });
+    // The link the editor pasted is never fetched itself; only X's oEmbed is asked, with the clean address.
+    expect(calls).toHaveLength(1);
+    expect(decodeURIComponent(calls[0]!.url)).toContain('url=https://x.com/chainalysis/status/2116240300486349117');
+    expect(decodeURIComponent(calls[0]!.url)).not.toContain('s=19');
+    // Into the bundle as stored, with nothing to copy.
+    const out = blocksForBundle([b!], null, 'hauls/001/media/x', 'https://files.example');
+    expect(out.problems).toEqual([]);
+    expect(out.copies).toEqual([]);
+    expect(out.blocks).toEqual([body]);
+  });
+
+  it('refuses links that are not one post, and posts X will not show or that have no words', async () => {
+    const env = await seedHaul(makeEnv());
+    stubNet((url) => {
+      if (!url.startsWith('https://publish.twitter.com/oembed?')) return undefined;
+      if (url.includes('picture_only')) return oembed('Someone', 'picture_only', '', 'October 1, 2026');
+      return undefined; // 404: deleted or protected
+    });
+    const it0 = await item(env);
+    await refused(addPost(env, it0, { url: 'https://x.com/chainalysis' }), /link to one post/);
+    await refused(addPost(env, it0, { url: 'https://example.com/a/status/123456' }), /link to one post/);
+    await refused(addPost(env, it0, { url: 'https://x.com/gone/status/123456' }), /does not show this post/);
+    await refused(addPost(env, it0, { url: 'https://x.com/picture_only/status/123456' }), /no words/);
+    expect(await blocksFor(env, 'it_jevons')).toEqual([]);
+  });
+
+  it('writes X’s dates the house way', () => {
+    expect(houseDate('October 30, 2026')).toBe('30 October 2026');
+    expect(houseDate('March 5, 2021')).toBe('5 March 2021');
+    expect(houseDate('Oct 30, 2026')).toBe('Oct 30, 2026');
+    expect(houseDate('  ')).toBeUndefined();
+    expect(houseDate(undefined)).toBeUndefined();
   });
 });

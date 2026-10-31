@@ -1,4 +1,4 @@
-// Desk routes for an item's blocks: pull quotes, code, video and audio embeds, pictures. Mounted by
+// Desk routes for an item's blocks: pull quotes, code, video and audio embeds, posts, pictures. Mounted by
 // index.ts behind the same lock, CSRF refusal and JSON-only rules as every other /api route (the
 // picture upload is the one multipart route here; see security.ts). The rules themselves live in
 // packages/server/src/blocks.ts, so they hold whatever the Desk sends.
@@ -17,6 +17,7 @@ import {
   replaceChart,
   addCode,
   addPicture,
+  addPost,
   addQuote,
   addVideo,
   BlockRefused,
@@ -88,6 +89,7 @@ const ADD = {
   code: z.object({ kind: z.literal('code'), code: z.string().min(1).max(20_000), lang: z.enum(LANG_NAMES).optional(), caption: z.string().max(300).optional() }),
   video: z.object({ kind: z.literal('video'), url: z.string().trim().min(8).max(2000), start: clock.optional() }),
   audio: z.object({ kind: z.literal('audio'), url: z.string().trim().min(8).max(2000), title: z.string().max(200).optional(), start: clock.optional() }),
+  post: z.object({ kind: z.literal('post'), url: z.string().trim().min(8).max(2000) }),
 };
 type Added = z.infer<(typeof ADD)[keyof typeof ADD]>;
 
@@ -99,17 +101,17 @@ blocksApi.get('/api/items/:id/blocks', async (c) => {
 /** A chart spec as sent; its shape and every honesty rule are checked by validateChart, server side. */
 const CHART = z.object({ chart: z.record(z.string(), z.unknown()) });
 
-// Pull quotes, code, video, audio and charts. Each is checked before it is stored; a refusal says why.
+// Pull quotes, code, video, audio, posts and charts. Each is checked before it is stored; a refusal says why.
 blocksApi.post('/api/items/:id/blocks', async (c) => {
   const item = await itemOr404(c.env, c.req.param('id'));
-  const raw = await body(c, z.object({ kind: z.enum(['quote', 'code', 'video', 'audio', 'chart']) }).passthrough());
+  const raw = await body(c, z.object({ kind: z.enum(['quote', 'code', 'video', 'audio', 'post', 'chart']) }).passthrough());
   if (raw.kind === 'chart') {
     const parsed = CHART.safeParse(raw);
     if (!parsed.success) return c.json({ error: 'Send the chart as { kind: "chart", chart: {…} }' }, 400);
     const r = await attempt(() => addChart(c.env, item, parsed.data.chart as unknown as Chart));
     return c.json({ id: r.id, warnings: r.warnings, ...(await listing(c.env, item.id)) });
   }
-  const schema = raw.kind === 'quote' ? ('start' in raw ? ADD.quoteAt : ADD.quote) : ADD[raw.kind as 'code' | 'video' | 'audio'];
+  const schema = raw.kind === 'quote' ? ('start' in raw ? ADD.quoteAt : ADD.quote) : ADD[raw.kind as 'code' | 'video' | 'audio' | 'post'];
   const parsed = schema.safeParse(raw);
   if (!parsed.success) return c.json({ error: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') }, 400);
   const b = parsed.data as Added;
@@ -123,6 +125,8 @@ blocksApi.post('/api/items/:id/blocks', async (c) => {
         return addVideo(c.env, item, b);
       case 'audio':
         return addAudio(c.env, item, b);
+      case 'post':
+        return addPost(c.env, item, b);
     }
   });
   await runChecks(c.env, item.id, { links: false });

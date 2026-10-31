@@ -4,7 +4,7 @@
 import { Linking, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { fonts, typeColor, usePalette } from '@/theme';
-import { editorNote, EDITOR_EMAIL } from '@fdf/shared/about';
+import { editorNote, EDITOR_EMAIL, LICENCE } from '@fdf/shared/about';
 import { formGuide, formName } from '@/lib/forms';
 import { openSource } from '@/lib/open';
 import { Body, Machine, Meta, Note, Title } from '@/ui/type';
@@ -93,6 +93,13 @@ export function About() {
         <Flame size={8} />
         <Meta>Version {Constants.expoConfig?.version ?? '0'} · fromthedumpsterfire.com</Meta>
       </View>
+      <Meta style={{ marginTop: 10 }}>
+        {LICENCE.before}
+        <Text accessibilityRole="link" style={{ textDecorationLine: 'underline' }} onPress={() => void openSource(LICENCE.url, p)}>
+          {LICENCE.name}
+        </Text>
+        {LICENCE.after}
+      </Meta>
     </Screen>
   );
 }

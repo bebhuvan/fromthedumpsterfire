@@ -2,13 +2,14 @@
 // cleanup, capture detection and the runtime bundle validator.
 
 import { describe, expect, it } from 'vitest';
-import type { Haul, HaulIndex } from '../src/haul';
+import { xPostUrl, type Haul, type HaulIndex, type PostBlock } from '../src/haul';
 import { checkStyle } from '../src/style';
 import { findVerbatim, isVerbatimAt } from '../src/verbatim';
 import { checkDeletionOnly, cleanupDeterministic } from '../src/cleanup';
 import { canonicalUrl, detectText, detectUrl, extractUrls, isOnlyUrls } from '../src/detect';
 import { validateHaul } from '../src/validate';
 import haulJson from '../fixtures/haul-001.json';
+import devHaulJson from '../fixtures/dev/haul-002.json';
 import indexJson from '../fixtures/index.json';
 
 const haul = haulJson as Haul;
@@ -185,5 +186,35 @@ describe('bundle validator', () => {
     const i = clone(index);
     i.hauls[0]!.itemCount = 3;
     expect(validateHaul(h, i).errors.map((e) => e.rule)).toContain('index');
+  });
+});
+
+describe('X posts inside an item', () => {
+  it('reads a post link to its canonical address, and nothing else', () => {
+    expect(xPostUrl('https://x.com/chainalysis/status/2116240300486349117?a=O3UfzVOCfd_k65Pj4Ko&s=19')).toBe('https://x.com/chainalysis/status/2116240300486349117');
+    expect(xPostUrl('https://twitter.com/TheStalwart/status/2116258852387856655')).toBe('https://x.com/TheStalwart/status/2116258852387856655');
+    expect(xPostUrl('https://mobile.twitter.com/jack/statuses/20')).toBe('https://x.com/jack/status/20');
+    expect(xPostUrl('https://www.x.com/a_b/status/123456/photo/1')).toBe('https://x.com/a_b/status/123456');
+    expect(xPostUrl('https://x.com/chainalysis')).toBeNull();
+    expect(xPostUrl('https://x.com/i/lists/123456')).toBeNull();
+    expect(xPostUrl('https://evil.example/x.com/a/status/123456')).toBeNull();
+    expect(xPostUrl('javascript:alert(1)')).toBeNull();
+  });
+  it('accepts the sample post and refuses a post that is not X’s own address or has no words', () => {
+    const dev = devHaulJson as unknown as Haul;
+    expect(validateHaul(dev).errors).toEqual([]);
+    const post = dev.items.flatMap((i) => i.blocks ?? []).find((b): b is PostBlock => b.kind === 'post')!;
+    expect(post).toBeTruthy();
+    const bad = (change: Partial<PostBlock>) => {
+      const h = clone(dev);
+      const b = h.items.flatMap((i) => i.blocks ?? []).find((x) => x.kind === 'post')!;
+      Object.assign(b, change);
+      return validateHaul(h).errors.map((e) => e.path.replace(/^.*\.blocks\[\d+\]\./, ''));
+    };
+    expect(bad({ url: 'https://x.com/samplewriter/status/1000000000000000001?s=19' })).toContain('url');
+    expect(bad({ url: 'https://evil.example/samplewriter/status/1' })).toContain('url');
+    expect(bad({ handle: '@samplewriter' })).toContain('handle');
+    expect(bad({ text: '' })).toContain('text');
+    expect(bad({ platform: 'mastodon' as 'x' })).toContain('platform');
   });
 });

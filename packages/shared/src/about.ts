@@ -60,3 +60,16 @@ export const editorNote: AboutParagraph[] = [
 
 /** The note as plain text, one paragraph per line (for the plain-text and Markdown editions). */
 export const editorNoteText = (): string[] => editorNote.map((p) => p.map((s) => (typeof s === 'string' ? s : s.text)).join(''));
+
+/**
+ * The magazine's licence (the editor's choice, 2026-10-31): what is written for it is CC BY 4.0,
+ * commercial use included; the works it quotes and shows keep their makers' own terms. In the
+ * website's footer and at the foot of the app's About.
+ */
+export const LICENCE = {
+  name: 'CC BY 4.0',
+  url: 'https://creativecommons.org/licenses/by/4.0/',
+  before: 'Words written for this magazine are licensed ',
+  after:
+    ': share and adapt them, commercially too, with credit to From the Dumpster Fire. Quotations, excerpts, pictures and every other work shown here stay with their makers, under their own copyright and licences.',
+} as const;

@@ -100,11 +100,12 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   is never stored as the piece. The one exception is the editor's own saved copy in Readwise Reader
   or Instapaper (`library.ts`, tokens `READWISE_TOKEN`/`INSTAPAPER_TOKEN`), private like any source.
   The item keeps the original link; `sources.meta.via` says where the text came from. No paid scrapers, proxies, bot-check evasion or disguised user agents.
-- Item blocks (pull quotes, code, video, audio, pictures; `packages/server/src/blocks.ts`) follow the
-  same rules: quotes and code verified against the stored source (none on an item without source
-  text), embeds parsed from the editor's link by code, posters and pictures fetched through
-  `guardedFetch` with a byte cap and kept in MEDIA, pictures only with the editor's credit and
-  licence. `publish.ts` copies them to FILES, with the share card the Desk draws in the browser.
+- Item blocks (pull quotes, code, video, audio, X posts, pictures; `packages/server/src/blocks.ts`)
+  follow the same rules: quotes and code verified against the stored source (none on an item without
+  source text), embeds parsed from the editor's link by code, a post's words, author and date taken
+  from X's public oEmbed record (never typed or model-written) and drawn as a clipping, never X's
+  embed or script, posters and pictures fetched through `guardedFetch` with a byte cap and kept in
+  MEDIA, pictures only with the editor's credit and licence. `publish.ts` copies them to FILES, with the share card the Desk draws in the browser.
 - Charts (`docs/CHARTS.md`) are blocks too: stored with their rows, checked by `validateChart` (shared)
   on the Desk, at publish and in `validateHaul`. Provider data comes only through
   `packages/server/src/charts.ts` (Our World in Data, World Bank; `guardedFetch`, byte caps, licence as

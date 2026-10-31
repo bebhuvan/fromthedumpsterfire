@@ -2,12 +2,12 @@
 // website sets them: pull quotes between rules, code on the plate with a numbered gutter and colours by
 // role, a video as its poster with a link to watch it on its own site (no web view in the app), audio
 // files in the editor's player and podcast episodes as a row that opens their app, pictures with their
-// credit and licence, and charts (ui/Chart.tsx).
+// credit and licence, charts (ui/Chart.tsx), and X posts as small clippings (never X's embed).
 import { memo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { creditLine, videoHref, type Block } from '@fdf/shared/haul';
 import type { CodeRole } from '@fdf/shared/tokens';
-import { fonts, usePalette, useTextScale } from '@/theme';
+import { fonts, typeColor, usePalette, useTextScale } from '@/theme';
 import { clock, CODE_LANGS, codeLines } from '@/lib/code';
 import { openSource } from '@/lib/open';
 import { Meta } from './type';
@@ -32,6 +32,8 @@ export function Blocks({ blocks, source }: { blocks?: Block[]; source?: string }
             return <Picture key={i} plate={b.plate} />;
           case 'chart':
             return <Chart key={i} block={b} />;
+          case 'post':
+            return <Post key={i} block={b} />;
           default:
             return null;
         }
@@ -152,6 +154,38 @@ function AudioBlock({ block }: { block: Extract<Block, { kind: 'audio' }> }) {
   );
 }
 
+/** An X post as the website sets it: a small clipping (from, on, date over a rule, then the words), the link under it. */
+function Post({ block }: { block: Extract<Block, { kind: 'post' }> }) {
+  const p = usePalette();
+  const k = useTextScale();
+  const field = (key: string, v: string, sub?: string) => (
+    <View style={st.postField}>
+      <Text style={[st.postKey, { color: p.ink2 }]}>{key}</Text>
+      <Text style={[st.postVal, { color: p.ink, fontFamily: sub ? fonts.sansMedium : fonts.sans }]}>{v}</Text>
+      {sub ? <Text style={[st.postVal, { color: p.ink2 }]}>{sub}</Text> : null}
+    </View>
+  );
+  return (
+    <View>
+      <View style={[st.post, { backgroundColor: typeColor(p, 'social') }]}>
+        <View style={[st.postHead, { borderBottomColor: p.ink }]}>
+          {field('FROM', block.author, `@${block.handle}`)}
+          <View style={st.postPair}>
+            {field('ON', 'X')}
+            {block.date ? field('DATE', block.date) : null}
+          </View>
+        </View>
+        <Text selectable style={[st.postText, { color: p.ink, fontSize: 21 * k, lineHeight: 28 * k }]}>{block.text}</Text>
+      </View>
+      <Pressable accessibilityRole="link" onPress={() => openSource(block.url, p)} hitSlop={8} style={st.linkRow}>
+        <Text style={[st.link, { color: p.ink2 }]}>
+          {block.truncated ? 'X gives the start of this post. ' : ''}Read the post on X ↗
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 /** A picture with its caption, then who holds it and the licence they state. */
 export function Picture({ plate, style }: { plate: Extract<Block, { kind: 'image' }>['plate']; style?: object }) {
   const p = usePalette();
@@ -217,4 +251,12 @@ const st = StyleSheet.create({
   ext: { fontFamily: fonts.sansMedium, fontSize: 15 },
 
   caption: { fontFamily: fonts.textItalic, fontSize: 15, lineHeight: 21, marginTop: 10 },
+
+  post: { paddingHorizontal: 18, paddingBottom: 18 },
+  postHead: { paddingTop: 12, paddingBottom: 10, borderBottomWidth: 1, marginBottom: 14, gap: 8 },
+  postPair: { flexDirection: 'row', gap: 28 },
+  postField: { gap: 2 },
+  postKey: { fontFamily: fonts.sansMedium, fontSize: 11, letterSpacing: 1.3, includeFontPadding: false },
+  postVal: { fontSize: 14.5, lineHeight: 19, includeFontPadding: false },
+  postText: { fontFamily: fonts.displayRegular, includeFontPadding: false },
 });

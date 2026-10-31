@@ -129,6 +129,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .foot-nav { display: flex; flex-wrap: wrap; gap: 6px 20px; font: 500 13px/1.6 var(--sans); color: var(--ink2); }
 .foot-nav a { text-decoration: none; }
 .foot-app { font: 400 13px/1.6 var(--sans); color: var(--ink2); }
+.foot-licence { max-width: 40rem; font: 400 13px/1.6 var(--sans); color: var(--ink2); }
 @media (min-width: 1000px) { .foot-nav { grid-row: 2; } }
 
 /* Page heads (archive, threads, about, search, errors). */
@@ -701,6 +702,11 @@ blockquote > p + p { margin-top: 0.65em; }
 @media (max-width: 520px) { .clip-head { grid-template-columns: auto auto; row-gap: 10px; } .clip-head div:first-child { grid-column: 1 / -1; } }
 .clip-text p { font: 400 clamp(25px, 3.2vw, 36px)/1.28 var(--display); letter-spacing: -0.008em; white-space: pre-line; text-wrap: pretty; }
 .clip mark { background: color-mix(in srgb, var(--bg) 62%, transparent); }
+/* A post inside another item (Block 'post'): the clipping, smaller, with the link to it under. */
+.post { background: var(--tint); padding: 0 clamp(18px, 3vw, 28px) clamp(18px, 3vw, 26px); }
+.post-head { margin-bottom: clamp(14px, 2vw, 20px); }
+.post-text p { font: 400 clamp(20px, 2.2vw, 25px)/1.3 var(--display); letter-spacing: -0.006em; white-space: pre-line; text-wrap: pretty; }
+.post-cap { font: 400 13px/1.45 var(--sans); color: var(--ink2); }
 
 /* ---------- A mounted print (picture): the picture in its mount, a museum label beside or under. ---------- */
 .prt { padding-block: 16px 8px; }

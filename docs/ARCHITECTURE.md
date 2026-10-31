@@ -289,6 +289,13 @@ at publish; an item without source text takes neither. `video` (YouTube, Vimeo) 
 hqdefault, Vimeo's oEmbed thumbnail) and every picture are fetched with `guardedFetch` and a byte
 cap (or uploaded), measured with `imageSize`, and kept in MEDIA under `blocks/<id>/`; pictures need
 the editor's credit and licence. A Picture item's picture is its chosen plate (`provider 'editor'`).
+`post` (2026-10-31): an X post set inside another item. The editor's link is read by `xPostUrl`
+(`@fdf/shared/haul`) to `https://x.com/<handle>/status/<id>`; `addPost` asks X's public oEmbed
+(`fetchXPost`, guarded and capped) for the words, author and date, never the page and never a model;
+a post X ends with "…" is stored `truncated` and readers are sent to it for the rest. The site and
+the app draw it as a small clipping (no X script, iframe or web view; the CSP is unchanged). Its
+link joins the link check. The post's picture, if wanted, is a separate picture block with its
+credit.
 `POST /api/items/:id/blocks` (JSON, per-kind zod schemas), `POST /api/items/:id/picture`
 (multipart), `PUT /api/items/:id/blocks/order`, `PATCH|DELETE /api/blocks/:id`,
 `GET /api/blocks/:id/media` (the poster or picture, served from MEDIA to the Desk).

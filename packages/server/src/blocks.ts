@@ -10,16 +10,20 @@
 //   measured and kept in MEDIA. Every fetch goes through guardedFetch with a byte cap.
 // - pictures are uploaded or fetched (images only, capped), measured, kept in MEDIA, and carry the
 //   credit and licence the editor states. publish.ts copies posters and pictures to FILES.
+// - a post (an X post set inside the item) is resolved from the editor's link by code and its words
+//   taken from X's public oEmbed record, never typed in or written by a model; the site and the app
+//   draw it as a clipping, never with X's embed.
 
 import { findCode, findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
 import { startSeconds } from '@fdf/shared/quoting';
 import { codeLang, highlightCode } from '@fdf/shared/highlight';
-import type { Block, BlockKind, ChartImages, Plate } from '@fdf/shared/haul';
+import { xPostUrl, type Block, type BlockKind, type ChartImages, type Plate } from '@fdf/shared/haul';
 import { chartKey, validateChart, type Chart } from '@fdf/shared/charts';
 import type { Edition } from '@fdf/shared/tokens';
 import type { Env } from './env';
 import type { ItemRow, SourceRow } from './db';
 import { guardedFetch } from './extract/guard';
+import { fetchXPost } from './extract/sources';
 import { USER_AGENT } from './extract/http';
 import { readCapped, readJsonCapped } from './extract/stream';
 import { imageSize, IMAGE_TYPES, MAX_IMAGE_BYTES, maybeResize } from './plates';
@@ -46,7 +50,8 @@ export type StoredBlock =
   | { kind: 'video'; provider: 'youtube' | 'vimeo'; id: string; title: string; start?: number; poster?: { width: number; height: number }; link: string }
   | { kind: 'audio'; provider: 'file' | 'spotify' | 'apple'; url: string; title: string; start?: number; seconds?: number }
   | { kind: 'image'; caption: string; credit: string; licence: string; sourceUrl?: string; creator?: string; date?: string; width: number; height: number }
-  | { kind: 'chart'; chart: Chart };
+  | { kind: 'chart'; chart: Chart }
+  | { kind: 'post'; platform: 'x'; url: string; author: string; handle: string; date?: string; text: string; truncated?: boolean };
 
 /** An error the editor sees as it is: plain words, a 4xx status. */
 export class BlockRefused extends Error {
@@ -460,6 +465,43 @@ export async function setPicturePlate(env: Env, item: ItemRow, input: { bytes?: 
   return id;
 }
 
+// ---------------------------------------------------------------- posts
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** X's "October 30, 2026" in the house's "30 October 2026"; anything else as given. */
+export function houseDate(raw: string | undefined): string | undefined {
+  const t = raw?.trim();
+  const m = t ? /^([A-Z][a-z]+) (\d{1,2}), (\d{4})$/.exec(t) : null;
+  return m && MONTHS.includes(m[1]!) ? `${Number(m[2])} ${m[1]} ${m[3]}` : t || undefined;
+}
+
+/**
+ * An X post inside the item: the link is checked by code, and the words, author and date come from
+ * X's own public record of it (oEmbed). X gives long posts only to "…"; such a post is marked
+ * truncated and readers are sent to it for the rest.
+ */
+export async function addPost(env: Env, item: ItemRow, b: { url: string }): Promise<string> {
+  const url = xPostUrl(b.url);
+  if (!url) return refuse('Paste the link to one post on X (x.com/<name>/status/<number>).', 400);
+  const post = await fetchXPost(url).catch(() => refuse('X does not show this post publicly (it may be private, deleted or from a protected account).'));
+  const text = post.text.trim();
+  const handle = post.handle?.replace(/^@/, '');
+  if (!text) return refuse('X gives no words for this post (a picture or video alone). Add the picture with its credit instead.');
+  if (!post.author?.trim() || !handle || !/^[A-Za-z0-9_]{1,15}$/.test(handle)) return refuse('X did not say who posted this.');
+  const date = houseDate(post.date);
+  return insertBlock(env, item.id, {
+    kind: 'post',
+    platform: 'x',
+    url: `https://x.com/${handle}/status/${url.split('/').pop()}`,
+    author: truncate(post.author.replace(/\s+/g, ' ').trim(), 120),
+    handle,
+    text,
+    ...(date ? { date } : {}),
+    ...(/(…|\.\.\.)$/.test(text) ? { truncated: true } : {}),
+  });
+}
+
 // ---------------------------------------------------------------- charts
 
 /**
@@ -641,6 +683,9 @@ export function blocksForBundle(
         break;
       case 'audio':
         out.blocks.push({ kind: 'audio', provider: b.provider, url: b.url, title: b.title, ...(b.start ? { start: b.start } : {}), ...(b.seconds ? { seconds: b.seconds } : {}) });
+        break;
+      case 'post':
+        out.blocks.push({ kind: 'post', platform: b.platform, url: b.url, author: b.author, handle: b.handle, text: b.text, ...(b.date ? { date: b.date } : {}), ...(b.truncated ? { truncated: true } : {}) });
         break;
       case 'image': {
         if (!r.media_key) {

@@ -86,6 +86,8 @@ h3["items"].append(item("delhi-heat", "chart", {"text": "A year of Delhi's", "it
        "Sample note. A year of daily highs and lows against the normal range and the records, after the New York Times weather chart.", year=2024,
        blocks=[{"kind": "chart", "chart": chart("delhi-band-2024")}, {"kind": "chart", "chart": chart("temperature-stripes")}]))
 h2["items"][2]["blocks"].append({"kind": "chart", "chart": chart("south-asia-gdp-bar")})
+# A post block (2026-10-31): an X post set inside another item as a small clipping.
+h2["items"][2]["blocks"].append({"kind": "post", "platform": "x", "url": "https://x.com/samplewriter/status/1000000000000000001", "author": "Sample Writer", "handle": "samplewriter", "date": "3 October 2026", "text": "Sample post, set inside another item as a clipping in its own words.\n\nWhen X gives only the start of a long post, the card says so and sends readers to the rest…", "truncated": True})
 idx = {"bundleVersion": 1, "updatedAt": "2026-10-24T12:00:00Z", "hauls": []}
 for h in (h3, h2):
     n = h["number"]; json.dump(h, open(f"haul-{n:03}.json", "w"), indent=1, ensure_ascii=False)
