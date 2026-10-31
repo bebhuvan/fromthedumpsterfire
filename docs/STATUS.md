@@ -928,13 +928,15 @@ Before it goes live: merge `lives`, apply migration 0009 (`npm run db:migrate:pr
 Desk and the site, then an over-the-air update for the app (JavaScript only; no native change). Then
 submit Sen from `.editorial/lives-sen/README.md`, read and approve on the Desk, and add it to Haul 001.
 
-## X posts inside an item; the licence line (2026-10-31; deployed except the app)
+## X posts inside an item; the licence line (2026-10-31; deployed, app included)
 
 **Deployed 2026-10-31 (the editor's go):** web `fdf-web` 10121aea, pipeline `fdf-pipeline` 1b8607df,
-Desk `fdf-desk` dd0e6b9b. **Not yet: the app's over-the-air update.** Its signing key
-(`~/.config/fdf/app-updates/private-key.pem`) is not on this machine; it must be copied from the
-machine that made it (the certificate is `apps/mobile/certs/certificate.pem`). Until then the app
-skips post blocks (unknown kinds draw nothing) and shows no licence line. On the Desk: the
+Desk `fdf-desk` dd0e6b9b, app over-the-air update 760f2f55 for runtime `e903061b` (from ab42499 on
+the new laptop; the signing key copied from the old one, checked against the certificate; the live
+check verified the signature and every asset). On a fresh checkout `npm ci` skips `react-dom` (an
+optional peer in the lockfile), Expo then drops "web" from the app's platforms and the runtime
+changes (db0e094c here): run `npm install --no-save react-dom@19.3.1` before `npm run app:update`
+and check the runtime it prints is the APK's. On the Desk: the
 Chainalysis post, its chart (credit Chainalysis, "© the creator, shown for commentary") and Joe
 Weisenthal's post end the Binance item; Shantanu Goel's post is on the SIR item, which carries the
 editor's essay as its note and sits after Sukumar Sen in Haul 001 (23 items). Three failed duplicate
