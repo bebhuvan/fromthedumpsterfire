@@ -128,10 +128,12 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
       <Title title={note.title} as="h2" class="h-sec" id="fn-title" />
       {note.audio ? <Voice audio={note.audio} label="Hear it as I said it" /> : null}
       {note.paragraphs.map((para, i) => (
-        <Highlighted text={para} highlight={note.highlight} curl>{i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}</Highlighted>
+        <Highlighted text={para} highlight={note.highlight} curl class={i === 0 ? 'fn-first' : undefined}>{i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}</Highlighted>
       ))}
     </div>
   </section>
+
+  <div class="wrap orn" aria-hidden="true"><span class="flame"></span></div>
 
   <section class="wrap g contents" aria-labelledby="contents-title">
     <h2 class="mh sp-h" id="contents-title">In this Haul <span>{objects(haul.items.length).toLowerCase()}, each set in its own printed form</span></h2>

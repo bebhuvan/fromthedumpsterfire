@@ -166,12 +166,25 @@ export function RunHead({ haul, right, current }: { haul: Haul; right?: string; 
 }
 
 /** The foot of a page: the Haul on the left, the folio in ember on the right. */
-export function Folio({ haul, n }: { haul: string; n?: number }) {
+/** The foot of a page, as the website sets it: the flame, then where the page sits ("Haul 001 · 9 of 23"). */
+export function Folio({ haul, n, of }: { haul: string; n?: number; of?: number }) {
   const p = usePalette();
   return (
-    <View style={st.folio}>
-      <Meta>{haul}</Meta>
-      {n ? <Text style={[st.folioN, { color: p.ember }]}>{n}</Text> : null}
+    <View style={[st.folio, { borderTopColor: p.rule }]}>
+      <Flame size={9} />
+      <Meta style={{ fontVariant: ['lining-nums'] }}>{n ? `${haul} · ${n}${of ? ` of ${of}` : ''}` : haul}</Meta>
+    </View>
+  );
+}
+
+/** Between the letter and the contents: the flame alone between two short rules. */
+export function Ornament({ style }: { style?: StyleProp<ViewStyle> }) {
+  const p = usePalette();
+  return (
+    <View accessible={false} style={[st.orn, style]}>
+      <View style={[st.ornRule, { backgroundColor: p.rule }]} />
+      <Flame size={13} />
+      <View style={[st.ornRule, { backgroundColor: p.rule }]} />
     </View>
   );
 }
@@ -293,8 +306,9 @@ export const st = StyleSheet.create({
   pageHead: { paddingHorizontal: GUTTER, paddingBottom: 4, minHeight: 36, justifyContent: 'center' },
   runhead: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: GUTTER, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth },
   runText: { fontFamily: fonts.sans, fontSize: 12.5, includeFontPadding: false },
-  folio: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 44 },
-  folioN: { fontFamily: fonts.displayRegular, fontSize: 26, includeFontPadding: false, fontVariant: ['lining-nums'] },
+  folio: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 44, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  orn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 18 },
+  ornRule: { width: 48, height: StyleSheet.hairlineWidth },
   sectionTitle: { fontFamily: fonts.display, fontSize: 23, lineHeight: 28, includeFontPadding: false },
   apparatus: { fontFamily: fonts.sansMedium, fontSize: 13.5, includeFontPadding: false },
   voice: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 48 },

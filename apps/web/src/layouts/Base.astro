@@ -1,6 +1,6 @@
 ---
 // The page frame (design: Salvage, docs/DESIGN.md). A small struck masthead in every header, an
-// optional running head under it, and an optional ember folio above the footer.
+// optional running head under it, and an optional folio above the footer: the flame, then where the page sits.
 import '../styles/global.css';
 import { palettes } from '@fdf/shared/tokens';
 import { LICENCE } from '@fdf/shared/about';
@@ -25,7 +25,7 @@ interface Props {
   /** Running head under the header: left links back to the Haul, right names the form. */
   runhead?: { href: string; left: string; right?: string };
   /** Folio at the foot of the page (an item's number in its Haul). */
-  folio?: { left: string; number: string | number };
+  folio?: { left: string; number: string | number; of?: number };
   /** Drop the small masthead from the header when the page carries the big one. */
   bigMast?: boolean;
   /** Optional article metadata for OpenGraph, meta tags, and Schema.org. */
@@ -159,7 +159,7 @@ const nav = [
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    {folio ? <p class="wrap folio"><span>{folio.left}</span><span class="folio-n">{folio.number}</span></p> : null}
+    {folio ? <p class="wrap folio"><span class="folio-in"><span class="flame" aria-hidden="true"></span><span>{folio.left} · {folio.number}{folio.of ? ` of ${folio.of}` : ''}</span></span></p> : null}
     <footer class="wrap g foot" itemscope itemtype="https://schema.org/Periodical">
       <meta itemprop="name" content={SITE_NAME} />
       <meta itemprop="description" content={SITE_DESCRIPTION} />

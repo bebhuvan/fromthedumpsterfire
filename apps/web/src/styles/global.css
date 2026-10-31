@@ -105,8 +105,9 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .runhead { display: flex; justify-content: space-between; gap: 16px; padding-top: 9px; border-top: 1px solid var(--rule); font: 400 0.8125rem/1.4 var(--sans); color: var(--ink2); }
 .runhead a { text-decoration: none; }
 .runhead a:hover { color: var(--ink); }
-.folio { display: flex; justify-content: space-between; align-items: baseline; padding-block: 40px 0; font: 500 0.8125rem/1 var(--sans); color: var(--ink2); }
-.folio-n { font: 400 1.5rem/1 var(--display); color: var(--ember); font-variant-numeric: lining-nums; }
+.folio { padding-block: 40px 0; font: 400 0.8125rem/1 var(--sans); color: var(--ink2); }
+.folio-in { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--rule); font-variant-numeric: lining-nums; }
+.folio .flame { width: 10px; height: 18px; }
 .tab { position: absolute; right: 0; z-index: 3; width: 7px; height: 44px; background: var(--tint); font-size: 0; color: transparent; text-decoration: none; }
 .tab.n1 { top: 140px; } .tab.n2 { top: 186px; } .tab.n3 { top: 232px; } .tab.n4 { top: 278px; } .tab.n5 { top: 324px; }
 .tab.n6 { top: 370px; } .tab.n7 { top: 416px; } .tab.n8 { top: 462px; } .tab.n9 { top: 508px; } .tab.n10 { top: 554px; }
@@ -1058,3 +1059,22 @@ blockquote > p + p { margin-top: 0.65em; }
 .why-notes .note + .note { margin-top: 16px; }
 /* Prose never ends a paragraph on one short word if the browser can help it. */
 .ed-note p, .fn-c p, .bp-text, .qt-q p, .lf p { text-wrap: pretty; }
+
+/* The editor's marked phrase, underlined by hand in ember (the editor's colour), drawn from the same
+   stroke as the masthead's strike (public/marks/underline*.svg; one per theme, since a background picture
+   cannot take the theme's colour). */
+:root { --hand: url('/marks/underline.svg'); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --hand: url('/marks/underline-dark.svg'); } }
+:root[data-theme="dark"] { --hand: url('/marks/underline-dark.svg'); }
+mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
+  background: var(--hand) 0 100% / 100% 0.26em no-repeat; color: inherit; padding: 0 0 0.1em; margin: 0;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+
+/* The letter opens on a capital three lines deep, in the Haul's ink. */
+.fn-first::first-letter { float: left; font: 400 4.9em/0.8 var(--display); color: var(--ed, var(--ink)); margin: 0.08em 0.08em 0 -0.03em; }
+
+/* Between the letter and the contents, the flame stands alone between two short rules. */
+.orn { display: flex; justify-content: center; align-items: center; gap: 18px; padding-block: 4px 36px; }
+.orn::before, .orn::after { content: ''; width: 48px; height: 1px; background: var(--rule); }
+.orn .flame { width: 14px; height: 26px; }

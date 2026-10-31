@@ -1024,3 +1024,13 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   line; passage specimens no longer justified or credited twice; archive search placeholder shortened;
   footer strap uses the chosen tagline; running head says "The opening", not "Magazine opening".
 - Still open: "magazine" in the footer licence line and About (wording for the editor to approve).
+
+### Flourishes (2026-10-31, approved by the editor from comps in docs/design-comps/2026-10-31-flourishes)
+
+- Website: drop capital on the letter; marked phrases underlined by hand in ember (files in
+  `public/marks/underline*.svg`, since the CSP allows no data: images); the flame between the letter
+  and the contents; the folio is the flame and "Haul 001 · 9 of 23"; favicon and apple-touch icon are
+  the ember tile (option B).
+- App: the flame ornament and the new folio. The drop capital and the drawn underline are web only
+  (React Native cannot float a letter or colour an underline on Android); the app keeps its tint.
+- Not yet: the app icon (needs a new APK), per-item share cards, the app checked on a device.

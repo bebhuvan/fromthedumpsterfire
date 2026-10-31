@@ -87,7 +87,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
       <Source item={item} />
       <Actions haul={haul} item={item} />
       {next ? <NextItem n={haul.number} at={at + 2} item={next} /> : <Finished haul={haul} />}
-      <Folio haul={`Haul ${haulSlug(haul.number)}`} n={at + 1} />
+      <Folio haul={`Haul ${haulSlug(haul.number)}`} n={at + 1} of={haul.items.length} />
     </Screen>
   );
 }

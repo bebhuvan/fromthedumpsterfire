@@ -71,7 +71,8 @@ the right edge in the type colour at a height set by the item's number (7px on p
 from 1100px), **See also** as guide cards in a catalogue drawer (no fill or box: a ruled edge with a tab standing
 up from it in the colour of what it points to, staggered across the width as real guide-card tabs are;
 grey for Wikipedia, ink for a thread; each names where it points, then the title in display serif,
-then the gloss), *Next* as a ruled link, and an ember folio with the item's number.
+then the gloss), *Next* as a ruled link, and a folio: the flame, then "Haul 001 · 9 of 23". The editor's letter opens on a drop capital three
+lines deep in the Haul's ink.
 
 The About page uses the same forms: the title as a magazine opening, the two voices as a transcript
 (B. and MACHINE in the margin), the promises as numbered house rules each with the check that keeps
@@ -187,7 +188,10 @@ chosen one framed or underlined in ink), and a proof at the chosen size.
 ## Ember
 
 Ember (`#FF4F1F` light, `#FF6A3D` dark) is the brand's fire, used small and on purpose: the flame,
-the strike through "Internet" and the proofreader's caret, the editor's **B.**, the folio number, the
+the strike through "Internet" and the proofreader's caret, the editor's **B.**, the editor's hand-drawn
+underline under a marked phrase (the same stroke as the strike, `public/marks/underline*.svg`; it replaced
+the tinted highlighter on the site, 2026-10-31), the flame between the letter and the contents and at each
+item's foot, the
 current-page underline in the navigation (the rule under the app's current tab), the cover route's
 item numbers, the fingerprint's numbers, and the numbers on the About page's promises. Never body
 text, never machine text, never a fill.
@@ -245,7 +249,9 @@ podcast and speech share butter; paper and tool share mint; poem, passage and qu
 
 The mark is **one ember flame with the globe cut out of it**: the internet, on fire (chosen by the
 editor 2026-10-24 from a dozen comps; it replaced the plain teardrop). App icon: the mark on ink.
-Favicon: the same on an ink rounded square. On the site the small mark in the header and footer is a
+Favicon (the editor's choice, 2026-10-31): the mark cut out in white from an ember rounded square, the one
+place ember is a field, because a tab icon must read at 16 px on light and dark tabs; the apple-touch icon
+is the same, square. The app icon stays the mark on ink until a new APK. On the site the small mark in the header and footer is a
 mask (`apps/web/public/marks/flame.svg`) painted ember; in the app it is a white PNG
 (`apps/mobile/assets/marks/flame.png`) tinted ember. Sources and every size are generated from one
 drawing (see STATUS for the files). The masthead is *From the* ~~Internet~~ Dumpster Fire, the strike

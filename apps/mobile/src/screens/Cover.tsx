@@ -10,7 +10,7 @@ import { fonts, GUTTER, useEdition, usePalette } from '@/theme';
 import { longDate } from '@/lib/format';
 import { useReader } from '@/lib/store';
 import { Body, Highlighted, Machine, Meta, Title } from '@/ui/type';
-import { Action, Apparatus, Divider, Masthead, Sign, TopBar, VoiceNote } from '@/ui/parts';
+import { Action, Apparatus, Divider, Masthead, Ornament, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Specimen } from '@/ui/Specimen';
 import { Fingerprint, objects } from '@/ui/Fingerprint';
@@ -110,7 +110,8 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
         </View>
       ) : null}
 
-      <View style={{ marginTop: 44 }}>
+      <Ornament style={{ marginTop: 40 }} />
+      <View style={{ marginTop: 36 }}>
         <View style={[styles.contentsHead, { borderTopColor: p.ink }]}>
           <Apparatus>In this Haul</Apparatus>
           <Text style={[styles.contentsSub, { color: p.ink2 }]}>{objects(haul.items.length)}, each set in its own printed form</Text>
