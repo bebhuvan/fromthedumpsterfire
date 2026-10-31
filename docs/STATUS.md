@@ -965,6 +965,11 @@ captures and the letmefuckingwalk item archived. The shelf (unpublished) holds t
   (1200 × 630). Live: `/haul/1`, all 23 item pages, `/archive` and the feed answer 200; `og:image`
   is the card; the Binance page carries both posts and the credited chart; the SIR essay its post.
 - Sukumar Sen: all 54 lines kept and the profile approved (2026-10-31 08:36 UTC) before publishing.
+- **v2 (same day, the editor's "approved")**: item addresses now keep the whole title up to 80
+  characters, a long title's head before a colon or full stop, and never end on a little word
+  (`itemSlug` in `publish.ts`, Desk a8465460). Correction "Tidied the item addresses."; v1's card
+  reused. All 23 new item pages answer 200; v1's addresses 404 (no redirects, at the editor's word:
+  the site was hours old).
 - **Publishing from Claude Code**: this machine's editorial token (`claude-omarchy`) is on
   `ACCESS_SERVICE_PUBLISH_CLIENT_IDS` (Desk 4dff444c). Rule (the editor's): a session publishes a
   Haul only after the editor says "approved" for that edition; `preview` first, the card drawn, the
