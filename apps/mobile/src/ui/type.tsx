@@ -1,7 +1,9 @@
 import { memo, type ReactNode } from 'react';
-import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
-import type { Title as TitleData } from '@fdf/shared/haul';
+import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { curlQuotes, noteParagraphs, type Item, type Title as TitleData } from '@fdf/shared/haul';
 import { fonts, usePalette, useTextScale } from '@/theme';
+import { openSource } from '@/lib/open';
+import { useEditionInk } from './edition';
 
 type Props = { children: ReactNode; style?: StyleProp<TextStyle>; selectable?: boolean };
 
@@ -20,10 +22,10 @@ export const Title = memo(function Title({ title, size, style, maxScale }: { tit
     <Text
       accessibilityRole="header"
       maxFontSizeMultiplier={maxScale}
-      style={[s.base, { fontFamily: fonts.display, fontSize: size, lineHeight: size * 1.04, letterSpacing: -size * 0.018, color: p.ink }, style]}
+      style={[s.base, { fontFamily: fonts.display, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.018, color: p.ink }, style]}
     >
-      {title.text}
-      {title.italic ? <Text style={{ fontFamily: fonts.displayItalic }}>{' ' + title.italic}</Text> : null}
+      {curlQuotes(title.text)}
+      {title.italic ? <Text style={{ fontFamily: fonts.displayItalic }}>{' ' + curlQuotes(title.italic)}</Text> : null}
     </Text>
   );
 });
@@ -37,6 +39,44 @@ export function Body({ children, style, selectable }: Props) {
 export function Note({ children, style }: Props) {
   const p = usePalette();
   return <Text selectable style={useScaled({ ...s.base, ...s.note, color: p.ink }, style)}>{children}</Text>;
+}
+
+/**
+ * The editor's note as they wrote it: their paragraphs, their links on their own words (opened like
+ * any source), signed "B." in ember at the end. A line or two is set larger (`lead`); a long note (an
+ * essay of their own) is set upright, as prose is read. Straight marks are set curly for display.
+ */
+export function EditorNote({ why, lead = false, sign = true, style }: { why: Item['why']; lead?: boolean; sign?: boolean; style?: StyleProp<ViewStyle> }) {
+  const p = usePalette();
+  const k = useTextScale();
+  const ink = useEditionInk() ?? p.ink2;
+  const words = why.text.split(/\s+/).length;
+  const long = words > 120;
+  const size = lead && words <= 45 ? 21 : 19;
+  const text = { fontFamily: long ? fonts.text : fonts.textItalic, fontSize: size * k, lineHeight: size * (long ? 1.62 : 1.55) * k, color: p.ink };
+  const paras = noteParagraphs(why);
+  return (
+    <View style={style}>
+      {paras.map((runs, i) => (
+        <Text key={i} selectable style={[s.base, text, { marginTop: i ? size * 0.9 * k : 0 }]}>
+          {runs.map((r, j) =>
+            r.url ? (
+              <Text key={j} accessibilityRole="link" onPress={() => openSource(r.url!, p)} style={{ textDecorationLine: 'underline', textDecorationColor: ink }}>
+                {curlQuotes(r.text)}
+              </Text>
+            ) : (
+              curlQuotes(r.text)
+            ),
+          )}
+          {sign && i === paras.length - 1 ? (
+            <Text accessibilityLabel="Bhuvanesh, the editor" style={{ fontFamily: fonts.displayItalic, color: p.ember }}>
+              {' B.'}
+            </Text>
+          ) : null}
+        </Text>
+      ))}
+    </View>
+  );
 }
 
 export function Label({ children, style, muted }: Props & { muted?: boolean }) {
@@ -60,20 +100,21 @@ export function Highlighted({ text, highlight, color, style }: { text: string; h
   const p = usePalette();
   const scaled = useScaled({ ...s.base, color: p.ink }, style);
   const at = highlight ? text.indexOf(highlight) : -1;
-  if (!highlight || at < 0) return <Text selectable style={scaled}>{text}</Text>;
+  // Straight quotation marks are set curly for display; the stored words are untouched.
+  if (!highlight || at < 0) return <Text selectable style={scaled}>{curlQuotes(text)}</Text>;
   return (
     <Text selectable style={scaled}>
-      {text.slice(0, at)}
-      <Text style={{ backgroundColor: color }}>{highlight}</Text>
-      {text.slice(at + highlight.length)}
+      {curlQuotes(text.slice(0, at))}
+      <Text style={{ backgroundColor: color }}>{curlQuotes(highlight)}</Text>
+      {curlQuotes(text.slice(at + highlight.length))}
     </Text>
   );
 }
 
 export const s = StyleSheet.create({
   base: { includeFontPadding: false },
-  body: { fontFamily: fonts.text, fontSize: 18, lineHeight: 27 },
-  note: { fontFamily: fonts.textItalic, fontSize: 19, lineHeight: 28.5 },
+  body: { fontFamily: fonts.text, fontSize: 19, lineHeight: 29.5 },
+  note: { fontFamily: fonts.textItalic, fontSize: 20, lineHeight: 30 },
   label: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase' },
   machine: { fontFamily: fonts.sans, fontSize: 14.5, lineHeight: 22.5 },
   meta: { fontFamily: fonts.sansMedium, fontSize: 12.5, lineHeight: 18 },

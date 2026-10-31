@@ -53,7 +53,7 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
         </Text>
       </View>
       <View style={{ paddingHorizontal: GUTTER }}>
-        <Title title={haul.title} size={size} style={{ marginTop: 14, lineHeight: size * 0.96, letterSpacing: -size * 0.028 }} />
+        <Title title={haul.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.028 }} />
         <Body style={{ marginTop: 16, fontSize: 18.5, lineHeight: 27 }}>{haul.deck}</Body>
         <View style={{ marginTop: 34 }}>
           <Fingerprint haul={haul} />
@@ -115,7 +115,7 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
           <Apparatus>In this Haul</Apparatus>
           <Text style={[styles.contentsSub, { color: p.ink2 }]}>{objects(haul.items.length)}, each set in its own printed form</Text>
         </View>
-        <View style={{ gap: 36, marginTop: 22 }}>
+        <View style={{ gap: 48, marginTop: 22 }}>
           {haul.items.map((item, i) => (
             <Specimen key={item.id} haul={haul.number} item={item} n={i + 1} />
           ))}

@@ -69,7 +69,7 @@ export const editorNoteText = (): string[] => editorNote.map((p) => p.map((s) =>
 export const LICENCE = {
   name: 'CC BY 4.0',
   url: 'https://creativecommons.org/licenses/by/4.0/',
-  before: 'Words written for this magazine are licensed ',
+  before: 'Words written for From the Dumpster Fire are licensed ',
   after:
     ': share and adapt them, commercially too, with credit to From the Dumpster Fire. Quotations, excerpts, pictures and every other work shown here stay with their makers, under their own copyright and licences.',
 } as const;

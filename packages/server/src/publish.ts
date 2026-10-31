@@ -10,7 +10,7 @@
 // It never writes hauls/ or shelf/ to MEDIA.
 
 import type { Audio, AudioFormat, Haul, HaulIndex, HaulSummary, Item, Plate, Rhyme, RouteStep, Thread, Title } from '@fdf/shared/haul';
-import { AUDIO_FORMATS, PLAYS_ON_IOS } from '@fdf/shared/haul';
+import { AUDIO_FORMATS, PLAYS_ON_IOS, noteLinks, sourceDate } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
 import { isVerbatimAt } from '@fdf/shared/verbatim';
 import { BUNDLE_VERSION, haulSlug } from '@fdf/shared/haul';
@@ -209,6 +209,17 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       if (n.cite.kind !== 'source' || !src || !isVerbatimAt(src.text, n.cite, n.cite.quote)) problems.push({ itemId: it.id, itemTitle: label, message: `a kept idea's quotation no longer matches the source ("${n.text.slice(0, 50)}…")` });
     }
     const cards = (await env.DB.prepare(`SELECT * FROM wiki_cards WHERE item_id = ? AND status = 'kept' ORDER BY position`).bind(it.id).all<WikiRow>()).results;
+    // A note checked against a Wikipedia card links to that card's article, whether or not the card is kept.
+    const cardUrl = new Map(
+      (await env.DB.prepare('SELECT id, url FROM wiki_cards WHERE item_id = ?').bind(it.id).all<Pick<WikiRow, 'id' | 'url'>>()).results.map((c) => [c.id, c.url]),
+    );
+    const wikiUrl = (n: MarginalBody) => {
+      const url = n.cite.kind === 'wiki' ? cardUrl.get(n.cite.cardId) : undefined;
+      return url && /^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\//.test(url) ? { url } : {};
+    };
+    // Links the editor wrote into the note ("words" (https://…) or [words](https://…)) print as links on
+    // those words; lifting them out only deletes the marks around the words.
+    const why = noteLinks((it.why_text ?? '').trim());
     const conns = (
       await env.DB.prepare('SELECT c.*, i.title AS to_title, i.title_choice AS to_choice FROM connections c JOIN items i ON i.id = c.to_item_id WHERE c.item_id = ?').bind(it.id).all<{
         type: string;
@@ -274,9 +285,9 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       type: it.type as ContentType,
       title: title.italic ? { text: title.text, italic: title.italic } : { text: title.text },
       creator: it.creator ?? '',
-      source: { name: it.source_name ?? '', date: it.source_date ?? '', url: it.canonical_url || it.url || '' },
+      source: { name: it.source_name ?? '', date: sourceDate(it.source_date ?? ''), url: it.canonical_url || it.url || '' },
       ...(it.minutes ? { minutes: it.minutes } : {}),
-      why: { text: (it.why_text ?? '').trim(), ...(whyAudio ? { audio: whyAudio } : {}) },
+      why: { text: why.text, ...(why.links.length ? { links: why.links } : {}), ...(whyAudio ? { audio: whyAudio } : {}) },
       ...(ex
         ? {
             excerpt: {
@@ -289,7 +300,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       ...(it.media ? { media: JSON.parse(it.media) } : {}),
       ...(rhyme ? { rhyme } : {}),
       ...(plate ? { plate } : {}),
-      marginalia: notes.map((n) => ({ text: n.text, cite: citeLabel(n, it) })),
+      marginalia: notes.map((n) => ({ text: n.text, cite: citeLabel(n, it), ...wikiUrl(n) })),
       ...(ideas.length
         ? {
             ideas: ideas.map((n) => ({

@@ -47,7 +47,7 @@ function finish(res: Response, url: URL, env: Env, head: boolean, cacheStatus?: 
 
 async function unavailable(url: URL, env: Env, head: boolean): Promise<Response> {
   const page = await env.ASSETS.fetch(new Request(new URL('/503', url))).catch(() => null);
-  const body = page && page.ok ? page.body : 'The magazine is being checked and will be back in a few minutes.';
+  const body = page && page.ok ? page.body : 'The site is being checked and will be back in a few minutes.';
   const type = page && page.ok ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8';
   return finish(new Response(body, { status: 503, headers: { 'content-type': type, 'retry-after': '60' } }), url, env, head);
 }

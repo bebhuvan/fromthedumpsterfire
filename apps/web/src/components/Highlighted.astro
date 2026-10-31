@@ -2,21 +2,28 @@
 // Marks the editor's underlined phrase inside a passage. Both strings are escaped text. Anything in the
 // slot (an end mark) follows the text inside the last paragraph. A passage of two paragraphs (blank
 // line between) renders as two paragraphs; the mark sits in whichever one holds the highlight.
+import { curlQuotes } from '@fdf/shared/haul';
+
 interface Props {
   text: string;
   highlight?: string;
   class?: string;
   as?: 'p' | 'span';
+  /** Prose from a fetched page breaks paragraphs on any new line, not only a blank one. */
+  breaks?: 'blank' | 'line';
+  /** Straight quotation marks set curly, for display. */
+  curl?: boolean;
 }
-const { text, highlight, class: cls, as: Tag = 'p' } = Astro.props;
-const paras = Tag === 'p' ? text.split(/\n\s*\n/).filter((p) => p.trim()) : [text];
+const { text, highlight, class: cls, as: Tag = 'p', breaks = 'blank', curl = false } = Astro.props;
+const set = (s: string) => (curl ? curlQuotes(s) : s);
+const paras = Tag === 'p' ? text.split(breaks === 'line' ? /\s*\n\s*/ : /\n\s*\n/).filter((p) => p.trim()) : [text];
 const last = paras.length - 1;
 ---
 {paras.map((para, i) => {
   const at = highlight ? para.indexOf(highlight) : -1;
   return at >= 0 && highlight ? (
-    <Tag class={cls}>{para.slice(0, at)}<mark>{highlight}</mark>{para.slice(at + highlight.length)}{i === last ? <slot /> : null}</Tag>
+    <Tag class={cls}>{set(para.slice(0, at))}<mark>{set(highlight)}</mark>{set(para.slice(at + highlight.length))}{i === last ? <slot /> : null}</Tag>
   ) : (
-    <Tag class={cls}>{para}{i === last ? <slot /> : null}</Tag>
+    <Tag class={cls}>{set(para)}{i === last ? <slot /> : null}</Tag>
   );
 })}

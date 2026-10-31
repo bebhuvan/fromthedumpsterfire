@@ -1,19 +1,24 @@
 ---
-// The machine's notes: blue sans, each with the source it was checked against. Never boxed.
-import type { Marginal } from '@fdf/shared/haul';
+// The machine's notes: blue sans, each with the source it was checked against, linked when the source
+// is a Wikipedia article (from the note's own stored card, or a card the item keeps). Never boxed.
+import { curlQuotes, type Marginal, type WikiCard } from '@fdf/shared/haul';
+import { safeHref } from '../lib/site';
 
 interface Props {
   notes: Marginal[];
+  /** The item's Wikipedia cards, for notes published before they carried their own link. */
+  wiki?: WikiCard[];
   /** In a transcript the notes are one turn, under one MACHINE speaker label. */
   rows?: boolean;
 }
-const { notes, rows } = Astro.props;
+const { notes, wiki = [], rows } = Astro.props;
+const hrefOf = (n: Marginal) => safeHref(n.url ?? wiki.find((w) => n.cite === `Wikipedia: ${w.title}`)?.url ?? '');
 ---
 {rows
   ? notes.length ? (
       <div class="g tl">
         <p class="m who machine">Machine</p>
-        <div class="c tl-notes">{notes.map((n) => <p class="note machine">{n.text} <cite>{n.cite}</cite></p>)}</div>
+        <div class="c tl-notes">{notes.map((n) => { const href = hrefOf(n); return <p class="note machine">{curlQuotes(n.text)} <cite>{href ? <a href={href} rel="noopener noreferrer" target="_blank">{n.cite}<span class="sr"> (opens in a new tab)</span></a> : n.cite}</cite></p>; })}</div>
       </div>
     ) : null
-  : notes.map((n) => <p class="note machine"><span class="sr">The machine notes: </span>{n.text} <cite>{n.cite}</cite></p>)}
+  : notes.map((n) => { const href = hrefOf(n); return <p class="note machine"><span class="sr">The machine notes: </span>{curlQuotes(n.text)} <cite>{href ? <a href={href} rel="noopener noreferrer" target="_blank">{n.cite}<span class="sr"> (opens in a new tab)</span></a> : n.cite}</cite></p>; })}

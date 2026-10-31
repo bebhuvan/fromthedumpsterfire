@@ -3,7 +3,7 @@
 // /haul/<n>/thread/<id>.md) so LLM crawlers, answer engines, and readers get clean, cited text
 // with explicit Editor vs Machine attribution.
 
-import { haulSlug, type Haul, type Item, type Thread } from '@fdf/shared/haul';
+import { haulSlug, noteParagraphs, notePlain, type Haul, type Item, type Thread } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import { formName, formOf } from './forms';
 import { lifeBylineText, lifeYears, whereFrom } from '@fdf/shared/life';
@@ -56,7 +56,7 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
     '',
     `${h2} Why it's here (Editor — ${EDITOR_NAME})`,
     '',
-    item.why.text,
+    noteParagraphs(item.why).map((runs) => runs.map((r) => (r.url ? `[${r.text}](${r.url})` : r.text)).join('')).join('\n\n'),
     ...(item.startHere ? ['', `**Start here:** ${item.startHere.url ? `[${item.startHere.at}](${item.startHere.url})` : item.startHere.at}${item.startHere.note ? ` (${item.startHere.note})` : ''}`] : []),
   ];
 
@@ -277,7 +277,7 @@ export function llmsTxt(hauls: Haul[]): string {
     '',
     `> ${SITE_DESCRIPTION}`,
     '',
-    `${SITE_NAME} is an irregular, eclectic magazine of essays, talks, papers, poems, podcasts, book passages, historical rhymes, and Wikipedia rabbit holes salvaged before they burn. One human editor (${EDITOR_NAME}) chooses and annotates every piece, mostly by voice. Language models read closely, find typed connections across time, and check facts; their prose is always marked as the machine's voice.`,
+    `${SITE_NAME} is irregular, eclectic hauls of essays, talks, papers, poems, podcasts, book passages, historical rhymes, and Wikipedia rabbit holes salvaged before they burn. One human editor (${EDITOR_NAME}) chooses and annotates every piece, mostly by voice. Language models read closely, find typed connections across time, and check facts; their prose is always marked as the machine's voice.`,
     '',
     '## House Rules & Verification Invariants',
     '',
@@ -314,7 +314,7 @@ export function llmsTxt(hauls: Haul[]): string {
         const url = absolute(paths.item(h.number, item.id));
         const mdUrl = absolute(paths.itemMd(h.number, item.id));
         lines.push(
-          `- [${titleText(item.title)}](${url}) ([Markdown](${mdUrl})) — ${item.creator} (${item.source.name}, ${item.source.date}) · ${typeLabel[item.type]} in Haul ${haulSlug(h.number)}: ${firstSentence(item.why.text)}`,
+          `- [${titleText(item.title)}](${url}) ([Markdown](${mdUrl})) — ${item.creator} (${item.source.name}, ${item.source.date}) · ${typeLabel[item.type]} in Haul ${haulSlug(h.number)}: ${firstSentence(notePlain(item.why))}`,
         );
       }
     }

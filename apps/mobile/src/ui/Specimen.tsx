@@ -1,9 +1,11 @@
 // The cover's contents as specimens: each find shown as a small piece of its own printed form, so a
-// reader knows what they are holding before reading a word. Each keeps its own width and side.
+// reader knows what they are holding before reading a word. Each stands on the same left edge under its
+// head (number, kind, name) on a hairline, with the editor's first line under it.
 import { memo, useState, type ReactNode } from 'react';
-import { Image, Pressable, StyleSheet, Text, View, type DimensionValue } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
-import { haulSlug, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, notePlain, quoteLead, quoteLength, type Item } from '@fdf/shared/haul';
+import { useEditionInk } from './edition';
 import { typeLabel } from '@fdf/shared/tokens';
 import { fonts, typeColor, usePalette, useScheme } from '@/theme';
 import { firstChart } from '@/lib/chart';
@@ -16,29 +18,24 @@ import { lifeYears } from '@fdf/shared/life';
 const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim();
 const yearOf = (d: string) => /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(d)?.[1] ?? d;
 
-type Shape = { width: DimensionValue; align: 'flex-start' | 'center' | 'flex-end' };
-const SHAPE: Partial<Record<Form, Shape>> = {
-  broadside: { width: '72%', align: 'flex-end' },
-  offprint: { width: '84%', align: 'center' },
-  card: { width: '92%', align: 'flex-start' },
-  page: { width: '84%', align: 'flex-start' },
-  letter: { width: '90%', align: 'flex-end' },
-  clipping: { width: '90%', align: 'flex-start' },
-  print: { width: '86%', align: 'flex-start' },
-  label: { width: '86%', align: 'center' },
-  figure: { width: '92%', align: 'flex-start' },
-};
-
-/** Forms whose specimen does not show the title; the caption names it. */
-const TITLED_CAPTION = new Set<Form>(['transcript', 'broadside', 'facing', 'page', 'epigraph', 'letter', 'clipping', 'print', 'jacket']);
+/** Forms whose specimen does not show the title; the head names it. */
+const TITLED_CAPTION = new Set<Form>(['transcript', 'facing', 'page', 'epigraph', 'letter', 'clipping', 'print', 'jacket']);
 
 export const Specimen = memo(function Specimen({ haul, item, n }: { haul: number; item: Item; n: number }) {
   const p = usePalette();
   const read = useReader((s) => s.read.includes(readKey(haul, item.id)));
   const form = formOf(item);
-  const shape = SHAPE[form] ?? { width: '100%', align: 'flex-start' };
+  const ink = useEditionInk() ?? p.ember;
   return (
-    <View style={{ width: shape.width, alignSelf: shape.align }}>
+    <View>
+      <View style={[st.cap, { borderTopColor: p.rule }]}>
+        <Text style={[st.capN, { color: ink }]}>{String(n).padStart(2, '0')}</Text>
+        <Text style={[st.capType, { color: p.ink2, flex: 1 }]}>
+          {typeLabel[item.type]}
+          {TITLED_CAPTION.has(form) ? <Text style={{ color: p.ink }}>{`  ·  ${curlQuotes(titleText(item))}`}</Text> : null}
+          {read ? '  ·  Read' : ''}
+        </Text>
+      </View>
       <Pressable
         accessibilityRole="link"
         accessibilityLabel={`${n}, ${typeLabel[item.type]}: ${titleText(item)}, ${item.creator}${read ? ', read' : ''}`}
@@ -47,17 +44,7 @@ export const Specimen = memo(function Specimen({ haul, item, n }: { haul: number
       >
         <Body item={item} form={form} haul={haul} n={n} />
       </Pressable>
-      <View style={st.cap}>
-        <Text style={[st.capN, { color: p.ember }]}>{String(n).padStart(2, '0')}</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={[st.capType, { color: p.ink2 }]}>
-            {typeLabel[item.type]}
-            {TITLED_CAPTION.has(form) ? <Text style={{ color: p.ink }}>{`  ·  ${titleText(item)}`}</Text> : null}
-            {read ? '  ·  Read' : ''}
-          </Text>
-          <Text style={[st.capWhy, { color: p.ink2 }]}>{firstSentence(item.why.text)}</Text>
-        </View>
-      </View>
+      <Text style={[st.capWhy, { color: p.ink2 }]}>{curlQuotes(firstSentence(notePlain(item.why)))}</Text>
     </View>
   );
 });
@@ -105,6 +92,7 @@ function FigureSpecimen({ item, n }: { item: Item; n: number }) {
 
 function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n: number }): ReactNode {
   const p = usePalette();
+  const ink = useEditionInk() ?? p.ink2;
   const tint = typeColor(p, item.type);
   const ex = item.excerpt;
   switch (form) {
@@ -160,13 +148,25 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
           ) : null}
         </View>
       );
-    case 'broadside':
+    case 'broadside': {
+      // The first stanza (or eight lines), each line as the poet broke it.
+      const lines = (ex!.text.split(/\n\s*\n/)[0] ?? '').split('\n').slice(0, 8);
+      const more = ex!.text.trim().split('\n').filter((l) => l.trim()).length > lines.length;
       return (
         <View style={[st.poem, { backgroundColor: tint }]}>
-          <Text style={[st.poemText, { color: p.ink }]}>{ex!.text}</Text>
-          <Text style={[st.poemFoot, { color: p.ink, borderTopColor: p.rule }]}>{item.creator}</Text>
+          <View style={[st.poemHead, { borderBottomColor: p.rule }]}>
+            <Title title={item.title} size={26} style={{ lineHeight: 28 }} />
+            <Text style={[st.poemBy, { color: p.ink }]}>{item.creator.toUpperCase()}</Text>
+          </View>
+          <View>
+            {lines.map((l, i) => (
+              <Text key={i} style={[st.poemLine, { color: p.ink }]}>{l}</Text>
+            ))}
+          </View>
+          {more ? <Text style={[st.poemMore, { color: p.ink }]}>The whole poem</Text> : null}
         </View>
       );
+    }
     case 'card': {
       const hw = headword(item.title.text);
       return (
@@ -192,17 +192,32 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
           {ex ? <Text style={[st.pageFoot, { color: p.ink2 }]}>{ex.locator}</Text> : null}
         </View>
       );
-    case 'epigraph':
+    case 'epigraph': {
+      // A line or two set large; anything longer opens on its first clauses, the rest cut short.
+      const lead = quoteLength(ex!.text) === 'short' ? null : quoteLead(ex!.text, ex!.highlight);
+      const occasion = (ex!.locator || item.source.name).replace(`${item.creator}, `, '');
       return (
         <View style={st.epi}>
-          <Text style={[st.epiQ, { color: p.ink }]}>
-            <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>“</Text>
-            {ex!.text}
-            <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>”</Text>
-          </Text>
-          <Text style={[st.epiWho, { color: p.ink, borderTopColor: p.ink }]}>{item.creator.toUpperCase()}</Text>
+          {lead ? (
+            <View>
+              <Text accessible={false} style={[st.epiMark, { color: ink }]}>“</Text>
+              <Text style={[st.epiQ, { color: p.ink }]}>{curlQuotes(lead.lead)}</Text>
+              <Text numberOfLines={4} style={[st.epiRest, { color: p.ink2 }]}>{curlQuotes(lead.rest.trim())}</Text>
+            </View>
+          ) : (
+            <Text style={[st.epiQ, { color: p.ink }]}>
+              <Text style={{ color: ink, fontFamily: fonts.displayRegular }}>“</Text>
+              {curlQuotes(ex!.text)}
+              <Text style={{ color: ink, fontFamily: fonts.displayRegular }}>”</Text>
+            </Text>
+          )}
+          <View style={[st.epiWhoBox, { borderTopColor: p.ink }]}>
+            <Text style={[st.epiWho, { color: p.ink }]}>{item.creator.toUpperCase()}</Text>
+            {occasion ? <Text style={[st.epiWhere, { color: p.ink2 }]}>{occasion}</Text> : null}
+          </View>
         </View>
       );
+    }
     case 'letter':
       return (
         <View style={[st.letter, { backgroundColor: tint }]}>
@@ -240,16 +255,18 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
     case 'label':
       return (
         <View style={[st.label, { borderColor: p.ink, borderTopColor: tint }]}>
-          <Text style={[st.lbTitle, { color: p.ink, borderBottomColor: p.ink }]}>{titleText(item)}</Text>
-          <View style={[st.lbRow, { borderBottomColor: p.rule }]}>
-            <Text style={[st.lbKey, { color: p.ink2 }]}>MADE BY</Text>
-            <Text style={[st.lbVal, { color: p.ink }]}>{item.creator}</Text>
-          </View>
+          <Text style={[st.lbTitle, { color: p.ink, borderBottomColor: p.ink }]}>{curlQuotes(titleText(item))}</Text>
+          {item.creator ? (
+            <View style={[st.lbRow, { borderBottomColor: p.rule }]}>
+              <Text style={[st.lbKey, { color: p.ink2 }]}>MADE BY</Text>
+              <Text style={[st.lbVal, { color: p.ink }]}>{item.creator}</Text>
+            </View>
+          ) : null}
           <View style={[st.lbRow, { borderBottomColor: p.rule }]}>
             <Text style={[st.lbKey, { color: p.ink2 }]}>WHAT IT IS</Text>
             <Text style={[st.lbVal, { color: p.ink }]}>{item.source.name}</Text>
           </View>
-          {ex ? <Text style={[st.lbQ, { color: p.ink }]}>{ex.text}</Text> : null}
+          {ex ? <Text style={[st.lbQ, { color: p.ink }]}>{curlQuotes(ex.text)}</Text> : null}
         </View>
       );
   }
@@ -259,12 +276,12 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
   return (
     <View style={[st.frame, { borderColor: p.rule }]}>
       <Text style={[st.small, { color: p.ink2 }]}>{[item.source.name, item.source.date].filter(Boolean).join(' · ')}</Text>
-      <Title title={item.title} size={size} style={{ marginTop: 8, lineHeight: size * 0.92, letterSpacing: -size * 0.035 }} />
+      <Title title={item.title} size={size} style={{ marginTop: 8, lineHeight: size * 0.98, letterSpacing: -size * 0.035 }} />
       <Text style={[st.by, { color: p.ink }]}>{item.creator}</Text>
       {ex ? (
-        <Text style={[st.essayMk, { color: p.ink }]}>
-          <Text style={{ backgroundColor: tint }}>{ex.highlight ?? ex.text}</Text>
-        </Text>
+        <View style={[st.essayEx, { borderLeftColor: ink }]}>
+          <Text numberOfLines={ex.highlight ? undefined : 4} style={[st.essayExText, { color: p.ink2 }]}>{curlQuotes(ex.highlight ?? ex.text)}</Text>
+        </View>
       ) : null}
     </View>
   );
@@ -274,15 +291,16 @@ const hair = StyleSheet.hairlineWidth;
 const st = StyleSheet.create({
   lifeName: { fontFamily: fonts.display, fontSize: 44, lineHeight: 44, letterSpacing: -1.4 },
   lifeYears: { fontFamily: fonts.displayItalic, fontSize: 20, lineHeight: 26 },
-  cap: { flexDirection: 'row', gap: 10, marginTop: 10 },
-  capN: { fontFamily: fonts.displayRegular, fontSize: 18, lineHeight: 21, includeFontPadding: false, fontVariant: ['lining-nums'] },
+  cap: { flexDirection: 'row', alignItems: 'baseline', gap: 12, paddingTop: 10, marginBottom: 14, borderTopWidth: hair },
+  capN: { fontFamily: fonts.displayRegular, fontSize: 20, lineHeight: 22, includeFontPadding: false, fontVariant: ['lining-nums'] },
   capType: { fontFamily: fonts.sansMedium, fontSize: 12.5, lineHeight: 19 },
-  capWhy: { fontFamily: fonts.textItalic, fontSize: 15, lineHeight: 21, marginTop: 1 },
+  capWhy: { fontFamily: fonts.textItalic, fontSize: 16, lineHeight: 24, marginTop: 14 },
   small: { fontFamily: fonts.sans, fontSize: 11.5, includeFontPadding: false },
   by: { fontFamily: fonts.textItalic, fontSize: 15.5, marginTop: 6 },
 
   frame: { borderWidth: hair, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 18 },
-  essayMk: { fontFamily: fonts.displayRegular, fontSize: 16.5, lineHeight: 23.5, marginTop: 10 },
+  essayEx: { marginTop: 12, paddingLeft: 12, borderLeftWidth: 2 },
+  essayExText: { fontFamily: fonts.text, fontSize: 15.5, lineHeight: 24 },
 
   spread: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: hair },
   leaf: { flex: 1, paddingTop: 12, paddingBottom: 14, paddingRight: 12, gap: 8 },
@@ -298,9 +316,11 @@ const st = StyleSheet.create({
   abHead: { fontFamily: fonts.sansMedium, fontSize: 11, marginTop: 12, marginBottom: 4 },
   abText: { fontFamily: fonts.text, fontSize: 13.5, lineHeight: 19.5, alignSelf: 'stretch' },
 
-  poem: { minHeight: 260, paddingHorizontal: 18, paddingTop: 30, paddingBottom: 14, justifyContent: 'space-between', gap: 24 },
-  poemText: { fontFamily: fonts.textItalic, fontSize: 21, lineHeight: 29 },
-  poemFoot: { fontFamily: fonts.display, fontSize: 13.5, paddingTop: 8, borderTopWidth: hair },
+  poem: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20, gap: 16 },
+  poemHead: { paddingBottom: 12, borderBottomWidth: hair, gap: 6 },
+  poemBy: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3 },
+  poemLine: { fontFamily: fonts.textItalic, fontSize: 18, lineHeight: 27 },
+  poemMore: { fontFamily: fonts.sansMedium, fontSize: 13, textDecorationLine: 'underline' },
 
   card: { aspectRatio: 5 / 3, paddingHorizontal: 18, paddingTop: 14 },
   call: { flexDirection: 'row', justifyContent: 'space-between' },
@@ -315,7 +335,11 @@ const st = StyleSheet.create({
 
   epi: { paddingTop: 4, paddingBottom: 6, gap: 12 },
   epiQ: { fontFamily: fonts.display, fontSize: 30, lineHeight: 33, letterSpacing: -0.6 },
-  epiWho: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3, paddingTop: 8, borderTopWidth: 1, alignSelf: 'flex-start', minWidth: '60%' },
+  epiMark: { fontFamily: fonts.displayRegular, fontSize: 60, lineHeight: 60, height: 30, includeFontPadding: false },
+  epiRest: { fontFamily: fonts.text, fontSize: 16, lineHeight: 24, marginTop: 12 },
+  epiWhoBox: { paddingTop: 8, borderTopWidth: 1, alignSelf: 'flex-start', minWidth: '60%', gap: 2 },
+  epiWho: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3 },
+  epiWhere: { fontFamily: fonts.textItalic, fontSize: 14, lineHeight: 19 },
 
   letter: { paddingHorizontal: 22, paddingTop: 20, paddingBottom: 18, gap: 12 },
   ltDate: { alignSelf: 'flex-end', fontFamily: fonts.textItalic, fontSize: 13, lineHeight: 18, textAlign: 'right' },

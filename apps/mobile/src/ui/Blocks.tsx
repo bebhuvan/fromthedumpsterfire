@@ -1,5 +1,5 @@
 // The rich media an editor adds to an item (Block in @fdf/shared/haul), in the order given, as the
-// website sets them: pull quotes between rules, code on the plate with a numbered gutter and colours by
+// website sets them: pull quotes set by their length (ui/Quote.tsx), code on the plate with a numbered gutter and colours by
 // role, a video as its poster with a link to watch it on its own site (no web view in the app), audio
 // files in the editor's player and podcast episodes as a row that opens their app, pictures with their
 // credit and licence, charts (ui/Chart.tsx), and X posts as small clippings (never X's embed).
@@ -13,6 +13,7 @@ import { openSource } from '@/lib/open';
 import { Meta } from './type';
 import { PlayGlyph, VoiceNote } from './parts';
 import { Chart } from './Chart';
+import { Quotation } from './Quote';
 
 export function Blocks({ blocks, source }: { blocks?: Block[]; source?: string }) {
   if (!blocks?.length) return null;
@@ -20,8 +21,17 @@ export function Blocks({ blocks, source }: { blocks?: Block[]; source?: string }
     <View style={{ marginTop: 34, gap: 34 }}>
       {blocks.map((b, i) => {
         switch (b.kind) {
-          case 'quote':
-            return <PullQuote key={i} text={b.text} cap={[b.locator, source].filter(Boolean).join(', ')} />;
+          case 'quote': {
+            // Quotes in a row read as one run: each names its place, the last says once where they are from.
+            const endsRun = blocks[i + 1]?.kind !== 'quote';
+            return (
+              <Quotation
+                key={i}
+                text={b.text}
+                credit={endsRun ? [b.locator ?? '', source ? `${source} · matched word for word` : 'matched word for word against the source'] : [b.locator ?? '']}
+              />
+            );
+          }
           case 'code':
             return <Code key={i} block={b} />;
           case 'video':
@@ -38,24 +48,6 @@ export function Blocks({ blocks, source }: { blocks?: Block[]; source?: string }
             return null;
         }
       })}
-    </View>
-  );
-}
-
-/** The source's words between two ink rules, the marks in grey. */
-function PullQuote({ text, cap }: { text: string; cap: string }) {
-  const p = usePalette();
-  const k = useTextScale();
-  return (
-    <View>
-      <View style={[st.pq, { borderColor: p.ink }]}>
-        <Text selectable style={[st.pqText, { color: p.ink, fontSize: 25 * k, lineHeight: 31 * k }]}>
-          <Text style={{ color: p.ink2 }}>“</Text>
-          {text}
-          <Text style={{ color: p.ink2 }}>”</Text>
-        </Text>
-      </View>
-      <Meta style={{ marginTop: 8 }}>{cap ? `${cap} · ` : ''}matched word for word against the source</Meta>
     </View>
   );
 }
@@ -224,8 +216,6 @@ export function Credit({ plate, maker, noBy }: { plate: Extract<Block, { kind: '
 }
 
 const st = StyleSheet.create({
-  pq: { paddingTop: 16, paddingBottom: 15, borderTopWidth: 1, borderBottomWidth: 1 },
-  pqText: { fontFamily: fonts.displayRegular, letterSpacing: -0.2, includeFontPadding: false },
 
   codeCap: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 12, rowGap: 2, paddingBottom: 8, borderBottomWidth: 1 },
   codeLang: { fontFamily: fonts.sansMedium, fontSize: 11.5, letterSpacing: 1.1, includeFontPadding: false },

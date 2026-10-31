@@ -7,20 +7,22 @@
 import { memo, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
-import { haulSlug, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, quoteLength, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
+import { useEditionInk } from '@/ui/edition';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
-import { fonts, typeColor, useEdition, usePalette, useScheme, useTextScale } from '@/theme';
+import { fonts, GUTTER, typeColor, useEdition, usePalette, useScheme, useTextScale } from '@/theme';
 import { formName, formOf, headword, hostOf, speaker, titleText, type Form } from '@/lib/forms';
 import { joinMeta, minutes } from '@/lib/format';
 import { openSource } from '@/lib/open';
 import { shareUrl } from '@/lib/data';
 import { reader, useReader } from '@/lib/store';
-import { Highlighted, Machine, Meta, Note, Title } from '@/ui/type';
+import { EditorNote, Highlighted, Machine, Meta, Note, Title } from '@/ui/type';
+import { LeadQuotation, Quotation } from '@/ui/Quote';
 import { Jacket as BookJacket } from '@/ui/Jacket';
 import { useShelf } from '@/lib/data';
 import { statusLine } from '@/lib/shelf';
 import { spineColours, spineOf } from '@fdf/shared/shelf';
-import { Action, Apparatus, Arrow, Folio, Key, RunHead, Sign, TopBar, VoiceNote } from '@/ui/parts';
+import { Action, Apparatus, Arrow, Folio, Key, RunHead, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Blocks, Credit, Picture } from '@/ui/Blocks';
 import { Chart } from '@/ui/Chart';
@@ -111,8 +113,7 @@ function Why({ item, heading = "Why it's here", style }: { item: Item; heading?:
           {item.why.audio ? <VoiceNote audio={item.why.audio} label="this note" compact /> : null}
         </View>
       ) : null}
-      <Note style={{ marginTop: heading ? 8 : 0 }}>{item.why.text}</Note>
-      <Sign style={{ marginTop: 6 }} />
+      <EditorNote why={item.why} lead={heading === null} style={{ marginTop: heading ? 8 : 0 }} />
     </View>
   );
 }
@@ -125,11 +126,28 @@ function Notes({ item, style }: { item: Item; style?: object }) {
     <View style={[{ marginTop: 26 }, style]}>
       {item.marginalia.map((m, i) => (
         <View key={i} style={[styles.note, { borderTopColor: p.rule }, i === 0 && { borderTopWidth: 0, paddingTop: 0 }]}>
-          <Machine>{m.text}</Machine>
-          <Meta style={{ marginTop: 4, fontSize: 11.5 }}>{m.cite}</Meta>
+          <Machine>{curlQuotes(m.text)}</Machine>
+          <Cite item={item} note={m} />
         </View>
       ))}
     </View>
+  );
+}
+
+/** A machine note's source, a link when it is a Wikipedia article (its own stored card, or one the item keeps). */
+function Cite({ item, note }: { item: Item; note: Item['marginalia'][number] }) {
+  const p = usePalette();
+  const url = note.url ?? item.wiki.find((w) => note.cite === `Wikipedia: ${w.title}`)?.url;
+  return (
+    <Meta style={{ marginTop: 4, fontSize: 11.5 }}>
+      {url ? (
+        <Text accessibilityRole="link" onPress={() => openSource(url, p)} style={{ textDecorationLine: 'underline' }}>
+          {note.cite}
+        </Text>
+      ) : (
+        note.cite
+      )}
+    </Meta>
   );
 }
 
@@ -144,7 +162,7 @@ function Ideas({ item }: { item: Item }) {
         <View key={i} style={[styles.idea, { borderTopColor: p.rule }, i === 0 && { borderTopWidth: 0, paddingTop: 0, marginTop: 0 }]}>
           <Text style={[styles.ideaN, { color: p.ember }]}>{i + 1}</Text>
           <View style={{ flex: 1 }}>
-            <Machine>{m.text}</Machine>
+            <Machine>{curlQuotes(m.text)}</Machine>
             {m.quote ? <Text selectable style={[styles.ideaQ, { color: p.ink }]}>“{m.quote}”</Text> : null}
             {m.locator ? <Meta style={{ marginTop: 4, fontSize: 11.5 }}>{m.locator}</Meta> : null}
             {m.reaction ? (
@@ -226,15 +244,26 @@ function Essay({ item, haul }: { item: Item; haul: Haul }) {
   return (
     <View>
       <MetaLine item={item} />
-      <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 0.94, letterSpacing: -size * 0.03 }} />
+      <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.03 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
       <Why item={item} heading={null} style={{ marginTop: 22 }} />
       <StartHereLine item={item} />
       {item.plate ? <PlateView item={item} /> : null}
       {item.excerpt ? (
-        <View style={{ marginTop: 30 }}>
-          <Meta>{item.excerpt.locator}</Meta>
-          <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.pull} />
+        <View style={{ marginTop: 34 }}>
+          <Apparatus style={{ marginBottom: 6 }}>From the piece</Apparatus>
+          {item.excerpt.highlight && item.excerpt.highlight.split(/\s+/).length <= 40 ? (
+            <View style={{ marginBottom: 26 }}>
+              <Quotation text={item.excerpt.highlight} />
+            </View>
+          ) : null}
+          <Quotation
+            extract
+            text={item.excerpt.text}
+            highlight={item.excerpt.highlight}
+            mark={typeColor(p, item.type)}
+            credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+          />
           <ShareQuote haul={haul} item={item} />
         </View>
       ) : null}
@@ -255,7 +284,7 @@ function Figure({ item }: { item: Item }) {
   return (
     <View>
       <MetaLine item={item} />
-      <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 0.96, letterSpacing: -size * 0.025 }} />
+      <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.025 }} />
       {item.creator ? <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text> : null}
       <Why item={item} heading={null} style={{ marginTop: 20 }} />
       <View style={{ marginTop: 28 }}>
@@ -332,15 +361,15 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
           <Text style={[styles.whoEd, { color: p.ember }]}>B.</Text>
           <View style={{ flex: 1 }}>
             {item.why.audio ? <VoiceNote audio={item.why.audio} label="this note" compact /> : null}
-            <Note>{item.why.text}</Note>
+            <EditorNote why={item.why} sign={false} />
           </View>
         </View>
         {item.marginalia.map((m, i) => (
           <View key={i} style={styles.tl}>
             <Text style={[styles.who, { color: p.machine }]}>MACHINE</Text>
             <View style={{ flex: 1 }}>
-              <Machine>{m.text}</Machine>
-              <Meta style={{ marginTop: 4, fontSize: 11.5 }}>{m.cite}</Meta>
+              <Machine>{curlQuotes(m.text)}</Machine>
+              <Cite item={item} note={m} />
             </View>
           </View>
         ))}
@@ -353,19 +382,26 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
 /** Broadside: one coral sheet, the poem alone on it. */
 function Poem({ item }: { item: Item }) {
   const p = usePalette();
+  const k = useTextScale();
+  // The poem in its stanzas (a blank line between), each line as the poet broke it.
+  const stanzas = item.excerpt ? item.excerpt.text.split(/\n\s*\n/).map((st) => st.split('\n').filter((l) => l.trim())).filter((st) => st.length) : [];
+  const where = item.source.name.startsWith(`${item.creator}, `) ? item.source.name.slice(item.creator.length + 2) : item.source.name;
   return (
     <View>
       <View style={[styles.sheet, styles.broadside, { backgroundColor: typeColor(p, item.type) }]}>
-        <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
-        {item.excerpt ? (
-          <Text selectable style={[styles.poemText, { color: p.ink }]}>{item.excerpt.text}</Text>
-        ) : (
-          <Title title={item.title} size={40} />
-        )}
+        <View style={[styles.bsHead, { borderBottomColor: p.rule }]}>
+          <Title title={item.title} size={34} style={{ lineHeight: 36 }} />
+          <Text style={[styles.bsBy, { color: p.ink }]}>{item.creator.toUpperCase()}</Text>
+        </View>
+        {stanzas.map((st, i) => (
+          <Text key={i} selectable style={[styles.poemText, { color: p.ink, fontSize: 19 * k, lineHeight: 29 * k }]}>
+            {st.join('\n')}
+          </Text>
+        ))}
         <View style={[styles.bsFoot, { borderTopColor: p.rule }]}>
-          <Text style={[styles.bsWho, { color: p.ink }]}>{item.creator}</Text>
           <Text style={[styles.bsWhat, { color: p.ink2 }]}>
-            <Text style={{ fontFamily: fonts.textItalic }}>{titleText(item)}</Text>, {item.source.date}
+            <Text style={{ fontFamily: fonts.textItalic }}>{where}</Text>
+            {item.source.date && !where.includes(item.source.date) ? `, ${item.source.date}` : ''}
           </Text>
         </View>
       </View>
@@ -431,13 +467,11 @@ function Card({ item, haul, n }: { item: Item; haul: Haul; n: number }) {
         </Text>
         <Text style={[styles.cardDates, { color: p.ink2, borderBottomColor: p.rule }]}>{item.source.date}</Text>
         {item.why.audio ? <VoiceNote audio={item.why.audio} label="this note" compact /> : null}
-        <Text selectable style={[styles.cardText, { color: p.ink }]}>
-          {item.why.text} <Text style={{ fontFamily: fonts.displayItalic, color: p.ember }}>B.</Text>
-        </Text>
+        <EditorNote why={item.why} style={{ marginTop: 4 }} />
         {item.marginalia.map((m, i) => (
           <View key={i} style={{ marginTop: 14 }}>
-            <Machine>{m.text}</Machine>
-            <Meta style={{ marginTop: 3, fontSize: 11.5 }}>{m.cite}</Meta>
+            <Machine>{curlQuotes(m.text)}</Machine>
+            <Cite item={item} note={m} />
           </View>
         ))}
         {item.wiki.length || item.connections.length ? (
@@ -480,17 +514,34 @@ function Page({ item, haul }: { item: Item; haul: Haul }) {
 /** Epigraph: the words alone, set large, the marks hanging grey; who said them under an ink rule. */
 function Epigraph({ item }: { item: Item }) {
   const p = usePalette();
+  const ink = useEditionInk() ?? p.ink2;
   const k = useTextScale();
   const ex = item.excerpt!;
   const len = ex.text.length;
   const size = (len < 60 ? 40 : len < 140 ? 34 : 28) * Math.min(k, 1.1);
   const at = ex.highlight ? ex.text.indexOf(ex.highlight) : -1;
+  const occasion = [item.source.name, item.source.date].filter(Boolean).join(', ');
+  if (quoteLength(ex.text) !== 'short') {
+    return (
+      <View>
+        <MetaLine item={item} extra={item.source.date} />
+        <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
+        <View style={{ marginTop: 18 }}>
+          <LeadQuotation text={ex.text} highlight={ex.highlight} mark={typeColor(p, item.type)} />
+        </View>
+        <View style={[styles.epiWho, { borderTopColor: p.ink }]}>
+          <Text style={[styles.epiName, { color: p.ink }]}>{item.creator.toUpperCase()}</Text>
+          <Text style={[styles.epiWhere, { color: p.ink2 }]}>{occasion}</Text>
+        </View>
+      </View>
+    );
+  }
   return (
     <View>
       <MetaLine item={item} extra={item.source.date} />
       <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
       <Text selectable style={[styles.epiQ, { color: p.ink, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.022 }]}>
-        <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>“</Text>
+        <Text style={{ color: ink, fontFamily: fonts.displayRegular }}>“</Text>
         {at >= 0 && ex.highlight ? (
           <>
             {ex.text.slice(0, at)}
@@ -500,7 +551,7 @@ function Epigraph({ item }: { item: Item }) {
         ) : (
           ex.text
         )}
-        <Text style={{ color: p.ink2, fontFamily: fonts.displayRegular }}>”</Text>
+        <Text style={{ color: ink, fontFamily: fonts.displayRegular }}>”</Text>
       </Text>
       <View style={[styles.epiWho, { borderTopColor: p.ink }]}>
         <Text style={[styles.epiName, { color: p.ink }]}>{item.creator.toUpperCase()}</Text>
@@ -822,8 +873,10 @@ const styles = StyleSheet.create({
   said: { fontFamily: fonts.displayRegular, fontSize: 24, lineHeight: 31 },
 
   sheet: { marginTop: 22 },
-  broadside: { minHeight: 440, paddingHorizontal: 24, paddingTop: 56, paddingBottom: 22, justifyContent: 'space-between', gap: 56 },
-  poemText: { fontFamily: fonts.textItalic, fontSize: 30, lineHeight: 41.5 },
+  broadside: { marginHorizontal: -GUTTER, paddingHorizontal: 22, paddingTop: 36, paddingBottom: 22, gap: 22 },
+  bsHead: { paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, gap: 8 },
+  bsBy: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.5 },
+  poemText: { fontFamily: fonts.textItalic },
   bsFoot: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, gap: 2 },
   bsWho: { fontFamily: fonts.display, fontSize: 18 },
   bsWhat: { fontFamily: fonts.text, fontSize: 16 },

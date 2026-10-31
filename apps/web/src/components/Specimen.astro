@@ -2,7 +2,7 @@
 // One item on the cover, shown as a small specimen of its own printed form (lib/forms.ts): a cropped
 // opening, a two-page spread, a transcript strip, an offprint, a broadside, a catalogue card or a
 // book page. Under it, the number in ember, the type and the first sentence of the editor's note.
-import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, notePlain, quoteLead, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Highlighted from './Highlighted.astro';
 import { formOf, headword, quoteLength, speaker } from '../lib/forms';
@@ -14,8 +14,12 @@ import { firstSentence, paths, safeHref, titleText } from '../lib/site';
 interface Props {
   haul: Haul;
   item: Item;
+  /** Columns of twelve on the wide cover (coverSpans). */
+  span?: number;
+  /** Second in its row: set a little lower. */
+  lower?: boolean;
 }
-const { haul, item } = Astro.props;
+const { haul, item, span, lower } = Astro.props;
 const n = haul.items.indexOf(item) + 1;
 const form = formOf(item);
 const href = paths.item(haul.number, item.id);
@@ -27,6 +31,15 @@ const ex = item.excerpt;
 // A card carries its plate like a print clipped to it.
 const plate = item.plate ? safeHref(item.plate.url) : undefined;
 const size = len > 40 ? 'sz-s' : len > 22 ? 'sz-m' : 'sz-l';
+// A poem shows its first stanza (or its first eight lines), each line as the poet broke it.
+const poemLines = form === 'broadside' && ex ? (ex.text.split(/\n\s*\n/)[0] ?? '').split('\n').slice(0, 8) : [];
+const poemMore = form === 'broadside' && ex ? ex.text.trim().split('\n').filter((l) => l.trim()).length > poemLines.length : false;
+// A long quotation shows its lead large and the rest, cut short, in the reading size.
+const epiLen = form === 'epigraph' && ex ? quoteLength(ex.text) : 'short';
+const epiLead = form === 'epigraph' && ex && epiLen !== 'short' ? quoteLead(ex.text, ex.highlight) : null;
+// Under the speaker's name, the occasion, without the name said twice.
+const dropName = (s: string) => s.replace(new RegExp(`^${item.creator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},\\s*`), '');
+const occasion = dropName(ex?.locator || item.source.name || '');
 // A figure's specimen is its own chart, drawn small: the phone figure, a picture of the real thing.
 const figChart = form === 'figure' ? item.blocks?.find((b) => b.kind === 'chart') : undefined;
 let figScene: ReturnType<typeof renderChart> | null = null;
@@ -36,14 +49,18 @@ try {
   figScene = null;
 }
 ---
-<li class:list={['sp', `sp-${form}`, `t-${item.type}`]}>
-  <a class="sp-obj" href={href} aria-label={`${n}. ${typeLabel[item.type]}: ${titleText(item.title)}, ${item.creator}`}>
+<li class:list={['sp', `sp-${form}`, `t-${item.type}`, span ? `c-${span}` : null, { lo: lower }]}>
+  <p class="sp-cap" aria-hidden="true">
+    <span class="sp-n">{String(n).padStart(2, '0')}</span>
+    <span>{typeLabel[item.type]}{!['opening', 'offprint', 'card', 'label', 'life', 'broadside'].includes(form) ? <> · <span class="sp-ct">{curlQuotes(titleText(item.title))}</span></> : null}</span>
+  </p>
+  <a class="sp-obj" href={href} aria-label={`${n}. ${typeLabel[item.type]}: ${curlQuotes(titleText(item.title))}, ${item.creator}`}>
     {form === 'opening' ? (
       <>
         <span class="sp-meta">{item.source.name} · {item.source.date}</span>
-        <span class:list={['sp-et', size]}>{item.title.text}{item.title.italic ? ' ' : ''}{item.title.italic ? <em>{item.title.italic}</em> : null}</span>
+        <span class:list={['sp-et', size]}>{curlQuotes(item.title.text)}{item.title.italic ? ' ' : ''}{item.title.italic ? <em>{curlQuotes(item.title.italic)}</em> : null}</span>
         <span class="sp-by">{item.creator}</span>
-        {ex ? <Highlighted as="span" class="sp-ex" text={ex.highlight ?? ex.text} highlight={ex.highlight} /> : null}
+        {ex ? <span class:list={['sp-ex', { 'sp-ex-cut': !ex.highlight }]}>{curlQuotes(ex.highlight ?? ex.text)}</span> : null}
       </>
     ) : null}
 
@@ -57,7 +74,7 @@ try {
     {form === 'transcript' ? (
       <>
         <span class="sp-who">{speaker(item.creator)}</span>
-        {ex ? <Highlighted as="span" class="sp-said" text={ex.text} highlight={ex.highlight} /> : <span class="sp-said">{titleText(item.title)}</span>}
+        {ex ? <Highlighted as="span" class="sp-said" text={ex.text} highlight={ex.highlight} /> : <span class="sp-said">{curlQuotes(titleText(item.title))}</span>}
         <span class="sp-when">{item.source.name}, {item.source.date}</span>
       </>
     ) : null}
@@ -65,7 +82,7 @@ try {
     {form === 'offprint' ? (
       <>
         <span class="sp-rc">{item.source.name} · {yearOf(item.source.date)}</span>
-        <span class="sp-ot">{titleText(item.title)}</span>
+        <span class="sp-ot">{curlQuotes(titleText(item.title))}</span>
         <span class="sp-ob">{item.creator}</span>
         {ex ? <><span class="sp-ab">{ex.locator || 'Abstract'}</span><Highlighted as="span" class="sp-at" text={ex.text} highlight={ex.highlight} /></> : null}
       </>
@@ -73,8 +90,9 @@ try {
 
     {form === 'broadside' && ex ? (
       <>
-        <span class="sp-pt">{ex.text}</span>
-        <span class="sp-pf">{item.creator}</span>
+        <span class="sp-ptt"><span class="sp-pti">{curlQuotes(titleText(item.title))}</span><span class="sp-pf">{item.creator}</span></span>
+        <span class="sp-pt">{poemLines.map((l) => <span class="sp-pl">{l}</span>)}</span>
+        {poemMore ? <span class="sp-pmore">The whole poem</span> : null}
       </>
     ) : null}
 
@@ -92,14 +110,18 @@ try {
     {form === 'page' ? (
       <>
         <span class="sp-bh"><span>{item.source.name}</span><span>{item.creator}</span></span>
-        {ex ? <span class="sp-bt">{ex.text}</span> : <span class="sp-bt">{titleText(item.title)}</span>}
-        <span class="sp-bf">{ex?.locator || item.source.date}</span>
+        {ex ? <span class="sp-bt">{curlQuotes(ex.text)}</span> : <span class="sp-bt">{curlQuotes(titleText(item.title))}</span>}
+        <span class="sp-bf">{curlQuotes(dropName(ex?.locator || item.source.date))}</span>
       </>
     ) : null}
     {form === 'epigraph' && ex ? (
       <>
-        <span class:list={['sp-eq', `q-${quoteLength(ex.text)}`]}>{ex.text}</span>
-        <span class="sp-ew">{item.creator}</span>
+        {epiLead ? (
+          <span class="sp-eq q-lead"><span class="sp-eql">{curlQuotes(epiLead.lead)}</span><span class="sp-eqr">{curlQuotes(epiLead.rest.trim())}</span></span>
+        ) : (
+          <span class:list={['sp-eq', `q-${epiLen}`]}>{curlQuotes(ex.text)}</span>
+        )}
+        <span class="sp-ew"><span>{item.creator}</span>{occasion ? <span class="sp-ewo">{occasion}</span> : null}</span>
       </>
     ) : null}
 
@@ -146,16 +168,12 @@ try {
 
     {form === 'label' ? (
       <>
-        <span class="sp-lbt">{titleText(item.title)}</span>
-        <span class="sp-lbr"><span>Made by</span><span>{item.creator}</span></span>
+        <span class="sp-lbt">{curlQuotes(titleText(item.title))}</span>
+        {item.creator ? <span class="sp-lbr"><span>Made by</span><span>{item.creator}</span></span> : null}
         <span class="sp-lbr"><span>What it is</span><span>{item.source.name}</span></span>
-        {ex ? <span class="sp-lbq">{ex.text}</span> : null}
+        {ex ? <span class="sp-lbq">{curlQuotes(ex.text)}</span> : null}
       </>
     ) : null}
   </a>
-  <p class="sp-cap">
-    <span class="sp-n">{String(n).padStart(2, '0')}</span>
-    <span>{typeLabel[item.type]}{!['opening', 'offprint', 'card', 'label', 'life'].includes(form) ? <> · <span class="sp-ct">{titleText(item.title)}</span></> : null}</span>
-    <span class="sp-why">{firstSentence(item.why.text)}</span>
-  </p>
+  <p class="sp-why">{curlQuotes(firstSentence(notePlain(item.why)))}</p>
 </li>

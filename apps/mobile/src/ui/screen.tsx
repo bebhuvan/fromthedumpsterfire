@@ -6,6 +6,7 @@ import { GUTTER, usePalette } from '@/theme';
 import { useReader } from '@/lib/store';
 import { enablePush } from '@/lib/push';
 import { Body, Meta, Title } from './type';
+import { EditionInk } from './edition';
 import { Action, PageHead } from './parts';
 
 /** Height of the edition band on the top edge of every page of a Haul. */
@@ -33,7 +34,9 @@ export function Screen({ children, header, edition }: { children: ReactNode; hea
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y } } }], { useNativeDriver: true })}
       >
         {header}
-        <View style={styles.body}>{children}</View>
+        <EditionInk.Provider value={edition}>
+          <View style={styles.body}>{children}</View>
+        </EditionInk.Provider>
       </Animated.ScrollView>
       <Animated.View pointerEvents="none" style={[styles.scrim, { height: insets.top, backgroundColor: p.bg, opacity: scrim }]} />
       {edition ? <View pointerEvents="none" accessible={false} style={[styles.band, { backgroundColor: edition }]} /> : null}

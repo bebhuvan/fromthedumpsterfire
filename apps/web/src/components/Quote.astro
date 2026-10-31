@@ -1,0 +1,30 @@
+---
+// A quotation from a source, set by its length: a line or two large, a paragraph as a pull quote, more
+// as an extract in the reading type with a rule in the edition's ink. One opening mark in that ink
+// stands as the ornament; there is no closing mark (the setting shows where the words end), so marks
+// inside the quotation never collide. The words are the stored, matched words; only straight marks
+// are set curly. The credit names whose words they are and where they were found.
+import { quoteLength } from '@fdf/shared/haul';
+import Highlighted from './Highlighted.astro';
+import { safeHref } from '../lib/site';
+
+interface Props {
+  text: string;
+  highlight?: string;
+  /** Whose words, where, and anything else the line under the quotation should say. */
+  credit?: string[];
+  /** The page the words were matched against. */
+  cite?: string;
+  /** Set as an extract whatever its length (an excerpt is read, not displayed). */
+  extract?: boolean;
+  class?: string;
+}
+const { text, highlight, credit = [], cite, extract = false, class: cls } = Astro.props;
+const len = extract ? 'long' : quoteLength(text);
+const lines = credit.filter(Boolean);
+---
+<figure class:list={['qt', `qt-${len}`, cls]}>
+  <span class="qt-mark" aria-hidden="true">&#8220;</span>
+  <blockquote class="qt-q" cite={cite ? safeHref(cite) : undefined}><Highlighted text={text} highlight={highlight} breaks="line" curl /></blockquote>
+  {lines.length ? <figcaption class="qt-cap">{lines.join(', ')}</figcaption> : null}
+</figure>

@@ -83,6 +83,8 @@ export interface Plate {
 export interface Marginal {
   text: string;
   cite: string;
+  /** The Wikipedia article the note was checked against, from its stored card (added 2026-10-31). */
+  url?: string;
 }
 
 /**
@@ -308,7 +310,7 @@ export interface Item {
   creator: string;
   source: { name: string; date: string; url: string };
   minutes?: number;
-  why: { text: string; audio?: Audio };
+  why: { text: string; audio?: Audio; links?: NoteLink[] };
   excerpt?: Excerpt;
   rhyme?: Rhyme;
   media?: Media;
@@ -397,7 +399,9 @@ export const haulSlug = (n: number) => String(n).padStart(3, '0');
 export function sourceAction(item: Pick<Item, 'type' | 'creator' | 'source' | 'media' | 'title'>): string {
   if (item.type === 'rabbit-hole') return 'Go down the hole';
   const who = item.creator.trim();
-  const where = item.source.name.trim();
+  // A source named after its maker ("W. B. Yeats, Michael Robartes and the Dancer") names the maker once.
+  const named = item.source.name.trim();
+  const where = who && named.startsWith(`${who}, `) ? named.slice(who.length + 2) : named;
   const titled = [item.title.text, item.title.italic].filter(Boolean).join(' ').trim();
   const place = where && where !== titled && where !== who ? where : '';
   const url = item.media?.url ?? item.source.url;
@@ -439,4 +443,131 @@ export function creditLine(plate: Pick<Plate, 'credit' | 'licence' | 'creator' |
   // "Unknown photographer, 1953." reads as a credit; "By Unknown photographer" does not.
   const made = by ? `${/^(unknown|anonymous)\b/i.test(by) ? by.charAt(0).toUpperCase() + by.slice(1) : `By ${by}`}${plate.date ? `, ${plate.date}` : ''}.` : '';
   return [made, holder ? `${holder}.` : '', `${licence}.`].filter(Boolean).join(' ');
+}
+
+/** A link in the editor's note: words that appear in the note, and the address the editor gave them. */
+export interface NoteLink {
+  text: string;
+  url: string;
+}
+
+/** One stretch of a note's paragraph; `url` when those words are a link. */
+export interface NoteRun {
+  text: string;
+  url?: string;
+}
+
+// A link written into the note itself: "words" (https://…) or [words](https://…).
+const INLINE_LINK = /"([^"\n]{1,200})"\s*\((https?:\/\/[^\s()]+)\)|\[([^\]\n]{1,200})\]\((https?:\/\/[^\s()]+)\)/g;
+
+/**
+ * The editor's note with any links written into it lifted out: the words stay, the quote marks,
+ * brackets and address around them go. Only deletes, so the editor's words are never changed.
+ */
+export function noteLinks(text: string): { text: string; links: NoteLink[] } {
+  const links: NoteLink[] = [];
+  const out = text.replace(INLINE_LINK, (_m, qa: string | undefined, qu: string | undefined, ma: string | undefined, mu: string | undefined) => {
+    const words = (qa ?? ma ?? '').trim();
+    links.push({ text: words, url: (qu ?? mu)! });
+    return words;
+  });
+  return { text: out, links };
+}
+
+/** The note as plain words (for descriptions, captions and search), links reduced to their words. */
+export const notePlain = (why: Pick<Item['why'], 'text'>) => noteLinks(why.text).text;
+
+/**
+ * The note as the reader sees it: paragraphs (split on a blank line) of runs, the linked words marked
+ * with their address. Links come from `why.links` and, for notes written before that field, from the
+ * text itself. Each link marks the first place its words appear, once. Only http and https addresses
+ * become links.
+ */
+export function noteParagraphs(why: Pick<Item['why'], 'text' | 'links'>): NoteRun[][] {
+  const lifted = noteLinks(why.text);
+  const links = [...(why.links ?? []), ...lifted.links].filter((l) => l.text && /^https?:\/\//i.test(l.url));
+  const used = new Set<NoteLink>();
+  return lifted.text
+    .split(/\n\s*\n/)
+    .map((p) => p.replace(/\s*\n\s*/g, ' ').trim())
+    .filter(Boolean)
+    .map((para) => {
+      const runs: NoteRun[] = [];
+      let rest = para;
+      for (;;) {
+        let first: { at: number; link: NoteLink } | undefined;
+        for (const link of links) {
+          if (used.has(link)) continue;
+          const at = rest.indexOf(link.text);
+          if (at >= 0 && (!first || at < first.at)) first = { at, link };
+        }
+        if (!first) break;
+        used.add(first.link);
+        if (first.at) runs.push({ text: rest.slice(0, first.at) });
+        runs.push({ text: first.link.text, url: first.link.url });
+        rest = rest.slice(first.at + first.link.text.length);
+      }
+      if (rest) runs.push({ text: rest });
+      return runs;
+    });
+}
+
+/**
+ * Straight quotation marks set as curly ones, for display only: the stored words stay as they were
+ * matched (the verbatim check already reads both forms as the same). An apostrophe inside a word
+ * becomes ’; a mark, double or single, opens after a space or bracket and closes elsewhere.
+ */
+export function curlQuotes(text: string): string {
+  return text
+    .replace(/(^|[\s([{—–-])"/g, '$1“')
+    .replace(/"/g, '”')
+    .replace(/(\p{L})'(\p{L})/gu, '$1’$2')
+    .replace(/(\p{L}s)'(?=\s|[.,;:!?)]|$)/gu, '$1’')
+    .replace(/(^|[\s([{—–“-])'(?=\p{L})/gu, '$1‘')
+    .replace(/'/g, '’');
+}
+
+/** How long a quotation runs: a line or two is set large, a paragraph as a pull quote, more as an extract. */
+export function quoteLength(text: string): 'short' | 'medium' | 'long' {
+  const words = text.split(/\s+/).filter(Boolean).length;
+  return words <= 30 ? 'short' : words <= 80 ? 'medium' : 'long';
+}
+
+/**
+ * A long quotation's lead: the words set large before the rest follows in the reading type. The
+ * editor's highlight when it opens the quotation, else the opening clauses up to a comma or semicolon
+ * once there are eight words or more (never past thirty). `lead + rest` is always the whole text, so
+ * nothing is cut or changed; with no clean break there is no lead.
+ */
+export function quoteLead(text: string, highlight?: string): { lead: string; rest: string } | null {
+  const t = text.trimStart();
+  if (highlight && t.startsWith(highlight) && highlight.split(/\s+/).length <= 30) return { lead: highlight, rest: t.slice(highlight.length) };
+  const re = /[,;:—](?=\s)|[.!?](?=\s)/g;
+  for (let m = re.exec(t); m; m = re.exec(t)) {
+    const words = t.slice(0, m.index + 1).split(/\s+/).length;
+    if (words > 30) break;
+    if (words >= 8) return { lead: t.slice(0, m.index + 1), rest: t.slice(m.index + 1) };
+  }
+  return null;
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/**
+ * A source's date as a reader says it: a machine timestamp ("2026-10-24T19:40:00 JST+0900",
+ * "2026-10-24") becomes "24 October 2026", read in the source's own day (no time-zone shift); any
+ * date already written for people ("1859", "Autumn 1892", "22 October 2026") is left as it is.
+ */
+export function sourceDate(date: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ][\d:.]+(?:Z|[+-]\d{2}:?\d{2})?(?:\s*[A-Z]{2,5}(?:[+-]\d{2}:?\d{2})?)?)?$/.exec(date.trim());
+  if (!m) return date;
+  const month = MONTH_NAMES[Number(m[2]) - 1];
+  const day = Number(m[3]);
+  return month && day >= 1 && day <= 31 ? `${day} ${month} ${m[1]}` : date;
+}
+
+/** A bundle with every source date said as a reader says it (sourceDate); for bundles published before it. */
+export function tidyDates<T extends { items: { source: { date: string } }[] }>(haul: T): T {
+  for (const item of haul.items) item.source.date = sourceDate(item.source.date);
+  return haul;
 }

@@ -143,6 +143,17 @@ function checkItem(c: Collector, item: Item, p: string) {
   if (c.obj(item.why, `${p}.why`)) {
     c.str(item.why.text, `${p}.why.text`);
     c.audio(item.why.audio, `${p}.why.audio`);
+    // A link marks the editor's own words: they must be in the note, and the address must be the web.
+    if (item.why.links !== undefined && c.arr(item.why.links, `${p}.why.links`)) {
+      item.why.links.forEach((l, k) => {
+        const lp = `${p}.why.links[${k}]`;
+        if (!c.obj(l, lp)) return;
+        if (c.str(l.text, `${lp}.text`) && typeof item.why.text === 'string' && !item.why.text.includes(l.text)) {
+          c.err(`${lp}.text`, 'link-words', 'a link marks words that are in the note');
+        }
+        if (typeof l.url !== 'string' || !/^https?:\/\/[^\s]+$/i.test(l.url)) c.err(`${lp}.url`, 'link-url', 'a link goes to an http or https address');
+      });
+    }
   }
   if (c.obj(item.excerpt, `${p}.excerpt`, true)) {
     const ex = item.excerpt;
@@ -175,6 +186,9 @@ function checkItem(c: Collector, item: Item, p: string) {
       if (!c.obj(m, mp)) return;
       c.str(m.text, `${mp}.text`);
       if (typeof m.cite !== 'string' || !m.cite.trim()) c.err(`${mp}.cite`, 'citation', 'every machine note cites a source');
+      if (m.url !== undefined && (typeof m.url !== 'string' || !/^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\//.test(m.url))) {
+        c.err(`${mp}.url`, 'wiki-url', 'a note links only to the Wikipedia article it was checked against');
+      }
       c.machineProse(m.text, `${mp}.text`);
     });
   }

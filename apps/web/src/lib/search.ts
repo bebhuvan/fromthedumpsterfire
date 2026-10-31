@@ -4,7 +4,7 @@
 // small bonus for whole-word matches. A few hundred items at most, so a plain scan is instant.
 
 import { lifeParagraphs } from '@fdf/shared/life';
-import type { Haul, Item } from '@fdf/shared/haul';
+import { notePlain, type Haul, type Item } from '@fdf/shared/haul';
 import type { ContentType } from '@fdf/shared/tokens';
 
 /** One searchable field: text, weight, and whether it can supply a snippet. */
@@ -43,7 +43,7 @@ function fields(item: Item): Field[] {
     [item.creator, 5, 0],
     [item.source.name, 3, 0],
     [item.wiki.map((w) => w.title).join(' · '), 3, 0],
-    [item.why.text, 1.5, 1],
+    [notePlain(item.why), 1.5, 1],
     [item.excerpt?.text ?? '', 1.5, 1],
     [item.rhyme ? `${item.rhyme.then.quote} ${item.rhyme.now.quote}` : '', 1.5, 1],
     [item.marginalia.map((m) => m.text).join(' '), 1, 1],

@@ -6,8 +6,9 @@
 // the person's own words as the pull quote; numbers as a ledger; a life in dates; further reading;
 // and what it was written from. A portrait only if one cleared the credit rule; complete without.
 // Mirrors apps/mobile/src/screens/ItemScreen.tsx (LifeForm).
-import type { Item, Life, LifeLine } from '@fdf/shared/haul';
+import { quoteLength, type Item, type Life, type LifeLine } from '@fdf/shared/haul';
 import { lifeByline, lifeYears, sourceKey, whereFrom } from '@fdf/shared/life';
+import Note from './Note.astro';
 import Voice from './Voice.astro';
 import Credit from './Credit.astro';
 import { safeHref } from '../lib/site';
@@ -49,7 +50,7 @@ const figuresAfter = Math.min(2, life.sections.length - 1);
 <section class="wrap g why" aria-labelledby="why-title">
   <div class="m"><h2 class="mh" id="why-title">Why it's here</h2></div>
   <div class="c">
-    <p class="standfirst">{item.why.text} <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p>
+    <Note why={item.why} lead />
     {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
   </div>
 </section>
@@ -77,7 +78,7 @@ const figuresAfter = Math.min(2, life.sections.length - 1);
     {life.words && i === quoteAfter ? (
       <figure class="wrap g lf-words">
         <div class="c">
-          <blockquote class="pq lf-q"><p>{life.words.text.charAt(0).toUpperCase() + life.words.text.slice(1)}</p></blockquote>
+          <blockquote class:list={['pq lf-q', `q-${quoteLength(life.words.text)}`]}><p>{life.words.text.charAt(0).toUpperCase() + life.words.text.slice(1)}</p></blockquote>
           <figcaption class="lf-wcap">
             <span class="lf-ctx">{life.words.context.text}</span>
             <span class="pq-cap">

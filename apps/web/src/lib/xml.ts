@@ -1,6 +1,6 @@
 // RSS and sitemap generation. Every value is escaped; nothing from a bundle is emitted raw.
 
-import { haulSlug, type Haul } from '@fdf/shared/haul';
+import { haulSlug, noteParagraphs, type Haul } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import { bookUpdated, type Shelf } from '@fdf/shared/shelf';
 import {
@@ -53,7 +53,10 @@ function haulFeedHtml(h: Haul, allHauls: Haul[]): string {
     parts.push(
       `<h3><a href="${esc(itemUrl)}">${esc(titleText(item.title))}</a> — ${esc(item.creator)}</h3>`,
       `<p><small>${esc(typeLabel[item.type])} · ${srcHtml}</small></p>`,
-      `<p>${esc(item.why.text)} — <em>${esc(EDITOR_NAME)}</em></p>`,
+      ...noteParagraphs(item.why).map(
+        (runs, i, all) =>
+          `<p>${runs.map((r) => (r.url && safeHref(r.url) ? `<a href="${esc(safeHref(r.url)!)}">${esc(r.text)}</a>` : esc(r.text))).join('')}${i === all.length - 1 ? ` — <em>${esc(EDITOR_NAME)}</em>` : ''}</p>`,
+      ),
     );
     if (item.startHere) {
       const at = item.startHere.url ? `<a href="${esc(item.startHere.url)}">${esc(item.startHere.at)}</a>` : esc(item.startHere.at);

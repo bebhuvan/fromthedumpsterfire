@@ -43,15 +43,12 @@ export function formOf(item: Item): Form {
   }
 }
 
-/** How long a quotation runs, so an epigraph is set large only when it is a line or two. */
-export function quoteLength(text: string): 'short' | 'medium' | 'long' {
-  const words = text.split(/\s+/).filter(Boolean).length;
-  return words <= 30 ? 'short' : words <= 80 ? 'medium' : 'long';
-}
+/** How long a quotation runs, so it is set large only when it is a line or two (shared with the app). */
+export { quoteLength } from '@fdf/shared/haul';
 
 /** The form's name for the running head, as a reader would say it. */
 export const formName: Record<Form, string> = {
-  opening: 'Magazine opening',
+  opening: 'The opening',
   offprint: 'Offprint',
   transcript: 'Transcript',
   broadside: 'Broadside',
@@ -68,9 +65,32 @@ export const formName: Record<Form, string> = {
   life: 'The life',
 };
 
+/** How wide each form sits on the wide cover: big things, middling things, small things. */
+const coverSize = (f: Form): 'w' | 'm' | 'n' =>
+  f === 'broadside' || f === 'offprint' || f === 'page' || f === 'jacket' ? 'n' : f === 'card' || f === 'print' || f === 'letter' || f === 'clipping' || f === 'label' || f === 'life' ? 'm' : 'w';
+
+/**
+ * The wide cover's rows, in item order: two objects to a row of twelve columns (three when three small
+ * ones meet), each pair sized by what the two are, so every row is full and nothing jumps the queue.
+ */
+export function coverSpans(forms: Form[]): number[] {
+  const spans: number[] = [];
+  for (let i = 0; i < forms.length; ) {
+    const a = coverSize(forms[i]!);
+    const b = i + 1 < forms.length ? coverSize(forms[i + 1]!) : undefined;
+    const c = i + 2 < forms.length ? coverSize(forms[i + 2]!) : undefined;
+    if (a === 'n' && b === 'n' && c === 'n') { spans.push(4, 4, 4); i += 3; continue; }
+    if (!b) { spans.push(a === 'n' ? 6 : 8); i += 1; continue; }
+    const pair = a === b ? [6, 6] : a === 'n' ? [4, 8] : b === 'n' ? [8, 4] : a === 'w' ? [7, 5] : [5, 7];
+    spans.push(...pair);
+    i += 2;
+  }
+  return spans;
+}
+
 /** What a Haul holds, each type with the printed form it is set in (waiting page, About). */
 export const formGuide = [
-  { type: 'essay', name: 'Essays', form: 'opening' as Form, how: 'set as a magazine opens one.', detail: 'The title set huge, the reason it is here as the standfirst.' },
+  { type: 'essay', name: 'Essays', form: 'opening' as Form, how: 'opened as a feature opens in print.', detail: 'The title set huge, the reason it is here as the standfirst.' },
   { type: 'paper', name: 'Papers', form: 'offprint' as Form, how: 'as offprints: abstract first, sections numbered.', detail: 'Abstract first, sections numbered, references at the end.' },
   { type: 'talk', name: 'Talks and podcasts', form: 'transcript' as Form, how: 'as transcripts, speakers in the margin.', detail: 'Speakers in the margin, the line that matters set large.' },
   { type: 'poem', name: 'Poems', form: 'broadside' as Form, how: 'as broadsides: one sheet, nothing else on it.', detail: "One sheet in the poem's colour, nothing else on it." },

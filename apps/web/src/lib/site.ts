@@ -19,7 +19,7 @@ export const SITE = 'https://fromthedumpsterfire.com';
 export const SITE_NAME = 'From the Dumpster Fire';
 export const EDITOR_NAME = 'Bhuvanesh';
 export const SITE_DESCRIPTION =
-  'An irregular magazine of things worth salvaging from the internet and the archive, chosen by one editor and read closely with machines.';
+  'Irregular hauls of things worth salvaging from the internet and the archive, chosen by one editor and read closely with machines.';
 
 export const paths = {
   home: '/',

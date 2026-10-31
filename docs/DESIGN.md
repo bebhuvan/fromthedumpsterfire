@@ -134,9 +134,12 @@ carries the flame and the struck masthead, the editor's words, the credit and th
 The edition number and title over the fingerprint; the field note in the reading column, ending on the ember **B.** as its end mark, with the route in the margin (days in sans, the machine's step in blue, and each step citing the item it led to by its number in small raised ember, as a page cites a figure); **In this Haul** as *specimens*: each item shown as a small
 specimen of its own form (a cropped opening, a two-page spread, a transcript strip, an offprint with
 its abstract, a coral broadside, a 3×5 card with its punch hole, a book page), with the number in
-ember, the type and the first sentence of the why under it. Wide forms take seven of twelve columns,
-narrow ones four, cards six (the card carries its plate like a clipped print), across the full width under a ruled **In this Haul** head, packed densely so the table stays uneven but full; on phones they stack
-in order, each keeping its own width and side. Then the thread as a list of years, and the colophon.
+ember and the type above it and the first sentence of the why under it. Across the full width under a ruled
+**In this Haul** head they go two to a row of twelve columns in item order (`coverSpans` in
+`lib/forms.ts`): a big form beside a small one 8 and 4, two of a kind 6 and 6, big beside middling 7 and 5,
+three small ones 4, 4, 4; the second of a row sits a little lower, so the table stays uneven but every row
+is full and nothing jumps the queue (the card carries its plate like a clipped print). On phones they
+stack in order on one left edge. Then the thread as a list of years, and the colophon.
 The archive lists back issues as a run of editions, each with its number in its edition ink, a band down its edge and its mini fingerprint, under a search line that hands its words to the search page (a plain GET form, so it works without JavaScript). Search stays a word in the navigation, never an icon.
 
 ## The app's navigation

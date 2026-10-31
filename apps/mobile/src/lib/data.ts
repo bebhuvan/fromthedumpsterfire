@@ -6,7 +6,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { File, Paths } from 'expo-file-system';
-import { BUNDLE_VERSION, type Haul, type HaulIndex, type HaulSummary } from '@fdf/shared/haul';
+import { BUNDLE_VERSION, tidyDates, type Haul, type HaulIndex, type HaulSummary } from '@fdf/shared/haul';
 import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 import { useReader } from './store';
 import { INDEX_PATH, seedTable } from './seed';
@@ -46,9 +46,12 @@ function writeDisk(path: string, text: string) {
   }
 }
 
+/** A Haul's source dates as readers say them (bundles published before publish tidied them). */
+const tidy = <T,>(path: string, v: T): T => (v && path !== INDEX_PATH && path.startsWith('hauls/') ? (tidyDates(v as unknown as Haul) as unknown as T) : v);
+
 function peek<T>(path: string): T | null {
   if (memory.has(path)) return memory.get(path) as T;
-  const v = readDisk(path) ?? SEEDS[path] ?? null;
+  const v = tidy(path, readDisk(path) ?? SEEDS[path] ?? null);
   if (v) memory.set(path, v);
   return v as T | null;
 }
@@ -68,7 +71,7 @@ async function fetchJson(path: string): Promise<unknown | null> {
       if (json.bundleVersion !== BUNDLE_VERSION) return null; // a newer app is needed for this bundle
       // A build carrying the sample keeps it until a real Haul exists; an empty live index would hide it.
       if (path === INDEX_PATH && SEEDS[path] && !(json as HaulIndex).hauls?.length) return null;
-      memory.set(path, json);
+      memory.set(path, tidy(path, json));
       writeDisk(path, text);
       // A Haul's chart pictures are part of it: keep them on the phone too.
       if (path !== INDEX_PATH && path.startsWith('hauls/')) keepPictures(json as Haul);

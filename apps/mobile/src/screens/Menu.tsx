@@ -35,7 +35,7 @@ export function Menu() {
     <Screen header={<View style={{ height: insets.top + 28 }} />}>
       <Masthead size={34} />
       <View style={[styles.strap, { borderTopColor: p.ink }]}>
-        <Text style={[styles.strapText, { color: p.ink2 }]}>An irregular magazine of things worth salvaging from the internet and the archive, chosen by one editor.</Text>
+        <Text style={[styles.strapText, { color: p.ink2 }]}>Irregular hauls of things worth salvaging from the internet and the archive, chosen by one editor.</Text>
       </View>
 
       <Part label="Reading">

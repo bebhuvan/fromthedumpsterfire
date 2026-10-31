@@ -980,3 +980,47 @@ captures and the letmefuckingwalk item archived. The shelf (unpublished) holds t
   `app-updates/`. The `cf` admin login used for the token was logged out. Credentials on this
   machine are mode 600 in 700 folders. The old laptop's SSH (port 8877, password login) was used
   to copy the update key; the editor may want it off again.
+
+## Reading pass (2026-10-31; built and checked locally, not deployed, not committed)
+
+From the editor's phone review of Haul 001. Website and app; shared code in `@fdf/shared/haul`.
+
+- **Fixed (bugs):** the editor's notes keep their paragraphs; links written into a note (`"words" (url)`
+  or `[words](url)`) print as links on the words (`noteLinks`, `noteParagraphs`, `notePlain`; lifting a
+  link only deletes the marks around the words). Publish now stores them as `why.links` and gives a
+  machine note checked against a Wikipedia card its `url` (validated); older bundles get both from the
+  text and the item's cards at render. The cover poem keeps its line breaks. The hover frame no longer
+  sticks after a tap.
+- **Quotations** set by length (`quoteLength`, shared): a line or two large, a paragraph as a pull
+  quote, longer as an extract behind a rule in the edition ink; one opening mark in that ink, no
+  closing mark; straight marks curled for display only (`curlQuotes`). Long epigraphs open on their
+  first clauses (`quoteLead`). Quotes in a row share one credit. Web `Quote.astro`, app `ui/Quote.tsx`.
+- **Cover:** each object's head (number, kind, name) above it on a hairline; one left edge on phones;
+  essay excerpts cut to the highlight or four lines; the poem with its title, first stanza and lines as
+  written.
+- **Notes:** large italic only for a line or two; long notes upright at reading size
+  (`Note.astro`, `EditorNote`); the machine's notes follow the editor's on a phone.
+- **Type:** website font sizes in rem (browser text size applies); phone body 19px; app body 19/29.5;
+  multi-line titles loosened so letters never touch; poem and book page edge to edge on phones, book
+  paragraphs indented; tagline "Irregular hauls of things worth salvaging from the internet and the
+  archive" in the strap, site description and app menu.
+- Before/after phone shots: `docs/design-comps/2026-10-31-reading-pass/`.
+- **Not done:** the app is typechecked but not yet run on a device; Haul 001 needs a republish (with the
+  editor's approval) for stored note links and margin-note links (the site shows note links already);
+  the other reader-facing uses of "magazine" wait for the editor's wording; the Desk has no control yet
+  for adding a link or a paragraph break, and voice cleanup still flattens paragraphs.
+
+### Second pass (2026-10-31, same state: local only, not committed)
+
+- Wide cover packed in item order, two to a row (`coverSpans`); the dense flow that pulled item 08 up
+  beside 01 and left holes is gone.
+- Source dates said as readers say them (`sourceDate`, `tidyDates` in `@fdf/shared/haul`): applied at
+  publish and, for bundles already out, when the website and the app load them (NHK's
+  "2026-10-24T19:40:00 JST+0900" now reads "24 October 2026").
+- Single quotation marks curled too; titles, the field note, cover lines and machine notes curled for
+  display (web and app).
+- Poem page labels in the margin on wide screens; tool label drops an empty "Made by" (web and app);
+  Life dates no longer break a year in two (web and app); machine notes put their source on its own
+  line; passage specimens no longer justified or credited twice; archive search placeholder shortened;
+  footer strap uses the chosen tagline; running head says "The opening", not "Magazine opening".
+- Still open: "magazine" in the footer licence line and About (wording for the editor to approve).

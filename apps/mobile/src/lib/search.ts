@@ -2,7 +2,7 @@
 // field weights is instant and needs no index library or server.
 
 import { lifeParagraphs } from '@fdf/shared/life';
-import type { Haul, Item } from '@fdf/shared/haul';
+import { notePlain, type Haul, type Item } from '@fdf/shared/haul';
 
 export interface Hit {
   n: number;
@@ -28,7 +28,7 @@ function fields(item: Item): Field[] {
     { text: item.creator, weight: 5 },
     { text: item.source.name, weight: 3 },
     { text: item.wiki.map((w) => w.title).join(' · '), weight: 3 },
-    { text: item.why.text, weight: 1.5, snippet: true },
+    { text: notePlain(item.why), weight: 1.5, snippet: true },
     { text: item.excerpt?.text ?? '', weight: 1.5, snippet: true },
     { text: item.rhyme ? `${item.rhyme.then.quote} ${item.rhyme.now.quote}` : '', weight: 1.5, snippet: true },
     { text: item.marginalia.map((m) => m.text).join(' '), weight: 1, snippet: true },

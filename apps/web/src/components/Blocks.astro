@@ -10,6 +10,7 @@ import { CODE_LANGS_SHORT } from '../lib/forms';
 import { safeHref } from '../lib/site';
 import Credit from './Credit.astro';
 import Chart from './Chart.astro';
+import Quote from './Quote.astro';
 
 interface Props {
   blocks: Block[];
@@ -32,11 +33,12 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
   <div class="wrap blocks">
     {blocks.map((b) => {
       if (b.kind === 'quote') {
+        // Quotes in a row read as one run: each names its place, the last says once where they are from.
+        const endsRun = blocks[blocks.indexOf(b) + 1]?.kind !== 'quote';
         return (
-          <figure class="g blk blk-quote">
-            <blockquote class="c pq"><p>{b.text}</p></blockquote>
-            <figcaption class="c pq-cap">{[b.locator, source].filter(Boolean).join(', ')}{b.locator || source ? ' · ' : ''}matched word for word against the source</figcaption>
-          </figure>
+          <div class:list={['g blk blk-quote', { 'qt-runs-on': !endsRun }]}>
+            <Quote class="c" text={b.text} credit={endsRun ? [b.locator ?? '', source ? `${source} · matched word for word` : 'matched word for word against the source'] : [b.locator ?? '']} />
+          </div>
         );
       }
       if (b.kind === 'code') {

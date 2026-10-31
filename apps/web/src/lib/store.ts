@@ -6,7 +6,7 @@
 // used instead, and if there is none the Haul is listed in `failed` so its pages answer 503.
 // Nothing here throws for bad data except an unreadable index with no good copy in memory.
 
-import { BUNDLE_VERSION, type Haul, type HaulIndex, type Thread } from '@fdf/shared/haul';
+import { BUNDLE_VERSION, tidyDates, type Haul, type HaulIndex, type Thread } from '@fdf/shared/haul';
 import { validateHaul } from '@fdf/shared/validate';
 import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 
@@ -114,7 +114,7 @@ export function createStore(bucket: Bucket, opts: { now?: () => number; log?: Lo
       const haul = JSON.parse(await obj.text()) as Haul;
       const report = validateHaul(haul, ix);
       result = report.ok
-        ? { ok: true, haul }
+        ? { ok: true, haul: tidyDates(haul) }
         : { ok: false, error: report.errors.slice(0, 5).map((e) => `${e.path}: ${e.message}`).join('; ') };
     } catch (err) {
       result = { ok: false, error: `not JSON: ${err instanceof Error ? err.message : String(err)}` };

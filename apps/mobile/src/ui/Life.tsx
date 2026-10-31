@@ -114,7 +114,7 @@ export function LifeForm({ item, life, why }: { item: Item; life: LifeData; why:
           <View style={[{ marginTop: 8 }, rule]}>
             {life.dates.map((d, j) => (
               <View key={j} style={[st.dateRow, hair]}>
-                <Text maxFontSizeMultiplier={1.3} style={[st.year, { color: p.ink }]}>{d.year}</Text>
+                <Text maxFontSizeMultiplier={1.3} numberOfLines={1} style={[st.year, { color: p.ink }]}>{d.year}</Text>
                 <Text style={[st.small, { color: p.machineText, flex: 1 }]}>{d.line.text}</Text>
               </View>
             ))}
@@ -179,7 +179,7 @@ const st = StyleSheet.create({
   ledgerLine: { flexDirection: 'row', gap: 10, alignItems: 'baseline', marginTop: 1 },
   figure: { fontFamily: fonts.display, fontSize: 26, lineHeight: 30 },
   dateRow: { flexDirection: 'row', alignItems: 'baseline', gap: 14, paddingVertical: 7 },
-  year: { fontFamily: fonts.displayRegular, fontSize: 20, lineHeight: 24, width: 52 },
+  year: { fontFamily: fonts.displayRegular, fontSize: 20, lineHeight: 24, minWidth: 58 },
   readTitle: { fontFamily: fonts.textItalic },
   srcRow: { flexDirection: 'row', gap: 10, paddingVertical: 9 },
 });
