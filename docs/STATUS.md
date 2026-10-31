@@ -957,3 +957,21 @@ captures and the letmefuckingwalk item archived. The shelf (unpublished) holds t
   judged Yeats note; Shantanu Goel's SIR Bangalore lookup captured (`it_01m68d5hx0nx7nv22cxw`).
 - `npm run verify`: 754 tests pass.
 
+
+## Haul 001 published (2026-10-31)
+
+- **Published v1** from the terminal on the editor's approval: `hauls/001/v1/haul.json`, 23 items
+  (the guide's 6–20 warning noted), with the share card drawn by the Desk's own `drawCard`
+  (1200 × 630). Live: `/haul/1`, all 23 item pages, `/archive` and the feed answer 200; `og:image`
+  is the card; the Binance page carries both posts and the credited chart; the SIR essay its post.
+- Sukumar Sen: all 54 lines kept and the profile approved (2026-10-31 08:36 UTC) before publishing.
+- **Publishing from Claude Code**: this machine's editorial token (`claude-omarchy`) is on
+  `ACCESS_SERVICE_PUBLISH_CLIENT_IDS` (Desk 4dff444c). Rule (the editor's): a session publishes a
+  Haul only after the editor says "approved" for that edition; `preview` first, the card drawn, the
+  live pages checked after. `--confirm-publish` is still required by the client.
+- Security check the same day: unauthenticated requests get Access (302) on every Desk path and 403
+  on the API except `/v1/health`; a forged `cf-access-client-id` header gets 403; production
+  `workers.dev` addresses are off; the public bucket does not list and does not serve
+  `app-updates/`. The `cf` admin login used for the token was logged out. Credentials on this
+  machine are mode 600 in 700 folders. The old laptop's SSH (port 8877, password login) was used
+  to copy the update key; the editor may want it off again.
