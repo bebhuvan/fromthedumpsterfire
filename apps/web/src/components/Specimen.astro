@@ -2,7 +2,7 @@
 // One item on the cover, shown as a small specimen of its own printed form (lib/forms.ts): a cropped
 // opening, a two-page spread, a transcript strip, an offprint, a broadside, a catalogue card or a
 // book page. Under it, the number in ember, the type and the first sentence of the editor's note.
-import { curlQuotes, haulSlug, notePlain, quoteLead, type Haul, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Highlighted from './Highlighted.astro';
 import { formOf, headword, quoteLength, speaker } from '../lib/forms';
@@ -37,6 +37,8 @@ const poemMore = form === 'broadside' && ex ? ex.text.trim().split('\n').filter(
 // A long quotation shows its lead large and the rest, cut short, in the reading size.
 const epiLen = form === 'epigraph' && ex ? quoteLength(ex.text) : 'short';
 const epiLead = form === 'epigraph' && ex && epiLen !== 'short' ? quoteLead(ex.text, ex.highlight) : null;
+const epiLines = epiLead ? leadLines(epiLead.lead) : null;
+const llSize = epiLines ? `ll-${Math.max(8, epiLines.longest)}` : undefined;
 // Under the speaker's name, the occasion, without the name said twice.
 const dropName = (s: string) => s.replace(new RegExp(`^${item.creator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')},\\s*`), '');
 const occasion = dropName(ex?.locator || item.source.name || '');
@@ -117,7 +119,7 @@ try {
     {form === 'epigraph' && ex ? (
       <>
         {epiLead ? (
-          <span class="sp-eq q-lead"><span class="sp-eql">{curlQuotes(epiLead.lead)}</span><span class="sp-eqr">{curlQuotes(epiLead.rest.trim())}</span></span>
+          <span class="sp-eq q-lead"><span class:list={['sp-eql', llSize]}>{epiLines ? epiLines.lines.map((l) => <span class="ll">{curlQuotes(l)} </span>) : curlQuotes(epiLead.lead)}</span><span class="sp-eqr">{curlQuotes(epiLead.rest.trim())}</span></span>
         ) : (
           <span class:list={['sp-eq', `q-${epiLen}`]}>{curlQuotes(ex.text)}</span>
         )}

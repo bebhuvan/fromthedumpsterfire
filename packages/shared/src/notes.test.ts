@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { noteLinks, noteParagraphs, notePlain, sourceDate } from './haul';
+import { leadLines, noteLinks, noteParagraphs, notePlain, sourceDate } from './haul';
 
 describe('the editor’s note', () => {
   const raw =
@@ -71,5 +71,15 @@ describe('curlQuotes, single marks', () => {
   it('opens a single quotation and closes it, and keeps apostrophes as apostrophes', () => {
     expect(curlQuotes("Japanese firm GMO seeks 'Active Cyber Defense' by govt.")).toBe('Japanese firm GMO seeks ‘Active Cyber Defense’ by govt.');
     expect(curlQuotes("the '90s, rock 'n' roll")).toBe('the ’90s, rock ‘n’ roll');
+  });
+});
+
+describe('leadLines', () => {
+  it('sets parallel clauses one to a line', () => {
+    expect(leadLines('It was the best of times, it was the worst of times,')).toEqual({ lines: ['It was the best of times,', 'it was the worst of times,'], longest: 26 });
+  });
+  it('leaves a single long clause to wrap as prose', () => {
+    expect(leadLines('Thapar largely groups these figures into two camps:')).toBeNull();
+    expect(leadLines('At the center of a fab is lithography, and at the center of lithography is light,')).toBeNull();
   });
 });

@@ -2,12 +2,12 @@
 // reader knows what they are holding before reading a word. Each stands on the same left edge under its
 // head (number, kind, name) on a hairline, with the editor's first line under it.
 import { memo, useState, type ReactNode } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { go } from '@/nav';
-import { curlQuotes, haulSlug, notePlain, quoteLead, quoteLength, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, quoteLength, type Item } from '@fdf/shared/haul';
 import { useEditionInk } from './edition';
 import { typeLabel } from '@fdf/shared/tokens';
-import { fonts, typeColor, usePalette, useScheme } from '@/theme';
+import { fonts, GUTTER, typeColor, usePalette, useScheme } from '@/theme';
 import { firstChart } from '@/lib/chart';
 import { pictureUri } from '@/lib/pictures';
 import { readKey, useReader } from '@/lib/store';
@@ -93,6 +93,7 @@ function FigureSpecimen({ item, n }: { item: Item; n: number }) {
 function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n: number }): ReactNode {
   const p = usePalette();
   const ink = useEditionInk() ?? p.ink2;
+  const { width } = useWindowDimensions();
   const tint = typeColor(p, item.type);
   const ex = item.excerpt;
   switch (form) {
@@ -201,7 +202,17 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
           {lead ? (
             <View>
               <Text accessible={false} style={[st.epiMark, { color: ink }]}>“</Text>
-              <Text style={[st.epiQ, { color: p.ink }]}>{curlQuotes(lead.lead)}</Text>
+              {(() => {
+                // Short parallel clauses go one to a line, sized so the longest fills the measure.
+                const ll = leadLines(lead.lead);
+                if (!ll) return <Text style={[st.epiQ, { color: p.ink }]}>{curlQuotes(lead.lead)}</Text>;
+                const size = Math.min(30, (width - 2 * GUTTER) / (ll.longest * 0.43));
+                return (
+                  <Text maxFontSizeMultiplier={1} style={[st.epiQ, { color: p.ink, fontSize: size, lineHeight: size * 1.1, letterSpacing: -size * 0.02 }]}>
+                    {ll.lines.map(curlQuotes).join('\n')}
+                  </Text>
+                );
+              })()}
               <Text numberOfLines={4} style={[st.epiRest, { color: p.ink2 }]}>{curlQuotes(lead.rest.trim())}</Text>
             </View>
           ) : (

@@ -4,9 +4,9 @@
 // marks inside the quotation never collide. The words are the stored, matched words; only straight
 // marks are set curly. The credit says whose words they are and where they were found.
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { curlQuotes, quoteLead, quoteLength } from '@fdf/shared/haul';
-import { fonts, usePalette, useTextScale } from '@/theme';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { curlQuotes, leadLines, quoteLead, quoteLength } from '@fdf/shared/haul';
+import { fonts, GUTTER, usePalette, useTextScale } from '@/theme';
 import { useEditionInk } from './edition';
 import { Meta } from './type';
 
@@ -78,16 +78,19 @@ export function LeadQuotation({ text, highlight, mark }: { text: string; highlig
   const p = usePalette();
   const k = useTextScale();
   const ink = useEditionInk() ?? p.ink2;
+  const { width } = useWindowDimensions();
   const lead = quoteLead(text, highlight);
   if (!lead) return <Quotation text={text} highlight={highlight} mark={mark} extract={quoteLength(text) === 'long'} />;
-  const size = 34 * Math.min(k, 1.1);
+  // Short parallel clauses go one to a line, the type sized so the longest fills the measure.
+  const lines = leadLines(lead.lead);
+  const size = lines ? Math.min(40, (width - 2 * GUTTER) / (lines.longest * 0.43)) : 34 * Math.min(k, 1.1);
   return (
     <View>
       <Text accessible={false} style={[st.mark, { color: ink, fontSize: 64, lineHeight: 64, height: 32 }]}>
         “
       </Text>
-      <Text selectable accessibilityRole="header" style={{ fontFamily: fonts.display, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.02, color: p.ink }}>
-        {curlQuotes(lead.lead)}
+      <Text selectable accessibilityRole="header" maxFontSizeMultiplier={lines ? 1 : undefined} style={{ fontFamily: fonts.display, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.02, color: p.ink }}>
+        {lines ? lines.lines.map((l, i) => curlQuotes(l) + (i < lines.lines.length - 1 ? '\n' : '')).join('') : curlQuotes(lead.lead)}
       </Text>
       {paras(lead.rest.trim()).map((para, i) => (
         <Text key={i} selectable style={{ marginTop: (i ? 12 : 16) * k, fontFamily: fonts.text, fontSize: 19 * k, lineHeight: 30 * k, color: p.ink }}>

@@ -3,7 +3,7 @@
 // a broadside, facing pages, a catalogue card or a page from the book. Every form shares the working
 // margin (meta, the machine's notes, speakers, section numbers), the running head, the thumb tab and
 // the folio. Mirrors apps/mobile/src/screens/ItemScreen.tsx.
-import { curlQuotes, haulSlug, notePlain, quoteLead, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
 import { editionOf, typeLabel } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
@@ -57,6 +57,9 @@ const sourceNoName = item.source.name.startsWith(`${item.creator}, `) ? item.sou
 // A long epigraph opens on its first clauses set large; the rest follows in the reading type.
 const epiLen = item.excerpt ? quoteLength(item.excerpt.text) : 'short';
 const epiLead = form === 'epigraph' && item.excerpt && epiLen !== 'short' ? quoteLead(item.excerpt.text, item.excerpt.highlight) : null;
+// A lead of short parallel clauses goes one clause to a line, sized to fill the measure.
+const epiLines = epiLead ? leadLines(epiLead.lead) : null;
+const llSize = epiLines ? `ll-${Math.max(8, epiLines.longest)}` : undefined;
 const lastmod = haulLastmod(haul);
 // A chart-led item is previewed by its chart's share card (the chart whole, with its title and credit).
 const chartCard = item.type === 'chart' ? item.blocks?.find((b) => b.kind === 'chart' && b.images?.share) : undefined;
@@ -208,7 +211,7 @@ const ogImage =
           <h1 class="sr" id="item-title">{titleText(item.title)}, {item.creator}</h1>
           {epiLead ? (
             <blockquote class="epi-q q-lead" cite={safeHref(item.source.url)}>
-              <p class="epi-lead"><span class="qt-mark" aria-hidden="true">&#8220;</span>{curlQuotes(epiLead.lead)}</p>
+              <p class:list={['epi-lead', llSize]}><span class="qt-mark" aria-hidden="true">&#8220;</span>{epiLines ? epiLines.lines.map((l) => <span class="ll">{curlQuotes(l)} </span>) : curlQuotes(epiLead.lead)}</p>
               <Highlighted text={epiLead.rest.trim()} highlight={item.excerpt.highlight !== epiLead.lead ? item.excerpt.highlight : undefined} class="epi-rest" breaks="line" curl />
             </blockquote>
           ) : (

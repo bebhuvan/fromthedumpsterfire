@@ -571,3 +571,16 @@ export function tidyDates<T extends { items: { source: { date: string } }[] }>(h
   for (const item of haul.items) item.source.date = sourceDate(item.source.date);
   return haul;
 }
+
+/**
+ * A quotation's lead set one clause to a line when it falls into short clauses ("It was the best of
+ * times, / it was the worst of times,"): two to four clauses, each at most thirty characters, broken
+ * after a comma, semicolon or colon. Display only: the lines joined with spaces are the lead. Null when
+ * the lead does not fall that way, and it wraps as prose. `longest` sizes the type to fill the measure.
+ */
+export function leadLines(lead: string): { lines: string[]; longest: number } | null {
+  const lines = (lead.match(/[^,;:]+(?:[,;:]+|$)/g) ?? []).map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2 || lines.length > 4 || lines.join(' ') !== lead.trim().replace(/\s+/g, ' ')) return null;
+  const longest = Math.max(...lines.map((l) => l.length));
+  return longest <= 30 ? { lines, longest } : null;
+}
