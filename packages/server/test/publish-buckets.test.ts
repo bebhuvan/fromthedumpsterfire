@@ -276,6 +276,14 @@ describe('item ids', () => {
     const { itemSlug } = await import('../src/publish');
     expect([itemSlug('Note'), itemSlug('Thread'), itemSlug('A note on threads')]).toEqual(['note-item', 'thread-item', 'a-note-on-threads']);
   });
+
+  it('keeps whole titles that fit and cuts long ones cleanly', async () => {
+    const { itemSlug } = await import('../src/publish');
+    expect(itemSlug('AI, public information, and the hope of a new civic consciousness')).toBe('ai-public-information-and-the-hope-of-a-new-civic-consciousness');
+    expect(itemSlug('Anatomy of a Frontier Lab Agent Intrusion: A Technical Timeline of the July 2026 Incident')).toBe('anatomy-of-a-frontier-lab-agent-intrusion');
+    expect(itemSlug('A very long title that keeps going and going without any break until it runs out of the room for it')).toBe('a-very-long-title-that-keeps-going-and-going-without-any-break-until-it-runs-out');
+    expect(itemSlug('Go: a very long subtitle that keeps going and going without any break until it runs out of room')).not.toBe('go');
+  });
 });
 
 describe('machine notes and ideas', () => {

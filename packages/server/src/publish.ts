@@ -39,9 +39,25 @@ export const INDEX_PATH = 'hauls/index.json';
 /** Item ids the website reserves for its own routes (/haul/1/note, /haul/1/thread/...). */
 export const RESERVED_ITEM_IDS = new Set(['note', 'thread']);
 
-/** A bundle item id from a title, never one of the reserved route words. */
+/** Little words an item's address never ends on ("…hope-of-a-new" reads as cut off). */
+const SLUG_TAIL_WORDS = new Set(['a', 'an', 'and', 'at', 'by', 'for', 'from', 'in', 'is', 'of', 'on', 'or', 'the', 'to', 'with']);
+const ITEM_SLUG_MAX = 80;
+
+/**
+ * A bundle item id from a title, never one of the reserved route words. A title that fits keeps
+ * every word; a longer one keeps its head before a colon or full stop when that says enough
+ * ("anatomy-of-a-frontier-lab-agent-intrusion"), else is cut at a word and never ends on a little word.
+ */
 export function itemSlug(title: string): string {
-  const s = slugify(title);
+  let s = slugify(title, ITEM_SLUG_MAX);
+  if (slugify(title, 1000).length > ITEM_SLUG_MAX) {
+    const head = title.split(/[:.?!;—–]\s/)[0] ?? title;
+    const h = slugify(head, ITEM_SLUG_MAX);
+    if (head !== title && h.split('-').length >= 3) s = h;
+    const words = s.split('-');
+    while (words.length > 1 && SLUG_TAIL_WORDS.has(words.at(-1)!)) words.pop();
+    s = words.join('-');
+  }
   return RESERVED_ITEM_IDS.has(s) ? `${s}-item` : s;
 }
 
@@ -105,7 +121,8 @@ export function bundleItemIds(items: Pick<ItemRow, 'id' | 'title' | 'title_choic
   for (const it of items) {
     const t = parseJson<Title | null>(it.title_choice, null)?.text ?? it.title ?? 'item';
     let s = itemSlug(t);
-    for (let k = 2; used.has(s); k++) s = `${slugify(t, 44)}-${k}`;
+    const base = s;
+    for (let k = 2; used.has(s); k++) s = `${base}-${k}`;
     used.add(s);
     idFor.set(it.id, s);
   }
