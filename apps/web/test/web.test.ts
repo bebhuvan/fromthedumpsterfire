@@ -10,7 +10,7 @@ import { esc, rss, sitemap } from '../src/lib/xml';
 import { itemMarkdown, threadMarkdown, llmsTxt, llmsFullTxt } from '../src/lib/markdown';
 import { tokensCss } from '../src/lib/tokens-css';
 import { assetLinks, appleAppSiteAssociation } from '../src/lib/applinks';
-import { aliasFor, cacheControl, pageCacheKey, sameOriginRedirect, markdownMirrorFor, prefersMarkdown, discoveryLinkHeader } from '../src/worker/lib';
+import { CSP, aliasFor, cacheControl, pageCacheKey, sameOriginRedirect, markdownMirrorFor, prefersMarkdown, discoveryLinkHeader } from '../src/worker/lib';
 
 const haul = seedHaul as Haul;
 const index = seedIndex as HaulIndex;
@@ -396,3 +396,12 @@ describe('SEO & metadata helpers', () => {
   });
 });
 
+
+describe('CSP', () => {
+  it('lets only Cloudflare Web Analytics in from outside, and still no inline script', () => {
+    const dir = (name: string) => CSP.split('; ').find((d) => d.startsWith(`${name} `));
+    expect(dir('script-src')).toBe("script-src 'self' https://static.cloudflareinsights.com");
+    expect(dir('connect-src')).toBe("connect-src 'self' https://cloudflareinsights.com");
+    expect(CSP).not.toContain('unsafe-inline');
+  });
+});

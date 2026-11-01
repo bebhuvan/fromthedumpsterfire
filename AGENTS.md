@@ -139,7 +139,8 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   (`/haul/<n>`, `/haul/<n>/<item>`, `/haul/<n>/thread/<id>`).
 - Never `set:html`; bundle text is always escaped, italic title tails render as `<em>`, external
   links go through `safeHref` (http/https only). No inline scripts or styles: the CSP in
-  `src/worker/lib.ts` is `script-src 'self'; style-src 'self'`, and `frame-src` names only the players
+  `src/worker/lib.ts` is `script-src 'self'; style-src 'self'` (plus Cloudflare Web Analytics' beacon, which
+  the edge injects: `static.cloudflareinsights.com` for the script, `cloudflareinsights.com` to report), and `frame-src` names only the players
   `embedSrc` in `@fdf/shared/haul` can build (youtube-nocookie, Vimeo, Spotify, Apple Podcasts).
   Positions (the fingerprint) are classes on a 100-column grid, never inline styles.
 - Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue

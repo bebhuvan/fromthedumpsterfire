@@ -400,3 +400,10 @@ Dated, newest last. Don't reopen these without a new reason.
   `@fdf/shared/about`; `rel="license"` on the link. Quotations, excerpts, pictures and every other
   work shown stay with their makers under their own terms. No separate licence page (the editor: a
   footer mention is enough).
+
+- **Cloudflare Web Analytics is allowed through the CSP (2026-11-01).** The edge injects its beacon into
+  every HTML page for browsers, and `script-src 'self'` blocked it, so the dashboard saw nothing. The
+  CSP now names `https://static.cloudflareinsights.com` (script) and `https://cloudflareinsights.com`
+  (reports) and nothing else from outside; it is cookieless and we add no script of our own for it.
+  Rejected for now: counting views in the Worker with Analytics Engine (no third-party script, but no
+  dashboard and weaker bot filtering).

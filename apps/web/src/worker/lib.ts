@@ -13,12 +13,14 @@ export const APEX = 'fromthedumpsterfire.com';
 
 export const CSP = [
   "default-src 'none'",
-  "script-src 'self'",
+  // Cloudflare Web Analytics: the edge injects its beacon, which loads from static.cloudflareinsights.com
+  // and reports to cloudflareinsights.com. Cookieless; nothing else third-party runs.
+  "script-src 'self' https://static.cloudflareinsights.com",
   "style-src 'self'",
   "img-src 'self' https:",
   "media-src 'self' https:",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://cloudflareinsights.com",
   // Only the players the bundle can name (embedSrc in @fdf/shared/haul).
   'frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://embed.podcasts.apple.com',
   "manifest-src 'self'",
