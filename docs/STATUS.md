@@ -659,8 +659,11 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   site's footer ("The code", `SOURCE_URL` in `apps/web/src/lib/site.ts`). Before the first push the history was
   rewritten: every commit signed `bhuvan@bebhuvan.com`, and the editor's Gmail replaced with `owner@example.com`.
   Local branches made before that (lives, charts-kit, the worktrees) still carry the old history; don't push them.
-- `OWNER_EMAIL` is no longer a var in `workers/api/wrangler.jsonc`. It must be a secret on both Desk Workers
-  before the next Desk deploy, or Access lets nobody in (fail closed):
+  The editor's checkout has a local `pre-push` hook (in `.git/hooks`, never pushed) that refuses any commit signed
+  by another address or carrying a private one. The pre-rewrite history is kept off the repo, in
+  `~/.local/share/fdf/backups/`.
+- `OWNER_EMAIL` is no longer a var in `workers/api/wrangler.jsonc`. It is a secret on both Desk Workers (set
+  2026-11-01, after redeploying each without the var). Without it Access lets nobody in (fail closed). To change it:
   `npx wrangler secret put OWNER_EMAIL -c workers/api/wrangler.jsonc --env production` (and `--env preview`).
 
 ## Milestones
