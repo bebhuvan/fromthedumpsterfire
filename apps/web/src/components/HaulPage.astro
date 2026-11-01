@@ -39,7 +39,9 @@ const numOf = new Map(haul.items.map((i, n) => [i.id, String(n + 1).padStart(2, 
 const last = note.paragraphs.length - 1;
 const slug = haulSlug(haul.number);
 const issueTitle = `Haul ${haul.number}: ${titleText(haul.title)}`;
-const coverImage = haulCoverImage(haul);
+// The front page is the publication, so a link to it is previewed by the site's card; the Haul's own
+// card belongs to /haul/<n>.
+const coverImage = home ? undefined : haulCoverImage(haul);
 const lastmod = haulLastmod(haul);
 const coverPlate = haul.cover;
 const coverSrc = coverPlate ? safeHref(coverPlate.url) : undefined;
@@ -52,7 +54,7 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
   title={home ? `Haul ${slug}: ${titleText(haul.title)}` : issueTitle}
   description={home ? `${haul.deck} ${SITE_DESCRIPTION}` : haul.deck}
   path={home ? paths.home : paths.haul(haul.number)}
-  type="article"
+  type={home ? 'website' : 'article'}
   image={coverImage}
   section={home ? 'latest' : undefined}
   bigMast={home}
