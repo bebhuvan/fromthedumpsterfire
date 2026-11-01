@@ -18,6 +18,8 @@ export function findHaul(
 export const SITE = 'https://fromthedumpsterfire.com';
 export const SITE_NAME = 'From the Dumpster Fire';
 export const EDITOR_NAME = 'Bhuvanesh';
+/** The site, the Desk and the app, in the open. */
+export const SOURCE_URL = 'https://github.com/bebhuvan/fromthedumpsterfire';
 export const SITE_DESCRIPTION =
   'Irregular hauls of things worth salvaging from the internet and the archive, chosen by one editor and read closely with machines.';
 

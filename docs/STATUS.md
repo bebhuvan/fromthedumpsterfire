@@ -652,6 +652,17 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
   note to the editor going to bhuvan@bebhuvan.com. The live route served a manifest whose signature
   verified and every asset matched its hash. Undo: `npm run app:update -- --rollback`.
 
+
+## The code in the open (2026-11-01)
+
+- Public at https://github.com/bebhuvan/fromthedumpsterfire (`main` and `launch-2026-10-24`), linked from the
+  site's footer ("The code", `SOURCE_URL` in `apps/web/src/lib/site.ts`). Before the first push the history was
+  rewritten: every commit signed `bhuvan@bebhuvan.com`, and the editor's Gmail replaced with `owner@example.com`.
+  Local branches made before that (lives, charts-kit, the worktrees) still carry the old history; don't push them.
+- `OWNER_EMAIL` is no longer a var in `workers/api/wrangler.jsonc`. It must be a secret on both Desk Workers
+  before the next Desk deploy, or Access lets nobody in (fail closed):
+  `npx wrangler secret put OWNER_EMAIL -c workers/api/wrangler.jsonc --env production` (and `--env preview`).
+
 ## Milestones
 
 1. **Reader app**: built; next is on-device polish and a real first Haul. ← in progress

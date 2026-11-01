@@ -4,7 +4,7 @@
 import '../styles/global.css';
 import { palettes } from '@fdf/shared/tokens';
 import { LICENCE } from '@fdf/shared/about';
-import { absolute, EDITOR_NAME, paths, SITE_DESCRIPTION, SITE_NAME } from '../lib/site';
+import { absolute, EDITOR_NAME, paths, SITE_DESCRIPTION, SITE_NAME, SOURCE_URL } from '../lib/site';
 import { markdownMirrorFor } from '../worker/lib';
 import Masthead from '../components/Masthead.astro';
 import Fingerprint from '../components/Fingerprint.astro';
@@ -176,6 +176,7 @@ const nav = [
         <a href={paths.shelf}>The shelf</a>
         <a href={paths.about}>How it's made</a>
         <a href={paths.feed}>RSS</a>
+        <a href={SOURCE_URL} rel="noopener noreferrer">The code</a>
       </nav>
       <p class="c foot-app">A mobile app is coming soon.</p>
       <p class="c foot-licence">{LICENCE.before}<a rel="license" itemprop="license" href={LICENCE.url}>{LICENCE.name}</a>{LICENCE.after}</p>

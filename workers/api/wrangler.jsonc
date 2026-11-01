@@ -33,7 +33,7 @@
         // Empty values deny every Desk request (fail closed).
         "ACCESS_TEAM_DOMAIN": "nameless-cell-b28f.cloudflareaccess.com",
         "ACCESS_AUD": "7563cb7bfd315acef12832457cb54f0294d9cb9d2612d4198a91066b78ddef4f",
-        "OWNER_EMAIL": "owner@example.com",
+        // OWNER_EMAIL (the one address Access lets in) is a secret, set with `wrangler secret put`, so it stays off GitHub.
         // Exact Access service Client IDs; empty keeps machine access off. See docs/EDITORIAL.md.
         "ACCESS_SERVICE_CLIENT_IDS": "3e90eab300e2381903d974809c091fcc.access",
         "ACCESS_SERVICE_PUBLISH_CLIENT_IDS": ""
@@ -65,7 +65,7 @@
         "AI_GATEWAY_ID": "fdf",
         "ACCESS_TEAM_DOMAIN": "nameless-cell-b28f.cloudflareaccess.com",
         "ACCESS_AUD": "fb6c6d7db7c68cb8be14e68af742081fe5ee0582d8c2eafc622ce36d735519c5",
-        "OWNER_EMAIL": "owner@example.com",
+        // OWNER_EMAIL (the one address Access lets in) is a secret, set with `wrangler secret put`, so it stays off GitHub.
         // Exact Access service Client IDs; empty keeps machine access off. See docs/EDITORIAL.md.
         "ACCESS_SERVICE_CLIENT_IDS": "9346d4d5af5f18122365892814b58aa0.access,79001c9b73ca2b771db68d94ec18969b.access",
         // The editor's own machine (claude-omarchy) may publish, on the editor's explicit "approved" (2026-10-31).
