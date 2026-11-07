@@ -1,11 +1,33 @@
 // A preview of the assembled bundle, laid out like the reader app (cover, field note, items).
 // Everything here comes from the bundle that would be published, rendered as text (never as HTML).
 
-import { haulSlug, type Haul, type Item } from '@fdf/shared/haul';
+import { haulSlug, type Haul, type Item, type NoteRun } from '@fdf/shared/haul';
+import { linkGroups, markRuns } from '@fdf/shared/fieldnote';
 import { editionOf, typeLabel, typeSwatch, type Edition } from '@fdf/shared/tokens';
 import { unitsLine } from '@fdf/shared/charts';
 import { ChartPreview } from '../lib/charts';
 import { safeHref } from '../lib/core';
+
+/** A paragraph of the field note's body: links on the editor's words, italics, the highlight. */
+function Runs({ runs, highlight }: { runs: NoteRun[]; highlight?: string }) {
+  const piece = (r: NoteRun & { mark?: boolean }, k: number) => {
+    const t = r.em ? <i key={k}>{r.text}</i> : <span key={k}>{r.text}</span>;
+    return r.mark ? <mark key={k}>{t}</mark> : t;
+  };
+  return (
+    <>
+      {linkGroups(markRuns(runs, highlight)).map((g, i) =>
+        g.url ? (
+          <a key={i} href={safeHref(g.url)} target="_blank" rel="noreferrer noopener">
+            {g.runs.map(piece)}
+          </a>
+        ) : (
+          <span key={i}>{g.runs.map(piece)}</span>
+        ),
+      )}
+    </>
+  );
+}
 
 function Highlighted({ text, highlight }: { text: string; highlight?: string }) {
   if (!highlight) return <>{text}</>;
@@ -119,11 +141,29 @@ export function Preview({ haul }: { haul: Haul }) {
           <h3 className="display" style={{ fontSize: 32, margin: '6px 0 0' }}>
             {fn.title.text} {fn.title.italic && <i>{fn.title.italic}</i>}
           </h3>
-          {fn.paragraphs.map((p, i) => (
-            <p key={i} className="serif" style={{ fontSize: 17.5, lineHeight: 1.55, margin: '12px 0 0', ['--type' as string]: `var(--${haul.swatch})` }}>
-              <Highlighted text={p} highlight={fn.highlight && p.includes(fn.highlight) ? fn.highlight : undefined} />
-            </p>
-          ))}
+          {fn.body
+            ? fn.body.map((b, i) => {
+                const para = { fontSize: 17.5, lineHeight: 1.55, margin: '12px 0 0', ['--type' as string]: `var(--${haul.swatch})` };
+                if (b.kind === 'paragraph') return <p key={i} className="serif" style={para}><Runs runs={b.runs} highlight={fn.highlight} /></p>;
+                if (b.kind === 'heading') return <h4 key={i} className="display" style={{ fontSize: 22, margin: '22px 0 0' }}>{b.text}</h4>;
+                if (b.kind === 'quotation')
+                  return (
+                    <blockquote key={i} style={{ margin: '12px 0 0 14px', paddingLeft: 12, borderLeft: '2px solid var(--rule)' }}>
+                      {b.paragraphs.map((runs, k) => <p key={k} className="serif" style={{ ...para, margin: k ? '8px 0 0' : 0 }}><Runs runs={runs} highlight={fn.highlight} /></p>)}
+                    </blockquote>
+                  );
+                return (
+                  <div key={i} className="small" style={{ margin: '14px 0 0', padding: '10px 12px', border: '1px solid var(--rule)' }}>
+                    <span className="label">{b.kind === 'post' ? 'X post' : b.kind === 'audio' ? 'Podcast' : 'Video'}</span>{' '}
+                    {b.kind === 'post' ? `${b.author} (@${b.handle}): ${b.text}` : b.title}
+                  </div>
+                );
+              })
+            : fn.paragraphs.map((p, i) => (
+                <p key={i} className="serif" style={{ fontSize: 17.5, lineHeight: 1.55, margin: '12px 0 0', ['--type' as string]: `var(--${haul.swatch})` }}>
+                  <Highlighted text={p} highlight={fn.highlight && p.includes(fn.highlight) ? fn.highlight : undefined} />
+                </p>
+              ))}
           {fn.route.length > 0 && (
             <>
               <div className="label" style={{ marginTop: 22 }}>The route</div>

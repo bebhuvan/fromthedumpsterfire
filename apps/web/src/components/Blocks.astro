@@ -16,8 +16,13 @@ interface Props {
   blocks: Block[];
   /** Name of the source, for the line under a pull quote. */
   source?: string;
+  /** Set inside a reading column (the field note's embeds), not on the page grid. */
+  inColumn?: boolean;
 }
-const { blocks, source } = Astro.props;
+const { blocks, source, inColumn = false } = Astro.props;
+// On the page each block is a grid row with its parts in the reading column; in a column, plain.
+const g = inColumn ? '' : 'g';
+const c = inColumn ? '' : 'c';
 // Charts are numbered as figures within the item.
 const figureOf = new Map(blocks.filter((b) => b.kind === 'chart').map((b, i) => [b, i + 1]));
 const clock = (s?: number) => {
@@ -30,26 +35,26 @@ const clock = (s?: number) => {
 const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
 ---
 {blocks.length ? (
-  <div class="wrap blocks">
+  <div class:list={[inColumn ? 'fn-blocks' : 'wrap blocks']}>
     {blocks.map((b) => {
       if (b.kind === 'quote') {
         // Quotes in a row read as one run: each names its place, the last says once where they are from.
         const endsRun = blocks[blocks.indexOf(b) + 1]?.kind !== 'quote';
         return (
-          <div class:list={['g blk blk-quote', { 'qt-runs-on': !endsRun }]}>
-            <Quote class="c" text={b.text} credit={endsRun ? [b.locator ?? '', source ? `${source} · matched word for word` : 'matched word for word against the source'] : [b.locator ?? '']} />
+          <div class:list={[g, 'blk blk-quote', { 'qt-runs-on': !endsRun }]}>
+            <Quote class={c || undefined} text={b.text} credit={endsRun ? [b.locator ?? '', source ? `${source} · matched word for word` : 'matched word for word against the source'] : [b.locator ?? '']} />
           </div>
         );
       }
       if (b.kind === 'code') {
         const n = lines(b.code);
         return (
-          <figure class="g blk blk-code">
-            <figcaption class="c code-cap">
+          <figure class:list={[g, 'blk blk-code']}>
+            <figcaption class:list={[c, 'code-cap']}>
               <span class="code-lang">{(b.lang && CODE_LANGS_SHORT[b.lang]) || b.lang || 'Code'}</span>
               {b.caption ? <span class="code-what">{b.caption}</span> : null}
             </figcaption>
-            <div class="c code-wrap" tabindex="0" role="region" aria-label={b.caption ? `Code: ${b.caption}` : 'Code'}>
+            <div class:list={[c, 'code-wrap']} tabindex="0" role="region" aria-label={b.caption ? `Code: ${b.caption}` : 'Code'}>
               <span class="code-gut" aria-hidden="true">{Array.from({ length: n }, (_, i) => <span>{i + 1}</span>)}</span>
               <pre class="code"><code>{(b.tokens ?? [['', b.code]]).map(([role, text]) => (role ? <span class={`k-${role}`}>{text}</span> : text))}</code></pre>
             </div>
@@ -59,8 +64,8 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
       if (b.kind === 'video') {
         const src = embedSrc(b);
         return (
-          <figure class="g blk blk-video">
-            <div class="c player player-16x9">
+          <figure class:list={[g, 'blk blk-video']}>
+            <div class:list={[c, 'player player-16x9']}>
               {src ? (
                 <iframe
                   src={src}
@@ -73,7 +78,7 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
                 ></iframe>
               ) : null}
             </div>
-            <figcaption class="c player-cap">
+            <figcaption class:list={[c, 'player-cap']}>
               <span class="player-t">{b.title}</span>
               <a href={videoHref(b)} rel="noopener noreferrer" target="_blank">Watch on {b.provider === 'youtube' ? 'YouTube' : 'Vimeo'}{b.start ? ` from ${clock(b.start)}` : ''}<span class="sr"> (opens in a new tab)</span></a>
             </figcaption>
@@ -84,12 +89,12 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
         const src = b.provider === 'file' ? safeHref(b.url) : embedSrc(b);
         const page = safeHref(b.url);
         return (
-          <figure class="g blk blk-audio">
-            <figcaption class="c player-cap player-cap-top">
+          <figure class:list={[g, 'blk blk-audio']}>
+            <figcaption class:list={[c, 'player-cap player-cap-top']}>
               <span class="player-t">{b.title}</span>
               {b.seconds || b.start ? <span class="player-meta">{[b.seconds ? clock(b.seconds) : '', b.start ? `start at ${clock(b.start)}` : ''].filter(Boolean).join(' · ')}</span> : null}
             </figcaption>
-            <div class:list={['c', 'player', `player-${b.provider}`]}>
+            <div class:list={[c, 'player', `player-${b.provider}`]}>
               {b.provider === 'file' && src ? (
                 <audio controls preload="none" src={b.start ? `${src}#t=${Math.floor(b.start)}` : src}>
                   <a href={src}>Download the audio</a>
@@ -106,7 +111,7 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
               ) : null}
             </div>
             {b.provider !== 'file' && page ? (
-              <p class="c player-cap"><a href={page} rel="noopener noreferrer" target="_blank">Open in {b.provider === 'spotify' ? 'Spotify' : 'Apple Podcasts'}<span class="sr"> (opens in a new tab)</span></a></p>
+              <p class:list={[c, 'player-cap']}><a href={page} rel="noopener noreferrer" target="_blank">Open in {b.provider === 'spotify' ? 'Spotify' : 'Apple Podcasts'}<span class="sr"> (opens in a new tab)</span></a></p>
             ) : null}
           </figure>
         );
@@ -114,8 +119,8 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
       if (b.kind === 'post') {
         const href = safeHref(b.url);
         return (
-          <figure class="g blk blk-post s-aqua">
-            <div class="c post">
+          <figure class:list={[g, 'blk blk-post s-aqua']}>
+            <div class:list={[c, 'post']}>
               <dl class="clip-head post-head">
                 <div><dt>From</dt><dd><span class="clip-name">{b.author}</span><span class="clip-handle">@{b.handle}</span></dd></div>
                 <div><dt>On</dt><dd>X</dd></div>
@@ -123,7 +128,7 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
               </dl>
               <blockquote class="post-text" cite={href}><p>{b.text}</p></blockquote>
             </div>
-            <figcaption class="c post-cap">
+            <figcaption class:list={[c, 'post-cap']}>
               {b.truncated ? 'X gives the start of this post; the rest is on X. ' : ''}
               {href ? <a href={href} rel="noopener noreferrer" target="_blank">Read the post on X<span class="sr"> (opens in a new tab)</span></a> : null}
             </figcaption>
@@ -137,9 +142,9 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
       if (b.kind === 'image') {
         const src = safeHref(b.plate.url);
         return src ? (
-          <figure class="g blk blk-image">
-            <img class="c" src={src} width={b.plate.width} height={b.plate.height} alt={b.plate.caption || ''} loading="lazy" decoding="async" />
-            <figcaption class="c plate-cap"><Credit plate={b.plate} /></figcaption>
+          <figure class:list={[g, 'blk blk-image']}>
+            <img class={c || undefined} src={src} width={b.plate.width} height={b.plate.height} alt={b.plate.caption || ''} loading="lazy" decoding="async" />
+            <figcaption class:list={[c, 'plate-cap']}><Credit plate={b.plate} /></figcaption>
           </figure>
         ) : null;
       }

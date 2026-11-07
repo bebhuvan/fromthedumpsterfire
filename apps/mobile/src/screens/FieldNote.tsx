@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { haulSlug, type Haul } from '@fdf/shared/haul';
 import { fonts, typeColor, useEdition, usePalette } from '@/theme';
-import { Highlighted, Machine, Title } from '@/ui/type';
+import { Machine, Title } from '@/ui/type';
+import { NoteBody } from '@/ui/NoteBody';
 import { Action, Apparatus, Folio, RunHead, Sign, TopBar, VoiceNote, playable } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 
@@ -33,10 +34,8 @@ export function FieldNote({ haul }: { haul: Haul }) {
         </View>
       ) : null}
 
-      <View style={{ marginTop: 22, gap: 16 }}>
-        {note.paragraphs.map((para, i) => (
-          <Highlighted key={i} text={para} highlight={note.highlight} color={p.swatch.butter} style={styles.para} />
-        ))}
+      <View style={{ marginTop: 22 }}>
+        <NoteBody note={note} para={styles.para} gap={16} />
       </View>
       <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
 

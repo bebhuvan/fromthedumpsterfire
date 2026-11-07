@@ -120,6 +120,8 @@ export interface HaulRow {
   fn_body: string;
   fn_highlight: string | null;
   fn_note_id: string | null;
+  /** The field note's embeds, resolved from its lone links (0010; fieldnote.ts). */
+  fn_embeds?: string;
   cover_plate: string | null;
   /** The Haul's edition colour (0006); NULL means editionOf(number). */
   edition?: string | null;

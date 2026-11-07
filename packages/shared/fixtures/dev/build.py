@@ -10,13 +10,36 @@ def item(id, type, title, creator, src, date, url, why, **kw):
     d = {"id": id, "type": type, "title": title if isinstance(title, dict) else {"text": title}, "creator": creator,
          "source": {"name": src, "date": date, "url": url}, "why": {"text": why}, "marginalia": [], "wiki": [], "connections": []}
     d.update(kw); return d
+# The field note as the editor sets it out (FieldNote.body): a heading, links and italics, a quotation,
+# a video and a post between the paragraphs. FN_PARAS is its plain words, as bodyParagraphs gives them.
+FN_POST = {"kind": "post", "platform": "x", "url": "https://x.com/samplewriter/status/1000000000000000002", "author": "Sample Writer", "handle": "samplewriter",
+           "date": "4 October 2026", "text": "A second sample post, set inside the field note between two paragraphs."}
+FN_VIDEO = {"kind": "video", "provider": "youtube", "id": "UF8uR6Z6KLc", "title": "Steve Jobs' 2005 Stanford Commencement Address",
+            "poster": {"url": "https://i.ytimg.com/vi/UF8uR6Z6KLc/hqdefault.jpg", "width": 480, "height": 360}}
+FN_BODY = [
+  {"kind": "paragraph", "runs": [{"text": "This is a development sample. It holds one of every kind of thing the magazine can carry, so the pages can be checked before real Hauls arrive."}]},
+  {"kind": "heading", "text": "What the field note can hold"},
+  {"kind": "paragraph", "runs": [{"text": "Each object here is set in its own printed form. The note itself can carry links, like "},
+     {"text": "the letter to Mrs. Bixby", "url": "https://en.wikipedia.org/wiki/Bixby_letter"}, {"text": ", titles in italic, like "},
+     {"text": "Walden", "em": True}, {"text": ", and quotations:"}]},
+  {"kind": "quotation", "paragraphs": [[{"text": "Stay hungry. Stay foolish."}], [{"text": "A second quoted paragraph, from "}, {"text": "the same speech", "url": "https://www.youtube.com/watch?v=UF8uR6Z6KLc"}, {"text": "."}]]},
+  {"kind": "paragraph", "runs": [{"text": "A video sits between paragraphs when its link is on a line of its own:"}]},
+  FN_VIDEO,
+  {"kind": "paragraph", "runs": [{"text": "And so does a post from X, drawn as a clipping in its own words."}]},
+  FN_POST,
+  {"kind": "paragraph", "runs": [{"text": "Each carries the rich media a Haul can hold: code, a video, a podcast, a pull quote and a picture."}]},
+]
+def _plain(b):
+    if b["kind"] == "paragraph": return ["".join(r["text"] for r in b["runs"])]
+    if b["kind"] == "heading": return [b["text"]]
+    if b["kind"] == "quotation": return ["".join(r["text"] for r in p) for p in b["paragraphs"]]
+    return []
+FN_PARAS = [t for b in FN_BODY for t in _plain(b)]
 h2 = {
  "bundleVersion": 1, "number": 2, "version": 1, "title": {"text": "Letters to", "italic": "the next people"},
  "deck": "A president's condolence, a commencement speech, a print of a wave, and a tool for keeping data where others can find it.",
  "publishedAt": "2026-10-22", "swatch": "lilac",
- "fieldNote": {"title": {"text": "Sample Haul,", "italic": "for the layout"}, "paragraphs": [
-   "This is a development sample. It holds one of every kind of thing the magazine can carry, so the pages can be checked before real Hauls arrive.",
-   "Each object here is set in its own printed form, and each carries the rich media a Haul can hold: code, a video, a podcast, a pull quote and a picture."],
+ "fieldNote": {"title": {"text": "Sample Haul,", "italic": "for the layout"}, "paragraphs": FN_PARAS, "body": FN_BODY,
    "highlight": "one of every kind of thing the magazine can carry", "route": [
    {"day": "Mon", "text": "A letter from 1864, still read aloud.", "by": "editor", "itemId": "bixby"},
    {"day": "Wed", "text": "A tool for publishing data, with its one command.", "by": "editor", "itemId": "datasette"},

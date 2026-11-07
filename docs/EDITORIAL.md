@@ -342,7 +342,16 @@ npm run editorial -- preview hl_ID --out .editorial/preview.json
 ```
 
 `haul.json` can include `title_text`, `title_italic`, `deck`, `fn_title_text`, `fn_body`, `edition`,
-`colophon` and `route`. The field note is the editor's dictated opening. `order.json` is
+`colophon` and `route`. The field note is the editor's opening, the essay readers meet first on the
+Haul's page. `fn_body` is the editor's text with a few marks (`packages/shared/src/fieldnote.ts`): a
+blank line between paragraphs, `## ` for a section heading, `> ` lines for a quotation (a `>` line
+alone between quoted paragraphs), `[their words](https://…)` for a link and `*a title*` for italic. A
+YouTube or Vimeo video, a Spotify episode or show, or an X post on a line of its own is set there as
+an embed: the Desk resolves it by code when the note is saved (`hauls.fn_embeds`; the Haul shows each
+one, or why it was refused, under `haul.fn_embeds`; `request POST /api/hauls/ID/field-note/embeds`
+retries the refused ones), and the publish refuses an embed link it could not resolve. Marks are only
+deleted, never reworded. A markdown essay goes in as it is, minus its own title line, which goes in
+`fn_title_text`. `order.json` is
 `{"itemIds":["it_FIRST","it_SECOND"]}`: it sets the **whole** ordered list. Read the current Haul
 before replacing the list. `new-haul` always creates a new draft; inspect `hauls` before repeating.
 

@@ -52,11 +52,34 @@ export interface RouteStep {
 export interface FieldNote {
   title: Title;
   audio?: Audio;
+  /**
+   * The note's words as plain paragraphs: every paragraph, heading and quoted paragraph of `body`,
+   * links reduced to their words, embeds left out. Readers without `body` print these; search, feeds
+   * and the highlight check read them.
+   */
   paragraphs: string[];
+  /**
+   * The note as the editor set it out (added 2026-11-07): paragraphs with their links and italics,
+   * section headings, quotations, and videos, podcasts and X posts set between the paragraphs. Built
+   * at publish from the editor's text (fieldnote.ts), only by deleting marks, so the words are theirs;
+   * each embed is resolved from the editor's link by code. Absent: print `paragraphs`.
+   */
+  body?: NoteBlock[];
   /** A sentence from the paragraphs to mark with the highlighter. */
   highlight?: string;
   route: RouteStep[];
 }
+
+/** A video, podcast or X post set in the field note, drawn as the same block an item carries. */
+export type NoteEmbed = Extract<Block, { kind: 'video' | 'audio' | 'post' }>;
+export const NOTE_EMBED_KINDS: readonly NoteEmbed['kind'][] = ['video', 'audio', 'post'];
+
+/** One piece of a field note's body, in reading order. */
+export type NoteBlock =
+  | { kind: 'paragraph'; runs: NoteRun[] }
+  | { kind: 'heading'; text: string }
+  | { kind: 'quotation'; paragraphs: NoteRun[][] }
+  | NoteEmbed;
 
 export interface Excerpt {
   text: string;
@@ -457,6 +480,8 @@ export interface NoteLink {
 export interface NoteRun {
   text: string;
   url?: string;
+  /** Set in italic: a title the editor wrote between asterisks (field notes, added 2026-11-07). */
+  em?: boolean;
 }
 
 // A link written into the note itself: "words" (https://…) or [words](https://…).

@@ -321,35 +321,43 @@ export function trimCode(code: string): string {
   return code.replace(/\r\n?/g, '\n').replace(/[ \t]+$/gm, '').replace(/^\n+|\n+$/g, '');
 }
 
-export async function addVideo(env: Env, item: ItemRow, b: { url: string; start?: string }): Promise<string> {
-  const v = parseVideoLink(b.url);
-  const start = b.start?.trim() ? parseClock(b.start) : v.start;
-  if (b.start?.trim() && start == null) refuse('Start at a time like 42:06 or 1:02:14.', 400);
+/** A stored video block from the editor's link, with its poster's bytes to keep (none if it had none). */
+export async function videoBlock(url: string, startRaw?: string): Promise<{ body: Extract<StoredBlock, { kind: 'video' }>; poster?: { bytes: Uint8Array; mime: string; ext: string } }> {
+  const v = parseVideoLink(url);
+  const start = startRaw?.trim() ? parseClock(startRaw) : v.start;
+  if (startRaw?.trim() && start == null) refuse('Start at a time like 42:06 or 1:02:14.', 400);
   const r = await resolveVideo(v);
-  const id = newId('bk_');
-  let media: { key: string; mime: string } | undefined;
-  if (r.poster) {
-    media = { key: `blocks/${id}/poster.${EXT[r.poster.mime] ?? 'jpg'}`, mime: r.poster.mime };
-    await env.MEDIA.put(media.key, r.poster.bytes, { httpMetadata: { contentType: r.poster.mime } });
-  }
-  return insertBlock(
-    env,
-    item.id,
-    { kind: 'video', provider: v.provider, id: v.id, title: r.title, link: r.link, ...(start ? { start } : {}), ...(r.poster ? { poster: { width: r.poster.width, height: r.poster.height } } : {}) },
-    media,
-    id,
-  );
+  return {
+    body: { kind: 'video', provider: v.provider, id: v.id, title: r.title, link: r.link, ...(start ? { start } : {}), ...(r.poster ? { poster: { width: r.poster.width, height: r.poster.height } } : {}) },
+    ...(r.poster ? { poster: { bytes: r.poster.bytes, mime: r.poster.mime, ext: EXT[r.poster.mime] ?? 'jpg' } } : {}),
+  };
 }
 
-export async function addAudio(env: Env, item: ItemRow, b: { url: string; title?: string; start?: string }): Promise<string> {
-  const a = parseAudioLink(b.url);
+export async function addVideo(env: Env, item: ItemRow, b: { url: string; start?: string }): Promise<string> {
+  const { body, poster } = await videoBlock(b.url, b.start);
+  const id = newId('bk_');
+  let media: { key: string; mime: string } | undefined;
+  if (poster) {
+    media = { key: `blocks/${id}/poster.${poster.ext}`, mime: poster.mime };
+    await env.MEDIA.put(media.key, poster.bytes, { httpMetadata: { contentType: poster.mime } });
+  }
+  return insertBlock(env, item.id, body, media, id);
+}
+
+/** A stored audio block from the editor's link; `title` is required where the host does not say it. */
+export async function audioBlock(url: string, b: { title?: string; start?: string } = {}): Promise<Extract<StoredBlock, { kind: 'audio' }>> {
+  const a = parseAudioLink(url);
   const start = b.start?.trim() ? parseClock(b.start) : a.start;
   if (b.start?.trim() && start == null) refuse('Start at a time like 42:06 or 1:02:14.', 400);
   let title = b.title?.replace(/\s+/g, ' ').trim();
   if (a.provider === 'file') await checkAudioFile(a.url);
   if (!title && a.provider === 'spotify') title = (await oembed(`https://open.spotify.com/oembed?url=${encodeURIComponent(a.url)}`))?.title?.replace(/\s+/g, ' ').trim();
   if (!title) refuse(a.provider === 'spotify' ? 'Spotify did not give a title for that link (is it public?). Type the episode title.' : 'Type the episode or recording title; this host does not say it.', 400);
-  return insertBlock(env, item.id, { kind: 'audio', provider: a.provider, url: a.url, title: truncate(title!, 200), ...(start ? { start } : {}) });
+  return { kind: 'audio', provider: a.provider, url: a.url, title: truncate(title!, 200), ...(start ? { start } : {}) };
+}
+
+export async function addAudio(env: Env, item: ItemRow, b: { url: string; title?: string; start?: string }): Promise<string> {
+  return insertBlock(env, item.id, await audioBlock(b.url, b));
 }
 
 export interface PictureMeta {
@@ -481,8 +489,8 @@ export function houseDate(raw: string | undefined): string | undefined {
  * X's own public record of it (oEmbed). X gives long posts only to "…"; such a post is marked
  * truncated and readers are sent to it for the rest.
  */
-export async function addPost(env: Env, item: ItemRow, b: { url: string }): Promise<string> {
-  const url = xPostUrl(b.url);
+export async function postBlock(raw: string): Promise<Extract<StoredBlock, { kind: 'post' }>> {
+  const url = xPostUrl(raw);
   if (!url) return refuse('Paste the link to one post on X (x.com/<name>/status/<number>).', 400);
   const post = await fetchXPost(url).catch(() => refuse('X does not show this post publicly (it may be private, deleted or from a protected account).'));
   const text = post.text.trim();
@@ -490,7 +498,7 @@ export async function addPost(env: Env, item: ItemRow, b: { url: string }): Prom
   if (!text) return refuse('X gives no words for this post (a picture or video alone). Add the picture with its credit instead.');
   if (!post.author?.trim() || !handle || !/^[A-Za-z0-9_]{1,15}$/.test(handle)) return refuse('X did not say who posted this.');
   const date = houseDate(post.date);
-  return insertBlock(env, item.id, {
+  return {
     kind: 'post',
     platform: 'x',
     url: `https://x.com/${handle}/status/${url.split('/').pop()}`,
@@ -499,7 +507,11 @@ export async function addPost(env: Env, item: ItemRow, b: { url: string }): Prom
     text,
     ...(date ? { date } : {}),
     ...(/(…|\.\.\.)$/.test(text) ? { truncated: true } : {}),
-  });
+  };
+}
+
+export async function addPost(env: Env, item: ItemRow, b: { url: string }): Promise<string> {
+  return insertBlock(env, item.id, await postBlock(b.url));
 }
 
 // ---------------------------------------------------------------- charts

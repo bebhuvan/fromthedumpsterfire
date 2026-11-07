@@ -1,0 +1,48 @@
+---
+// The field note as the editor set it out (FieldNote.body): paragraphs with their links and italic
+// titles, section headings, quotations, and videos, podcasts and X posts between the paragraphs
+// (Blocks.astro, in the column). The first paragraph opens with the drop initial; the last one is
+// signed "B.". Bundle text is escaped; links go through safeHref; straight marks are set curly.
+import { curlQuotes, type FieldNote, type NoteBlock, type NoteRun } from '@fdf/shared/haul';
+import { linkGroups, markRuns } from '@fdf/shared/fieldnote';
+import { safeHref } from '../lib/site';
+import Blocks from './Blocks.astro';
+
+interface Props {
+  note: FieldNote;
+}
+const { note } = Astro.props;
+const body: NoteBlock[] = note.body ?? note.paragraphs.map((p) => ({ kind: 'paragraph', runs: [{ text: p }] }));
+const first = body.findIndex((b) => b.kind === 'paragraph');
+const last = body.findLastIndex((b) => b.kind === 'paragraph');
+const groups = (runs: NoteRun[]) => linkGroups(markRuns(runs, note.highlight)).map((g) => ({ ...g, href: g.url ? safeHref(g.url) : undefined }));
+---
+{body.map((b, i) => {
+  if (b.kind === 'heading') return <h3 class="fn-h">{curlQuotes(b.text)}</h3>;
+  if (b.kind === 'quotation') {
+    return (
+      <blockquote class="fn-q">
+        {b.paragraphs.map((runs) => (
+          <p>
+            {groups(runs).map((g) => {
+              const words = g.runs.map((r) => { const t = curlQuotes(r.text); const w = r.em ? <em>{t}</em> : t; return r.mark ? <mark>{w}</mark> : w; });
+              return g.href ? <a href={g.href} rel="noopener noreferrer" target="_blank">{words}<span class="sr"> (opens in a new tab)</span></a> : words;
+            })}
+          </p>
+        ))}
+      </blockquote>
+    );
+  }
+  if (b.kind === 'paragraph') {
+    return (
+      <p class:list={[{ 'fn-first': i === first }]}>
+        {groups(b.runs).map((g) => {
+          const words = g.runs.map((r) => { const t = curlQuotes(r.text); const w = r.em ? <em>{t}</em> : t; return r.mark ? <mark>{w}</mark> : w; });
+          return g.href ? <a href={g.href} rel="noopener noreferrer" target="_blank">{words}<span class="sr"> (opens in a new tab)</span></a> : words;
+        })}
+        {i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}
+      </p>
+    );
+  }
+  return <Blocks blocks={[b]} inColumn />;
+})}

@@ -2,8 +2,8 @@
 // It checks the shape (bundles are JSON assembled from a database, so types alone prove nothing)
 // and the invariants in test/fixtures.test.ts, plus the house rules that apply to published copy.
 
-import type { Block, Haul, HaulIndex, Item, Life, LifeCite, LifeLine, Title } from './haul';
-import { AUDIO_FORMATS, BLOCK_KINDS, BUNDLE_VERSION, embedSrc, haulSlug, xPostUrl } from './haul';
+import type { Block, Haul, HaulIndex, Item, Life, LifeCite, LifeLine, NoteBlock, NoteRun, Title } from './haul';
+import { AUDIO_FORMATS, BLOCK_KINDS, BUNDLE_VERSION, embedSrc, haulSlug, NOTE_EMBED_KINDS, xPostUrl } from './haul';
 import { CODE_ROLES, EDITIONS, SWATCHES as SWATCH_LIST, typeSwatch } from './tokens';
 import { checkStyle } from './style';
 import { validateChart } from './charts/validate';
@@ -343,6 +343,35 @@ function checkLife(c: Collector, life: Life, p: string) {
   for (const id of ids) if (!used.has(id)) c.err(`${p}.sources`, 'life', `"${id}" is listed but nothing cites it; the label names only what the profile was written from`);
 }
 
+/** A stretch of the editor's words: text, and at most a web link and italic. */
+function checkRuns(c: Collector, runs: NoteRun[], p: string) {
+  if (!c.arr(runs, p)) return;
+  if (!runs.length) c.err(p, 'shape', 'a paragraph has words');
+  runs.forEach((r, k) => {
+    const rp = `${p}[${k}]`;
+    if (!c.obj(r, rp)) return;
+    c.str(r.text, `${rp}.text`);
+    if (r.url !== undefined && (typeof r.url !== 'string' || !/^https?:\/\/[^\s]+$/i.test(r.url))) c.err(`${rp}.url`, 'link-url', 'a link goes to an http or https address');
+    if (r.em !== undefined && typeof r.em !== 'boolean') c.err(`${rp}.em`, 'shape', 'true or false');
+  });
+}
+
+/** One piece of the field note's body: a paragraph, heading, quotation, or a video, podcast or post. */
+function checkNoteBlock(c: Collector, b: NoteBlock, p: string) {
+  if (!c.obj(b, p)) return;
+  if (b.kind === 'paragraph') return checkRuns(c, b.runs, `${p}.runs`);
+  if (b.kind === 'heading') return void c.str(b.text, `${p}.text`);
+  if (b.kind === 'quotation') {
+    if (c.arr(b.paragraphs, `${p}.paragraphs`)) {
+      if (!b.paragraphs.length) c.err(`${p}.paragraphs`, 'shape', 'a quotation has at least one paragraph');
+      b.paragraphs.forEach((runs, k) => checkRuns(c, runs, `${p}.paragraphs[${k}]`));
+    }
+    return;
+  }
+  if (!NOTE_EMBED_KINDS.includes(b.kind)) return c.err(`${p}.kind`, 'shape', `paragraph, heading, quotation or one of ${NOTE_EMBED_KINDS.join(', ')}`);
+  checkBlock(c, b, p);
+}
+
 function checkBlock(c: Collector, b: Block, p: string) {
   if (!c.obj(b, p)) return;
   if (!BLOCK_KINDS.includes(b.kind)) return c.err(`${p}.kind`, 'shape', `one of ${BLOCK_KINDS.join(', ')}`);
@@ -453,6 +482,7 @@ export function validateHaul(haul: Haul, index?: HaulIndex, opts: ValidateOption
         c.err('fieldNote.highlight', 'highlight', 'the highlight is not in the field note text');
       }
     }
+    if (fn.body !== undefined && c.arr(fn.body, 'fieldNote.body')) fn.body.forEach((b, k) => checkNoteBlock(c, b, `fieldNote.body[${k}]`));
     c.audio(fn.audio, 'fieldNote.audio');
     if (c.arr(fn.route, 'fieldNote.route')) {
       fn.route.forEach((r, k) => {

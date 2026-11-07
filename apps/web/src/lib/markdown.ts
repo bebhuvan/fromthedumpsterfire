@@ -3,7 +3,8 @@
 // /haul/<n>/thread/<id>.md) so LLM crawlers, answer engines, and readers get clean, cited text
 // with explicit Editor vs Machine attribution.
 
-import { haulSlug, noteParagraphs, notePlain, type Haul, type Item, type Thread } from '@fdf/shared/haul';
+import { haulSlug, noteParagraphs, notePlain, videoHref, type FieldNote, type Haul, type Item, type NoteRun, type Thread } from '@fdf/shared/haul';
+import { linkGroups } from '@fdf/shared/fieldnote';
 import { typeLabel } from '@fdf/shared/tokens';
 import { formName, formOf } from './forms';
 import { lifeBylineText, lifeYears, whereFrom } from '@fdf/shared/life';
@@ -211,6 +212,27 @@ export function threadMarkdown(haul: Haul, thread: Thread, allHauls?: Haul[], he
   return lines.join('\n') + '\n';
 }
 
+const mdRuns = (runs: NoteRun[]) =>
+  linkGroups(runs)
+    .map((g) => {
+      const t = g.runs.map((r) => (r.em ? `*${r.text}*` : r.text)).join('');
+      return g.url ? `[${t}](${g.url})` : t;
+    })
+    .join('');
+
+/** The field note's lines: as the editor set it out when it has a body, else its paragraphs. */
+function fieldNoteMarkdown(note: FieldNote): string[] {
+  if (!note.body) return note.paragraphs.flatMap((p) => [p, '']);
+  return note.body.flatMap((b) => {
+    if (b.kind === 'paragraph') return [mdRuns(b.runs), ''];
+    if (b.kind === 'heading') return [`### ${b.text}`, ''];
+    if (b.kind === 'quotation') return [b.paragraphs.map((r) => `> ${mdRuns(r)}`).join('\n>\n'), ''];
+    if (b.kind === 'video') return [`[Video: ${b.title}](${videoHref(b)})`, ''];
+    if (b.kind === 'audio') return [`[Podcast: ${b.title}](${b.url})`, ''];
+    return [`> ${b.author} (@${b.handle}) on X${b.date ? `, ${b.date}` : ''}: ${b.text.replace(/\n+/g, ' ')}`, `> [Read the post](${b.url})`, ''];
+  });
+}
+
 /** Render a complete Haul issue as Markdown. */
 export function haulMarkdown(haul: Haul, allHauls?: Haul[]): string {
   const slug = haulSlug(haul.number);
@@ -232,7 +254,7 @@ export function haulMarkdown(haul: Haul, allHauls?: Haul[]): string {
     '',
     `## Field Note: ${titleText(note.title)} (Editor — ${EDITOR_NAME})`,
     '',
-    ...note.paragraphs.flatMap((p) => [p, '']),
+    ...fieldNoteMarkdown(note),
   ];
 
   if (note.route.length) {

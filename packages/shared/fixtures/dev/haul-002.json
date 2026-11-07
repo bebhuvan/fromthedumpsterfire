@@ -16,7 +16,115 @@
   },
   "paragraphs": [
    "This is a development sample. It holds one of every kind of thing the magazine can carry, so the pages can be checked before real Hauls arrive.",
-   "Each object here is set in its own printed form, and each carries the rich media a Haul can hold: code, a video, a podcast, a pull quote and a picture."
+   "What the field note can hold",
+   "Each object here is set in its own printed form. The note itself can carry links, like the letter to Mrs. Bixby, titles in italic, like Walden, and quotations:",
+   "Stay hungry. Stay foolish.",
+   "A second quoted paragraph, from the same speech.",
+   "A video sits between paragraphs when its link is on a line of its own:",
+   "And so does a post from X, drawn as a clipping in its own words.",
+   "Each carries the rich media a Haul can hold: code, a video, a podcast, a pull quote and a picture."
+  ],
+  "body": [
+   {
+    "kind": "paragraph",
+    "runs": [
+     {
+      "text": "This is a development sample. It holds one of every kind of thing the magazine can carry, so the pages can be checked before real Hauls arrive."
+     }
+    ]
+   },
+   {
+    "kind": "heading",
+    "text": "What the field note can hold"
+   },
+   {
+    "kind": "paragraph",
+    "runs": [
+     {
+      "text": "Each object here is set in its own printed form. The note itself can carry links, like "
+     },
+     {
+      "text": "the letter to Mrs. Bixby",
+      "url": "https://en.wikipedia.org/wiki/Bixby_letter"
+     },
+     {
+      "text": ", titles in italic, like "
+     },
+     {
+      "text": "Walden",
+      "em": true
+     },
+     {
+      "text": ", and quotations:"
+     }
+    ]
+   },
+   {
+    "kind": "quotation",
+    "paragraphs": [
+     [
+      {
+       "text": "Stay hungry. Stay foolish."
+      }
+     ],
+     [
+      {
+       "text": "A second quoted paragraph, from "
+      },
+      {
+       "text": "the same speech",
+       "url": "https://www.youtube.com/watch?v=UF8uR6Z6KLc"
+      },
+      {
+       "text": "."
+      }
+     ]
+    ]
+   },
+   {
+    "kind": "paragraph",
+    "runs": [
+     {
+      "text": "A video sits between paragraphs when its link is on a line of its own:"
+     }
+    ]
+   },
+   {
+    "kind": "video",
+    "provider": "youtube",
+    "id": "UF8uR6Z6KLc",
+    "title": "Steve Jobs' 2005 Stanford Commencement Address",
+    "poster": {
+     "url": "https://i.ytimg.com/vi/UF8uR6Z6KLc/hqdefault.jpg",
+     "width": 480,
+     "height": 360
+    }
+   },
+   {
+    "kind": "paragraph",
+    "runs": [
+     {
+      "text": "And so does a post from X, drawn as a clipping in its own words."
+     }
+    ]
+   },
+   {
+    "kind": "post",
+    "platform": "x",
+    "url": "https://x.com/samplewriter/status/1000000000000000002",
+    "author": "Sample Writer",
+    "handle": "samplewriter",
+    "date": "4 October 2026",
+    "text": "A second sample post, set inside the field note between two paragraphs."
+   },
+   {
+    "kind": "paragraph",
+    "runs": [
+     {
+      "text": "Each carries the rich media a Haul can hold: code, a video, a podcast, a pull quote and a picture."
+     }
+    ]
+   }
   ],
   "highlight": "one of every kind of thing the magazine can carry",
   "route": [
@@ -218,23 +326,6 @@
        "focus": [
         "India"
        ]
-      }
-     },
-     "images": {
-      "light": {
-       "url": "https://files.fromthedumpsterfire.com/hauls/002/media/datasette-3-chart-1f30f9171a29ace6-light.png",
-       "width": 1125,
-       "height": 773
-      },
-      "dark": {
-       "url": "https://files.fromthedumpsterfire.com/hauls/002/media/datasette-3-chart-1f30f9171a29ace6-dark.png",
-       "width": 1125,
-       "height": 773
-      },
-      "share": {
-       "url": "https://files.fromthedumpsterfire.com/hauls/002/media/datasette-3-chart-1f30f9171a29ace6-share.png",
-       "width": 1080,
-       "height": 1473
       }
      }
     },

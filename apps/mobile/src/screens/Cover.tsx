@@ -9,10 +9,11 @@ import { haulSlug, type Haul } from '@fdf/shared/haul';
 import { fonts, GUTTER, useEdition, usePalette } from '@/theme';
 import { longDate } from '@/lib/format';
 import { useReader } from '@/lib/store';
-import { Body, Highlighted, Machine, Meta, Title } from '@/ui/type';
+import { Body, Machine, Meta, Title } from '@/ui/type';
 import { Action, Apparatus, Divider, Masthead, Ornament, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Specimen } from '@/ui/Specimen';
+import { NoteBody } from '@/ui/NoteBody';
 import { Fingerprint, objects } from '@/ui/Fingerprint';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -78,10 +79,8 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
             <VoiceNote audio={note.audio} label="Hear it as I said it" />
           </View>
         ) : null}
-        <View style={{ marginTop: 16, gap: 14 }}>
-          {note.paragraphs.map((para, i) => (
-            <Highlighted key={i} text={para} highlight={note.highlight} color={p.swatch.butter} style={styles.para} />
-          ))}
+        <View style={{ marginTop: 16 }}>
+          <NoteBody note={note} para={styles.para} gap={14} />
         </View>
         <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
       </View>

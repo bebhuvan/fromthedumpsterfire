@@ -88,7 +88,7 @@ const Code = memo(function Code({ block }: { block: Extract<Block, { kind: 'code
 });
 
 /** The poster in a 16:9 frame with a play key; tapping it, or the line under it, opens the video on its own site. */
-function Video({ block }: { block: Extract<Block, { kind: 'video' }> }) {
+export function Video({ block }: { block: Extract<Block, { kind: 'video' }> }) {
   const p = usePalette();
   const [failed, setFailed] = useState(false);
   const site = block.provider === 'youtube' ? 'YouTube' : 'Vimeo';
@@ -119,7 +119,7 @@ function Video({ block }: { block: Extract<Block, { kind: 'video' }> }) {
 }
 
 /** An audio file plays in the editor's player; a Spotify or Apple episode is a row that opens its app. */
-function AudioBlock({ block }: { block: Extract<Block, { kind: 'audio' }> }) {
+export function AudioBlock({ block }: { block: Extract<Block, { kind: 'audio' }> }) {
   const p = usePalette();
   const app = block.provider === 'spotify' ? 'Spotify' : block.provider === 'apple' ? 'Apple Podcasts' : '';
   const meta = [block.seconds ? clock(block.seconds) : '', block.start ? `start at ${clock(block.start)}` : ''].filter(Boolean).join(' · ');
@@ -147,7 +147,7 @@ function AudioBlock({ block }: { block: Extract<Block, { kind: 'audio' }> }) {
 }
 
 /** An X post as the website sets it: a small clipping (from, on, date over a rule, then the words), the link under it. */
-function Post({ block }: { block: Extract<Block, { kind: 'post' }> }) {
+export function Post({ block }: { block: Extract<Block, { kind: 'post' }> }) {
   const p = usePalette();
   const k = useTextScale();
   const field = (key: string, v: string, sub?: string) => (

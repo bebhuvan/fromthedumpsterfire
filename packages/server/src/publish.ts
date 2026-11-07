@@ -23,6 +23,7 @@ import { imageSize, plateForBundle, type PlateRow } from './plates';
 import { formatOfNote } from './voice';
 import { threadsForHaul } from './connect';
 import { blocksFor, blocksForBundle, type ChartPictures } from './blocks';
+import { fieldNoteForBundle, type FieldNoteEmbeds } from './fieldnote';
 import { drawChartPictures, type ChartDrawer } from './chartdraw';
 import { chartKey, validateChart, type Chart } from '@fdf/shared/charts';
 import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
@@ -337,6 +338,11 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     return step;
   });
 
+  // The field note: the editor's text set out as its body, its embeds' posters copied next to the bundle.
+  const fn = fieldNoteForBundle(h.fn_body, parseJson<FieldNoteEmbeds>(h.fn_embeds ?? '{}', {}), `hauls/${slug}/media/field-note`, filesBase);
+  copies.push(...fn.copies);
+  for (const m of fn.problems) problems.push({ message: m });
+
   const fnNote = await noteById(h.fn_note_id);
   const fnAudio = fnNote ? audioFor(fnNote, `hauls/${slug}/audio/field-note`, 'fieldNote.audio', 'The field-note recording') : undefined;
   const cover = await plateFor(h.cover_plate, `hauls/${slug}/plates/cover`, 'The cover');
@@ -377,7 +383,8 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     fieldNote: {
       title: h.fn_title_italic ? { text: h.fn_title_text, italic: h.fn_title_italic } : { text: h.fn_title_text },
       ...(fnAudio ? { audio: fnAudio } : {}),
-      paragraphs: h.fn_body.split(/\n\s*\n/).map((p) => p.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean),
+      paragraphs: fn.paragraphs,
+      ...(fn.body ? { body: fn.body } : {}),
       ...(h.fn_highlight?.trim() ? { highlight: h.fn_highlight.trim() } : {}),
       route,
     },

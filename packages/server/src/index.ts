@@ -16,6 +16,7 @@ export * from './plates';
 export * from './connect';
 export * from './rhymes';
 export * from './blocks';
+export * from './fieldnote';
 export { fetchOwid, fetchWorldBank, owidSlug, wbUnits, type FetchedChartData } from './charts';
 export * from './shelf';
 export * from './lives';

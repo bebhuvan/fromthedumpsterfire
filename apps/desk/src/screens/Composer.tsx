@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import { haulSlug, type Haul, type RouteStep } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
+import { embedLinks, noteParts, partsPlain } from '@fdf/shared/fieldnote';
 import { EDITIONS, editionOf, SWATCHES, typeLabel } from '@fdf/shared/tokens';
 import { api, displayTitle, parseChecks, type HaulDetail, type HaulRecord, type Note, type PreviewResult, type PublishResult, type TrayItem } from '../api';
 import { Link, safeHref, SaveNote, useAutosave, useLoad, useToast } from '../lib/core';
@@ -120,7 +121,7 @@ export function Composer({ id }: { id: string }) {
             Field-note recording to publish <FormatBadge format={data.fieldNoteAudio.format} />
           </div>
         )}
-        <FieldNote haul={h} save={save} items={data.items} busy={busy} onMachine={machine} />
+        <FieldNote haul={h} save={save} items={data.items} busy={busy} onMachine={machine} onRetryEmbeds={() => api.post<HaulDetail>(`/api/hauls/${id}/field-note/embeds`, {}).then(setData)} />
       </div>
 
       <aside className="sticky stack" style={{ gap: 16 }}>
@@ -210,15 +211,15 @@ function EditionPicker({ haul, save }: { haul: HaulRecord; save: (b: Partial<Hau
 
 // ---------------------------------------------------------------- field note
 
+// Sentences of the note as readers get it (marks deleted), so a highlight matches the published words.
 function sentences(body: string): string[] {
-  return body
-    .split(/\n\s*\n/)
-    .flatMap((p) => p.replace(/\s*\n\s*/g, ' ').match(/[^.!?]+[.!?]+["”’)]*|[^.!?]+$/g) ?? [])
+  return partsPlain(noteParts(body))
+    .flatMap((p) => p.match(/[^.!?]+[.!?]+["”’)]*|[^.!?]+$/g) ?? [])
     .map((s) => s.trim())
     .filter((s) => s.length > 12);
 }
 
-function FieldNote({ haul, save, items, busy, onMachine }: { haul: HaulRecord; save: (b: Partial<HaulRecord>) => Promise<void>; items: HaulDetail['items']; busy: string | null; onMachine: (w: 'questions' | 'route') => void }) {
+function FieldNote({ haul, save, items, busy, onMachine, onRetryEmbeds }: { haul: HaulRecord; save: (b: Partial<HaulRecord>) => Promise<void>; items: HaulDetail['items']; busy: string | null; onMachine: (w: 'questions' | 'route') => void; onRetryEmbeds: () => Promise<void> }) {
   const body = useAutosave(`fn:${haul.id}`, haul.fn_body, (v) => save({ fn_body: v }));
   const [note, setNote] = useState<Note | null>(null);
   const lines = useMemo(() => sentences(body.value), [body.value]);
@@ -258,6 +259,11 @@ function FieldNote({ haul, save, items, busy, onMachine }: { haul: HaulRecord; s
           aria-label="Field note"
         />
         <SaveNote state={body.state} />
+        <p className="small muted" style={{ margin: 0 }}>
+          A blank line between paragraphs. <code>## </code> starts a heading, <code>&gt; </code> a quotation, <code>[your words](https://…)</code> makes a link and <code>*a title*</code> italic.
+          A YouTube or Vimeo video, a Spotify episode or an X post goes on a line of its own and is set there as an embed.
+        </p>
+        <Embeds haul={haul} text={body.value} onRetry={onRetryEmbeds} />
         {note && <NoteCompare note={note} onUse={(t) => body.onChange(body.value.trim() ? `${body.value.trim()}\n\n${t}` : t)} />}
         {lines.length > 0 && (
           <label className="field">
@@ -278,6 +284,38 @@ function FieldNote({ haul, save, items, busy, onMachine }: { haul: HaulRecord; s
       <Route haul={haul} save={save} items={items} busy={busy === 'route'} onDraft={() => onMachine('route')} />
       <Colophon haul={haul} save={save} />
     </section>
+  );
+}
+
+/** Each lone link in the note that will be an embed: what code found for it, or why it could not. */
+function Embeds({ haul, text, onRetry }: { haul: HaulRecord; text: string; onRetry: () => Promise<void> }) {
+  const [retrying, setRetrying] = useState(false);
+  const links = embedLinks(text);
+  if (!links.length) return null;
+  const failed = links.some((u) => haul.fn_embeds?.[u]?.error);
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <span className="label">Embeds in the note</span>
+      {links.map((u) => {
+        const e = haul.fn_embeds?.[u];
+        const b = e?.block;
+        return (
+          <div key={u} className="small" style={{ display: 'grid', gridTemplateColumns: '64px 1fr', gap: 8 }}>
+            <span className="label">{b ? (b.kind === 'post' ? 'X post' : b.kind === 'audio' ? 'Podcast' : 'Video') : e?.error ? 'Refused' : 'Saving'}</span>
+            <span>
+              {b ? (b.kind === 'post' ? `${b.author} (@${b.handle}): ${(b.text ?? '').slice(0, 90)}${(b.text ?? '').length > 90 ? '…' : ''}` : b.title) : e?.error ?? 'Resolved when the note saves.'}
+              <br />
+              <a className="muted" href={safeHref(u)} target="_blank" rel="noreferrer noopener">{u}</a>
+            </span>
+          </div>
+        );
+      })}
+      {failed && (
+        <button className="btn small" disabled={retrying} onClick={() => { setRetrying(true); void onRetry().finally(() => setRetrying(false)); }}>
+          {retrying ? 'Trying again…' : 'Try the refused links again'}
+        </button>
+      )}
+    </div>
   );
 }
 

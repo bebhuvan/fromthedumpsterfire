@@ -1064,3 +1064,26 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   `hauls/<n>/v<version>/cards/<item>.png`, the bundle carries `item.card` (checked by `validateHaul`), and
   the item page uses it for link previews before its plate (a chart's own card still comes first).
   Haul 001 has none until it is published again.
+
+## The field note set out, with links and embeds (2026-11-07, the editor: "ensure the main note supports links and embeds like tweets, youtube videos etc both on the website and the app")
+
+- The field note is the essay readers meet first on a Haul's page. The editor writes it on the Desk
+  (or `fn_body` from the terminal) with a few marks: `## ` headings, `> ` quotations, `[words](url)`
+  links, `*titles*` in italic, and a YouTube/Vimeo, Spotify or X link alone on its line as an embed.
+  `packages/shared/src/fieldnote.ts` reads the marks (only deleting them); `packages/server/src/fieldnote.ts`
+  resolves embeds with the item-block functions in `blocks.ts` (`videoBlock`, `audioBlock`,
+  `postBlock`, split out of `addVideo`/`addAudio`/`addPost`) when the note is saved, keeps them in
+  `hauls.fn_embeds` (**migration 0010**, posters in MEDIA under `fieldnote/`), and `publish.ts` writes
+  `fieldNote.body` (only when the note says more than plain paragraphs) with posters copied under
+  `hauls/<n>/media/field-note-*`. `fieldNote.paragraphs` stays the plain words, so older app builds and
+  feeds still read the note. `validateHaul` checks the body (links http/https only, embeds as blocks).
+- Desk: a line on the marks under the field note, each embed with what code found (or why it was
+  refused) and a retry button; the highlight is chosen from the note's words without marks; the preview
+  shows the body. Website: `NoteBody.astro` (embeds through `Blocks.astro`'s new `inColumn` mode), the
+  Markdown copy and the RSS feed carry the links. App: `ui/NoteBody.tsx` on the cover and the field note
+  page (embeds through the exported `Video`, `AudioBlock` and `Post`).
+- Development sample Haul 002 has a field note with every piece (`fixtures/dev/build.py`).
+- Verified: `npm run verify`, the built website at desktop and phone width, the app's Android bundle.
+  Not checked: the app on a device. Apple Podcasts links stay links (they need a typed title).
+- To ship: `npm run db:migrate:production` (0010), deploy the Desk and pipeline Workers and the website,
+  then `npm run app:update` (JS only, no new APK).

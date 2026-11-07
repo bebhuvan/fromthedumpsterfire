@@ -1,6 +1,7 @@
 // RSS and sitemap generation. Every value is escaped; nothing from a bundle is emitted raw.
 
-import { haulSlug, noteParagraphs, type Haul } from '@fdf/shared/haul';
+import { haulSlug, noteParagraphs, videoHref, type Haul, type NoteRun } from '@fdf/shared/haul';
+import { linkGroups } from '@fdf/shared/fieldnote';
 import { typeLabel } from '@fdf/shared/tokens';
 import { bookUpdated, type Shelf } from '@fdf/shared/shelf';
 import {
@@ -26,8 +27,26 @@ function haulFeedHtml(h: Haul, allHauls: Haul[]): string {
 
   const note = h.fieldNote;
   parts.push(`<h2>${esc(titleText(note.title))}</h2>`);
-  for (const p of note.paragraphs) {
-    parts.push(`<p>${esc(p)}</p>`);
+  const runs = (rs: NoteRun[]) =>
+    linkGroups(rs)
+      .map((g) => {
+        const t = g.runs.map((r) => (r.em ? `<em>${esc(r.text)}</em>` : esc(r.text))).join('');
+        return g.url && /^https?:\/\//i.test(g.url) ? `<a href="${esc(g.url)}">${t}</a>` : t;
+      })
+      .join('');
+  if (note.body) {
+    for (const b of note.body) {
+      if (b.kind === 'paragraph') parts.push(`<p>${runs(b.runs)}</p>`);
+      else if (b.kind === 'heading') parts.push(`<h3>${esc(b.text)}</h3>`);
+      else if (b.kind === 'quotation') parts.push(`<blockquote>${b.paragraphs.map((r) => `<p>${runs(r)}</p>`).join('')}</blockquote>`);
+      else if (b.kind === 'video') parts.push(`<p><a href="${esc(videoHref(b))}">${esc(b.title)}</a> (video)</p>`);
+      else if (b.kind === 'audio') parts.push(`<p><a href="${esc(b.url)}">${esc(b.title)}</a> (podcast)</p>`);
+      else parts.push(`<blockquote><p>${esc(b.text)}</p><p>${esc(b.author)} (@${esc(b.handle)}) on X. <a href="${esc(b.url)}">Read the post</a></p></blockquote>`);
+    }
+  } else {
+    for (const p of note.paragraphs) {
+      parts.push(`<p>${esc(p)}</p>`);
+    }
   }
   if (note.route.length) {
     const steps = note.route

@@ -421,6 +421,8 @@ export interface HaulRecord {
   fn_body: string;
   fn_highlight: string | null;
   fn_note_id: string | null;
+  /** The field note's lone links to videos, podcasts and posts, as code resolved them (keyed by link). */
+  fn_embeds: Record<string, { block?: { kind: 'video' | 'audio' | 'post'; title?: string; author?: string; handle?: string; text?: string }; error?: string; at: string }>;
   cover_plate: string | null;
   route: Array<RouteStep & { drafted?: boolean }>;
   questions: Array<{ q: string; answer: string }>;

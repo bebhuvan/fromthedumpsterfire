@@ -11,6 +11,8 @@ import { EDITIONS, SWATCHES, typeSwatch } from '@fdf/shared/tokens';
 import {
   assembleHaul,
   blocksFor,
+  resolveFieldNoteEmbeds,
+  type FieldNoteEmbeds,
   blockView,
   defaultColophon,
   describeRoutes,
@@ -799,7 +801,7 @@ async function haulDetail(env: Env, id: string) {
   const versions = (await env.DB.prepare('SELECT * FROM haul_versions WHERE haul_id = ? ORDER BY version DESC').bind(id).all()).results;
   const plates = await platesFor(env, { haulId: id });
   const notes = (await env.DB.prepare('SELECT id, target, mime, format, seconds FROM notes WHERE id = ?').bind(h.fn_note_id ?? '').all()).results;
-  return { haul: { ...h, route: parseJson(h.route, []), questions: parseJson(h.questions, []) }, items, versions, plates, fieldNoteAudio: notes[0] ?? null };
+  return { haul: { ...h, route: parseJson(h.route, []), questions: parseJson(h.questions, []), fn_embeds: parseJson(h.fn_embeds ?? '{}', {}) }, items, versions, plates, fieldNoteAudio: notes[0] ?? null };
 }
 
 app.get('/api/hauls/:id', async (c) => c.json(await haulDetail(c.env, c.req.param('id'))));
@@ -834,11 +836,29 @@ app.patch('/api/hauls/:id', async (c) => {
     sets.push(`${k} = ?`);
     vals.push(k === 'route' || k === 'questions' ? JSON.stringify(v) : v === '' && k.endsWith('italic') ? null : v);
   }
+  // The field note's lone links to videos, podcasts and posts are resolved by code as it is saved.
+  if (b.fn_body !== undefined) {
+    const row = await c.env.DB.prepare('SELECT fn_embeds FROM hauls WHERE id = ?').bind(id).first<{ fn_embeds: string }>();
+    if (!row) return c.json({ error: 'No such Haul' }, 404);
+    const embeds = await resolveFieldNoteEmbeds(c.env, id, b.fn_body, parseJson<FieldNoteEmbeds>(row.fn_embeds, {}));
+    sets.push('fn_embeds = ?');
+    vals.push(JSON.stringify(embeds));
+  }
   if (sets.length) {
     sets.push('updated_at = ?');
     vals.push(nowIso(), id);
     await c.env.DB.prepare(`UPDATE hauls SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run();
   }
+  return c.json(await haulDetail(c.env, id));
+});
+
+// Try the field note's embeds that failed again now (a post made public, a video back up).
+app.post('/api/hauls/:id/field-note/embeds', async (c) => {
+  const id = c.req.param('id');
+  const row = await c.env.DB.prepare('SELECT fn_body, fn_embeds FROM hauls WHERE id = ?').bind(id).first<{ fn_body: string; fn_embeds: string }>();
+  if (!row) return c.json({ error: 'No such Haul' }, 404);
+  const embeds = await resolveFieldNoteEmbeds(c.env, id, row.fn_body, parseJson<FieldNoteEmbeds>(row.fn_embeds, {}), { retry: true });
+  await c.env.DB.prepare('UPDATE hauls SET fn_embeds = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify(embeds), nowIso(), id).run();
   return c.json(await haulDetail(c.env, id));
 });
 
