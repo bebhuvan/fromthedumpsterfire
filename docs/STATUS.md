@@ -1085,5 +1085,7 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
 - Development sample Haul 002 has a field note with every piece (`fixtures/dev/build.py`).
 - Verified: `npm run verify`, the built website at desktop and phone width, the app's Android bundle.
   Not checked: the app on a device. Apple Podcasts links stay links (they need a typed title).
-- To ship: `npm run db:migrate:production` (0010), deploy the Desk and pipeline Workers and the website,
-  then `npm run app:update` (JS only, no new APK).
+- Shipped 2026-11-07: migration 0010 on `fdf-desk` (applied with `cf d1 migrations apply`, since the
+  Wrangler login on this machine has no D1 scope), `fdf-pipeline` a276e415, `fdf-desk` bf852597, `fdf-web`
+  5e6bcee3, app over-the-air update 3dd2f1a7 for runtime `e903061b` (signature and assets verified).
+  Haul 2's draft field note assembles with 7 headings, 5 quotations, its 8 links and italics.
