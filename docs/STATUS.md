@@ -1103,11 +1103,21 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
 - Website `Note.astro` (quotation upright on a rule in the edition ink; italic title upright inside the
   italic note; "B." under a closing quotation), the Markdown copy and RSS; app `EditorNote`
   (`ui/type.tsx`); the Desk shows the marks under the note. Development sample: Haul 002's Stanford item.
-- Verified: `npm run verify`, the app's `tsc`, the built website at desktop width. Not yet deployed
-  (`fdf-desk`, `fdf-pipeline`, `fdf-web`, an app over-the-air update).
+- Verified: `npm run verify`, the app's `tsc`, the built website at desktop and phone width.
+- Shipped 2026-11-08: `fdf-pipeline` 966014e2, `fdf-desk` 52ebce96, `fdf-web` a1cab479, app over-the-air
+  update ea115ca4 for runtime `e903061b` (signature and assets verified). Not checked in the app on a device.
 
 ## Longer excerpts (2026-11-08, the editor)
 
 - The excerpt guide is now up to 400 words and a fifth of the piece (`quoting.ts`; DECISIONS 2026-11-08);
   the draft prompt allows up to four consecutive paragraphs. Applies to new drafts and to the Desk's
-  guide; excerpts already chosen are unchanged. Not yet deployed (`fdf-desk`, `fdf-pipeline`).
+  guide; excerpts already chosen are unchanged. Shipped with the deploy above.
+
+## Haul 002 published (2026-11-08, the editor: "Approved, publish tonight")
+
+- "Goalless exploration", v1, twelve items, the field note "Here, There Be Monsters". Notes saved word for
+  word from the editor's draft (three quotations changed to their sources' wording, as approved; the
+  Dorset line with the paper's "[sic]"); excerpts chosen by hand in the session (no model spend); seven
+  public-domain plates; the Haul's and each item's share card drawn with the Desk's `card.ts`. The deck
+  and the plate captions were written in the session and are the editor's to replace. Working notes:
+  `.editorial/haul-002/README.md`.
