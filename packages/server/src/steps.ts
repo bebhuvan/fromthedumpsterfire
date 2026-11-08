@@ -3,7 +3,8 @@
 // output to D1 and returns only small values.
 
 import { checkStyle, describeIssues } from '@fdf/shared/style';
-import { findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
+import { findQuotation, findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
+import { itemNote } from '@fdf/shared/fieldnote';
 import { countWords, excerptCap, ideaCount, isPunctuated, QUOTED_WHOLE, wantsIdeas } from '@fdf/shared/quoting';
 import type { ContentType } from '@fdf/shared/tokens';
 import type { Env } from './env';
@@ -621,7 +622,18 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
   // The editor's own note.
   {
     const ok = Boolean(item.why_text?.trim());
-    results.why = { status: ok ? 'pass' : 'fail', summary: ok ? 'Your note is in' : "No \"why it's here\" yet", rows: [{ label: "Why it's here", status: ok ? 'pass' : 'fail' }] };
+    // A quotation the note sets out ("> " lines) is the source's words: each must be found there.
+    const quoted = ok ? itemNote(item.why_text!).quotations : [];
+    const qRows: CheckSummary['rows'] = quoted.map((q, i) => {
+      const found = Boolean(src?.text && findQuotation(src.text, q));
+      return { label: `Quotation ${i + 1} in your note`, status: found ? 'pass' : 'fail', detail: found ? 'Found word for word in the source' : `Not in the source word for word: "${truncate(q, 80)}"` };
+    });
+    const missing = qRows.filter((r) => r.status === 'fail').length;
+    results.why = {
+      status: !ok || missing ? 'fail' : 'pass',
+      summary: !ok ? "No \"why it's here\" yet" : missing ? `${missing} of ${qRows.length} quotations in your note are not in the source` : 'Your note is in',
+      rows: [{ label: "Why it's here", status: ok ? 'pass' : 'fail' }, ...qRows],
+    };
   }
 
   for (const [name, r] of Object.entries(results)) await upsertCheck(env, itemId, name, r.status, { summary: r.summary, rows: r.rows });

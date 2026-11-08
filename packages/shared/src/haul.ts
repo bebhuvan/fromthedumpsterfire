@@ -75,6 +75,9 @@ export type NoteEmbed = Extract<Block, { kind: 'video' | 'audio' | 'post' }>;
 export const NOTE_EMBED_KINDS: readonly NoteEmbed['kind'][] = ['video', 'audio', 'post'];
 
 /** One piece of a field note's body, in reading order. */
+/** One piece of an item note's body: a paragraph or a quotation from the item's source. */
+export type ItemNoteBlock = Extract<NoteBlock, { kind: 'paragraph' | 'quotation' }>;
+
 export type NoteBlock =
   | { kind: 'paragraph'; runs: NoteRun[] }
   | { kind: 'heading'; text: string }
@@ -333,7 +336,12 @@ export interface Item {
   creator: string;
   source: { name: string; date: string; url: string };
   minutes?: number;
-  why: { text: string; audio?: Audio; links?: NoteLink[] };
+  /**
+   * The editor's note. `text` is the plain words (links lifted out into `links`); `body`, when the
+   * note sets out quotations or italic titles (added 2026-11-08), is the note as written: paragraphs
+   * and quotations, each quotation matched word for word against the item's source at publish.
+   */
+  why: { text: string; audio?: Audio; links?: NoteLink[]; body?: ItemNoteBlock[] };
   excerpt?: Excerpt;
   rhyme?: Rhyme;
   media?: Media;
@@ -537,6 +545,11 @@ export function noteParagraphs(why: Pick<Item['why'], 'text' | 'links'>): NoteRu
       if (rest) runs.push({ text: rest });
       return runs;
     });
+}
+
+/** The note as blocks: its body when it has one, else its paragraphs (with their links). */
+export function noteBlocks(why: Pick<Item['why'], 'text' | 'links' | 'body'>): ItemNoteBlock[] {
+  return why.body ?? noteParagraphs(why).map((runs) => ({ kind: 'paragraph' as const, runs }));
 }
 
 /**

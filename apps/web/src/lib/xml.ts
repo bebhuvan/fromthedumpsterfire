@@ -1,6 +1,6 @@
 // RSS and sitemap generation. Every value is escaped; nothing from a bundle is emitted raw.
 
-import { haulSlug, noteParagraphs, videoHref, type Haul, type NoteRun } from '@fdf/shared/haul';
+import { haulSlug, noteBlocks, videoHref, type Haul, type NoteRun } from '@fdf/shared/haul';
 import { linkGroups } from '@fdf/shared/fieldnote';
 import { typeLabel } from '@fdf/shared/tokens';
 import { bookUpdated, type Shelf } from '@fdf/shared/shelf';
@@ -72,10 +72,14 @@ function haulFeedHtml(h: Haul, allHauls: Haul[]): string {
     parts.push(
       `<h3><a href="${esc(itemUrl)}">${esc(titleText(item.title))}</a> — ${esc(item.creator)}</h3>`,
       `<p><small>${esc(typeLabel[item.type])} · ${srcHtml}</small></p>`,
-      ...noteParagraphs(item.why).map(
-        (runs, i, all) =>
-          `<p>${runs.map((r) => (r.url && safeHref(r.url) ? `<a href="${esc(safeHref(r.url)!)}">${esc(r.text)}</a>` : esc(r.text))).join('')}${i === all.length - 1 ? ` — <em>${esc(EDITOR_NAME)}</em>` : ''}</p>`,
-      ),
+      ...noteBlocks(item.why).map((b, i, all) => {
+        const html = (runs: NoteRun[]) =>
+          runs.map((r) => { const t = r.em ? `<em>${esc(r.text)}</em>` : esc(r.text); return r.url && safeHref(r.url) ? `<a href="${esc(safeHref(r.url)!)}">${t}</a>` : t; }).join('');
+        const sign = i === all.length - 1 ? ` — <em>${esc(EDITOR_NAME)}</em>` : '';
+        return b.kind === 'quotation'
+          ? `<blockquote>${b.paragraphs.map((runs) => `<p>${html(runs)}</p>`).join('')}</blockquote>${sign ? `<p>${sign.slice(3)}</p>` : ''}`
+          : `<p>${html(b.runs)}${sign}</p>`;
+      }),
     );
     if (item.startHere) {
       const at = item.startHere.url ? `<a href="${esc(item.startHere.url)}">${esc(item.startHere.at)}</a>` : esc(item.startHere.at);

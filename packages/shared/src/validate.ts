@@ -154,6 +154,14 @@ function checkItem(c: Collector, item: Item, p: string) {
         if (typeof l.url !== 'string' || !/^https?:\/\/[^\s]+$/i.test(l.url)) c.err(`${lp}.url`, 'link-url', 'a link goes to an http or https address');
       });
     }
+    // The note as set out: paragraphs and quotations only (headings and embeds belong elsewhere).
+    if (item.why.body !== undefined && c.arr(item.why.body, `${p}.why.body`)) {
+      item.why.body.forEach((b, k) => {
+        const bp = `${p}.why.body[${k}]`;
+        if (b && typeof b === 'object' && b.kind !== 'paragraph' && b.kind !== 'quotation') c.err(`${bp}.kind`, 'shape', 'paragraph or quotation');
+        else checkNoteBlock(c, b, bp);
+      });
+    }
   }
   if (c.obj(item.excerpt, `${p}.excerpt`, true)) {
     const ex = item.excerpt;

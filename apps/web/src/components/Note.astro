@@ -1,8 +1,11 @@
 ---
-// The editor's note: their paragraphs as they wrote them, their links on their own words, signed "B."
-// at the end of the last paragraph. A long note reads as prose; a short one is set larger (`lead`).
-// Straight apostrophes and quotation marks are set curly for display; the stored words are untouched.
-import { curlQuotes, noteParagraphs, type Item } from '@fdf/shared/haul';
+// The editor's note: their paragraphs as they wrote them, their links on their own words, italic
+// titles, quotations from the source set off with a rule in the edition ink, signed "B." at the end
+// of the last paragraph (or under a closing quotation). A long note reads as prose; a short one is
+// set larger (`lead`). Straight apostrophes and quotation marks are set curly for display; the stored
+// words are untouched.
+import { curlQuotes, noteBlocks, type Item, type NoteRun } from '@fdf/shared/haul';
+import { linkGroups } from '@fdf/shared/fieldnote';
 import { safeHref } from '../lib/site';
 
 interface Props {
@@ -13,20 +16,27 @@ interface Props {
   sign?: boolean;
 }
 const { why, lead = false, sign = true } = Astro.props;
-const paras = noteParagraphs(why);
+const blocks = noteBlocks(why);
 const words = why.text.split(/\s+/).length;
 // Large italic suits a line or two; past that the note is read, so it takes the reading size.
 const size = lead && words <= 45 ? 'note-lead' : words > 120 ? 'note-long' : 'note-short';
-const last = paras.length - 1;
+const last = blocks.length - 1;
+const endsQuoted = blocks[last]?.kind === 'quotation';
+const groups = (runs: NoteRun[]) => linkGroups(runs).map((g) => ({ ...g, href: g.url ? safeHref(g.url) : undefined }));
 ---
 <div class:list={['ed-note', size]}>
-  {paras.map((runs, i) => (
-    <p>
-      {runs.map((r) => {
-        const href = r.url ? safeHref(r.url) : undefined;
-        return href ? <a href={href} rel="noopener noreferrer" target="_blank">{curlQuotes(r.text)}<span class="sr"> (opens in a new tab)</span></a> : curlQuotes(r.text);
-      })}
-      {sign && i === last ? <> <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></> : null}
-    </p>
-  ))}
+  {blocks.map((b, i) => {
+    const paras = b.kind === 'quotation' ? b.paragraphs : [b.runs];
+    const ps = paras.map((runs) => (
+      <p>
+        {groups(runs).map((g) => {
+          const ws = g.runs.map((r) => (r.em ? <em>{curlQuotes(r.text)}</em> : curlQuotes(r.text)));
+          return g.href ? <a href={g.href} rel="noopener noreferrer" target="_blank">{ws}<span class="sr"> (opens in a new tab)</span></a> : ws;
+        })}
+        {sign && i === last && !endsQuoted ? <> <span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></> : null}
+      </p>
+    ));
+    return b.kind === 'quotation' ? <blockquote class="note-q">{ps}</blockquote> : ps;
+  })}
+  {sign && endsQuoted ? <p class="note-sign"><span class="sign-in" aria-label="Bhuvanesh, the editor">B.</span></p> : null}
 </div>

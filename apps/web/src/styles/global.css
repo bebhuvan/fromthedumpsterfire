@@ -1036,6 +1036,18 @@ blockquote > p + p { margin-top: 0.65em; }
 .ed-note a { text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 55%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
 .ed-note a:hover { text-decoration-color: var(--ed, var(--ink)); }
 .c-ed .ed-note p { font-style: normal; }
+/* An italic title inside the italic note turns upright; inside upright prose it is italic. */
+.ed-note em { font-style: normal; }
+.note-long p em, .c-ed .ed-note p em, .ed-note .note-q p em { font-style: italic; }
+/* A quotation from the source, set out in the note: the source's words, so upright, on a rule in the
+   Haul's ink (as the field note's quotations are). */
+.ed-note .note-q { margin: 0.95em 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); }
+.ed-note .note-q p { font-style: normal; }
+.ed-note .note-q:last-child { margin-bottom: 0; }
+.ed-note .note-q:first-child { margin-top: 0; }
+.ed-note .note-q + p, .ed-note p + .note-q { margin-top: 0.95em; }
+.ed-note .note-q p + p { margin-top: 0.6em; }
+.note-sign { margin-top: 0.5em; }
 .rh-sf { margin-top: 18px; }
 
 /* "Why it's here": the editor's note first; the machine's notes after it on a phone, in the margin

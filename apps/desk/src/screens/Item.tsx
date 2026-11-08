@@ -352,6 +352,10 @@ function WhySection({ detail, onSaved }: { detail: ItemDetail; onSaved: () => vo
         placeholder="Why you pulled this out of the fire, the way you would tell a friend."
         aria-label="Why it's here"
       />
+      <p className="small muted">
+        A blank line starts a paragraph. <code>&gt; </code> before a line quotes the source (it must be there word for word; … marks words left out),{' '}
+        <code>[your words](https://…)</code> is a link, <code>*a title*</code> is italic.
+      </p>
       <div className="row between">
         <div className="row">
           <VoiceNote

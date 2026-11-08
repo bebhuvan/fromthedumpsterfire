@@ -3,7 +3,7 @@
 // /haul/<n>/thread/<id>.md) so LLM crawlers, answer engines, and readers get clean, cited text
 // with explicit Editor vs Machine attribution.
 
-import { haulSlug, noteParagraphs, notePlain, videoHref, type FieldNote, type Haul, type Item, type NoteRun, type Thread } from '@fdf/shared/haul';
+import { haulSlug, noteBlocks, notePlain, videoHref, type FieldNote, type Haul, type Item, type NoteRun, type Thread } from '@fdf/shared/haul';
 import { linkGroups } from '@fdf/shared/fieldnote';
 import { typeLabel } from '@fdf/shared/tokens';
 import { formName, formOf } from './forms';
@@ -57,7 +57,11 @@ export function itemMarkdown(haul: Haul, item: Item, allHauls?: Haul[], headingL
     '',
     `${h2} Why it's here (Editor — ${EDITOR_NAME})`,
     '',
-    noteParagraphs(item.why).map((runs) => runs.map((r) => (r.url ? `[${r.text}](${r.url})` : r.text)).join('')).join('\n\n'),
+    noteBlocks(item.why)
+      .map((b) => {
+        return b.kind === 'quotation' ? b.paragraphs.map((runs) => `> ${mdRuns(runs)}`).join('\n>\n') : mdRuns(b.runs);
+      })
+      .join('\n\n'),
     ...(item.startHere ? ['', `**Start here:** ${item.startHere.url ? `[${item.startHere.at}](${item.startHere.url})` : item.startHere.at}${item.startHere.note ? ` (${item.startHere.note})` : ''}`] : []),
   ];
 

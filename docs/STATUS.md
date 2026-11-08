@@ -1089,3 +1089,19 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   Wrangler login on this machine has no D1 scope), `fdf-pipeline` a276e415, `fdf-desk` bf852597, `fdf-web`
   5e6bcee3, app over-the-air update 3dd2f1a7 for runtime `e903061b` (signature and assets verified).
   Haul 2's draft field note assembles with 7 headings, 5 quotations, its 8 links and italics.
+
+## Quotations and italics in item notes (2026-11-08, the editor: "Yes, build it", for Haul 2's notes)
+
+- An item's note (`why_text`) takes `> ` quotations and `*italic*` titles, as the field note does, plus
+  links as before. `itemNote` (`@fdf/shared/fieldnote`) reads them, only deleting marks; a heading's marks
+  are dropped and a lone link stays a link (no embeds in item notes). `findQuotation`
+  (`@fdf/shared/verbatim`) matches a quotation with `…` gaps, each stretch word for word, in order.
+- The `why` check (`steps.ts`) lists each quotation, found or not; `publish.ts` refuses a note quotation
+  not in the item's source and writes `why.body` (paragraphs and quotations) only when the note has a
+  quotation or italic; `why.text` stays the plain words with `why.links`, so older app builds and feeds
+  still read the note. `validateHaul` allows only paragraph and quotation blocks in `why.body`.
+- Website `Note.astro` (quotation upright on a rule in the edition ink; italic title upright inside the
+  italic note; "B." under a closing quotation), the Markdown copy and RSS; app `EditorNote`
+  (`ui/type.tsx`); the Desk shows the marks under the note. Development sample: Haul 002's Stanford item.
+- Verified: `npm run verify`, the app's `tsc`, the built website at desktop width. Not yet deployed
+  (`fdf-desk`, `fdf-pipeline`, `fdf-web`, an app over-the-air update).

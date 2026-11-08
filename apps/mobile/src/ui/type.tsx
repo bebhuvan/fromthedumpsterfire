@@ -1,6 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
-import { curlQuotes, noteParagraphs, type Item, type Title as TitleData } from '@fdf/shared/haul';
+import { curlQuotes, noteBlocks, type Item, type NoteRun, type Title as TitleData } from '@fdf/shared/haul';
+import { linkGroups } from '@fdf/shared/fieldnote';
 import { fonts, usePalette, useTextScale } from '@/theme';
 import { openSource } from '@/lib/open';
 import { useEditionInk } from './edition';
@@ -43,7 +44,8 @@ export function Note({ children, style }: Props) {
 
 /**
  * The editor's note as they wrote it: their paragraphs, their links on their own words (opened like
- * any source), signed "B." in ember at the end. A line or two is set larger (`lead`); a long note (an
+ * any source), italic titles, quotations from the source on a rule in the edition ink, signed "B." in
+ * ember at the end (under a closing quotation). A line or two is set larger (`lead`); a long note (an
  * essay of their own) is set upright, as prose is read. Straight marks are set curly for display.
  */
 export function EditorNote({ why, lead = false, sign = true, style }: { why: Item['why']; lead?: boolean; sign?: boolean; style?: StyleProp<ViewStyle> }) {
@@ -53,28 +55,50 @@ export function EditorNote({ why, lead = false, sign = true, style }: { why: Ite
   const words = why.text.split(/\s+/).length;
   const long = words > 120;
   const size = lead && words <= 45 ? 21 : 19;
+  const gap = size * 0.9 * k;
   const text = { fontFamily: long ? fonts.text : fonts.textItalic, fontSize: size * k, lineHeight: size * (long ? 1.62 : 1.55) * k, color: p.ink };
-  const paras = noteParagraphs(why);
-  return (
-    <View style={style}>
-      {paras.map((runs, i) => (
-        <Text key={i} selectable style={[s.base, text, { marginTop: i ? size * 0.9 * k : 0 }]}>
-          {runs.map((r, j) =>
-            r.url ? (
-              <Text key={j} accessibilityRole="link" onPress={() => openSource(r.url!, p)} style={{ textDecorationLine: 'underline', textDecorationColor: ink }}>
-                {curlQuotes(r.text)}
-              </Text>
-            ) : (
-              curlQuotes(r.text)
-            ),
-          )}
-          {sign && i === paras.length - 1 ? (
-            <Text accessibilityLabel="Bhuvanesh, the editor" style={{ fontFamily: fonts.displayItalic, color: p.ember }}>
-              {' B.'}
-            </Text>
-          ) : null}
+  const blocks = noteBlocks(why);
+  const last = blocks.length - 1;
+  const signMark = (
+    <Text accessibilityLabel="Bhuvanesh, the editor" style={{ fontFamily: fonts.displayItalic, color: p.ember }}>
+      {' B.'}
+    </Text>
+  );
+  // An italic title turns upright inside italic words; in upright words (a quotation, a long note) it is italic.
+  const runs = (rs: NoteRun[], upright: boolean) =>
+    linkGroups(rs).map((g, i) => {
+      const inner = g.runs.map((r, j) => (
+        <Text key={j} style={r.em ? { fontFamily: upright ? fonts.textItalic : fonts.text } : null}>
+          {curlQuotes(r.text)}
         </Text>
-      ))}
+      ));
+      return g.url ? (
+        <Text key={i} accessibilityRole="link" onPress={() => openSource(g.url!, p)} style={{ textDecorationLine: 'underline', textDecorationColor: ink }}>
+          {inner}
+        </Text>
+      ) : (
+        <Text key={i}>{inner}</Text>
+      );
+    });
+  return (
+    <View style={[{ gap }, style]}>
+      {blocks.map((b, i) =>
+        b.kind === 'quotation' ? (
+          <View key={i} style={{ borderLeftWidth: 2, borderLeftColor: ink, paddingLeft: 14, gap: gap * 0.7 }}>
+            {b.paragraphs.map((rs, j) => (
+              <Text key={j} selectable style={[s.base, text, { fontFamily: fonts.text }]}>
+                {runs(rs, true)}
+              </Text>
+            ))}
+          </View>
+        ) : (
+          <Text key={i} selectable style={[s.base, text]}>
+            {runs(b.runs, long)}
+            {sign && i === last ? signMark : null}
+          </Text>
+        ),
+      )}
+      {sign && blocks[last]?.kind === 'quotation' ? <Text style={[s.base, text, { marginTop: -gap * 0.5 }]}>{signMark}</Text> : null}
     </View>
   );
 }

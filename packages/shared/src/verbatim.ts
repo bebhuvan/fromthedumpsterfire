@@ -84,6 +84,28 @@ export function findVerbatim(source: string, quote: string): (Span & { text: str
   return balanceQuotes(source, start, end);
 }
 
+/**
+ * A quotation the editor wrote into a note, found in the source: each stretch between ellipses
+ * ("…" or "...", marking words left out) must be in the source word for word, in that order.
+ * Returns the spans found, or null when any stretch is missing.
+ */
+export function findQuotation(source: string, quote: string): Array<Span & { text: string }> | null {
+  const pieces = quote
+    .split(/\s*(?:…|\.\.\.)\s*/)
+    .map((x) => x.trim())
+    .filter((x) => /[\p{L}\p{N}]/u.test(x));
+  if (!pieces.length) return null;
+  const spans: Array<Span & { text: string }> = [];
+  let from = 0;
+  for (const piece of pieces) {
+    const found = findVerbatim(source.slice(from), piece);
+    if (!found) return null;
+    spans.push({ start: from + found.start, end: from + found.end, text: found.text });
+    from += found.end;
+  }
+  return spans;
+}
+
 /** Curly quotation marks opened or closed inside s and not matched there. A ’ between letters is an apostrophe. */
 function unmatched(s: string, open: string, close: string): { opens: number; closes: number } {
   let opens = 0;

@@ -224,6 +224,14 @@ npm run editorial -- edit it_ID --data .editorial/commentary.json
 npm run editorial -- check it_ID
 ```
 
+An item's note takes a few marks (`itemNote` in `packages/shared/src/fieldnote.ts`, added 2026-11-08):
+a blank line between paragraphs, `[their words](https://…)` (or `"their words" (https://…)`) for a
+link, `*a title*` for italic, and `> ` lines for a quotation from **that item's** source. Each quoted
+paragraph must be in the stored source word for word (`…` marks words left out; each stretch between
+ellipses is matched, in order): the item's `why` check lists every quotation, and the publish refuses
+one it cannot find. A line quoted from somewhere else cannot be set as a quotation on that item; keep
+it in the editor's prose with ordinary quotation marks.
+
 For chat dictation, preserve the received raw transcript and edited version in private working
 files under `.editorial/` before editing. A chat transcript does not give the client the original
 audio file. Upload actual audio when available; do not manufacture a recording or pretend the Desk

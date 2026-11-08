@@ -13,7 +13,7 @@
 // Paragraphs are separated by a blank line. Turning the text into the body only deletes marks, so
 // the words that print are the editor's, in their order (the test checks this).
 
-import { xPostUrl, type NoteBlock, type NoteEmbed, type NoteRun } from './haul';
+import { noteLinks, xPostUrl, type ItemNoteBlock, type NoteBlock, type NoteEmbed, type NoteLink, type NoteRun } from './haul';
 
 /** A piece of the editor's text, before embeds are resolved. */
 export type NotePart =
@@ -208,4 +208,37 @@ export function linkGroups<R extends NoteRun>(runs: R[]): Array<{ url?: string; 
     else out.push({ ...(r.url ? { url: r.url } : {}), runs: [r] });
   }
   return out;
+}
+
+// An item's note (Item.why) takes two of the field note's marks (added 2026-11-08): "> " lines for a
+// quotation from the item's source, and *words* for an italic title. Links work as before, in either
+// form. A heading's marks are deleted and its words kept as a paragraph; a lone link prints as a link
+// (embeds belong to blocks). Only marks are deleted, so the words that print are the editor's.
+
+const QUOTED_LINK = /"([^"\n]{1,200})"\s*\((https?:\/\/[^\s()]+)\)/g;
+
+/**
+ * The note as it will publish: plain `text` and `links` (what older readers print), and a `body`
+ * when the note sets out a quotation or an italic title. `quotations` are the quoted paragraphs'
+ * words, each to be found in the item's source (`findQuotation`) before the note can ship.
+ */
+export function itemNote(source: string): { text: string; links: NoteLink[]; body?: ItemNoteBlock[]; quotations: string[] } {
+  const marked = source.trim().replace(QUOTED_LINK, (_m, words: string, url: string) => `[${words}](${url})`);
+  const body: ItemNoteBlock[] = noteParts(marked).map((p) =>
+    p.kind === 'quotation'
+      ? { kind: 'quotation', paragraphs: p.paragraphs.map(noteRuns) }
+      : p.kind === 'link'
+        ? { kind: 'paragraph', runs: [{ text: p.url, url: p.url }] }
+        : { kind: 'paragraph', runs: noteRuns(p.text) },
+  );
+  const rich = body.some((b) => b.kind === 'quotation' || b.runs.some((r) => r.em));
+  if (!rich) return { ...noteLinks(source.trim()), quotations: [] };
+  const links: NoteLink[] = [];
+  for (const b of body) for (const runs of b.kind === 'quotation' ? b.paragraphs : [b.runs]) for (const g of linkGroups(runs)) if (g.url) links.push({ text: runsText(g.runs), url: g.url });
+  return {
+    text: bodyParagraphs(body).join('\n\n'),
+    links,
+    body,
+    quotations: body.flatMap((b) => (b.kind === 'quotation' ? b.paragraphs.map(runsText) : [])),
+  };
 }

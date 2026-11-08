@@ -10,9 +10,10 @@
 // It never writes hauls/ or shelf/ to MEDIA.
 
 import type { Audio, AudioFormat, Haul, HaulIndex, HaulSummary, Item, Plate, Rhyme, RouteStep, Thread, Title } from '@fdf/shared/haul';
-import { AUDIO_FORMATS, PLAYS_ON_IOS, noteLinks, sourceDate } from '@fdf/shared/haul';
+import { AUDIO_FORMATS, PLAYS_ON_IOS, sourceDate } from '@fdf/shared/haul';
+import { itemNote } from '@fdf/shared/fieldnote';
 import { checkStyle } from '@fdf/shared/style';
-import { isVerbatimAt } from '@fdf/shared/verbatim';
+import { findQuotation, isVerbatimAt } from '@fdf/shared/verbatim';
 import { BUNDLE_VERSION, haulSlug } from '@fdf/shared/haul';
 import { editionOf, type ContentType, type Swatch } from '@fdf/shared/tokens';
 import { validateHaul, type BundleIssue } from '@fdf/shared/validate';
@@ -219,8 +220,13 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       return url && /^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\//.test(url) ? { url } : {};
     };
     // Links the editor wrote into the note ("words" (https://…) or [words](https://…)) print as links on
-    // those words; lifting them out only deletes the marks around the words.
-    const why = noteLinks((it.why_text ?? '').trim());
+    // those words; lifting them out only deletes the marks around the words. A quotation set out in
+    // the note ("> " lines) must be in this item's source word for word, as any excerpt.
+    const why = itemNote(it.why_text ?? '');
+    for (const q of why.quotations) {
+      if (!src?.text || !findQuotation(src.text, q))
+        problems.push({ itemId: it.id, itemTitle: label, message: `a quotation in your note is not in the source word for word ("${q.slice(0, 60)}${q.length > 60 ? '…' : ''}")` });
+    }
     const conns = (
       await env.DB.prepare('SELECT c.*, i.title AS to_title, i.title_choice AS to_choice FROM connections c JOIN items i ON i.id = c.to_item_id WHERE c.item_id = ?').bind(it.id).all<{
         type: string;
@@ -288,7 +294,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       creator: it.creator ?? '',
       source: { name: it.source_name ?? '', date: sourceDate(it.source_date ?? ''), url: it.canonical_url || it.url || '' },
       ...(it.minutes ? { minutes: it.minutes } : {}),
-      why: { text: why.text, ...(why.links.length ? { links: why.links } : {}), ...(whyAudio ? { audio: whyAudio } : {}) },
+      why: { text: why.text, ...(why.links.length ? { links: why.links } : {}), ...(why.body ? { body: why.body } : {}), ...(whyAudio ? { audio: whyAudio } : {}) },
       ...(ex
         ? {
             excerpt: {

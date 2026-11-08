@@ -354,7 +354,42 @@
     "url": "https://www.youtube.com/watch?v=UF8uR6Z6KLc"
    },
    "why": {
-    "text": "Sample note. Everyone remembers the last line. The middle, about getting fired, is the better part."
+    "text": "Sample note. Everyone remembers the last line. The middle, about getting fired, is the better part.\n\nStay hungry. Stay foolish.\n\nA note can quote its source and set a title in italic, like the Whole Earth Catalog.",
+    "body": [
+     {
+      "kind": "paragraph",
+      "runs": [
+       {
+        "text": "Sample note. Everyone remembers the last line. The middle, about getting fired, is the better part."
+       }
+      ]
+     },
+     {
+      "kind": "quotation",
+      "paragraphs": [
+       [
+        {
+         "text": "Stay hungry. Stay foolish."
+        }
+       ]
+      ]
+     },
+     {
+      "kind": "paragraph",
+      "runs": [
+       {
+        "text": "A note can quote its source and set a title in italic, like the "
+       },
+       {
+        "text": "Whole Earth Catalog",
+        "em": true
+       },
+       {
+        "text": "."
+       }
+      ]
+     }
+    ]
    },
    "marginalia": [],
    "wiki": [],

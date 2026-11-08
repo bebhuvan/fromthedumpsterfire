@@ -372,6 +372,25 @@ describe('the editor on a long item', () => {
   });
 });
 
+describe("quotations in the editor's note", () => {
+  it('publishes a note with a quotation from the source and an italic title, and refuses one not in it', async () => {
+    const env = await seedHaul(makeEnv());
+    const note = 'Jevons, in *The Coal Question*, put it plainly:\n\n> It is wholly a confusion of ideas … The very contrary is the truth.\n\nStill true.';
+    await env.DB.prepare('UPDATE items SET why_text = ? WHERE id = ?').bind(note, 'it_jevons').run();
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+    const a = await assembleHaul(env, 'hl_1');
+    expect(a.problems).toEqual([]);
+    expect(a.bundleErrors).toEqual([]);
+    const why = a.haul.items[0]!.why;
+    expect(why.body?.map((b) => b.kind)).toEqual(['paragraph', 'quotation', 'paragraph']);
+    expect(why.text).toBe('Jevons, in The Coal Question, put it plainly:\n\nIt is wholly a confusion of ideas … The very contrary is the truth.\n\nStill true.');
+
+    await env.DB.prepare('UPDATE items SET why_text = ? WHERE id = ?').bind('As he said:\n\n> Coal will last forever.', 'it_jevons').run();
+    const b = await assembleHaul(env, 'hl_1');
+    expect(b.problems.map((p) => p.message)).toEqual([expect.stringContaining('a quotation in your note is not in the source word for word ("Coal will last forever.")')]);
+  });
+});
+
 describe('a new reading replaces unticked Wikipedia cards', () => {
   it('keeps ticked cards and cards a kept note cites, and clears the rest', async () => {
     const { resolveWiki } = await import('../src/steps');

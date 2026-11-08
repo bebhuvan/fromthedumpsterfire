@@ -9,6 +9,8 @@ WAVE = {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunam
 def item(id, type, title, creator, src, date, url, why, **kw):
     d = {"id": id, "type": type, "title": title if isinstance(title, dict) else {"text": title}, "creator": creator,
          "source": {"name": src, "date": date, "url": url}, "why": {"text": why}, "marginalia": [], "wiki": [], "connections": []}
+    body = kw.pop("why_body", None)
+    if body: d["why"]["body"] = body
     d.update(kw); return d
 # The field note as the editor sets it out (FieldNote.body): a heading, links and italics, a quotation,
 # a video and a post between the paragraphs. FN_PARAS is its plain words, as bodyParagraphs gives them.
@@ -59,7 +61,10 @@ h2 = {
        blocks=[{"kind": "code", "lang": "bash", "caption": "Install it and serve a database", "code": "pip install datasette\ndatasette serve hauls.db --open"},
                {"kind": "code", "lang": "python", "caption": "Or load rows from Python first", "code": "import sqlite_utils\n\n# One table per Haul, one row per object\ndb = sqlite_utils.Database(\"hauls.db\")\ndb[\"items\"].insert_all(rows, pk=\"id\")\nprint(db[\"items\"].count, \"objects\")\n"}]),
   item("stanford", "speech", "Commencement address", "Steve Jobs", "Stanford University", "12 June 2005", "https://www.youtube.com/watch?v=UF8uR6Z6KLc",
-       "Sample note. Everyone remembers the last line. The middle, about getting fired, is the better part.", place="Stanford, California", minutes=15,
+       "Sample note. Everyone remembers the last line. The middle, about getting fired, is the better part.\n\nStay hungry. Stay foolish.\n\nA note can quote its source and set a title in italic, like the Whole Earth Catalog.", place="Stanford, California", minutes=15,
+       why_body=[{"kind": "paragraph", "runs": [{"text": "Sample note. Everyone remembers the last line. The middle, about getting fired, is the better part."}]},
+                 {"kind": "quotation", "paragraphs": [[{"text": "Stay hungry. Stay foolish."}]]},
+                 {"kind": "paragraph", "runs": [{"text": "A note can quote its source and set a title in italic, like the "}, {"text": "Whole Earth Catalog", "em": True}, {"text": "."}]}],
        excerpt={"text": "Stay hungry. Stay foolish.", "highlight": "Stay hungry.", "locator": "14:33"},
        blocks=[{"kind": "video", "provider": "youtube", "id": "UF8uR6Z6KLc", "title": "Steve Jobs' 2005 Stanford Commencement Address", "start": 0, "poster": {"url": "https://i.ytimg.com/vi/UF8uR6Z6KLc/hqdefault.jpg", "width": 480, "height": 360}}]),
   item("kay", "quote", "Predicting the future", "Alan Kay", "Xerox PARC meeting", "1971", "https://en.wikipedia.org/wiki/Alan_Kay",
