@@ -2,16 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { countWords, excerptAdvice, excerptCap, ideaCount, START_AT, startSeconds, wantsIdeas } from './quoting';
 
 describe('excerpt guide', () => {
-  it('allows about a seventh of the piece, between 50 and 250 words', () => {
-    expect(excerptCap(1587)).toBe(238); // a 7-minute article: two paragraphs
-    expect(excerptCap(300)).toBe(50); // a short post still gets a passage
-    expect(excerptCap(20000)).toBe(250); // a long talk is capped
+  it('allows a fifth of the piece, between 50 and 400 words', () => {
+    expect(excerptCap(1587)).toBe(317); // a 7-minute article: a few paragraphs
+    expect(excerptCap(300)).toBe(60); // a short post: a fifth of it
+    expect(excerptCap(200)).toBe(50); // a very short one still gets a passage
+    expect(excerptCap(20000)).toBe(400); // a long talk is capped
   });
   it('advises without blocking, and lets posts be quoted whole', () => {
     const para = Array.from({ length: 60 }, () => 'word').join(' ');
     expect(excerptAdvice(para, 1000).over).toBe(false);
-    expect(excerptAdvice(`${para} ${para} ${para}`, 1000).over).toBe(true);
-    expect(excerptAdvice(`${para} ${para} ${para}`, 1000).message).toMatch(/180 words, 18% of the piece/);
+    expect(excerptAdvice(`${para} ${para} ${para}`, 1000).over).toBe(false);
+    expect(excerptAdvice(`${para} ${para} ${para} ${para}`, 1000).over).toBe(true);
+    expect(excerptAdvice(`${para} ${para} ${para} ${para}`, 1000).message).toMatch(/240 words, 24% of the piece/);
     expect(excerptAdvice(`${para} ${para}`, 150, 'post').over).toBe(false);
     expect(excerptAdvice(`${para} ${para}`, 150, 'social').over).toBe(false);
     expect(excerptAdvice(`${para} ${para}`, 150, 'quote').over).toBe(false);

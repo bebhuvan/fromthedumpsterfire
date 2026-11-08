@@ -407,3 +407,13 @@ Dated, newest last. Don't reopen these without a new reason.
   (reports) and nothing else from outside; it is cookieless and we add no script of our own for it.
   Rejected for now: counting views in the Worker with Analytics Engine (no third-party script, but no
   dashboard and weaker bot filtering).
+
+## 2026-11-08
+
+- **Excerpts may run longer: up to 400 words and a fifth of the piece** (was 250 words and about a
+  seventh; the editor: "can we use some bigger quotes … falls under free use"). `EXCERPT_MAX_WORDS` and
+  `EXCERPT_MAX_SHARE` in `packages/shared/src/quoting.ts`; the pipeline now proposes passages of up to
+  four consecutive paragraphs. Still proportional (a short post gives a fifth of itself, not most of
+  it), still a guide beside the selection that warns and never blocks, still always beside the
+  editor's note and a link to the original. Rejected: a quarter and 600 words (the quote starts to
+  stand in for the original, the factor fair use and fair dealing weigh most) and no guide at all.

@@ -331,7 +331,7 @@ Access team domain: `nameless-cell-b28f.cloudflareaccess.com`. Deploy: `npm run 
     DeepSeek, then Haiku. Haiku, Gemini Flash, DeepSeek Flash, Sonnet and Gemini 4 Argon were run on
     the same two items (MODELS.md); Argon matched Sonnet at 1.7 times the cost and is defined but in
     no chain. Five titles from named angles; three excerpt
-    candidates of one or two paragraphs within `excerptCap` (about a seventh of the piece, 250 words
+    candidates of one or two paragraphs within `excerptCap` (about a seventh of the piece, 250 words; raised 2026-11-08 to a fifth and 400 words
     at most), each with a line on why; zero to three notes that must pass a "glad to learn this here"
     test; for long talks, podcasts, videos and papers, three to seven **big ideas**, each attributed
     and tied to a verbatim passage with its time or page (`packages/shared/src/quoting.ts`).
@@ -1105,3 +1105,9 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   (`ui/type.tsx`); the Desk shows the marks under the note. Development sample: Haul 002's Stanford item.
 - Verified: `npm run verify`, the app's `tsc`, the built website at desktop width. Not yet deployed
   (`fdf-desk`, `fdf-pipeline`, `fdf-web`, an app over-the-air update).
+
+## Longer excerpts (2026-11-08, the editor)
+
+- The excerpt guide is now up to 400 words and a fifth of the piece (`quoting.ts`; DECISIONS 2026-11-08);
+  the draft prompt allows up to four consecutive paragraphs. Applies to new drafts and to the Desk's
+  guide; excerpts already chosen are unchanged. Not yet deployed (`fdf-desk`, `fdf-pipeline`).

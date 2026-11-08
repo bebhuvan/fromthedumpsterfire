@@ -5,7 +5,7 @@
 import { checkStyle, describeIssues } from '@fdf/shared/style';
 import { findQuotation, findVerbatim, isVerbatimAt } from '@fdf/shared/verbatim';
 import { itemNote } from '@fdf/shared/fieldnote';
-import { countWords, excerptCap, ideaCount, isPunctuated, QUOTED_WHOLE, wantsIdeas } from '@fdf/shared/quoting';
+import { countWords, EXCERPT_MAX_WORDS, excerptCap, ideaCount, isPunctuated, QUOTED_WHOLE, wantsIdeas } from '@fdf/shared/quoting';
 import type { ContentType } from '@fdf/shared/tokens';
 import type { Env } from './env';
 import type { DraftRow, ExcerptRow, ItemRow, MarginalBody, SourceRow, WikiRow } from './db';
@@ -204,7 +204,7 @@ interface DraftPieceFailure {
 }
 
 /** Check every machine-written piece of a draft: style, verbatim excerpts, real citations. */
-export function auditDraft(out: DraftOutput, source: string, cards: Pick<WikiRow, 'title'>[], limits: DraftLimits = { excerptWords: 250, ideas: 0 }): DraftPieceFailure[] {
+export function auditDraft(out: DraftOutput, source: string, cards: Pick<WikiRow, 'title'>[], limits: DraftLimits = { excerptWords: EXCERPT_MAX_WORDS, ideas: 0 }): DraftPieceFailure[] {
   const failures: DraftPieceFailure[] = [];
   const titles = new Set(cards.map((c) => c.title.toLowerCase()));
   out.titles.forEach((t, i) => {

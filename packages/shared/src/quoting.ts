@@ -4,16 +4,17 @@
 //
 // No statute sets a safe length. Fair dealing in India (s. 52, criticism and review) and fair use in
 // the US both weigh how much of the work is taken, whether the quote could stand in for reading the
-// original, and whether it serves commentary. So the guide is proportional: up to two paragraphs,
-// never more than about a seventh of the piece, and always beside the editor's note and a link.
+// original, and whether it serves commentary. So the guide is proportional: a few paragraphs (up to
+// 400 words), never more than a fifth of the piece, and always beside the editor's note and a link.
+// (Raised from 250 words and about a seventh on 2026-11-08, the editor's call: "bigger quotes".)
 // It is a guide shown to the editor, never a block: a public-domain text can be quoted at length.
 
 import type { ContentType } from './tokens';
 
 /** Upper bound on a proposed excerpt, in words, whatever the length of the piece. */
-export const EXCERPT_MAX_WORDS = 250;
+export const EXCERPT_MAX_WORDS = 400;
 /** Share of the whole piece an excerpt may take. */
-export const EXCERPT_MAX_SHARE = 0.15;
+export const EXCERPT_MAX_SHARE = 0.2;
 /** Below this, a passage is a line, not an excerpt; short pieces still get this much. */
 export const EXCERPT_MIN_WORDS = 50;
 
