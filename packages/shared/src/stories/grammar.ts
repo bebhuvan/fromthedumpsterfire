@@ -36,4 +36,4 @@ export const MARGIN = {
 export const DOT = { story: 3.5, named: 2.6, note: 2 } as const;
 
 /** Opacity of context lines and their projections, and of the story's wash. */
-export const OPACITY = { context: 0.7, contextProjected: 0.45, wash: 0.14, hatch: 0.75 } as const;
+export const OPACITY = { context: 0.7, contextProjected: 0.45, wash: 0.14, hatch: 0.75, reference: 0.8 } as const;

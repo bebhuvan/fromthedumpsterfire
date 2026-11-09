@@ -54,7 +54,14 @@ export interface Axis {
 export interface XAxis { domain: [number, number]; ticks: number[]; phoneTicks?: number[]; title?: string }
 
 export interface Panel { y: Axis; series: Series[]; rules?: Rule[]; zones?: Zone[]; notes?: Note[]; weight?: number }
-export interface LinesFigure { form: 'lines'; x: XAxis; seam?: number; panels: Panel[] }
+export interface LinesFigure {
+  form: 'lines';
+  x: XAxis;
+  seam?: number;
+  panels: Panel[];
+  /** What the grey context lines are, for the key ("Every other country"). */
+  contextLabel?: string;
+}
 
 export interface SwarmItem {
   label: string;
@@ -157,22 +164,50 @@ export interface Story {
 // ---- Validation -------------------------------------------------------------------------------
 
 /**
- * Every finite number anywhere in a value: a figure's rows, axes, rules and bins alike, and the
- * figures written in its own labels ("Births per woman, 2023"), as the chart kit counts a chart's
- * stated metadata.
+ * Keys that hold a figure's structure, not its data: scales, ticks, bins, the seam, references and
+ * zones (definitions such as replacement at 2.1 must be stated as facts), notes and label positions.
+ * A number under one of these keys is never evidence for a figure in the words.
  */
-function numbersIn(v: unknown, out: Set<number>): void {
+// ('step' is not here: it names the swarm's share panel, which is data, as well as a heatmap's bin
+// width, which is not but cannot mislead: a bin width is never a figure the words cite.)
+const STRUCTURE = new Set(['domain', 'ticks', 'phoneTicks', 'decimals', 'digits', 'perSide', 'width', 'every', 'dots', 'bins', 'mid', 'rule', 'rules', 'zones', 'seam', 'notes', 'labelAt', 'phoneLabelAt', 'sizeKey', 'centre']);
+
+/** The data in a value: numbers in its rows, never in its strings or its structure. */
+function dataIn(v: unknown, out: Set<number>): void {
   if (typeof v === 'number') { if (Number.isFinite(v)) out.add(v); return; }
-  if (typeof v === 'string') { for (const f of figuresIn(v)) out.add(f.value); return; }
-  if (Array.isArray(v)) { for (const x of v) numbersIn(x, out); return; }
-  if (v && typeof v === 'object') for (const x of Object.values(v)) numbersIn(x, out);
+  if (Array.isArray(v)) { for (const x of v) dataIn(x, out); return; }
+  if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) if (!STRUCTURE.has(k)) dataIn(x, out);
 }
 
-/** Every number a story's machine words may cite: its figures' data and its facts. */
+/** Every string in a value, with where it is: the machine's labels on a figure. */
+function stringsIn(v: unknown, at: string, out: [string, string][]): void {
+  if (typeof v === 'string') { if (/\d/.test(v)) out.push([at, v]); return; }
+  if (Array.isArray(v)) { v.forEach((x) => stringsIn(x, at, out)); return; }
+  if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) if (k !== 'form' && k !== 'key' && k !== 'code') stringsIn(x, `${at} ${k}`, out);
+}
+
+/**
+ * What the machine's prose may cite: its facts, each with a method, and the years its rows hold.
+ * Prose is held to facts because a story's rows hold thousands of numbers, and nearly any round
+ * number would match one of them by chance.
+ */
+export function citableInProse(story: Story): number[] {
+  const nums = new Set<number>(story.facts.map((f) => f.value));
+  const rows = new Set<number>();
+  for (const p of story.plates) dataIn(p.figure, rows);
+  // Years the figures show, whether in their rows or written in their own headings (a slope's "1990").
+  const labels: [string, string][] = [];
+  for (const p of story.plates) stringsIn(p.figure, '', labels);
+  for (const [, t] of labels) for (const f of figuresIn(t)) rows.add(f.value);
+  for (const v of rows) if (Number.isInteger(v) && v >= 1800 && v <= 2200) nums.add(v);
+  return [...nums];
+}
+
+/** Every number a label on a figure may cite: its figures' data and the story's facts. */
 export function citable(story: Story): number[] {
   const nums = new Set<number>();
-  for (const f of story.facts) numbersIn(f.value, nums);
-  for (const p of story.plates) numbersIn(p.figure, nums);
+  for (const f of story.facts) dataIn(f.value, nums);
+  for (const p of story.plates) dataIn(p.figure, nums);
   return [...nums];
 }
 
@@ -181,8 +216,8 @@ export function untraced(text: string, nums: number[]): string[] {
   return figuresIn(text)
     .filter((f) => {
       const tol = 0.5 * 10 ** -f.decimals + 1e-9;
-      // "67 per cent" and "67%" may cite a share stored as 0.67 or as 67.
-      return !nums.some((v) => Math.abs(v - f.value) <= tol || Math.abs(v * 100 - f.value) <= tol);
+      // "67 per cent" and "67%" may cite a share stored as 0.67 (a fraction) or as 67.
+      return !nums.some((v) => Math.abs(v - f.value) <= tol || (v >= 0 && v <= 1 && Math.abs(v * 100 - f.value) <= tol));
     })
     .map((f) => f.text);
 }
@@ -209,8 +244,9 @@ export function validateStory(story: Story, editorText: string): string[] {
   if (story.movements.length && (inMovements.length !== story.plates.length || inMovements.some((k) => !keys.has(k)))) errs.push('Every plate belongs to exactly one movement.');
   for (const f of story.facts) if (!f.method.trim()) errs.push(`The fact "${f.key}" has no method.`);
 
-  const nums = citable(story);
+  const nums = citable(story), prose = citableInProse(story);
   const machine: [string, string][] = [];
+  const figureText: [string, string][] = [];
   story.ledger.forEach((l, i) => machine.push([`ledger ${i + 1}`, `${l.value} ${l.text}`]));
   for (const p of story.plates) {
     const at = `Plate "${p.name}"`;
@@ -223,6 +259,10 @@ export function validateStory(story: Story, editorText: string): string[] {
       if (s.via && (!/^https:\/\//.test(s.via.url) || !s.via.licence.trim())) errs.push(`${at}: the redistributor "${s.via.name}" needs an https link and its licence.`);
     }
     const f = p.figure;
+    // Every label on the figure is the machine's too: its figures are traced like the paragraph's.
+    const labels: [string, string][] = [];
+    stringsIn(f, `${at} figure`, labels);
+    figureText.push(...labels);
     if (f.form === 'lines') {
       for (const panel of f.panels) {
         if (panel.y.domain[0] !== 0 && !/not (at )?zero/i.test(p.caption)) errs.push(`${at}: the scale does not start at zero, and the caption must say so.`);
@@ -237,21 +277,29 @@ export function validateStory(story: Story, editorText: string): string[] {
             }
           }
         }
-        panel.notes?.forEach((n) => machine.push([`${at} note`, [...n.lines, ...(n.phone ?? [])].join(' ')]));
       }
     } else if (f.form === 'swarm') {
       if (f.items.some((i) => !(i.weight > 0))) errs.push(`${at}: every member needs a weight above zero.`);
       if (f.items.some((i) => typeof i.at === 'number' && (i.state === 'projected') !== i.at > f.seam)) errs.push(`${at}: projected members sit after the seam, estimated ones before it.`);
-      f.step?.notes?.forEach((n) => machine.push([`${at} note`, n.lines.join(' ')]));
     } else if (f.form === 'stack') {
-      const n0 = f.layers[0]?.points.length ?? 0;
-      for (let i = 0; i < n0; i++) {
-        const tot = f.layers.reduce((a, l) => a + (l.points[i]?.[1] ?? NaN), 0);
-        if (!(Math.abs(tot - 100) <= 0.6)) { errs.push(`${at}: the layers must add to 100 at every point (${tot.toFixed(1)} at ${f.layers[0]!.points[i]![0]}).`); break; }
+      const xs = f.layers[0]?.points.map(([x]) => x) ?? [];
+      for (const x of xs) {
+        const tot = f.layers.reduce((a, l) => a + (yOf(l.points, x) ?? NaN), 0);
+        if (!(Math.abs(tot - 100) <= 0.6)) { errs.push(`${at}: the layers must add to 100 at every x (${tot.toFixed(1)} at ${x}).`); break; }
       }
       if (f.layers.some((l) => l.points.some(([, v]) => v < 0))) errs.push(`${at}: a share cannot be negative.`);
+      for (const x of [...(f.labelAt ?? []), ...(f.phoneLabelAt ?? [])]) if (f.layers.some((l) => yOf(l.points, x) === undefined)) errs.push(`${at}: the shares are labelled at ${x}, a year the layers do not hold.`);
     } else if (f.form === 'bars') {
       if (f.x.domain[0] !== 0 || f.bars.some((b) => !(b.value >= 0))) errs.push(`${at}: bars start at zero and are never negative.`);
+    } else if (f.form === 'bump') {
+      const years = new Set(f.lines.flatMap((l) => l.ranks.map(([y]) => y)));
+      for (const y of years) {
+        const ranks = f.lines.map((l) => yOf(l.ranks, y)).filter((r): r is number => r !== undefined).sort((a, b) => a - b);
+        if (ranks.some((r, i) => r !== i + 1)) { errs.push(`${at}: the ranks in ${y} are not 1 to ${ranks.length}.`); break; }
+      }
+    } else if (f.form === 'slope' || f.form === 'dumbbell') {
+      const vals = f.form === 'slope' ? f.members.flatMap((m) => [m.from, m.to]) : f.rows.flatMap((r) => [r.from, r.to]);
+      if (vals.some((v) => !Number.isFinite(v))) errs.push(`${at}: every value must be a number.`);
     } else if (f.form === 'heatmap' || f.form === 'map') {
       const b = f.form === 'map' ? f.bins : { width: f.step, perSide: f.perSide };
       if (!(b.width > 0) || b.perSide < 1 || b.perSide > 5) errs.push(`${at}: the ramp needs a positive bin width and one to five bins a side.`);
@@ -260,9 +308,13 @@ export function validateStory(story: Story, editorText: string): string[] {
       if ([f.solid.left, f.solid.right, f.outline.left, f.outline.right].some((a) => a.length !== n || a.some((v) => !(v >= 0)))) errs.push(`${at}: every age group needs a count of zero or more on both sides, in both years.`);
     }
   }
-  for (const [where, text] of machine) {
+  for (const [where, text] of figureText) {
     const bad = untraced(text, nums);
     if (bad.length) errs.push(`${where}: ${bad.join(', ')} is not in the rows or the facts.`);
+  }
+  for (const [where, text] of machine) {
+    const bad = untraced(text, prose);
+    if (bad.length) errs.push(`${where}: ${bad.join(', ')} is not a fact of the story.`);
     const style = checkStyle(text);
     for (const i of style.issues.filter((x) => x.severity === 'error')) errs.push(`${where}: ${i.message}`);
   }

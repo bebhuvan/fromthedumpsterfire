@@ -35,7 +35,7 @@ export function scatterFixture(g: Gallery): ScatterFigure {
   return {
     form: 'scatter',
     x: { ...xa, phoneTicks: xa.ticks.filter((t) => t % 10 === 0), title: `Median age, years, ${YEAR}` },
-    y: { unit: `Births per woman, ${YEAR}`, ...ya },
+    y: { unit: `Children per woman, ${YEAR}`, ...ya },
     points,
     rule: { y: REPLACEMENT, label: `Replacement ${REPLACEMENT}` },
     sizeKey: { title: 'People', circles: [{ weight: 1e9, label: '1 billion' }, { weight: 1e8, label: '100 million' }] },

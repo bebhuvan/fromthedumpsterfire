@@ -4,7 +4,7 @@
 import { labelOn, type Scene, type SceneNode } from '../../charts/scene';
 import { seam, xAxis } from '../axes';
 import { areaOf, hatch, hatchPath, pathOf, scale, type Pt } from '../geom';
-import { DASH, DOT, HATCH, MARGIN, STROKE, TYPE, WIDTH, type Device } from '../grammar';
+import { DASH, OPACITY, DOT, HATCH, MARGIN, STROKE, TYPE, WIDTH, type Device } from '../grammar';
 import { Placer, widthOf } from '../place';
 import type { MultiplesFigure, PyramidFigure, StackFigure } from '../spec';
 
@@ -19,7 +19,7 @@ export function drawMultiples(f: MultiplesFigure, dev: Device): Scene {
   f.panels.forEach((p, i) => {
     const children: SceneNode[] = [];
     children.push({ t: 'line', x1: 0, y1: y(f.y.domain[0]), x2: pw, y2: y(f.y.domain[0]), stroke: 'ink', sw: STROKE.grid });
-    if (f.rule) children.push({ t: 'line', x1: 0, y1: y(f.rule.y), x2: pw, y2: y(f.rule.y), stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: 0.7 });
+    if (f.rule) children.push({ t: 'line', x1: 0, y1: y(f.rule.y), x2: pw, y2: y(f.rule.y), stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: OPACITY.reference });
     if (f.seam !== undefined) children.push({ t: 'line', x1: x(f.seam), y1: 0, x2: x(f.seam), y2: ph, stroke: 'ink2', sw: STROKE.hair, dash: DASH.seam });
     if (i % cols === 0) for (const t of f.y.ticks) children.push({ t: 'text', x: -5, y: y(t) + 3.5, text: String(t), face: 'sans', size: T.tick, anchor: 'end', fill: 'ink2' });
     if (f.context) children.push({ t: 'path', d: pathOf(f.context.points.filter(([a]) => f.seam === undefined || a <= f.seam).map(([a, b]) => [x(a), y(b)])), stroke: 'quiet3', sw: 0.9 });
@@ -67,17 +67,22 @@ export function drawStack(f: StackFigure, dev: Device): Scene {
   }
   for (const t of [0, 50, 100]) nodes.push({ t: 'text', x: M.left - 6, y: y(t) + 4, text: String(t), face: 'sans', size: T.tick, anchor: 'end', fill: 'ink2' });
   nodes.push({ t: 'text', x: M.left - 6 - widthOf('0', 'sans', T.tick), y: y(100) - T.tick * 1.3, text: f.unit, face: 'sans', size: T.tick, fill: 'ink2' });
-  // Names inside their bands, with the share under each name.
+  // Names inside their bands, with the share under each name, at the years the words name; the
+  // first set inside the left edge, the last inside the right, so a label never leaves its band.
   const at = dev === 'phone' ? f.phoneLabelAt ?? f.labelAt : f.labelAt;
+  const first = xs[0]!, last = xs[xs.length - 1]!;
   for (const yr of at) {
     const i = xs.indexOf(yr);
+    if (i < 0) throw new Error(`The stack has no shares for ${yr}`);
+    const anchor = yr === first ? 'start' : yr === last ? 'end' : 'middle';
+    const lx = x(yr) + (anchor === 'start' ? 8 : anchor === 'end' ? -8 : 0);
     let base = 0;
     for (const l of f.layers) {
       const v = l.points[i]![1];
       const mid = y(base + v / 2), name = dev === 'phone' ? l.short ?? l.label : l.label;
       const ink = labelOn(paint[l.role]);
-      nodes.push({ t: 'text', x: x(yr), y: mid - 1, text: name, face: 'sansMedium', size: T.inFill, anchor: 'middle', fill: ink });
-      nodes.push({ t: 'text', x: x(yr), y: mid + T.inFillSub + 2, text: String(Math.round(v)), face: 'sans', size: T.inFillSub, anchor: 'middle', fill: ink });
+      nodes.push({ t: 'text', x: lx, y: mid - 1, text: name, face: 'sansMedium', size: T.inFill, anchor, fill: ink });
+      nodes.push({ t: 'text', x: lx, y: mid + T.inFillSub + 2, text: String(Math.round(v)), face: 'sans', size: T.inFillSub, anchor, fill: ink });
       base += v;
     }
   }
@@ -95,8 +100,8 @@ export function drawPyramid(f: PyramidFigure, dev: Device): Scene {
   const yOf = (i: number) => top + (n - 1 - i) * (bh + gap);
   const nodes: SceneNode[] = [];
   f.groups.forEach((_, i) => {
-    nodes.push({ t: 'rect', x: mid - spine - s(f.solid.left[i]!), y: yOf(i), w: s(f.solid.left[i]!), h: bh, fill: 'ed', fo: 0.85 });
-    nodes.push({ t: 'rect', x: mid + spine, y: yOf(i), w: s(f.solid.right[i]!), h: bh, fill: 'ed', fo: 0.85 });
+    nodes.push({ t: 'rect', x: mid - spine - s(f.solid.left[i]!), y: yOf(i), w: s(f.solid.left[i]!), h: bh, fill: 'ed' });
+    nodes.push({ t: 'rect', x: mid + spine, y: yOf(i), w: s(f.solid.right[i]!), h: bh, fill: 'ed' });
   });
   // The later year as a silhouette over the first: one stepped outline a side.
   const outline = (side: 1 | -1, vals: number[]) => {
@@ -115,11 +120,11 @@ export function drawPyramid(f: PyramidFigure, dev: Device): Scene {
   // Only the ticks whose label fits inside the figure.
   for (const v of f.ticks.filter((t) => spine + s(t) + 14 <= width / 2)) for (const side of [-1, 1]) {
     const xx = mid + side * (spine + s(v));
-    nodes.push({ t: 'line', x1: xx, y1: axisY, x2: xx, y2: axisY + 4, stroke: 'ink2', sw: STROKE.hair }, { t: 'text', x: xx, y: axisY + 16, text: v ? `${Math.round(v / 1e6)}m` : '0', face: 'sans', size: T.tick, anchor: 'middle', fill: 'ink2' });
+    nodes.push({ t: 'line', x1: xx, y1: axisY, x2: xx, y2: axisY + 4, stroke: 'ink2', sw: STROKE.hair }, { t: 'text', x: xx, y: axisY + 16, text: v ? `${Math.round(v / 1e6)}${f.tickFormat === 'million' ? 'm' : ''}` : '0', face: 'sans', size: T.tick, anchor: 'middle', fill: 'ink2' });
   }
   // The key, drawn with the marks themselves.
   const kx = dev === 'phone' ? 0 : mid + half - 130, ky = dev === 'phone' ? height - 16 : top + 8;
-  nodes.push({ t: 'rect', x: kx, y: ky, w: 18, h: 11, fill: 'ed', fo: 0.85 }, { t: 'text', x: kx + 24, y: ky + 10, text: f.solid.label, face: 'sansMedium', size: T.label, fill: 'ink' });
+  nodes.push({ t: 'rect', x: kx, y: ky, w: 18, h: 11, fill: 'ed' }, { t: 'text', x: kx + 24, y: ky + 10, text: f.solid.label, face: 'sansMedium', size: T.label, fill: 'ink' });
   const k2x = dev === 'phone' ? 80 : kx, k2y = dev === 'phone' ? ky : ky + 20;
   nodes.push({ t: 'path', d: `M${k2x} ${k2y + 11}V${k2y}H${k2x + 18}V${k2y + 11}`, stroke: 'ink', sw: 1.3, dash: '4 2.5' }, { t: 'text', x: k2x + 24, y: k2y + 10, text: f.outline.label, face: 'sans', size: T.label, fill: 'ink2' });
   return { width, height, nodes };

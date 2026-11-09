@@ -31,6 +31,35 @@ describe('scatter', () => {
     for (let i = 1; i < data.length; i++) expect(data[i]!.r).toBeLessThanOrEqual(data[i - 1]!.r);
     expect(circles.filter((c) => c.fill === 'ed')).toHaveLength(1);
   });
+  test.each(['wide', 'phone'] as const)('%s: every name beside its circle or on a leader that touches no other circle', (dev) => {
+    const s = drawScatter(fig, dev);
+    const boxes = texts(s.nodes);
+    const discs = s.nodes.filter((n): n is Extract<SceneNode, { t: 'circle' }> => n.t === 'circle' && n.tip !== undefined);
+    const leaders = s.nodes.filter((n): n is Extract<SceneNode, { t: 'line' }> => n.t === 'line' && n.stroke === 'ink2' && !n.dash);
+    const gap = (b: { x: number; y: number; w: number; h: number }, px: number, py: number) => Math.hypot(Math.max(b.x - px, 0, px - b.x - b.w), Math.max(b.y - py, 0, py - b.y - b.h));
+    const toSeg = (px: number, py: number, l: Extract<SceneNode, { t: 'line' }>) => {
+      const dx = l.x2 - l.x1, dy = l.y2 - l.y1, t = Math.max(0, Math.min(1, ((px - l.x1) * dx + (py - l.y1) * dy) / (dx * dx + dy * dy || 1)));
+      return Math.hypot(px - l.x1 - t * dx, py - l.y1 - t * dy);
+    };
+    for (const p of fig.points.filter((q) => q.named || q.focus)) {
+      const b = boxes.find((t) => t.t === p.label)!;
+      const c = discs.find((d) => d.tip === p.label)!;
+      const beside = gap(b, c.cx, c.cy) - c.r;
+      if (beside <= 12) continue;
+      const l = leaders.find((n) => Math.abs(Math.hypot(n.x1 - c.cx, n.y1 - c.cy) - c.r) < 2 && gap(b, n.x2, n.y2) < 4);
+      expect(l, `${p.label} is ${beside.toFixed(0)} px off with no leader`).toBeDefined();
+      expect(Math.hypot(l!.x2 - l!.x1, l!.y2 - l!.y1), `${p.label}'s leader`).toBeLessThan(dev === 'phone' ? 48 : 60);
+      for (const o of discs) if (o !== c) expect(toSeg(o.cx, o.cy, l!), `${p.label}'s leader runs into ${o.tip}`).toBeGreaterThan(o.r);
+    }
+  });
+  test.each(['wide', 'phone'] as const)('%s: no name on or below the axis', (dev) => {
+    const s = drawScatter(fig, dev);
+    const axis = Math.max(...s.nodes.filter((n): n is Extract<SceneNode, { t: 'line' }> => n.t === 'line' && n.stroke === 'ink' && n.y1 === n.y2 && !n.dash).map((n) => n.y1));
+    for (const p of fig.points.filter((q) => q.named || q.focus)) {
+      const b = texts(s.nodes).find((t) => t.t === p.label)!;
+      expect(b.y + b.h, p.label).toBeLessThan(axis - 1);
+    }
+  });
   test('a label with nowhere to go throws', () => {
     const crowded = { ...fig, points: fig.points.map((p) => ({ ...p, named: true })) };
     expect(() => drawScatter(crowded, 'phone')).toThrow(/No room/);

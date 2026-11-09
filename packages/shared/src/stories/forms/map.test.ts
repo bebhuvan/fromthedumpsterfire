@@ -5,7 +5,8 @@ import { describe, expect, test } from 'vitest';
 import type { SceneNode } from '../../charts/scene';
 import { WORLD } from '../../charts/geo/world';
 import { expectClean, texts } from '../testkit';
-import { drawMap, mapBins } from './map';
+import { ramp } from '../ramp';
+import { drawMap } from './map';
 import { mapFixture } from './map.fixture';
 
 // node:fs through a dynamic import, as in charts/labels.test.ts: the package's types leave Node out.
@@ -19,23 +20,15 @@ describe('map', () => {
     expect(fig.unmapped).toEqual(['Kosovo']);
     expect(fig.values.length + fig.unmapped.length).toBe(gallery.countries.length);
   });
-  test('bins are symmetric about 2.1, cool below and warm above, open at the ends', () => {
-    const { edges, paints, paintOf } = mapBins(fig);
-    expect(edges).toHaveLength(9);
-    expect(edges[4]).toBe(2.1);
-    for (let i = 0; i < edges.length; i++) expect(edges[i]! + edges[edges.length - 1 - i]!).toBeCloseTo(4.2, 9);
-    for (let i = 1; i < edges.length; i++) expect(edges[i]! - edges[i - 1]!).toBeCloseTo(0.25, 9);
-    expect(paints).toEqual(['div0', 'div1', 'div2', 'div3', 'div4', 'div6', 'div7', 'div8', 'div9', 'div10']);
-    expect(paintOf(0.5)).toBe('div0');
-    expect(paintOf(2.09)).toBe('div4');
-    expect(paintOf(2.1)).toBe('div6');
-    expect(paintOf(6)).toBe('div10');
+  test('the bins are the story ramp\'s, about 2.1, a quarter wide', () => {
+    expect(ramp(fig.bins).edges[4]).toBe(2.1);
+    expect(fig.unit).toBe('Children per woman, 2023');
   });
   test.each(['wide', 'phone'] as const)('%s: every country with data gets its bin; India outlined and named', (dev) => {
     const s = drawMap(fig, dev);
     expectClean(s);
     const marks = flat(s.nodes);
-    const { paintOf } = mapBins(fig);
+    const { paintOf } = ramp(fig.bins);
     const filled = marks.filter((n) => (n.t === 'path' || n.t === 'circle') && n.tip && n.fill?.startsWith('div'));
     expect(filled).toHaveLength(fig.values.length);
     for (const v of fig.values) {
@@ -48,7 +41,14 @@ describe('map', () => {
     const india = WORLD.find((w) => w[0] === 'IND')![3];
     expect(marks.some((n) => n.t === 'path' && n.d === india && n.stroke === 'ed' && !n.fill)).toBe(true);
     const words = texts(s.nodes).map((t) => t.t);
-    expect(words).toEqual(expect.arrayContaining(['India', 'Replacement 2.1', 'No data', '2.1']));
+    expect(words).toEqual(expect.arrayContaining(['India 1.98', 'Replacement 2.1', 'No data', '2.1']));
+    // India's name is on none of its small neighbours.
+    const name = texts(s.nodes).find((t) => t.t.startsWith('India'))!;
+    for (const code of ['BGD', 'LKA', 'NPL', 'BTN']) {
+      const d = WORLD.find((w) => w[0] === code)!;
+      const [x, y] = [d[4] * (s.width / 1000), 4 + (d[5] - 2.4) * (s.width / 1000)];
+      expect(x > name.x && x < name.x + name.w && y > name.y && y < name.y + name.h, `India's name on ${code}`).toBe(false);
+    }
   });
   test('a row the map cannot place throws', () => {
     expect(() => drawMap({ ...fig, values: [...fig.values, { code: 'XXX', name: 'Atlantis', v: 2 }] }, 'wide')).toThrow(/not on the map/);

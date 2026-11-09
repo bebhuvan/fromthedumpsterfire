@@ -55,7 +55,8 @@ export function xAxis(P: Placer, x: Scale, ticks: number[], y0: number, dev: Dev
 /** The seam: a dotted hairline, "Estimated" to its left and "Projected" to its right, above the plot. */
 export function seam(P: Placer, x: number, top: number, bottom: number, dev: Device): SceneNode[] {
   const size = TYPE[dev].tick;
-  const a = dev === 'phone' ? 'Estimated' : 'UN estimates', b = dev === 'phone' ? 'Projected' : 'UN projection';
+  // The same words at both widths, and the same as the key's.
+  const a = 'Estimated', b = 'Projected';
   const wa = widthOf(a, 'sans', size), wb = widthOf(b, 'sans', size);
   P.block({ x: x - wa - 8, y: top - size, w: wa + wb + 16, h: size + 4 });
   return [

@@ -7,7 +7,7 @@ import type { BumpFigure } from './bump';
 import type { Pt } from '../geom';
 
 const SEAM = 2023;
-const SHORT: Record<string, string> = { USA: 'US' };
+const WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 
 /** Each member's rank at each year among the members (1 the most), ties by name. */
 export function ranksAmong(members: GalleryCountry[], years: number[]): Map<string, Pt[]> {
@@ -32,7 +32,8 @@ export function bumpFixture(g: Gallery, focus = 'IND'): BumpFigure {
     x: { domain: [first, last], ticks: decades.filter((y) => (y - first) % 30 === 0), phoneTicks: decades.filter((y) => (y - first) % 50 === 0) },
     seam: SEAM,
     dots: decades,
-    unit: 'Rank',
-    lines: ten.map((c) => ({ key: c.code, label: c.name, phoneLabel: SHORT[c.code], focus: c.code === focus || undefined, ranks: ranks.get(c.code)! })),
+    // The count is the lines', so the words cannot drift from the figure.
+    unit: `Rank among these ${WORDS[ten.length] ?? ten.length}`,
+    lines: ten.map((c) => ({ key: c.code, label: c.name, focus: c.code === focus || undefined, ranks: ranks.get(c.code)! })),
   };
 }

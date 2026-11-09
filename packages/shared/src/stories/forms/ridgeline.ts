@@ -1,14 +1,17 @@
 // ridgeline: how a distribution shifts. One ridge per moment, each the kernel density of the members'
 // values (Gaussian, Silverman's bandwidth), all on one height scale so a taller ridge means a tighter
-// crowd. Ridges overlap a little, the later in front. Earlier moments are quiet, the story's moment
-// washed in the edition's ink, a projected one hatched ("not yet"). Each ridge carries its median; a
-// reference (replacement, 2.1) runs down through all of them, named once.
+// crowd. A ridge is bounded to its own values, lowest to highest (reflected at both ends, so no mass
+// leaks where no member is, nor below zero): a smoothed curve never invents a country. The axis title
+// says the ridges are smoothed. Ridges overlap a little, the later in front, and the story's moment
+// in front of all. Earlier moments are quiet, the story's moment washed in the edition's ink, a
+// projected one hatched ("not yet"). Each ridge carries its median, placed clear of the reference and
+// of the other ridges' fills; a reference (replacement, 2.1) runs down through all of them, named once.
 
 import type { Scene, SceneNode } from '../../charts/scene';
 import { xAxis } from '../axes';
 import { areaOf, hatch, hatchPath, pathOf, scale, type Pt } from '../geom';
 import { DASH, HATCH, OPACITY, STROKE, TYPE, WIDTH, type Device } from '../grammar';
-import { place, Placer, widthOf } from '../place';
+import { place, Placer, widthOf, type Anchor } from '../place';
 
 export interface Ridge {
   key: string;
@@ -55,11 +58,21 @@ export function silverman(v: readonly number[]): number {
   return 0.9 * spread * n ** -0.2;
 }
 
-/** The Gaussian kernel density of the values at each x, with bandwidth h. */
-export function density(v: readonly number[], h: number, xs: readonly number[]): number[] {
+/**
+ * The Gaussian kernel density of the values at each x, with bandwidth h, bounded to [lo, hi] by
+ * reflection: each value also counts as its mirror image in
+ * either bound, so the mass a plain density would spill past a bound is folded back inside, and
+ * outside the bounds the density is zero.
+ */
+export function boundedDensity(v: readonly number[], h: number, xs: readonly number[], lo: number, hi: number): number[] {
+  if (!(hi > lo)) throw new Error('A bounded density needs a range');
   const k = 1 / (v.length * h * Math.sqrt(2 * Math.PI));
-  return xs.map((x) => k * v.reduce((a, xi) => a + Math.exp(-0.5 * ((x - xi) / h) ** 2), 0));
+  const g = (x: number, c: number) => Math.exp(-0.5 * ((x - c) / h) ** 2);
+  return xs.map((x) => (x < lo || x > hi ? 0 : k * v.reduce((a, xi) => a + g(x, xi) + g(x, 2 * lo - xi) + g(x, 2 * hi - xi), 0)));
 }
+
+/** A ridge's bounds: its own lowest and highest values, never below zero. */
+export const ridgeBounds = (v: readonly number[]): [number, number] => [Math.max(0, Math.min(...v)), Math.max(...v)];
 
 const GRID = 0.04;
 
@@ -69,9 +82,15 @@ export function drawRidgeline(f: RidgelineFigure, dev: Device): Scene {
   const pitch = phone ? 50 : 62, peak = phone ? 68 : 84;
   const n = f.ridges.length;
   const x = scale(f.x.domain, [left, right]);
-  const xs: number[] = [];
-  for (let v = f.x.domain[0]; v <= f.x.domain[1] + 1e-9; v += GRID) xs.push(Math.round(v * 1e6) / 1e6);
-  const dens = f.ridges.map((r) => density(r.values, silverman(r.values), xs));
+  // Each ridge sampled from its lowest value to its highest, the bounds themselves included.
+  const xsOf = (r: Ridge) => {
+    const [lo, hi] = ridgeBounds(r.values);
+    const xs = [lo];
+    for (let v = Math.ceil(lo / GRID) * GRID; v < hi; v += GRID) if (v > lo) xs.push(Math.round(v * 1e6) / 1e6);
+    return [...xs, hi];
+  };
+  const grids = f.ridges.map(xsOf);
+  const dens = f.ridges.map((r, i) => boundedDensity(r.values, silverman(r.values), grids[i]!, ...ridgeBounds(r.values)));
   const h = scale([0, Math.max(...dens.flat())], [0, peak]);
   // The first ridge stands just under the reference's name; each after it a pitch lower, so the
   // tallest ridge reaches a little into the one behind it.
@@ -86,32 +105,41 @@ export function drawRidgeline(f: RidgelineFigure, dev: Device): Scene {
   back.push(...xAxis(P, x, f.x.ticks, axisY, dev, f.x.title));
   back.push({ t: 'line', x1: left, y1: axisY, x2: right, y2: axisY, stroke: 'ink', sw: STROKE.grid });
 
-  const curves: Pt[][] = [];
+  const curves: Pt[][] = [], fills: { x: number; y: number; w: number; h: number }[][] = [];
+  const drawn: SceneNode[][] = [];
   f.ridges.forEach((r, i) => {
-    const y0 = base(i);
-    const curve: Pt[] = xs.map((v, k) => [x(v), y0 - h(dens[i]![k]!)]);
-    const floor: Pt[] = xs.map((v) => [x(v), y0]);
+    const y0 = base(i), xs = grids[i]!;
+    // The curve rises straight from the baseline at the lowest value and drops to it at the highest.
+    const inner: Pt[] = xs.map((v, k) => [x(v), y0 - h(dens[i]![k]!)]);
+    const curve: Pt[] = [[x(xs[0]!), y0], ...inner, [x(xs[xs.length - 1]!), y0]];
+    const floor: Pt[] = curve.map(([cx]) => [cx, y0]);
     curves.push(curve);
+    // The fill as strips, for the placer: no median sits inside another ridge's fill.
+    fills.push(inner.filter((_, k) => k % 3 === 0).map(([cx, cy]) => ({ x: cx - 2, y: cy, w: 4, h: y0 - cy })));
     const area = areaOf(curve, floor);
-    ridges.push({ t: 'line', x1: left, y1: y0, x2: right, y2: y0, stroke: 'rule', sw: STROKE.grid });
+    const out: SceneNode[] = [{ t: 'line', x1: left, y1: y0, x2: right, y2: y0, stroke: 'rule', sw: STROKE.grid }];
     // The ground first, so a ridge in front hides the one behind it.
-    ridges.push({ t: 'path', d: area, fill: 'bg' });
+    out.push({ t: 'path', d: area, fill: 'bg' });
     if (r.role === 'context') {
-      ridges.push({ t: 'path', d: area, fill: 'quiet2' }, { t: 'path', d: pathOf(curve), stroke: 'quiet3', sw: STROKE.named });
+      out.push({ t: 'path', d: area, fill: 'quiet2' }, { t: 'path', d: pathOf(curve), stroke: 'quiet3', sw: STROKE.named });
     } else if (r.role === 'focus') {
-      ridges.push({ t: 'path', d: area, fill: 'ed', fo: OPACITY.wash * 1.6 }, { t: 'path', d: pathOf(curve), stroke: 'ed', sw: STROKE.story[dev] });
+      out.push({ t: 'path', d: area, fill: 'ed', fo: OPACITY.wash * 1.6 }, { t: 'path', d: pathOf(curve), stroke: 'ed', sw: STROKE.story[dev] });
     } else {
-      ridges.push({ t: 'path', d: hatchPath(hatch(curve, floor, HATCH.close)), stroke: 'quiet3', sw: HATCH.weight, so: OPACITY.hatch });
-      ridges.push({ t: 'path', d: pathOf(curve), stroke: 'quiet3', sw: STROKE.named, dash: DASH.projected });
+      out.push({ t: 'path', d: hatchPath(hatch(curve, floor, HATCH.close)), stroke: 'quiet3', sw: HATCH.weight, so: OPACITY.hatch });
+      out.push({ t: 'path', d: pathOf(curve), stroke: 'quiet3', sw: STROKE.named, dash: DASH.projected });
     }
-    ridges.push({ t: 'line', x1: left, y1: y0, x2: right, y2: y0, stroke: r.role === 'focus' ? 'ed' : 'quiet3', sw: STROKE.hair });
+    out.push({ t: 'line', x1: left, y1: y0, x2: right, y2: y0, stroke: r.role === 'focus' ? 'ed' : 'quiet3', sw: STROKE.hair });
+    drawn.push(out);
   });
+  // The story's ridge last, in front of every other.
+  f.ridges.forEach((r, i) => { if (r.role !== 'focus') ridges.push(...drawn[i]!); });
+  f.ridges.forEach((r, i) => { if (r.role === 'focus') ridges.push(...drawn[i]!); });
   // The line of every ridge, as the placer sees it: no label sits on one.
   curves.forEach((c) => P.path(c.filter((_, k) => k % 3 === 0), 2));
 
   if (f.rule) {
     const rx = x(f.rule.x);
-    over.push({ t: 'line', x1: rx, y1: top - 8, x2: rx, y2: axisY, stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: 0.8 });
+    over.push({ t: 'line', x1: rx, y1: top - 8, x2: rx, y2: axisY, stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: OPACITY.reference });
     P.path([[rx, top - 4], [rx, axisY]], 1.5);
     labels.push(...place(P, { lines: [f.rule.label], at: [rx, top - 8], face: 'sans', size: T.label, paint: 'ink2', prefer: [[0, -6, 'middle'], [-4, -4, 'end'], [4, -4, 'start']], roam: false }));
   }
@@ -123,16 +151,33 @@ export function drawRidgeline(f: RidgelineFigure, dev: Device): Scene {
     labels.push(...place(P, { lines: r.sub ? [r.label, r.sub] : [r.label], at: [left - 10, y0], face: strong ? 'sansMedium' : 'sans', size: T.label, paint: strong ? 'ink' : 'ink2', prefer: [[0, -4 - (r.sub ? T.label * 1.3 : 0), 'end']], roam: false }));
     // The median: a tick from the baseline to the ridge, and its value beside the tick's top.
     const m = median(r.values);
-    const mx = x(m), my = y0 - h(density(r.values, silverman(r.values), [m])[0]!);
+    const mx = x(m), crestY = y0 - h(boundedDensity(r.values, silverman(r.values), [m], ...ridgeBounds(r.values))[0]!);
+    // A ridge below the story's runs behind it: its median stops at the story's baseline.
+    const fi = f.ridges.findIndex((q) => q.role === 'focus');
+    const my = fi >= 0 && fi < i ? Math.max(crestY, base(fi)) : crestY;
     over.push({ t: 'line', x1: mx, y1: y0, x2: mx, y2: my, stroke: strong ? 'ed' : 'ink', sw: strong ? 1.5 : 1 });
     P.path([[mx, y0], [mx, my]], 1.5);
     const val = m.toFixed(f.digits), text = i === 0 ? `${f.medianWord} ${val}` : val;
     const tw = widthOf(text, strong ? 'sansMedium' : 'sans', T.tick);
-    labels.push(...place(P, {
-      lines: [text], at: [mx, my], face: strong ? 'sansMedium' : 'sans', size: T.tick, paint: strong ? 'ink' : 'ink2',
-      prefer: [[0, -11, 'middle'], [4, -11, 'start'], [-4, -11, 'end'], [0, -17, 'middle'], [5, (y0 - my) / 2 + T.tick * 0.3, 'start'], [-5, (y0 - my) / 2 + T.tick * 0.3, 'end'], [tw / 2 + 8, -14, 'middle']],
+    // Placed against everything so far and, for this label only, the other ridges' fills.
+    const Q = new Placer(P.bounds);
+    Q.taken.push(...P.taken, ...fills.flatMap((fl, j) => (j === i ? [] : fl)));
+    // Over the tick's top; or, when the tick runs behind the story's ridge (whose fill is above it),
+    // beside the tick's middle, inside its own ridge, so no leader is needed; on a ridge too narrow
+    // for that (the phone's), just outside its lowest value, on a leader that crosses nothing else.
+    const behind = my !== crestY, mid = (y0 + my) / 2;
+    labels.push(...place(Q, {
+      lines: [text], at: behind ? [mx, mid] : [mx, my], face: strong ? 'sansMedium' : 'sans', size: T.tick, paint: strong ? 'ink' : 'ink2',
+      prefer: behind
+        ? [0, 1, 2, 3].flatMap((k): [number, number, Anchor][] => {
+          // Down the tick towards the baseline, where the ridge is widest.
+          const dy = T.tick * 0.3 + Math.min(k * 6, (y0 - mid) - T.tick * 0.5);
+          return [[-6, dy, 'end'], [6, dy, 'start']];
+        }).concat([[x(ridgeBounds(r.values)[0]) - mx - 6, T.tick * 0.3, 'end']])
+        : [[0, -11, 'middle'], [4, -11, 'start'], [-4, -11, 'end'], [0, -17, 'middle'], [7, (y0 - my) / 2 + T.tick * 0.3, 'start'], [-7, (y0 - my) / 2 + T.tick * 0.3, 'end'], [tw / 2 + 8, -14, 'middle']],
       reach: 60,
     }, `the median of ${r.label}`));
+    P.block(Q.taken[Q.taken.length - 1]!);
   });
   return { width, height, nodes: [...back, ...ridges, ...over, ...labels] };
 }

@@ -28,7 +28,7 @@ describe('validateStory', () => {
   test('a figure the rows do not hold is refused', () => {
     const s = copy();
     s.plates[0]!.body += ' Fertility was 9.47 in one place.';
-    expect(validateStory(s, note).join(' ')).toMatch(/9\.47 is not in the rows/);
+    expect(validateStory(s, note).join(' ')).toMatch(/9\.47 is not a fact of the story/);
   });
   test('a reworded margin note is refused', () => {
     const s = copy();
@@ -67,6 +67,34 @@ describe('validateStory', () => {
     const it = f.items.find((i) => typeof i.at === 'number' && i.state === 'estimated')!;
     it.state = 'projected';
     expect(validateStory(s, note).join(' ')).toMatch(/projected members sit after the seam/);
+  });
+  test('a figure typed into a note on the plate is refused (notes are not evidence)', () => {
+    const s = copy();
+    const f = s.plates[0]!.figure;
+    if (f.form !== 'lines') throw new Error('fall is a lines plate');
+    f.panels[0]!.notes![0]!.lines = ['The peak: 9.87 children'];
+    expect(validateStory(s, note).join(' ')).toMatch(/9\.87 is not in the rows/);
+  });
+  test('a number in no row or fact is refused, even a round one', () => {
+    const s = copy();
+    s.plates[0]!.body += ' There are 147 others.';
+    expect(validateStory(s, note).join(' ')).toMatch(/147 is not a fact of the story/);
+  });
+  test('a reference line is not evidence: its label must cite a row or a fact', () => {
+    // Labels on a figure may cite its rows (code draws them from the rows), so the test uses a value
+    // no row holds; a line's own position never counts.
+    const s = copy();
+    const f = s.plates[0]!.figure;
+    if (f.form !== 'lines') throw new Error('fall is a lines plate');
+    f.panels[0]!.rules![0]! = { y: 12.5, label: 'Replacement 12.5' };
+    expect(validateStory(s, note).join(' ')).toMatch(/12\.5 is not in the rows/);
+  });
+  test('shares labelled at a year the layers do not hold are refused', () => {
+    const s = copy();
+    const f = s.plates.find((p) => p.key === 'regions')!.figure;
+    if (f.form !== 'stack') throw new Error('regions is a stack');
+    f.labelAt = [1951.5];
+    expect(validateStory(s, note).join(' ')).toMatch(/labelled at 1951\.5/);
   });
   test('figures with scale words trace to full values', () => {
     expect(untraced('146 million babies', [146_054_880])).toEqual([]);

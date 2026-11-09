@@ -64,5 +64,5 @@ for (const p of pages) for (const width of widths) {
 }
 ws.close();
 chrome.kill();
-rmSync(profile, { recursive: true, force: true });
-process.exit(failures ? 1 : 0);
+// The browser may still be writing to its profile as it exits.
+setTimeout(() => { rmSync(profile, { recursive: true, force: true }); process.exit(failures ? 1 : 0); }, 500);

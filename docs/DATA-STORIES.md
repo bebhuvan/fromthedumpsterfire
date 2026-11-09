@@ -82,6 +82,7 @@ visible against the ground and the wash. Ember is never data; machine blue is ne
 | Plate number (head) | Newsreader Display | 15 px, tracked | 15 px |
 | Plate name, key, movement label | Schibsted 500, capitals, 0.16 em tracking | 11 px | 11 px |
 | Tick | Schibsted 400, `ink2` | 11 px | 10.5 px |
+| Unit | Schibsted 400, `ink2`, sentence case ("Children per woman") | 11 px | 10.5 px |
 | Label | Schibsted 400 (`ink2`) or 500 (ink) | 13 px | 12 px |
 | Note | Schibsted 400, machine blue | 13 px | 12 px |
 | Number in a fill | Schibsted 500, ground or ink by contrast | 13 px | 12 px |
@@ -101,24 +102,49 @@ and 1440 px, and fails on any overlap or any label off its figure.
 
 ## The forms
 
-| Form | For | The fertility story's plate |
-|---|---|---|
-| `lines` | change over time, with context, projection, ranges, references, zones; one or more panels on one time axis | I The fall, IV The floor, V The peak, VII India |
-| `swarm` | every member of a group placed at the moment something happened to it, sized by weight; a step panel above | II The crossing |
-| `multiples` | the same measure for a few named members, one scale | III Twelve countries |
-| `stack` | shares of a whole over time, to 100 | VI Where babies are born |
-| `pyramid` | a population by age and sex, now against a later year | VIII Why India keeps growing |
+Fourteen, each in `packages/shared/src/stories/forms/` with a fixture from real UN rows and a test
+that it draws clean at both widths. The gallery (`docs/design-comps/data-stories/gallery.html`) shows
+all of them.
+
+| Form | For |
+|---|---|
+| `lines` | change over time, with context, projection, ranges, references, zones; one or more panels on one time axis |
+| `swarm` | every member placed at the moment something happened to it, sized by weight; a step panel above (the fold-out form) |
+| `heatmap` | a value for every member and every year, on the diverging ramp, grouped and ordered by when something happened |
+| `map` | a value for every country on the same ramp; India's boundaries as India depicts them |
+| `scatter` | two measures together, circles sized by weight, the named members labelled |
+| `trail` | how a few members moved through two measures over time |
+| `ridgeline` | how a distribution shifts, one density a moment, bounded to the possible range |
+| `slope` | change between two moments for a dozen or so members |
+| `dumbbell` | two values per member, then (a ring) and now (a dot) |
+| `bars` | amounts ranked, from zero |
+| `bump` | rankings over time, worked out by code |
+| `multiples` | the same measure for a few members on one scale |
+| `stack` | shares of a whole over time, to 100 |
+| `pyramid` | a population by age and sex, now against a later year |
+
+**The one exception to "everything else is grey"**: the heatmap and the map need a value for every
+cell, so they use the chart kit's diverging ramp (`div0` to `div10`), cool below a meaningful edge and
+warm above it, binned by `stories/ramp.ts`, tested for contrast against the ground in both schemes.
 
 ## Honesty (validated, fail-closed)
 
 `validateStory` refuses a story whose plates break any of these:
 
 - Every plate names its sources, each with an https link, a licence and a retrieval date.
+- **The machine's prose cites facts.** Every figure in a headline, paragraph, caption, the ledger or a
+  coda must be one of the story's facts (each with its method) or a year its rows hold. A story's rows
+  hold thousands of numbers, so nearly any round number would match one by chance; facts close that.
+- **Labels on a figure cite its rows or the facts.** Every string on a figure (notes, end labels,
+  reference and zone labels, values) is checked. A figure's structure (scales, ticks, bins, the seam,
+  reference lines and zones, label positions) is never evidence: replacement at 2.1 is a stated fact.
+  Limit: a label may cite any number in the rows, so a typed value that happens to equal a row passes;
+  labels are written by code from the rows, which is why this looser rule is enough for them.
 - Projected points come after the seam; ranges are ordered (lower 95 ≤ lower 80 ≤ upper 80 ≤ upper 95).
-- Shares in a stack sum to 100 (within rounding) at every point; pyramids and stacks are never negative.
+- Stacked shares sum to 100 at every x, are never negative, and are labelled only at years they hold.
+- Bars start at zero and are never negative; bump ranks are 1 to n in every year; ramps have a positive
+  bin width and one to five bins a side.
 - A line plate whose scale does not start at zero says so in its caption.
-- Every figure in the machine's words (headlines, paragraphs, notes, captions, the ledger's lines)
-  matches a number in the rows or a fact, rounded no finer than written.
 - Machine prose passes `checkStyle`.
 - The editor's margin notes and standfirst are his words, unchanged: they must be found in his stored
   text.

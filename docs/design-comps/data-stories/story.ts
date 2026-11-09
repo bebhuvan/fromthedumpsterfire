@@ -48,6 +48,17 @@ const ko = at(D.named['South Korea'].tfr, EST);
 const kids = fact('kids', Math.round((100 * ko) / 2.1), 'Children of 100 adults at a constant rate of 0.72, against replacement at 2.1.');
 const grand = fact('grandkids', Math.round(100 * (ko / 2.1) ** 2), 'Grandchildren of 100 adults at a constant rate of 0.72.');
 fact('adults', 100, 'The illustration’s first generation.');
+fact('peakTfr', peak[1], 'The world’s total fertility rate in its peak year.');
+fact('worldNow', now, 'The world’s total fertility rate in 2023.');
+fact('southKorea', ko, 'South Korea’s total fertility rate in 2023.');
+fact('cameBack', D.floor.filter((f: any) => f.max_after >= 2.1).length, 'Countries that fell below 1.5 and later reached 2.1 again: counted from the rows.');
+fact('range80', 80, 'The UN’s 80 per cent prediction interval (a definition).');
+fact('range95', 95, 'The UN’s 95 per cent prediction interval (a definition).');
+fact('floorScale', 0.5, 'Where the floor plate’s scale starts.');
+fact('india1950', at(D.named.India.tfr, 1950), 'India’s total fertility rate in 1950.');
+fact('india2023', at(D.named.India.tfr, EST), 'India’s total fertility rate in 2023.');
+fact('replacement', 2.1, 'Replacement fertility: the rate at which each generation replaces the one before (a definition, not a row).');
+fact('below', 1.5, 'The threshold the floor plate follows countries from (a definition).');
 const B: Pt[] = D.world.births.map(([y, v]: Pt) => [y, v / 1e6]);
 const De: Pt[] = D.world.deaths.map(([y, v]: Pt) => [y, v / 1e6]);
 const bPk = peakOf(B.filter((p) => p[0] <= EST));
@@ -70,8 +81,11 @@ const tot = (r: any[]) => r[2] + r[3];
 const under5 = Math.round(fact('under5', tot(pyr23[0]), 'Indians aged 0 to 4 in 2023.') / 1e6);
 const teens = Math.round(fact('teens', tot(pyr23[3]), 'Indians aged 15 to 19 in 2023.') / 1e6);
 const big61 = pyr61.reduce((a: any, b: any) => (tot(b) > tot(a) ? b : a));
+const span = (r: any) => [r[1], r[1] + 4] as const;
+for (const [k, r] of [['teens', pyr23[3]], ['largest61', big61]] as const) { const [a, b] = span(r); fact(`${k}From`, a, `First age in the group (five-year groups).`); fact(`${k}To`, b, `Last age in the group.`); }
 fact('years', inPk[0] - EST, 'Years from 2023 to India’s peak.');
-const twelve = ['South Korea', 'China', 'Japan', 'Italy', 'Thailand', 'Brazil', 'United States', 'France', 'Iran', 'Bangladesh', 'India', 'Nigeria'];
+// Lowest first, by the 2023 value, so the panels read as a ranking.
+const twelve = ['South Korea', 'China', 'Japan', 'Italy', 'Thailand', 'Brazil', 'United States', 'France', 'Iran', 'Bangladesh', 'India', 'Nigeria'].sort((a, b) => at(D.named[a].tfr, EST) - at(D.named[b].tfr, EST));
 const t2100 = twelve.map((c) => at(D.named[c].tfr, 2100));
 const up = fact('driftUp', twelve.filter((c) => at(D.named[c].tfr, 2100) > at(D.named[c].tfr, EST)).length, 'Of the twelve, those the UN projects higher in 2100 than in 2023.');
 fact('twelve', twelve.length, 'Countries on the plate.');
@@ -90,9 +104,9 @@ plates.push({
   caption: 'Total fertility rate: every country of a million people or more, and the world with the UN’s 80 and 95 per cent ranges.',
   sources: [viaOwid('fertility-rate-with-projections'), UN_PPP],
   figure: {
-    form: 'lines', seam: EST, x: { domain: [1950, 2100], ticks: [1950, 1975, 2000, 2023, 2050, 2075, 2100], phoneTicks: [1950, 2000, 2050, 2100] },
+    form: 'lines', seam: EST, contextLabel: 'Every other country', x: { domain: [1950, 2100], ticks: [1950, 1975, 2000, 2023, 2050, 2075, 2100], phoneTicks: [1950, 2000, 2050, 2100] },
     panels: [{
-      y: { unit: 'children per woman', domain: [0, 8], ticks: [0, 2, 4, 6, 8] },
+      y: { unit: 'Children per woman', domain: [0, 8], ticks: [0, 2, 4, 6, 8] },
       rules: [{ y: 2.1, label: 'Replacement 2.1' }],
       series: [
         ...Object.keys(D.field).map((c) => ({ key: c, role: 'context' as const, points: [...yrs(D.field[c]), ...(D.fieldProj[c] as number[]).slice(1).map((v, i) => [EST + 1 + i, v] as Pt)], projectedFrom: EST })),
@@ -136,9 +150,9 @@ plates.push({
   caption: 'Total fertility rate, estimated to 2023 and projected to 2100.',
   sources: [viaOwid('fertility-rate-with-projections')],
   figure: {
-    form: 'multiples', seam: EST, x: { domain: [1950, 2100], ticks: [] }, y: { unit: 'children per woman', domain: [0, 8], ticks: [2, 6] },
+    form: 'multiples', seam: EST, x: { domain: [1950, 2100], ticks: [] }, y: { unit: 'Children per woman', domain: [0, 8], ticks: [2, 6] },
     rule: { y: 2.1, label: 'Replacement 2.1' }, context: { label: 'World', points: wt },
-    scaleLine: 'Children per woman on one scale, 0 to 8, 1950 to 2100; the world in grey', phoneScaleLine: 'Children per woman, 0 to 8, 1950 to 2100',
+    scaleLine: 'Children per woman on one scale, 1950 to 2100; the world in grey; the value is 2023', phoneScaleLine: 'Children per woman; the value is 2023',
     panels: twelve.map((c) => ({ label: c, points: D.named[c].tfr, projectedFrom: EST, value: f2(at(D.named[c].tfr, EST)) })),
   },
 });
@@ -154,9 +168,9 @@ plates.push({
   sources: [viaOwid('fertility-rate-with-projections')],
   coda: { label: 'At South Korea’s rate', figures: [{ value: '100', text: 'adults' }, { value: String(kids), text: 'children' }, { value: String(grand), text: 'grandchildren' }], text: `Arithmetic on one number, not a forecast: each generation is the last multiplied by ${f2(ko)} over 2.1.` },
   figure: {
-    form: 'lines', x: { domain: [0, 50], ticks: [0, 10, 20, 30, 40, 50], title: 'Years after first falling below 1.5' },
+    form: 'lines', contextLabel: 'Every other country', x: { domain: [0, 50], ticks: [0, 10, 20, 30, 40, 50], title: 'Years after first falling below 1.5' },
     panels: [{
-      y: { unit: 'children per woman', domain: [0.5, 2.5], ticks: [0.5, 1, 1.5, 2, 2.5], format: 'one' },
+      y: { unit: 'Children per woman', domain: [0.5, 2.5], ticks: [0.5, 1, 1.5, 2, 2.5], format: 'one' },
       rules: [{ y: 2.1, label: 'Replacement 2.1' }],
       zones: [{ from: floorMax, to: 2.1, label: 'No country of a million people has come back up through here', phone: 'None has come back up through here' }],
       series: [
@@ -172,13 +186,13 @@ plates.push({
 plates.push({
   key: 'peak', name: 'The peak',
   headline: `The world’s births peaked in ${bPk[0]}, in the UN’s central projection`,
-  body: `${Math.round(bPk[1])} million babies were born in ${bPk[0]}. Deaths rise as the world ages, and in ${dCross} they overtake births, the year the world’s population peaks at ${(pPk[1] / 1e9).toFixed(1)} billion. The range is wide: by 2100 the UN puts births between ${lo95} and ${hi95} million a year.`,
+  body: `${Math.round(bPk[1])} million babies were born in ${bPk[0]}. Deaths rise as the world ages, and in ${dCross} they overtake births, the year the world’s population peaks at ${(pPk[1] / 1e9).toFixed(1)} billion. The range is wide: by 2100 the UN puts births between ${lo95} million and ${hi95} million a year.`,
   caption: 'Births and deaths in the world each year, with the UN’s 80 and 95 per cent ranges for births.',
   sources: [viaOwid('births-and-deaths-projected-to-2100'), UN_PPP],
   figure: {
     form: 'lines', seam: EST, x: { domain: [1950, 2100], ticks: [1950, 1975, 2000, 2023, 2050, 2075, 2100], phoneTicks: [1950, 2000, 2050, 2100] },
     panels: [{
-      y: { unit: 'million a year', domain: [0, 160], ticks: [0, 50, 100, 150] },
+      y: { unit: 'Million a year', domain: [0, 160], ticks: [0, 50, 100, 150] },
       series: [
         { key: 'Deaths', role: 'named', label: 'Deaths', points: De, projectedFrom: EST },
         { key: 'Births', role: 'focus', label: 'Births', points: B, projectedFrom: EST, range: range(Object.fromEntries(Object.entries(ib).map(([k, v]) => [k, (v as Pt[]).map(([y, x]) => [y, x / 1e6] as Pt)]))) },
@@ -202,7 +216,7 @@ plates.push({
   figure: {
     form: 'stack', seam: EST, unit: 'of every 100 babies', x: { domain: [1950, 2100], ticks: [1950, 1975, 2000, 2023, 2050, 2075, 2100], phoneTicks: [1950, 2000, 2050, 2100] },
     layers: [{ label: 'Africa', role: 'focus', points: share('Africa (UN)') }, { label: 'Asia', role: 'second', points: share('Asia (UN)') }, { label: 'Rest of the world', short: 'Rest', role: 'rest', points: rest }],
-    labelAt: [1960, 2010, 2085], phoneLabelAt: [1965, 2085],
+    labelAt: [1950, EST, 2100], phoneLabelAt: [1950, 2100],
   },
 });
 
@@ -218,12 +232,12 @@ plates.push({
     form: 'lines', seam: EST, x: { domain: [1950, 2100], ticks: [1950, 1975, 2000, 2023, 2050, 2075, 2100], phoneTicks: [1950, 2000, 2050, 2100] },
     panels: [
       {
-        y: { unit: 'children per woman', domain: [0, 6.5], ticks: [0, 2, 4, 6] }, weight: 1.15, rules: [{ y: 2.1, label: 'Replacement' }],
+        y: { unit: 'Children per woman', domain: [0, 6.5], ticks: [0, 2, 4, 6] }, weight: 1.15, rules: [{ y: 2.1, label: 'Replacement' }],
         series: [tfrSeries('World', wt, 'named', 'World'), tfrSeries('India', I.tfr, 'focus', 'India', D.intervals.tfr.India)],
         notes: [{ x: inCross, y: at(I.tfr, inCross), lines: [`${inCross}: below replacement`], phone: [`${inCross}: below`, 'replacement'] }],
       },
       {
-        y: { unit: 'people', domain: [0, 2.4], ticks: [0, 1, 2], format: 'int' }, weight: 0.85,
+        y: { unit: 'Billion people', domain: [0, 2.4], ticks: [0, 1, 2], format: 'int' }, weight: 0.85,
         series: [{ key: 'India population', role: 'focus', label: 'India', points: pop(I.pop), projectedFrom: EST, range: range(Object.fromEntries(Object.entries(ip).map(([k, v]) => [k, pop(v as Pt[])]))) }],
         notes: [{ x: inPk[0], y: inPk[1] / 1e9, lines: [`${inPk[0]}: peaks at ${(inPk[1] / 1e9).toFixed(2)} billion`], phone: [`Peak ${inPk[0]}:`, `${(inPk[1] / 1e9).toFixed(2)} billion`] }],
       },
@@ -235,7 +249,7 @@ const groups = pyr23.filter((r: any) => r[1] <= 95);
 plates.push({
   key: 'pyramid', name: 'Why India keeps growing',
   headline: 'Fewer babies, more parents',
-  body: `In ${EST} India had ${under5} million children under five and ${teens} million aged 15 to 19: the base of its pyramid has already narrowed. The bulge of young adults carries the population up for another ${inPk[0] - EST} years. By ${inPk[0]} the largest age group is ${big61[0].replace('-', ' to ')}.`,
+  body: `In ${EST} India had ${under5} million children under five and ${teens} million aged ${span(pyr23[3])[0]} to ${span(pyr23[3])[1]}: the base of its pyramid has already narrowed. The bulge of young adults carries the population up for another ${inPk[0] - EST} years. By ${inPk[0]} the largest age group is ${span(big61)[0]} to ${span(big61)[1]}.`,
   caption: 'India’s population by five-year age group and sex, 2023 and the UN projection for 2061.',
   sources: [UN_AGE],
   figure: {
@@ -255,7 +269,7 @@ const story: Story = {
     { value: f2(now), text: `in ${EST}, just above replacement at 2.1`, loud: true },
     { value: `${share23}%`, text: 'of the world’s people live where fertility is below 2.1' },
     { value: String(bPk[0]), text: `the year the world’s births peaked, at ${Math.round(bPk[1])} million, in the UN’s central projection` },
-    { value: '0', text: `of ${floorN} countries that fell below 1.5 have come back to replacement` },
+    { value: String(facts.find((f) => f.key === 'cameBack')!.value), text: `of ${floorN} countries that fell below 1.5 have come back to replacement` },
   ],
   movements: [
     { numeral: 'I', name: 'It happened everywhere', plates: ['fall', 'crossing', 'twelve'] },

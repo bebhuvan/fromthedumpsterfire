@@ -5,7 +5,6 @@
 import type { HeatmapFigure, HeatmapRow } from './heatmap';
 import { firstBelow, REPLACEMENT, valueIn, type Gallery } from './gallery.fixture';
 
-
 /** Names too long for a row, shortened (wide, phone). */
 const SHORT: Record<string, [string, string]> = {
   COD: ['DR Congo', 'DR Congo'],
@@ -20,7 +19,6 @@ const SEAM = 2023;
 export function cascadeFixture(g: Gallery, focus = 'IND'): HeatmapFigure {
   const [y0, y1] = [1950, SEAM];
   const top = g.countries.slice().sort((a, b) => valueIn(b.pop, SEAM) - valueIn(a.pop, SEAM)).slice(0, 40);
-  const phone = new Set(top.slice(0, 25).map((c) => c.code));
   const rows: HeatmapRow[] = top.map((c) => {
     const crossed = firstBelow(c.tfr, REPLACEMENT);
     const values = c.tfr.filter(([y]) => y >= y0 && y <= y1).map(([, v]) => v);
@@ -32,7 +30,6 @@ export function cascadeFixture(g: Gallery, focus = 'IND'): HeatmapFigure {
       values,
       crossed,
       group: crossed === null ? 2 : crossed <= SEAM ? 0 : 1,
-      phone: phone.has(c.code),
     };
   });
   // Crossed first at the top; never by 2100 last; ties by name.

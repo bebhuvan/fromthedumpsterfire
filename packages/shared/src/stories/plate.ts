@@ -60,7 +60,7 @@ export function keyOf(f: Figure): { mark: KeyMark; text: string }[] {
   const add = (mark: KeyMark, text: string) => out.some((k) => k.mark === mark) || out.push({ mark, text });
   if (f.form === 'lines') {
     const all = f.panels.flatMap((p) => p.series);
-    if (all.some((s) => s.role === 'context')) add('context', 'Every other country');
+    if (all.some((s) => s.role === 'context')) add('context', f.contextLabel ?? 'Everything else');
     add('estimated', 'Estimated');
     if (all.some((s) => s.projectedFrom !== undefined)) add('projected', 'Projected');
     if (all.some((s) => s.range)) { add('range80', '80% range'); add('range95', '95% range'); }

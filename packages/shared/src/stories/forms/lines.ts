@@ -4,8 +4,8 @@
 
 import type { Scene, SceneNode } from '../../charts/scene';
 import { ranges, seam, xAxis, yAxis } from '../axes';
-import { areaOf, hatch, hatchPath, pathOf, scale, type Pt } from '../geom';
-import { DASH, DOT, HATCH, MARGIN, STROKE, TYPE, WIDTH, type Device } from '../grammar';
+import { hatch, hatchPath, pathOf, scale, type Pt } from '../geom';
+import { DASH, OPACITY, DOT, HATCH, MARGIN, STROKE, TYPE, WIDTH, type Device } from '../grammar';
 import { place, Placer, spread, widthOf } from '../place';
 import type { LinesFigure, Series } from '../spec';
 
@@ -45,7 +45,7 @@ export function drawLines(f: LinesFigure, dev: Device, width: number = WIDTH[dev
       P.block({ x: M.left, y: lo, w: width - M.right - M.left, h: hi - lo });
     }
     for (const r of panel.rules ?? []) {
-      mid.push({ t: 'line', x1: M.left, y1: y(r.y), x2: width - M.right, y2: y(r.y), stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: 0.75 });
+      mid.push({ t: 'line', x1: M.left, y1: y(r.y), x2: width - M.right, y2: y(r.y), stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: OPACITY.reference });
       P.path([[M.left, y(r.y)], [width - M.right, y(r.y)]], 2);
       ends.push({ y: y(r.y), text: r.label, strong: false });
     }
@@ -96,6 +96,3 @@ export function drawLines(f: LinesFigure, dev: Device, width: number = WIDTH[dev
   }
   return { width, height, nodes: [...back, ...mid, ...front, ...labels] };
 }
-
-/** The area under a line to a floor, for a washed step. */
-export const under = (pts: Pt[], floorY: number) => areaOf(pts, pts.map(([px]) => [px, floorY] as Pt));

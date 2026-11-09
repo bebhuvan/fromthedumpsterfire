@@ -16,6 +16,19 @@ const f = bumpFixture(g);
 const flat = (ns: SceneNode[]): SceneNode[] => ns.flatMap((n) => (n.t === 'g' ? flat(n.children) : [n]));
 
 describe('bump', () => {
+  test('the unit counts the lines, and every name is written in full', () => {
+    expect(f.unit).toBe('Rank among these ten');
+    expect(f.lines.every((l) => l.phoneLabel === undefined)).toBe(true);
+  });
+  test.each(['wide', 'phone'] as const)('%s: projected moments are hollow, estimated ones filled', (dev) => {
+    const s = drawBump(f, dev);
+    const circles = flat(s.nodes).filter((n): n is Extract<SceneNode, { t: 'circle' }> => n.t === 'circle');
+    const after = f.dots.filter((yr) => yr > f.seam).length, before = f.dots.length - after;
+    expect(circles.filter((c) => c.fill === 'bg')).toHaveLength(after * f.lines.length);
+    expect(circles.filter((c) => c.fill !== 'bg')).toHaveLength(before * f.lines.length);
+    // The story line's projected dots keep its ink round the hollow.
+    expect(circles.filter((c) => c.fill === 'bg' && c.stroke === 'ed')).toHaveLength(after);
+  });
   test('ten countries, ranked every ten years 1950 to 2100 and at the seam', () => {
     expect(f.lines).toHaveLength(10);
     const years = f.lines[0]!.ranks.map(([y]) => y);
@@ -41,7 +54,8 @@ describe('bump', () => {
     const s = drawBump(f, dev);
     expectClean(s);
     const words = texts(s.nodes).map((t) => t.t);
-    for (const l of f.lines) expect(words.filter((w) => w === (dev === 'phone' ? l.phoneLabel ?? l.label : l.label))).toHaveLength(2);
+    for (const l of f.lines) expect(words.filter((w) => w === l.label), l.label).toHaveLength(2);
+    expect(words).toContain('Rank among these ten');
     const ed = flat(s.nodes).filter((n) => n.t === 'path' && n.stroke === 'ed');
     expect(ed.filter((n) => n.t === 'path' && n.dash)).toHaveLength(1);
     expect(ed.filter((n) => n.t === 'path' && !n.dash)).toHaveLength(1);

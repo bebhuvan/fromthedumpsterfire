@@ -5,7 +5,7 @@
 import type { Scene, SceneNode } from '../../charts/scene';
 import { fmt, xAxis } from '../axes';
 import { scale } from '../geom';
-import { DASH, STROKE, TYPE, WIDTH, type Device } from '../grammar';
+import { DASH, OPACITY, STROKE, TYPE, WIDTH, type Device } from '../grammar';
 import { Placer, widthOf, type Box } from '../place';
 
 export interface BarsFigure {
@@ -65,7 +65,7 @@ export function drawBars(f: BarsFigure, dev: Device): Scene {
 
   if (f.rule) {
     const rx = x(f.rule.x), w = widthOf(f.rule.label, 'sans', T.small);
-    marks.push({ t: 'line', x1: rx, y1: headY + 5, x2: rx, y2: bottom + 2, stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: 0.85 });
+    marks.push({ t: 'line', x1: rx, y1: headY + 5, x2: rx, y2: bottom + 2, stroke: 'ink', sw: STROKE.hair, dash: DASH.reference, so: OPACITY.reference });
     const lx = Math.min(Math.max(rx - w / 2, 0), width - w);
     claim({ x: lx, y: headY - T.small * 0.8, w, h: T.small * 1.05 }, f.rule.label);
     labels.push({ t: 'text', x: lx, y: headY, text: f.rule.label, face: 'sans', size: T.small, fill: 'ink2', stroke: 'bg', sw: 4 });

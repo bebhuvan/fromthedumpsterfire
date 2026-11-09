@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { groupTransform, nodeAttrs, type Scene, type SceneNode } from '../../../packages/shared/src/charts/scene';
-import { citable, drawFigure, drawKey, plateWidth, untraced, validateStory, type Figure, type Plate, type Story } from '../../../packages/shared/src/stories';
+import { citableInProse, drawFigure, drawKey, plateWidth, untraced, validateStory, type Figure, type Plate, type Story } from '../../../packages/shared/src/stories';
 import type { Gallery } from '../../../packages/shared/src/stories/forms/gallery.fixture';
 import { slopeFixture } from '../../../packages/shared/src/stories/forms/slope.fixture';
 import { dumbbellFixture } from '../../../packages/shared/src/stories/forms/dumbbell.fixture';
@@ -221,7 +221,7 @@ ${story.movements.map((m) => `<div class="mv"><span class="caps">Movement ${m.nu
   ];
   // Every figure in a caption must be in the figure's own rows.
   for (const e of entries) {
-    const nums = citable({ facts: [{ key: 'replacement', value: 2.1, method: 'Replacement fertility, a definition.' }, ...(e.facts ?? [])], plates: [{ figure: e.figure } as Plate] } as unknown as Story);
+    const nums = citableInProse({ facts: [...story.facts, { key: 'snapshot', value: 2023, method: 'The year the gallery’s one-year figures show.' }, ...(e.facts ?? [])], plates: [{ figure: e.figure } as Plate] } as unknown as Story);
     const bad = untraced(e.caption, nums);
     if (bad.length) throw new Error(`Gallery "${e.name}": ${bad.join(', ')} not in its rows`);
   }

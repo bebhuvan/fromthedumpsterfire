@@ -14,11 +14,12 @@ export function mapFixture(g: Gallery): MapFigure & { unmapped: string[] } {
   const onMap = (r: { code: string; name: string }) => (worldIndex(r.code) ?? worldIndex(r.name)) !== undefined;
   return {
     form: 'map',
+    year: YEAR,
     values: rows.filter(onMap),
     unmapped: rows.filter((r) => !onMap(r)).map((r) => r.name),
     bins: { centre: REPLACEMENT, width: 0.25, perSide: 5 },
     centreLabel: 'Replacement',
-    unit: `Births per woman, ${YEAR}`,
+    unit: `Children per woman, ${YEAR}`,
     focus: ['IND'],
   };
 }

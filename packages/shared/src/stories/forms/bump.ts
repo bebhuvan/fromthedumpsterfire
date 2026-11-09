@@ -1,7 +1,7 @@
 // bump: rankings over time. Each member's rank among the group at each moment, one row a rank, the
 // members' lines easing from row to row. Every line quiet but the story's, in the edition's ink;
-// the stretch after the seam dashed (projected); a dot at each moment ringed in the ground; names at
-// both ends, so a reader can follow a member in from either side.
+// the stretch after the seam dashed (projected); a dot at each moment ringed in the ground, hollow where
+// the moment is projected; names at both ends, so a reader can follow a member in from either side.
 
 import type { Scene, SceneNode } from '../../charts/scene';
 import { seam, xAxis } from '../axes';
@@ -26,7 +26,7 @@ export interface BumpFigure {
   seam: number;
   /** The moments that get a dot (the seam's own point is on the line but not dotted). */
   dots: number[];
-  /** Written over the ranks ("Rank"). */
+  /** Written over the ranks ("Rank among these ten"). */
   unit: string;
   lines: BumpLine[];
 }
@@ -63,7 +63,7 @@ export function drawBump(f: BumpFigure, dev: Device): Scene {
   const nameW = Math.max(...f.lines.map((l) => widthOf(name(l), face(l), T.label)));
   const numW = phone ? 0 : widthOf(String(n), 'sans', T.tick) + 10;
   const x0 = Math.ceil(nameW + numW + 12), x1 = width - Math.ceil(nameW + 12);
-  const pitch = phone ? 25 : 30, top = phone ? 52 : 56;
+  const pitch = phone ? 25 : 30, top = phone ? 60 : 56;
   const y = scale([1, n], [top, top + (n - 1) * pitch]);
   const axisY = y(n) + 22;
   const height = axisY + 6 + T.tick + 8;
@@ -91,14 +91,23 @@ export function drawBump(f: BumpFigure, dev: Device): Scene {
     l.ranks.forEach(([yr, rk]) => {
       if (!f.dots.includes(yr)) return;
       const r = l.focus ? DOT.story : DOT.named;
-      dots.push({ t: 'circle', cx: x(yr), cy: y(rk), r, fill: paint, stroke: 'bg', sw: 1.5 });
+      // Projected, so hollow, as in every form: the ground inside, the line's ink around.
+      if (yr > f.seam) dots.push({ t: 'circle', cx: x(yr), cy: y(rk), r: l.focus ? DOT.story - 0.5 : DOT.note, fill: 'bg', stroke: paint, sw: l.focus ? STROKE.named * 1.25 : STROKE.hair * 1.2 });
+      else dots.push({ t: 'circle', cx: x(yr), cy: y(rk), r, fill: paint, stroke: 'bg', sw: STROKE.ring * 0.75 });
     });
   }
   // The dots of the story line over every other line.
-  dots.sort((a, b) => Number(a.t === 'circle' && a.fill === 'ed') - Number(b.t === 'circle' && b.fill === 'ed'));
+  const inked = (n: SceneNode) => Number(n.t === 'circle' && (n.fill === 'ed' || n.stroke === 'ed'));
+  dots.sort((a, b) => inked(a) - inked(b));
 
   if (!phone) for (let r = 1; r <= n; r++) labels.push(...place(P, { lines: [String(r)], at: [x0 - 8, y(r) + T.tick * 0.35], face: 'sans', size: T.tick, paint: 'ink2', prefer: [[0, 0, 'end']], roam: false }, `rank ${r}`));
-  labels.push(...place(P, { lines: [f.unit], at: [phone ? x0 - 8 : x0 - 8, top - 26], face: 'sans', size: T.tick, paint: 'ink2', prefer: [[0, 0, 'end']], roam: false }));
+  // The unit over the rank numbers, or a line higher from the figure's left edge when it is wider
+  // than the names (on that line it would run into the seam's words).
+  const unitW = widthOf(f.unit, 'sans', T.tick), unitY = top - 26;
+  const unitAt = [[x0 - 8 - unitW, unitY], [0, unitY - T.tick * 1.8]].find(([ux, uy]) => ux! >= 0 && P.free({ x: ux!, y: uy! - T.tick * 0.8, w: unitW, h: T.tick * 1.05 }));
+  if (!unitAt) throw new Error(`No room on the plate for "${f.unit}"`);
+  P.block({ x: unitAt[0]!, y: unitAt[1]! - T.tick * 0.8, w: unitW, h: T.tick * 1.05 });
+  labels.push({ t: 'text', x: unitAt[0]!, y: unitAt[1]!, text: f.unit, face: 'sans', size: T.tick, fill: 'ink2' });
   for (const l of f.lines) {
     const first = l.ranks[0]!, last = l.ranks[l.ranks.length - 1]!;
     const common = { face: face(l), size: T.label, paint: (l.focus ? 'ink' : 'ink2') as 'ink' | 'ink2', roam: false };
