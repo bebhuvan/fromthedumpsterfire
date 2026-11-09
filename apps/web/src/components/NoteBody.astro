@@ -10,8 +10,10 @@ import Blocks from './Blocks.astro';
 
 interface Props {
   note: FieldNote;
+  /** Sign the last paragraph "B.": not when the cover sets only the note's opening. */
+  signed?: boolean;
 }
-const { note } = Astro.props;
+const { note, signed = true } = Astro.props;
 const body: NoteBlock[] = note.body ?? note.paragraphs.map((p) => ({ kind: 'paragraph', runs: [{ text: p }] }));
 const first = body.findIndex((b) => b.kind === 'paragraph');
 const last = body.findLastIndex((b) => b.kind === 'paragraph');
@@ -40,7 +42,7 @@ const groups = (runs: NoteRun[]) => linkGroups(markRuns(runs, note.highlight)).m
           const words = g.runs.map((r) => { const t = curlQuotes(r.text); const w = r.em ? <em>{t}</em> : t; return r.mark ? <mark>{w}</mark> : w; });
           return g.href ? <a href={g.href} rel="noopener noreferrer" target="_blank">{words}<span class="sr"> (opens in a new tab)</span></a> : words;
         })}
-        {i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}
+        {signed && i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}
       </p>
     );
   }

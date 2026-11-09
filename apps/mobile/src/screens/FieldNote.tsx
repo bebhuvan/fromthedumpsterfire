@@ -2,6 +2,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { haulSlug, type Haul } from '@fdf/shared/haul';
+import { editionOf } from '@fdf/shared/tokens';
 import { fonts, typeColor, useEdition, usePalette } from '@/theme';
 import { Machine, Title } from '@/ui/type';
 import { NoteBody } from '@/ui/NoteBody';
@@ -35,7 +36,7 @@ export function FieldNote({ haul }: { haul: Haul }) {
       ) : null}
 
       <View style={{ marginTop: 22 }}>
-        <NoteBody note={note} para={styles.para} gap={16} />
+        <NoteBody note={note} edition={editionOf(haul.number, haul.edition)} para={styles.para} gap={16} />
       </View>
       <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
 
@@ -66,7 +67,7 @@ export function FieldNote({ haul }: { haul: Haul }) {
 }
 
 const styles = StyleSheet.create({
-  para: { fontFamily: fonts.text, fontSize: 18.5, lineHeight: 28 },
+  para: { fontFamily: fonts.text, fontSize: 18, lineHeight: 28.5 },
   step: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 7 },
   day: { width: 40, fontFamily: fonts.sansMedium, fontSize: 12, marginTop: 4 },
   key: { width: 8, height: 8, marginTop: 8, marginRight: 10, borderWidth: StyleSheet.hairlineWidth },

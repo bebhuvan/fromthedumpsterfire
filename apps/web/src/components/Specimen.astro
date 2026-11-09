@@ -86,7 +86,7 @@ try {
         <span class="sp-rc">{item.source.name} · {yearOf(item.source.date)}</span>
         <span class="sp-ot">{curlQuotes(titleText(item.title))}</span>
         <span class="sp-ob">{item.creator}</span>
-        {ex ? <><span class="sp-ab">{ex.locator || 'Abstract'}</span><Highlighted as="span" class="sp-at" text={ex.text} highlight={ex.highlight} /></> : null}
+        {ex ? <><span class="sp-ab">{ex.locator || 'From the paper'}</span><Highlighted as="span" class="sp-at" text={ex.text} highlight={ex.highlight} curl /></> : null}
       </>
     ) : null}
 

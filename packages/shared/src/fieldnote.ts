@@ -242,3 +242,47 @@ export function itemNote(source: string): { text: string; links: NoteLink[]; bod
     quotations: body.flatMap((b) => (b.kind === 'quotation' ? b.paragraphs.map(runsText) : [])),
   };
 }
+
+/**
+ * The field note's opening on the cover (2026-11-09). A long note (the editor writes long, and Haul
+ * 002's ran past 4,000 words) pushed the Haul's contents twenty-five phone screens down, so the cover
+ * sets the note's opening and continues it on the note's own page, as a magazine's editor's letter
+ * says "continued on page 4". The words are not changed, only where the cover stops: at the end of a
+ * paragraph once about LEAD_WORDS are set, never after a heading or inside a quotation. A note of up
+ * to LEAD_FROM_WORDS, or one that would leave a short rest, is set whole.
+ */
+export const LEAD_FROM_WORDS = 700;
+export const LEAD_WORDS = 450;
+const MIN_REST_WORDS = 200;
+
+const blockWords = (b: NoteBlock): number => {
+  const count = (s: string) => s.split(/\s+/).filter(Boolean).length;
+  if (b.kind === 'paragraph') return count(runsText(b.runs));
+  if (b.kind === 'heading') return count(b.text);
+  if (b.kind === 'quotation') return b.paragraphs.reduce((n, p) => n + count(runsText(p)), 0);
+  return 0;
+};
+
+export interface NoteLead {
+  /** What the cover sets: every block when the note is not cut. */
+  blocks: NoteBlock[];
+  cut: boolean;
+  words: number;
+  /** Reading time of the whole note, at 230 words a minute. */
+  minutes: number;
+}
+
+export function noteLead(body: NoteBlock[]): NoteLead {
+  const words = body.reduce((n, b) => n + blockWords(b), 0);
+  const minutes = Math.max(1, Math.round(words / 230));
+  const whole = { blocks: body, cut: false, words, minutes };
+  if (words <= LEAD_FROM_WORDS) return whole;
+  let acc = 0;
+  for (let i = 0; i < body.length; i++) {
+    acc += blockWords(body[i]!);
+    if (acc >= LEAD_WORDS && body[i]!.kind === 'paragraph') {
+      return words - acc < MIN_REST_WORDS ? whole : { blocks: body.slice(0, i + 1), cut: true, words, minutes };
+    }
+  }
+  return whole;
+}

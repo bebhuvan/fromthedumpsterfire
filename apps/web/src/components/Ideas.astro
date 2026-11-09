@@ -3,7 +3,7 @@
 // followed by the passage where the source says it, in the source's own words (serif), and where
 // to find it, then the editor's own line on it when there is one (italic serif, signed). Numbered,
 // never boxed.
-import type { Idea } from '@fdf/shared/haul';
+import { curlQuotes, type Idea } from '@fdf/shared/haul';
 
 interface Props {
   ideas: Idea[];
@@ -19,7 +19,7 @@ const { ideas } = Astro.props;
           <p class="machine idea-t"><span class="sr">The machine: </span>{idea.text}</p>
           {idea.quote ? (
             <blockquote class="idea-q">
-              <p>{idea.quote}</p>
+              <p>{curlQuotes(idea.quote)}</p>
               {idea.locator ? <footer class="idea-loc">{idea.locator}</footer> : null}
             </blockquote>
           ) : idea.locator ? (

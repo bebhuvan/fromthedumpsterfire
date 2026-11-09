@@ -3,7 +3,10 @@
 // as an extract in the reading type with a rule in the edition's ink. One opening mark in that ink
 // stands as the ornament; there is no closing mark (the setting shows where the words end), so marks
 // inside the quotation never collide. The words are the stored, matched words; only straight marks
-// are set curly. The credit names whose words they are and where they were found.
+// are set curly. The credit names whose words they are and where they were found; `checked` adds the
+// machine's check ("Matched word for word") in the blue sans, because it is the machine's claim.
+// An extract that was checked is a salvage slip (2026-11-09, the proof sheet): a cutting of plate grey
+// with a torn top edge, the credit and the check on its stub.
 import { quoteLength } from '@fdf/shared/haul';
 import Highlighted from './Highlighted.astro';
 import { safeHref } from '../lib/site';
@@ -17,14 +20,21 @@ interface Props {
   cite?: string;
   /** Set as an extract whatever its length (an excerpt is read, not displayed). */
   extract?: boolean;
+  /** The words were matched against the stored source: say so, in the machine's voice. */
+  checked?: boolean;
   class?: string;
 }
-const { text, highlight, credit = [], cite, extract = false, class: cls } = Astro.props;
+const { text, highlight, credit = [], cite, extract = false, checked = false, class: cls } = Astro.props;
 const len = extract ? 'long' : quoteLength(text);
 const lines = credit.filter(Boolean);
 ---
-<figure class:list={['qt', `qt-${len}`, cls]}>
+<figure class:list={['qt', `qt-${len}`, { 'qt-slip': checked && len === 'long' }, cls]}>
   <span class="qt-mark" aria-hidden="true">&#8220;</span>
   <blockquote class="qt-q" cite={cite ? safeHref(cite) : undefined}><Highlighted text={text} highlight={highlight} breaks="line" curl /></blockquote>
-  {lines.length ? <figcaption class="qt-cap">{lines.join(', ')}</figcaption> : null}
+  {lines.length || checked ? (
+    <figcaption class="qt-cap">
+      {lines.length ? <span class="qt-who">{lines.join(', ')}</span> : null}
+      {checked ? <span class="qt-chk machine">Matched word for word</span> : null}
+    </figcaption>
+  ) : null}
 </figure>

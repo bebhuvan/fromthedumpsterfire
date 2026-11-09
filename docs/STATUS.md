@@ -1204,3 +1204,25 @@ Substack's own publication as a stand-in: the frame loads under the CSP with no 
 390px and 1280px, light and dark (screenshots in `docs/design-comps/2026-11-09-subscribe/`). Substack's
 form is white in dark mode; it has no dark version. The app's Menu line needs a new build or an
 over-the-air update to reach phones.
+## 2026-11-09: design review and small fixes (branch claude/heuristic-visvesvaraya-55cce2, not deployed)
+
+- **`docs/DESIGN-REVIEW.md`**: what works, what was off (ranked, with screenshots), a house style for
+  quotations (three comps) and three directions for the visual grammar, with a recommendation. Comps
+  and pictures in `docs/design-comps/2026-11-09-review/`. Waiting on the editor's pick.
+- **Fixed, web and app:** a tool's "In its own words" is a credited quotation set by length (was 190
+  words of display serif on Censusnama); quotations in the editor's notes and the field note are a
+  step smaller than his words; clippings step down with length; a paper's References follow its
+  figures; the cover specimen and About key no longer call a paper's passage its "Abstract"; web
+  excerpts set quote marks curly as the app does.
+- **Fixed, pipeline:** Wikipedia card summaries no longer stop at a middle initial ("Lyndon B.").
+  Haul 002's published cards keep the cut text until they are edited and republished.
+- Not deployed: the website, an app update and the pipeline all need the editor's go-ahead.
+- **The proof sheet, built** (the editor's pick): 18px reading on phones, 19px on desktop; checked
+  extracts as torn salvage slips with "Matched word for word" in the machine's blue; quotations in the
+  editor's notes as book quotations; a salvage tag on item heads. Web and app. Not deployed.
+- **Seven signatures, built** (the editor's pick): the ledger, the cover's date stamp, the 404 that
+  burned, taped plates, an ornament per edition, the archive as a card drawer, the footer's slug and
+  neighbours. Web and app (the 404 is web only). Not deployed.
+- **The field note continued**: past 700 words the cover sets the note's opening and a "Continued" line
+  to the note's own page (`/haul/<n>/note`, new on the website); a jump to the contents under the date.
+  Web and app. Not deployed.

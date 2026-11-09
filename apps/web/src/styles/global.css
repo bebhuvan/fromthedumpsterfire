@@ -35,11 +35,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   margin: 0; position: relative; overflow-x: hidden;
   background: var(--bg); color: var(--ink);
-  font: 1.125rem/1.6 var(--serif);
+  font: 1.1875rem/1.62 var(--serif);
   font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-wrap: break-word;
 }
-/* Phones read at a size up: the column is short, so the type can be generous. */
-@media (max-width: 640px) { body { font-size: 1.1875rem; } }
+/* Reading size (2026-11-09, the proof sheet): 19px on wide screens, 18px on phones, where 19px left
+   about 39 characters to a line and long notes read choppy; 18px gives about 45. */
+@media (max-width: 640px) { body { font-size: 1.125rem; } }
 h1, h2, h3, p, ol, ul, figure, blockquote { margin: 0; }
 ol, ul { list-style: none; padding: 0; }
 img { max-width: 100%; height: auto; display: block; }
@@ -119,6 +120,11 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .mh { font: 500 0.875rem/1.4 var(--sans); color: var(--ink2); }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 400 0.875rem/1.45 var(--sans); color: var(--ink2); }
 @media (min-width: 1000px) { .meta { flex-direction: column; padding-top: 0.5em; } }
+/* The salvage tag (2026-11-09, the proof sheet): an item's number in the Haul's ink over an ink rule,
+   then its kind, where it was salvaged from and its length, like the tag on a lot. */
+.tag { border-top: 1px solid var(--ink); padding-top: 8px; align-items: baseline; }
+.tag-n { font: 400 1.375rem/1 var(--display); color: var(--ed, var(--ink)); font-variant-numeric: lining-nums tabular-nums; letter-spacing: -0.01em; }
+@media (min-width: 1000px) { .tag { padding-top: 10px; gap: 3px; } .tag-n { font-size: 1.75rem; margin-bottom: 4px; } }
 
 /* The editor's hand: "B." in ember italic; at the end of the field note it is the end mark. */
 .endmark { font-size: 1.3em; line-height: 0; margin-left: 0.15em; }
@@ -132,6 +138,15 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .foot-nav { display: flex; flex-wrap: wrap; gap: 6px 20px; font: 500 0.8125rem/1.6 var(--sans); color: var(--ink2); }
 .foot-nav a { text-decoration: none; }
 .foot-app { font: 400 0.8125rem/1.6 var(--sans); color: var(--ink2); }
+/* The slug and the neighbours (Base.astro). */
+.foot-slug { margin: 6px 0 0; max-width: 30rem; border-top: 1px solid var(--ink); font: 400 0.8125rem/1.5 var(--sans); color: var(--ink2); }
+.foot-slug div { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 12px; padding-block: 4px; border-bottom: 1px solid var(--rule); }
+.foot-slug dd { margin: 0; color: var(--ink); }
+.foot-nb p { font: 500 0.6875rem/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); }
+.foot-nb ul { display: flex; flex-wrap: wrap; margin-top: 4px; font: italic 400 0.9375rem/1.6 var(--serif); }
+.foot-nb li:not(:last-child)::after { content: '\00b7' / ''; margin-inline: 0.45em; color: var(--ink2); font-style: normal; }
+.foot-nb a { color: var(--ink); text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.foot-nb a:hover { text-decoration-color: var(--ink); }
 .foot-licence { max-width: 40rem; font: 400 0.8125rem/1.6 var(--sans); color: var(--ink2); }
 @media (min-width: 1000px) { .foot-nav { grid-row: 2; } }
 
@@ -182,7 +197,12 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 /* The field note set out (NoteBody.astro): headings, quotations, links, and embeds in the column. */
 .fn-h { font: 500 1.375rem/1.2 var(--display); letter-spacing: -0.006em; margin-top: 1.9em; text-wrap: wrap; }
 .fn-h + p { margin-top: 0.5em; }
-.fn-q { margin: 1.1em 0 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); }
+/* A quotation in the editor's words is set as a book sets a block quotation (2026-11-09): a step
+   smaller, indented on both sides, no rule, one opening mark in the Haul's ink hanging in the indent.
+   The rule alone left long quotations reading as more of the editor's prose. Shared with .note-q. */
+.fn-q, .ed-note .note-q { position: relative; padding: 0 0.8em 0 1.7em; }
+.fn-q::before, .ed-note .note-q::before { content: '\201C' / ''; position: absolute; left: -0.04em; top: -0.16em; font: 400 2.9em/1 var(--display); color: var(--ed, var(--ink2)); }
+.fn-q { margin: 1.1em 0 0; font-size: 0.9375em; }
 .fn-q p { margin-top: 0.6em; }
 .fn-q p:first-child { margin-top: 0; }
 .fn-c > p a, .fn-q a { text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 55%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
@@ -286,9 +306,15 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 }
 @media (min-width: 1000px) { .contents .sp-h, .contents .sp-list { grid-column: 1 / -1; } }
 
-.arch { display: grid; border-top: 1px solid var(--ink); }
-.arch li { border-bottom: 1px solid var(--rule); border-left: 6px solid var(--ed); }
-.arch a { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; text-decoration: none; color: var(--ink); padding: 22px 0 24px clamp(16px, 3vw, 32px); position: relative; }
+/* The archive as a card drawer (2026-11-09, a signature): each Haul an index card standing in a
+   drawer, its tab (the date it went out) up from the card's edge in the Haul's ink at its own place
+   along the drawer, a punch hole at the corner, the drawer's front a heavy ink rule. */
+.arch { display: grid; padding-top: 4px; border-bottom: 3px solid var(--ink); }
+.arch li { margin-top: 30px; border-top: 1px solid var(--ink); border-left: 6px solid var(--ed); }
+.arch a { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; text-decoration: none; color: var(--ink); padding: 22px 40px 24px clamp(16px, 3vw, 32px); position: relative; }
+.arch a::after { content: ''; position: absolute; right: 14px; top: 22px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--ink2); }
+.ar-tab { position: absolute; top: -23px; height: 22px; padding: 3px 12px 0; border: 1px solid var(--ink); border-bottom: 0; background: var(--bg); font: 500 0.6875rem/1.4 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ed); white-space: nowrap; }
+.tab-0 { left: 0; } .tab-1 { left: 24%; } .tab-2 { left: 48%; } .tab-3 { left: 66%; }
 .ar-num { display: grid; gap: 14px; align-content: start; font: 400 clamp(3.5rem, 7vw, 5.25rem)/0.8 var(--display); letter-spacing: -0.03em; color: var(--ed); font-variant-numeric: lining-nums; }
 .ar-h { font: 500 0.75rem/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
 .ar-fp { margin-top: 12px; max-width: 34rem; }
@@ -320,6 +346,14 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .h-item { font: 500 clamp(2.25rem, 5.2vw, 3.75rem)/1.02 var(--display); letter-spacing: -0.015em; text-wrap: wrap; }
 .plate { padding-block: 16px; }
 .plate img { width: 100%; }
+/* Taped plates (2026-11-09, a signature): a plate salvaged from an archive is held to the page with
+   two strips of tape, as a scrapbook holds a print. Item plates only; pictures in blocks stay clean. */
+figure.plate { position: relative; }
+figure.plate::before, figure.plate::after { content: ''; position: absolute; top: 5px; z-index: 1; width: 76px; height: 22px; pointer-events: none;
+  background: color-mix(in srgb, var(--butter) 74%, transparent); border-inline: 1px dashed color-mix(in srgb, var(--ink2) 30%, transparent); }
+figure.plate::before { left: -12px; transform: rotate(-30deg); }
+figure.plate::after { right: -12px; transform: rotate(30deg); }
+.card-lay figure.plate::before, .card-lay figure.plate::after { top: -11px; }
 .plate figcaption { margin-top: 10px; display: grid; gap: 4px; font-size: 1rem; font-style: italic; }
 .plate .cr { font: 400 0.8125rem/1.45 var(--sans); color: var(--ink2); font-style: normal; }
 
@@ -756,6 +790,9 @@ blockquote > p + p { margin-top: 0.65em; }
 .clip-handle { color: var(--ink2); }
 @media (max-width: 520px) { .clip-head { grid-template-columns: auto auto; row-gap: 10px; } .clip-head div:first-child { grid-column: 1 / -1; } }
 .clip-text p { font: 400 clamp(1.5625rem, 3.2vw, 2.25rem)/1.28 var(--display); letter-spacing: -0.008em; white-space: pre-line; text-wrap: pretty; }
+/* A post steps down with its length, as a quotation does: a long thread in 36px display is a wall. */
+.clip-medium p { font-size: clamp(1.3125rem, 2.3vw, 1.6875rem); line-height: 1.34; letter-spacing: 0; }
+.clip-long p { font: 400 1.1875rem/1.6 var(--serif); }
 .clip mark { background: color-mix(in srgb, var(--bg) 62%, transparent); }
 /* A post inside another item (Block 'post'): the clipping, smaller, with the link to it under. */
 .post { background: var(--tint); padding: 0 clamp(18px, 3vw, 28px) clamp(18px, 3vw, 26px); }
@@ -801,7 +838,13 @@ blockquote > p + p { margin-top: 0.65em; }
 .lab-dl div:last-child { border-bottom: 0; }
 .lab-dl dt { font: 500 0.75rem/1.5 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); }
 .lab-dl dd { margin: 0; font-size: 1.125rem; }
-.lab-own dd p { font: 400 1.3125rem/1.4 var(--display); }
+/* Its own words are a quotation set by length (Quote.astro), a step down inside the label: a site's
+   long blurb in display serif read as a wall in the editor's type (Censusnama, Haul 002). */
+.lab-own .qt-short .qt-q p { font-size: clamp(1.375rem, 2.6vw, 1.75rem); }
+.lab-own .qt-medium .qt-q p { font-size: 1.25rem; }
+.lab-own .qt-long .qt-q p { font-size: 1.0625rem; }
+.lab-own .qt-cap { margin-top: 4px; }
+.lab-own .qt .qt-mark { position: static; height: 0.36em; margin-top: 2px; font-size: 3rem; }
 @media (max-width: 520px) { .lab-dl div { grid-template-columns: minmax(0, 1fr); } }
 
 /* Specimens of the newer forms on the cover. */
@@ -1024,6 +1067,7 @@ blockquote > p + p { margin-top: 0.65em; }
    note (an essay of the editor's own) upright, as prose is read. */
 .ed-note { max-width: 36rem; }
 .ed-note p { font: italic 400 1.1875rem/1.6 var(--serif); text-wrap: pretty; }
+@media (max-width: 640px) { .ed-note p { font-size: 1.125rem; } }
 .ed-note p + p { margin-top: 0.85em; }
 .note-lead p { font-size: 1.375rem; line-height: 1.5; }
 .note-long p { font-style: normal; font-size: inherit; line-height: 1.65; }
@@ -1038,8 +1082,8 @@ blockquote > p + p { margin-top: 0.65em; }
 .note-long p em, .c-ed .ed-note p em, .ed-note .note-q p em { font-style: italic; }
 /* A quotation from the source, set out in the note: the source's words, so upright, on a rule in the
    Haul's ink (as the field note's quotations are). */
-.ed-note .note-q { margin: 0.95em 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); }
-.ed-note .note-q p { font-style: normal; }
+.ed-note .note-q { margin: 1.1em 0; }
+.ed-note .note-q p { font-style: normal; font-size: 0.9375em; line-height: 1.6; }
 .ed-note .note-q:last-child { margin-bottom: 0; }
 .ed-note .note-q:first-child { margin-top: 0; }
 .ed-note .note-q + p, .ed-note p + .note-q { margin-top: 0.95em; }
@@ -1074,6 +1118,18 @@ blockquote > p + p { margin-top: 0.65em; }
 .qt-long .qt-q p { font: 400 1em/1.65 var(--serif); }
 .qt-cap { margin-top: 10px; font: 400 0.8125rem/1.5 var(--sans); color: var(--ink2); max-width: 36rem; }
 .qt-cap::before { content: ''; display: block; width: 36px; margin-bottom: 8px; border-top: 1px solid var(--ink); }
+.qt-cap .qt-chk { display: block; font-size: inherit; line-height: inherit; }
+/* The salvage slip (2026-11-09, the proof sheet): a checked extract is a cutting from the source, a
+   slip of plate grey with a torn top edge (a CSS mask), set a step smaller and narrower than the
+   editor's words, its credit and the machine's check on a stub below a dashed tear. */
+.qt-slip { max-width: 36rem; margin-inline: -6px; padding: 20px 18px 13px; background: var(--plate);
+  mask: linear-gradient(#000 0 0) 0 6px / 100% calc(100% - 6px) no-repeat, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 0 / 12px 6px repeat-x; }
+.qt-slip .qt-mark { height: 0.42em; margin-top: 0; font-size: 3rem; }
+.qt-slip .qt-q { padding-left: 0; border-left: 0; }
+.qt-slip .qt-q p { font-size: 0.9375em; line-height: 1.62; }
+.qt-slip .qt-cap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 16px; margin-top: 14px; padding-top: 9px; border-top: 1px dashed color-mix(in srgb, var(--ink2) 55%, transparent); max-width: none; }
+.qt-slip .qt-cap::before { content: none; }
+.qt-slip .qt-chk { text-align: right; margin-left: auto; }
 .qt mark { padding: 0 0.06em; margin: 0 -0.06em; }
 @media (min-width: 1000px) {
   .qt-short, .qt-medium { position: relative; }
@@ -1172,3 +1228,72 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .nl-frame { display: block; width: 100%; height: 320px; border: 0; }
 .nl-note { margin-top: 12px; max-width: 34rem; }
 .nl-soon { font: 400 clamp(1.1875rem, 1.8vw, 1.3125rem)/1.6 var(--serif); max-width: 38rem; }
+/* ---------- The ledger (Ledger.astro): whose words are on the page, counted. ---------- */
+.ledger { padding-block: 26px 4px; }
+.lg { max-width: 30rem; }
+.lg-rows { margin: 0; border-top: 1px solid var(--ink); }
+.lg-rows div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding-block: 7px; border-bottom: 1px solid var(--rule); }
+.lg-rows dt { font-size: 0.9375rem; }
+.lg-rows dd { margin: 0; font: 400 1.375rem/1 var(--display); font-variant-numeric: lining-nums tabular-nums; }
+.lg-ed dt { font-style: italic; }
+.lg-mc dt { font: 400 0.875rem/1.4 var(--sans); color: var(--machine); }
+.lg-bar { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); height: 8px; margin-top: 12px; }
+.lg-b-ed { background: var(--ink); }
+.lg-b-src { background: var(--plate); box-shadow: inset 0 0 0 1px var(--rule); }
+.lg-b-mc { background: var(--machine); }
+.w-1{grid-column:span 1}.w-2{grid-column:span 2}.w-3{grid-column:span 3}.w-4{grid-column:span 4}.w-5{grid-column:span 5}.w-6{grid-column:span 6}.w-7{grid-column:span 7}.w-8{grid-column:span 8}.w-9{grid-column:span 9}.w-10{grid-column:span 10}.w-11{grid-column:span 11}.w-12{grid-column:span 12}.w-13{grid-column:span 13}.w-14{grid-column:span 14}.w-15{grid-column:span 15}.w-16{grid-column:span 16}.w-17{grid-column:span 17}.w-18{grid-column:span 18}.w-19{grid-column:span 19}.w-20{grid-column:span 20}
+
+/* ---------- The date stamp on the cover (HaulPage.astro). ---------- */
+.cv { position: relative; }
+.cv-stamps { position: absolute; right: var(--gut); top: 2px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
+.stamp { display: block; transform: rotate(-6deg); border: 2px solid var(--ed, var(--ink)); color: var(--ed, var(--ink)); padding: 5px 10px 4px; text-align: center; font: 500 0.625rem/1.25 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.85; mix-blend-mode: multiply; }
+.stamp b { display: block; margin: 3px 0 2px; font: 400 1.25rem/1 var(--display); letter-spacing: 0.01em; text-transform: none; font-variant-numeric: lining-nums; }
+.stamp-c { transform: rotate(4deg); margin-right: 18px; border-style: double; border-width: 3px; }
+:root[data-theme="dark"] .stamp { mix-blend-mode: normal; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stamp { mix-blend-mode: normal; } }
+/* From 1000px the stamps stand in the margin at the top of the cover, above the Haul's number (which
+   sits at the foot of the same cell), clear of a title that runs the width of the page. */
+@media (min-width: 1000px) { .cv-stamps { position: static; grid-column: 1; grid-row: 1; align-self: start; align-items: flex-start; gap: 10px; padding-top: 0.6em; } .cv-no { grid-row: 1; } .stamp b { font-size: 1.375rem; } .stamp-c { margin: 0 0 0 26px; } }
+/* On a narrower screen the stamps would sit on the title: they stand in a row under the date. */
+@media (max-width: 999px) { .cv-no { order: -1; } .cv-stamps { position: static; flex-direction: row; align-items: center; gap: 18px; margin: 2px 0 0 4px; } .stamp-c { margin-right: 0; } }
+
+/* ---------- The page that burned (404.astro, a signature): the one page where the fire is literal.
+   The message sits on a sheet whose bottom-right corner has burned away (a mask cut by burn.svg), its
+   edge charred (burn-edge.svg) in a darkened ember. ---------- */
+.burnt { position: relative; padding: 22px 22px 64px; background: var(--plate);
+  -webkit-mask: linear-gradient(#000 0 0), url('/marks/burn.svg') right bottom / 240px 170px no-repeat; -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) exclude, url('/marks/burn.svg') right bottom / 240px 170px no-repeat; }
+.burnt::after { content: ''; position: absolute; right: 0; bottom: 0; width: 240px; height: 170px; pointer-events: none;
+  background: color-mix(in srgb, var(--ember) 55%, #2a0d04);
+  -webkit-mask: url('/marks/burn-edge.svg') center / 100% 100% no-repeat; mask: url('/marks/burn-edge.svg') center / 100% 100% no-repeat; }
+.burnt .deck { max-width: 30ch; }
+@media (max-width: 640px) { .burnt { padding-bottom: 96px; } }
+
+/* ---------- An ornament per edition (2026-11-09, a signature): each edition ink has its printer's
+   ornament (public/marks/orn-<edition>.svg, a mask painted in the Haul's ink), set between the field
+   note's sections and in each item's closing folio beside the flame. ---------- */
+.e-oxblood { --orn: url('/marks/orn-oxblood.svg'); }
+.e-teal { --orn: url('/marks/orn-teal.svg'); }
+.e-ochre { --orn: url('/marks/orn-ochre.svg'); }
+.e-plum { --orn: url('/marks/orn-plum.svg'); }
+.e-pine { --orn: url('/marks/orn-pine.svg'); }
+.e-umber { --orn: url('/marks/orn-umber.svg'); }
+.e-slate { --orn: url('/marks/orn-slate.svg'); }
+.e-olive { --orn: url('/marks/orn-olive.svg'); }
+
+.has-ed .fn-c :is(p, blockquote) ~ .fn-h::before { content: ''; display: block; width: 22px; height: 22px; margin: 0 auto 1.4em; background: var(--ed);
+  -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
+.orn-mark { display: inline-block; width: 14px; height: 14px; margin-left: 10px; vertical-align: -2px; background: var(--ed);
+  -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
+
+/* ---------- The field note continued (2026-11-09): a long note sets its opening on the cover and
+   continues on its own page; a ruled line says so, as a magazine says "continued on page 4". ---------- */
+.fn-more { display: grid; justify-items: center; gap: 2px; margin-top: 2.2em; text-align: center; }
+.fn-more-orn { width: 22px; height: 22px; margin-bottom: 12px; background: var(--ed, var(--ink2)); -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
+.fn-more a { font: italic 400 1.25rem/1.35 var(--display); color: var(--ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 45%, transparent); text-decoration-thickness: 1px; text-underline-offset: 0.28em; }
+.fn-more a:hover { text-decoration-color: var(--ed, var(--ink)); }
+.fn-more-t { font: 400 0.8125rem/1.5 var(--sans); color: var(--ink2); }
+.cv-jump { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.cv-jump:hover { text-decoration-color: currentColor; }
+.fn-page { padding-top: 28px; }
+#contents-title { scroll-margin-top: 16px; }

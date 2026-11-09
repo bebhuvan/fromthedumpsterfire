@@ -232,7 +232,9 @@ describe('app links and aliases', () => {
   });
 
   it('maps the app deep-link aliases', () => {
-    expect(aliasFor('/haul/1/note')).toBe('/haul/1#field-note');
+    // The field note has its own page (2026-11-09), at the address the app's deep link already uses.
+    expect(aliasFor('/haul/1/note')).toBeNull();
+    expect(aliasFor('/haul/1/note/')).toBe('/haul/1/note');
     expect(aliasFor('/haul/001/as-we-may-think')).toBe('/haul/1/as-we-may-think');
     expect(aliasFor('/hauls')).toBe('/archive');
     expect(aliasFor('/haul/1/as-we-may-think')).toBeNull();

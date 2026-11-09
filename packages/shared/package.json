@@ -20,6 +20,7 @@
     "./about": "./src/about.ts",
     "./fieldnote": "./src/fieldnote.ts",
     "./prepublish": "./src/prepublish.ts",
+    "./ledger": "./src/ledger.ts",
     "./charts": "./src/charts/index.ts",
     "./charts/glosses": "./src/charts/glosses.ts",
     "./fixtures/haul-001.json": "./fixtures/haul-001.json",

@@ -32,6 +32,7 @@ export const Quotation = memo(function Quotation({
   credit = [],
   extract = false,
   mark: markColour,
+  checked = false,
 }: {
   text: string;
   highlight?: string;
@@ -40,33 +41,62 @@ export const Quotation = memo(function Quotation({
   extract?: boolean;
   /** The highlighter's colour (the item type's swatch). */
   mark?: string;
+  /** The words were matched against the stored source: say so, in the machine's blue. */
+  checked?: boolean;
 }) {
   const p = usePalette();
   const k = useTextScale();
   const ink = useEditionInk() ?? p.ink2;
   const len = extract ? 'long' : quoteLength(text);
   const lines = credit.filter(Boolean);
+  const slip = checked && len === 'long';
   const size = len === 'short' ? 28 : len === 'medium' ? 22 : 18;
   const textStyle =
     len === 'long'
-      ? { fontFamily: fonts.text, fontSize: 18 * k, lineHeight: 29 * k }
+      ? { fontFamily: fonts.text, fontSize: 17 * k, lineHeight: 27.5 * k }
       : { fontFamily: fonts.displayRegular, fontSize: size * k, lineHeight: size * (len === 'short' ? 1.18 : 1.36) * k, letterSpacing: len === 'short' ? -0.3 : 0 };
+  const words = paras(text).map((para, i) => (
+    <Text key={i} selectable style={[textStyle, { color: p.ink, marginTop: i ? 12 * k : 0 }]}>
+      <Marked text={para} highlight={highlight} color={markColour} />
+    </Text>
+  ));
+  const check = checked ? <Text style={[st.check, { color: p.machine }]}>Matched word for word</Text> : null;
+  // A checked extract is a salvage slip, as the website sets it: plate grey, a torn top edge (a row of
+  // small triangles drawn with views), the credit and the check on a stub below a dashed tear.
+  if (slip)
+    return (
+      <View style={st.slipWrap}>
+        <View style={st.teeth} accessible={false} importantForAccessibility="no">
+          {TEETH.map((i) => (
+            <View key={i} style={[st.tooth, { borderBottomColor: p.plate }]} />
+          ))}
+        </View>
+        <View style={[st.slip, { backgroundColor: p.plate }]}>
+          <Text accessible={false} importantForAccessibility="no" style={[st.mark, { color: ink, fontSize: 48, lineHeight: 48, height: 22 }]}>
+            “
+          </Text>
+          {words}
+          <View style={st.tear}>
+            <View style={[st.tearLine, { borderColor: p.ink2 }]} />
+          </View>
+          <View style={st.stub}>
+            {lines.length ? <Meta style={{ fontFamily: fonts.sans }}>{lines.join(', ')}</Meta> : null}
+            {check}
+          </View>
+        </View>
+      </View>
+    );
   return (
     <View>
-      <Text accessible={false} style={[st.mark, { color: ink, fontSize: len === 'long' ? 52 : 64, lineHeight: len === 'long' ? 52 : 64, height: len === 'long' ? 26 : 32 }]}>
+      <Text accessible={false} importantForAccessibility="no" style={[st.mark, { color: ink, fontSize: len === 'long' ? 52 : 64, lineHeight: len === 'long' ? 52 : 64, height: len === 'long' ? 26 : 32 }]}>
         “
       </Text>
-      <View style={len === 'long' ? [st.extract, { borderLeftColor: ink }] : null}>
-        {paras(text).map((para, i) => (
-          <Text key={i} selectable style={[textStyle, { color: p.ink, marginTop: i ? 12 * k : 0 }]}>
-            <Marked text={para} highlight={highlight} color={markColour} />
-          </Text>
-        ))}
-      </View>
-      {lines.length ? (
+      <View style={len === 'long' ? [st.extract, { borderLeftColor: ink }] : null}>{words}</View>
+      {lines.length || checked ? (
         <View style={st.cap}>
           <View style={[st.capRule, { backgroundColor: p.ink }]} />
-          <Meta style={{ fontFamily: fonts.sans }}>{lines.join(', ')}</Meta>
+          {lines.length ? <Meta style={{ fontFamily: fonts.sans }}>{lines.join(', ')}</Meta> : null}
+          {check}
         </View>
       ) : null}
     </View>
@@ -86,14 +116,14 @@ export function LeadQuotation({ text, highlight, mark }: { text: string; highlig
   const size = lines ? Math.min(40, (width - 2 * GUTTER) / (lines.longest * 0.43)) : 34 * Math.min(k, 1.1);
   return (
     <View>
-      <Text accessible={false} style={[st.mark, { color: ink, fontSize: 64, lineHeight: 64, height: 32 }]}>
+      <Text accessible={false} importantForAccessibility="no" style={[st.mark, { color: ink, fontSize: 64, lineHeight: 64, height: 32 }]}>
         “
       </Text>
       <Text selectable accessibilityRole="header" maxFontSizeMultiplier={lines ? 1 : undefined} style={{ fontFamily: fonts.display, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.02, color: p.ink }}>
         {lines ? lines.lines.map((l, i) => curlQuotes(l) + (i < lines.lines.length - 1 ? '\n' : '')).join('') : curlQuotes(lead.lead)}
       </Text>
       {paras(lead.rest.trim()).map((para, i) => (
-        <Text key={i} selectable style={{ marginTop: (i ? 12 : 16) * k, fontFamily: fonts.text, fontSize: 19 * k, lineHeight: 30 * k, color: p.ink }}>
+        <Text key={i} selectable style={{ marginTop: (i ? 12 : 16) * k, fontFamily: fonts.text, fontSize: 18 * k, lineHeight: 28.5 * k, color: p.ink }}>
           <Marked text={para} highlight={highlight !== lead.lead ? highlight : undefined} color={mark} />
         </Text>
       ))}
@@ -101,9 +131,22 @@ export function LeadQuotation({ text, highlight, mark }: { text: string; highlig
   );
 }
 
+/** Enough teeth for the widest phone; the row is clipped to the slip. */
+const TEETH = Array.from({ length: 80 }, (_, i) => i);
+
 const st = StyleSheet.create({
   mark: { fontFamily: fonts.displayRegular, includeFontPadding: false, overflow: 'visible' },
   extract: { paddingLeft: 16, borderLeftWidth: 2 },
   cap: { marginTop: 12, gap: 8 },
   capRule: { width: 36, height: StyleSheet.hairlineWidth * 2 },
+  check: { fontFamily: fonts.sans, fontSize: 12.5, lineHeight: 18 },
+  slipWrap: { marginHorizontal: -4 },
+  teeth: { flexDirection: 'row', height: 6, overflow: 'hidden' },
+  tooth: { width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderBottomWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent' },
+  slip: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+  // A dashed line on one edge only is unreliable on Android, so the tear is a dashed box clipped to its top.
+  tear: { height: 1, overflow: 'hidden', marginTop: 14 },
+  tearLine: { height: 4, borderWidth: 1, borderStyle: 'dashed', opacity: 0.55 },
+  // Credit over check: side by side, a phone's narrow transcript column squeezed the credit to four lines.
+  stub: { gap: 2, marginTop: 8 },
 });

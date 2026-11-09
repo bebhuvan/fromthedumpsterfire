@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signatures</title>
+<style>
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2') format('woff2'); font-weight: 500; }
+:root { --bg: #FFFFFF; --ink: #141416; --ink2: #55555C; --rule: #E6E6EA; --plate: #F4F4F6; --machine: #4651D2; --ember: #FF4F1F; --ed: #0E6461; --ed1: #8C2333; --apricot: #FFE0C2; --mint: #D2F3E2; --butter: #FFF0A6; --lilac: #ECE4FA;
+  --serif: 'Newsreader Text', Georgia, serif; --display: 'Newsreader Display', Georgia, serif; --sans: 'Schibsted Grotesk', system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0F0F12; --ink: #F3F3F1; --ink2: #A2A2AA; --rule: #2A2A31; --plate: #1B1B20; --machine: #A3ACFF; --ember: #FF6A3D; --ed: #6FD0CB; --ed1: #EE8E99; --apricot: #4D2E14; --mint: #163D2D; --butter: #433B12; --lilac: #33284A; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font: 18px/1.6 var(--serif); padding: 32px 24px 64px; }
+h1 { font: 500 2.6rem/1 var(--display); letter-spacing: -0.02em; }
+.intro { max-width: 50rem; margin: 14px 0 30px; font-size: 1.05rem; color: var(--ink2); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 34px 30px; }
+.card { border-top: 2px solid var(--ink); padding-top: 12px; }
+.no { font: 400 1.6rem/1 var(--display); color: var(--ed); }
+.h { font: 500 1.35rem/1.15 var(--display); margin: 4px 0 6px; }
+.what { font: 400 0.86rem/1.5 var(--sans); color: var(--ink2); margin-bottom: 16px; }
+.what b { color: var(--ink); font-weight: 500; }
+.stage { border: 1px solid var(--rule); padding: 22px 18px; min-height: 240px; position: relative; overflow: hidden; }
+.sans { font-family: var(--sans); }
+
+/* 1 The ledger */
+.ledger { border-top: 1px solid var(--ink); padding-top: 10px; font: 400 0.8rem/1.5 var(--sans); color: var(--ink2); }
+.ledger .row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.ledger .fig { font: 400 1.25rem/1 var(--display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.ledger .ed { font-family: var(--serif); font-style: italic; color: var(--ink); font-size: 0.95rem; }
+.ledger .mc { color: var(--machine); }
+.ledger .src { font-family: var(--serif); color: var(--ink); font-size: 0.95rem; }
+.bar { display: flex; height: 8px; margin: 12px 0 4px; }
+.bar i { display: block; }
+.bar .b1 { background: var(--ink); flex: 1061; }
+.bar .b2 { background: var(--plate); flex: 166; border: 1px solid var(--rule); }
+.bar .b3 { background: var(--machine); flex: 120; }
+/* 2 The date stamp */
+.cover-t { font: 500 2.2rem/0.98 var(--display); letter-spacing: -0.02em; margin-top: 8px; max-width: 12ch; }
+.haul { font: 500 0.7rem var(--sans); letter-spacing: 0.12em; color: var(--ed); }
+.haul b { font: 400 2.6rem/1 var(--display); letter-spacing: 0; margin-left: 6px; vertical-align: -0.2em; }
+.stamp { position: absolute; right: 16px; top: 26px; transform: rotate(-7deg); border: 2px solid var(--ed); color: var(--ed); padding: 6px 10px 5px; text-align: center; font: 500 0.66rem/1.25 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.88; }
+.stamp b { display: block; font: 400 1.35rem/1 var(--display); letter-spacing: 0.02em; text-transform: none; margin: 3px 0 2px; }
+/* 3 The burnt 404 */
+.burn { position: relative; padding: 20px 18px 28px; background: var(--plate);
+  mask: radial-gradient(circle at 100% 100%, #0000 0 52px, #000 54px), radial-gradient(circle at 78% 100%, #0000 0 34px, #000 36px), radial-gradient(circle at 100% 70%, #0000 0 26px, #000 28px);
+  mask-composite: intersect; }
+.burn::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 100% 100%, #0000 0 54px, color-mix(in srgb, var(--ember) 70%, #000) 55px, #0000 62px), radial-gradient(circle at 78% 100%, #0000 0 36px, color-mix(in srgb, var(--ember) 60%, #000) 37px, #0000 42px), radial-gradient(circle at 100% 70%, #0000 0 28px, color-mix(in srgb, var(--ember) 60%, #000) 29px, #0000 33px); }
+.burn .k { font: 400 0.8rem var(--sans); color: var(--ink2); }
+.burn h3 { font: 500 1.8rem/1.02 var(--display); margin: 6px 0 8px; }
+.burn h3 em { font-weight: 400; font-style: italic; }
+.burn p { font-size: 0.95rem; color: var(--ink2); max-width: 26ch; }
+/* 4 Tape on plates */
+.plate { position: relative; margin: 18px auto 10px; width: 78%; aspect-ratio: 4 / 3; background: linear-gradient(160deg, #8a8f7a, #4a4f3e 60%, #2f3328); }
+.tape { position: absolute; width: 74px; height: 22px; background: color-mix(in srgb, var(--butter) 70%, transparent); border-left: 1px dashed color-mix(in srgb, var(--ink2) 30%, transparent); border-right: 1px dashed color-mix(in srgb, var(--ink2) 30%, transparent); }
+.tape.a { left: -18px; top: 8px; transform: rotate(-32deg); }
+.tape.b { right: -18px; top: 8px; transform: rotate(32deg); }
+.cap { text-align: center; font: italic 400 0.85rem/1.4 var(--serif); }
+.cap span { display: block; font: 400 0.72rem var(--sans); font-style: normal; color: var(--ink2); }
+/* 5 Fleurons per edition */
+.fl-row { display: flex; justify-content: space-around; align-items: center; margin: 14px 0 18px; }
+.fl { text-align: center; font: 400 0.72rem var(--sans); color: var(--ink2); }
+.fl b { display: block; font: 400 2rem/1.2 var(--display), "DejaVu Serif", "Noto Serif", serif; }
+.fl.e2 b { color: var(--ed); } .fl.e1 b { color: var(--ed1); }
+.para { font-size: 0.92rem; color: var(--ink); }
+.orn { text-align: center; font: 400 1.4rem/1 var(--display); color: var(--ed); margin: 12px 0; letter-spacing: 0.5em; }
+/* 6 The archive as a drawer */
+.drawer { border-bottom: 3px solid var(--ink); padding-bottom: 6px; }
+.dcard { position: relative; margin-top: -2px; border-top: 1px solid var(--ink); padding: 18px 0 10px; }
+.dcard .tab { position: absolute; top: -17px; height: 16px; padding: 1px 10px 0; border: 1px solid var(--ink); border-bottom: 0; background: var(--bg); font: 500 0.66rem/1.4 var(--sans); letter-spacing: 0.08em; }
+.dcard.c2 .tab { left: 10px; color: var(--ed); } .dcard.c1 .tab { left: 120px; color: var(--ed1); }
+.dcard .t { font: 500 1.15rem/1.15 var(--display); }
+.dcard .t em { font-style: italic; font-weight: 400; }
+.dcard .m { font: 400 0.74rem var(--sans); color: var(--ink2); margin-top: 3px; }
+.dcard .hole { position: absolute; right: 14px; top: 22px; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--ink2); }
+/* 7 The slug and the neighbours */
+.slug { border-top: 2px solid var(--ink); padding-top: 10px; font: 400 0.76rem/1.6 var(--sans); color: var(--ink2); }
+.slug .ln { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--rule); padding: 3px 0; }
+.slug .ln b { color: var(--ink); font-weight: 500; }
+.nb { margin-top: 14px; }
+.nb p { font: 500 0.66rem var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); }
+.nb ul { list-style: none; display: flex; flex-wrap: wrap; gap: 2px 0; margin-top: 4px; font: italic 400 0.92rem var(--serif); }
+.nb li::after { content: '\00a0\00b7\00a0'; color: var(--ember); font-style: normal; }
+.nb li:last-child::after { content: ''; }
+.nb a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<h1>Signatures</h1>
+<p class="intro">Seven small things an editor at a desk would do to a page, each used in one place and meaning one thing. The aim is the old web's spirit (a person's hand everywhere, nothing a template) in our own language, not its costume (no counters, marquees or glitter). Pick any; none depends on another.</p>
+<div class="grid">
+
+<div class="card"><p class="no">1</p><p class="h">The ledger</p>
+<p class="what">At the foot of every item, an honest account of whose words are on the page, counted by code from the bundle: <b>the editor's</b> in his italic, <b>the source's</b> in the serif, <b>the machine's</b> in blue. The old web's hit counter, turned into the house's promise.</p>
+<div class="stage"><div class="ledger">
+<div class="row"><span class="ed">Words by the editor</span><span class="fig">1,061</span></div>
+<div class="row"><span class="src">Words from the source, matched</span><span class="fig">166</span></div>
+<div class="row"><span class="mc">Words by the machine, checked</span><span class="fig">120</span></div>
+<div class="bar"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
+<span>Robert Caro on the Dwarkesh Podcast · Haul 002, item 6</span></div></div></div>
+
+<div class="card"><p class="no">2</p><p class="h">The date stamp</p>
+<p class="what">The cover's date as a library stamp in the Haul's ink, a few degrees off true: <b>SALVAGED · 8 Nov 2026</b>. A correction would add a second stamp, <b>CORRECTED</b>, with its version. Once per cover, nowhere else.</p>
+<div class="stage"><span class="stamp">Salvaged<b>8 Nov 2026</b>Haul 002</span>
+<p class="haul">HAUL <b>002</b></p><p class="cover-t">The Uses and Abuses of History</p>
+<p class="para" style="margin-top:10px;max-width:24ch">Linux and Wikipedia, the dilettante twice over, the world's falling birth rates…</p></div></div>
+
+<div class="card"><p class="no">3</p><p class="h">The page that burned</p>
+<p class="what">The 404 ("Nothing here, or it burned") set on a sheet whose corner has actually burned away, its edge charred in ember. The one page where the fire is literal; the old web's 404s were where sites were most themselves.</p>
+<div class="stage"><div class="burn"><p class="k">404</p><h3>Nothing here, <em>or it burned</em></h3><p>The page you asked for isn't part of any Haul. It may have moved.</p></div></div></div>
+
+<div class="card"><p class="no">4</p><p class="h">Taped plates</p>
+<p class="what">The public-domain plates, the pictures salvaged from archives, held to the page with two strips of tape, as a scrapbook holds a print. Only plates; a chart or a picture block stays clean.</p>
+<div class="stage"><div class="plate"><i class="tape a"></i><i class="tape b"></i></div>
+<p class="cap">Hunter in Winter Wood. George Henry Durrie, 1860.<span>Wikimedia Commons · Public domain</span></p></div></div>
+
+<div class="card"><p class="no">5</p><p class="h">An ornament per edition</p>
+<p class="what">Each Haul gets its own printer's ornament in its ink, set between the field note's sections and at the end of each item (beside the flame), drawn as marks like the flame. Old printers had their fleurons; old sites had their dingbats. A reader comes to know an issue by its mark.</p>
+<div class="stage"><div class="fl-row"><span class="fl e1"><b>❦&#xFE0E;</b>Haul 001</span><span class="fl e2"><b>✣&#xFE0E;</b>Haul 002</span><span class="fl"><b>☙&#xFE0E;</b>Haul 003</span><span class="fl"><b>⁂</b>Haul 004</span></div>
+<p class="para">…and use them to divide us, to pit us against one another, and to conjure up enemies where there should be none.</p>
+<p class="orn">✣</p>
+<p class="para"><b class="sans" style="font-size:.8rem">History, the pitiful creature</b></p></div></div>
+
+<div class="card"><p class="no">6</p><p class="h">The archive as a card drawer</p>
+<p class="what">Every Haul as an index card in a drawer, each tab standing up in its own ink at its own place along the edge, as the See also guide cards already do. The archive becomes a piece of furniture.</p>
+<div class="stage"><div class="drawer">
+<div class="dcard c2"><span class="tab">HAUL 002</span><span class="hole"></span><p class="t">The Uses and Abuses of History</p><p class="m">8 November 2026 · sixteen objects · corrected, version 4</p></div>
+<div class="dcard c1" style="margin-top:22px"><span class="tab">HAUL 001</span><span class="hole"></span><p class="t">Wild, wild <em>times</em></p><p class="m">31 October 2026 · twenty-three objects</p></div>
+</div></div></div>
+
+<div class="card"><p class="no">7</p><p class="h">The slug and the neighbours</p>
+<p class="what">The footer as a printer's slug (what it is set in, when it was last salvaged, whose hand) and a <b>neighbours</b> line: the editor's other places and a few sites he salvages from, the old web's blogroll and webring. The list would be his.</p>
+<div class="stage"><div class="slug">
+<div class="ln"><span>Set in</span><b>Newsreader &amp; Schibsted Grotesk</b></div>
+<div class="ln"><span>Last salvaged</span><b>8 November 2026</b></div>
+<div class="ln"><span>Chosen by</span><b>a person · read and checked by a machine</b></div>
+<div class="nb"><p>Neighbours</p><ul><li><a>akshara.ink</a></li><li><a>thisindianlife.today</a></li><li><a>seneca.ink</a></li><li><a>smallweb.blog</a></li><li><a>The Public Domain Review</a></li></ul></div>
+</div></div></div>
+
+</div>
+</body>
+</html>

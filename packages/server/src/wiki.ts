@@ -109,10 +109,36 @@ export function wikiKeyFromUrl(raw: string): string | null {
   }
 }
 
-/** The first sentence of a Wikipedia extract, as a fallback card summary. */
+// A full stop after an initial ("Lyndon B. Johnson"), a short title ("Jr.", "St.") or a scholarly
+// abbreviation ("c. 1505", "pp.", "et al.") does not end a sentence: cutting there printed "Robert
+// Moses and Lyndon B." on Haul 002's cards. When in doubt the sentence runs on ("World War I. It…"
+// stays one): a card a sentence long is better than one cut mid-name.
+const NOT_AN_END = /(?:^|[\s(])(?:[A-Za-z]|Jr|Sr|Dr|Mr|Mrs|Ms|St|Mt|vs|No|Co|Inc|Ltd|Gen|Col|Lt|Rev|Hon|Prof|ca|pp|vol|al|approx|fl|cf|viz|esp)\.$/;
+
+/** Wikipedia's lead split into whole sentences, verbatim. */
+export function sentencesOf(text: string): string[] {
+  const out: string[] = [];
+  const end = /[.!?]+["'”’)]*(?=\s+["“(‘]?[A-Z0-9]|\s*$)/g;
+  let from = 0;
+  for (let m = end.exec(text); m; m = end.exec(text)) {
+    const upto = m.index + m[0].length;
+    if (NOT_AN_END.test(text.slice(Math.max(from, m.index - 6), m.index + 1))) continue;
+    out.push(text.slice(from, upto).trim());
+    from = upto;
+  }
+  if (text.slice(from).trim()) out.push(text.slice(from).trim());
+  return out.filter(Boolean);
+}
+
+/** The first sentence of a Wikipedia extract (at least 40 characters), as a fallback card summary. */
 export function firstSentence(s: string): string {
-  const m = /^(.{40,}?[.!?])(\s+[A-Z]|$)/s.exec(s.trim());
-  return (m?.[1] ?? s).trim();
+  const text = s.trim();
+  let at = 0;
+  for (const x of sentencesOf(text)) {
+    at = text.indexOf(x, at) + x.length;
+    if (at >= 40) return text.slice(0, at).trim();
+  }
+  return text;
 }
 
 /**
@@ -122,7 +148,7 @@ export function firstSentence(s: string): string {
  */
 export function bestSentence(extract: string, why: string): string {
   const text = extract.trim();
-  const sentences = text.match(/[^.!?]+(?:[.!?]+["'”’)]*)(?=\s+[A-Z0-9"“(]|\s*$)/g)?.map((x) => x.trim()).filter((x) => x.length >= 40) ?? [];
+  const sentences = sentencesOf(text).filter((x) => x.length >= 40);
   if (!why.trim() || sentences.length < 2) return firstSentence(text);
   const want = new Set(tokens(why));
   let best = sentences[0]!;

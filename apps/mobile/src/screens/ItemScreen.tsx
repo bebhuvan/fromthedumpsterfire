@@ -4,12 +4,12 @@
 // letter is the letter, a post is a clipping, a picture is a mounted print, a book is its jacket and
 // a tool is a specimen label, and a chart-led item is the figure (lib/forms.ts, the website's choice).
 // Rich media follows (ui/Blocks.tsx, charts in ui/Chart.tsx).
-import { memo, useState, type ReactNode } from 'react';
+import { createContext, memo, useContext, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { curlQuotes, haulSlug, notePlain, quoteLength, sourceAction, speechSetting, type Haul, type Item } from '@fdf/shared/haul';
 import { useEditionInk } from '@/ui/edition';
-import { typeLabel, type ContentType } from '@fdf/shared/tokens';
+import { editionOf, typeLabel, type ContentType } from '@fdf/shared/tokens';
 import { fonts, GUTTER, typeColor, useEdition, usePalette, useScheme, useTextScale } from '@/theme';
 import { formName, formOf, headword, hostOf, speaker, titleText, type Form } from '@/lib/forms';
 import { joinMeta, minutes } from '@/lib/format';
@@ -28,6 +28,7 @@ import { Blocks, Credit, Picture } from '@/ui/Blocks';
 import { Chart } from '@/ui/Chart';
 import { firstChart } from '@/lib/chart';
 import { LifeForm } from '@/ui/Life';
+import { ledger } from '@fdf/shared/ledger';
 
 /** Index form of a two-word name: "Joseph Bazalgette" becomes "Bazalgette, Joseph". */
 const inverted = (n: string) => {
@@ -72,6 +73,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
   const blocks = lead ? item.blocks?.filter((b) => b !== lead) : item.blocks;
 
   return (
+    <ItemNumber.Provider value={at + 1}>
     <Screen header={header} edition={ed}>
       {body[form]}
       {WHY_AFTER.has(form) ? (
@@ -83,22 +85,76 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
       ) : null}
       <Blocks blocks={blocks} source={item.source.name} />
       <Ideas item={item} />
-      {form === 'offprint' ? null : <SeeAlso haul={haul} item={item} />}
+      {form === 'offprint' ? <PaperReferences item={item} haul={haul} /> : <SeeAlso haul={haul} item={item} />}
       <Source item={item} />
       <Actions haul={haul} item={item} />
+      <LedgerRows item={item} />
       {next ? <NextItem n={haul.number} at={at + 2} item={next} /> : <Finished haul={haul} />}
-      <Folio haul={`Haul ${haulSlug(haul.number)}`} n={at + 1} of={haul.items.length} />
+      <Folio haul={`Haul ${haulSlug(haul.number)}`} n={at + 1} of={haul.items.length} edition={{ name: editionOf(haul.number, haul.edition), ink: ed }} />
     </Screen>
+    </ItemNumber.Provider>
   );
 }
 
 // ---------- shared pieces ----------
 
-function MetaLine({ item, extra }: { item: Item; extra?: string }) {
+/**
+ * The ledger (2026-11-09, a signature), as the website sets it (Ledger.astro): whose words are on the
+ * page, counted from the bundle, the editor's in his italic, the source's in the serif, the machine's
+ * in blue, and a bar in those three inks.
+ */
+function LedgerRows({ item }: { item: Item }) {
+  const p = usePalette();
+  const l = ledger(item);
+  const total = l.editor + l.source + l.machine;
+  if (!total) return null;
+  const row = (label: ReactNode, value: number) => (
+    <View style={[styles.lgRow, { borderBottomColor: p.rule }]}>
+      {label}
+      <Text style={[styles.lgFig, { color: p.ink }]}>{value.toLocaleString('en-GB')}</Text>
+    </View>
+  );
   return (
-    <View style={styles.metaLine}>
+    <View style={styles.lg} accessibilityLabel="The ledger: whose words are on this page">
+      <Apparatus>The ledger</Apparatus>
+      <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: p.ink }}>
+        {row(<Text style={[styles.lgK, { color: p.ink, fontFamily: fonts.textItalic }]}>Words by the editor</Text>, l.editor)}
+        {l.source ? row(<Text style={[styles.lgK, { color: p.ink }]}>Words from the source, matched</Text>, l.source) : null}
+        {l.machine ? row(<Text style={[styles.lgK, { color: p.machine, fontFamily: fonts.sans, fontSize: 13.5 }]}>Words by the machine, checked</Text>, l.machine) : null}
+      </View>
+      <View style={styles.lgBar} accessible={false} importantForAccessibility="no-hide-descendants">
+        {l.editor ? <View style={{ flex: l.editor, backgroundColor: p.ink }} /> : null}
+        {l.source ? <View style={{ flex: l.source, backgroundColor: p.plate, borderWidth: StyleSheet.hairlineWidth, borderColor: p.rule }} /> : null}
+        {l.machine ? <View style={{ flex: l.machine, backgroundColor: p.machine }} /> : null}
+      </View>
+    </View>
+  );
+}
+
+/** The item's number in its Haul, for the salvage tag. */
+const ItemNumber = createContext(0);
+
+/**
+ * The kind, where it came from and its length. As a salvage tag (2026-11-09, the proof sheet, as the
+ * website sets it on the same forms): the item's number in the Haul's ink over an ink rule first.
+ */
+function MetaLine({ item, extra, tag }: { item: Item; extra?: string; tag?: boolean }) {
+  const p = usePalette();
+  const ink = useEditionInk() ?? p.ink;
+  const n = useContext(ItemNumber);
+  const line = (
+    <View style={[styles.metaLine, tag && n ? { marginTop: 0, flexShrink: 1 } : null]}>
       <Key type={item.type} />
-      <Meta>{joinMeta(extra ?? `${item.source.name}, ${item.source.date}`, minutes(item.minutes))}</Meta>
+      <Meta>{joinMeta(extra ?? `${tag ? 'Salvaged from ' : ''}${item.source.name}, ${item.source.date}`, minutes(item.minutes))}</Meta>
+    </View>
+  );
+  if (!tag || !n) return line;
+  return (
+    <View style={[styles.tag, { borderTopColor: p.ink }]}>
+      <Text accessibilityLabel={`Item ${n}`} style={[styles.tagN, { color: ink }]}>
+        {String(n).padStart(2, '0')}
+      </Text>
+      {line}
     </View>
   );
 }
@@ -163,7 +219,7 @@ function Ideas({ item }: { item: Item }) {
           <Text style={[styles.ideaN, { color: p.ember }]}>{i + 1}</Text>
           <View style={{ flex: 1 }}>
             <Machine>{curlQuotes(m.text)}</Machine>
-            {m.quote ? <Text selectable style={[styles.ideaQ, { color: p.ink }]}>“{m.quote}”</Text> : null}
+            {m.quote ? <Text selectable style={[styles.ideaQ, { color: p.ink }]}>“{curlQuotes(m.quote)}”</Text> : null}
             {m.locator ? <Meta style={{ marginTop: 4, fontSize: 11.5 }}>{m.locator}</Meta> : null}
             {m.reaction ? (
               <Note style={{ marginTop: 8, fontSize: 17, lineHeight: 25 }}>
@@ -228,6 +284,9 @@ function PlateView({ item, style }: { item: Item; style?: object }) {
         resizeMode="cover"
         style={{ width: '100%', aspectRatio: plate.width / plate.height, backgroundColor: p.plate }}
       />
+      {/* Taped plates (2026-11-09, a signature), as the website sets them: two strips of tape. */}
+      <View style={[styles.tape, styles.tapeL, { backgroundColor: p.swatch.butter + 'BD' }]} pointerEvents="none" />
+      <View style={[styles.tape, styles.tapeR, { backgroundColor: p.swatch.butter + 'BD' }]} pointerEvents="none" />
       <Text style={[styles.caption, { color: p.ink }]}>{plate.caption}</Text>
       <Credit plate={plate} />
     </View>
@@ -243,7 +302,7 @@ function Essay({ item, haul }: { item: Item; haul: Haul }) {
   const size = len <= 18 ? 62 : len <= 32 ? 48 : 38;
   return (
     <View>
-      <MetaLine item={item} />
+      <MetaLine item={item} tag />
       <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.03 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
       <Why item={item} heading={null} style={{ marginTop: 22 }} />
@@ -262,7 +321,8 @@ function Essay({ item, haul }: { item: Item; haul: Haul }) {
             text={item.excerpt.text}
             highlight={item.excerpt.highlight}
             mark={typeColor(p, item.type)}
-            credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+            credit={[item.creator, item.source.name, item.excerpt.locator]}
+            checked
           />
           <ShareQuote haul={haul} item={item} />
         </View>
@@ -283,7 +343,7 @@ function Figure({ item }: { item: Item }) {
   const size = len <= 24 ? 46 : len <= 44 ? 38 : 32;
   return (
     <View>
-      <MetaLine item={item} />
+      <MetaLine item={item} tag />
       <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.025 }} />
       {item.creator ? <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text> : null}
       <Why item={item} heading={null} style={{ marginTop: 20 }} />
@@ -309,7 +369,8 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
             text={item.excerpt.text}
             highlight={item.excerpt.highlight}
             mark={typeColor(p, item.type)}
-            credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+            credit={[item.creator, item.source.name, item.excerpt.locator]}
+            checked
           />
           <ShareQuote haul={haul} item={item} />
         </View>
@@ -317,28 +378,47 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
     });
   if (item.plate) sections.push({ h: 'Figure', body: <PlateView item={item} style={{ marginTop: 0 }} /> });
   if (item.marginalia.length) sections.push({ h: 'Notes', body: <Notes item={item} style={{ marginTop: 0 }} /> });
-  if (item.wiki.length || item.connections.length) sections.push({ h: 'References', body: <SeeAlso haul={haul} item={item} bare /> });
   return (
     <View>
       <View style={[styles.runcite, { borderColor: p.rule }]}>
         <Meta>{item.creator}. {titleText(item)}. {item.source.name}, {item.source.date}.</Meta>
       </View>
       <View style={{ alignItems: 'center', marginTop: 26 }}>
-        <MetaLine item={item} extra="Offprint" />
+        <MetaLine item={item} extra="Offprint" tag />
         <Title title={item.title} size={titleText(item).length > 30 ? 30 : 36} style={{ textAlign: 'center', marginTop: 14 }} />
         <Text style={[styles.byline, { color: p.ink, textAlign: 'center' }]}>{item.creator}</Text>
       </View>
       <StartHereLine item={item} />
       {sections.map((s, i) => (
-        <View key={s.h} style={styles.sec}>
-          <Text style={[styles.secN, { color: p.ink2 }]} accessible={false}>{i + 1}</Text>
-          <View style={{ flex: 1 }}>
-            <Text accessibilityRole="header" style={[styles.secH, { color: p.ink }]}>{s.h}</Text>
-            {s.body}
-          </View>
-        </View>
+        <PaperSection key={s.h} n={i + 1} h={s.h}>
+          {s.body}
+        </PaperSection>
       ))}
     </View>
+  );
+}
+
+function PaperSection({ n, h, children }: { n: number; h: string; children: ReactNode }) {
+  const p = usePalette();
+  return (
+    <View style={styles.sec}>
+      <Text style={[styles.secN, { color: p.ink2 }]} accessible={false}>{n}</Text>
+      <View style={{ flex: 1 }}>
+        <Text accessibilityRole="header" style={[styles.secH, { color: p.ink }]}>{h}</Text>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+/** A paper's references close it, after its figures (charts and other blocks), as a printed paper's do. */
+function PaperReferences({ item, haul }: { item: Item; haul: Haul }) {
+  if (!item.wiki.length && !item.connections.length) return null;
+  const n = 2 + (item.excerpt ? 1 : 0) + (item.plate ? 1 : 0) + (item.marginalia.length ? 1 : 0);
+  return (
+    <PaperSection n={n} h="References">
+      <SeeAlso haul={haul} item={item} bare />
+    </PaperSection>
   );
 }
 
@@ -350,7 +430,7 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
   const dateline = [item.place, item.source.date].filter(Boolean).join(', ');
   return (
     <View>
-      <MetaLine item={item} extra={label} />
+      <MetaLine item={item} extra={label} tag />
       <Title title={item.title} size={titleText(item).length > 26 ? 38 : 46} style={{ marginTop: 14 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}, {item.source.name}</Text>
       <StartHereLine item={item} />
@@ -370,7 +450,8 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
                   text={item.excerpt.text}
                   highlight={item.excerpt.highlight}
                   mark={typeColor(p, item.type)}
-                  credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+                  credit={[item.creator, item.source.name, item.excerpt.locator]}
+                  checked
                 />
               )}
               <ShareQuote haul={haul} item={item} />
@@ -408,6 +489,7 @@ function Poem({ item }: { item: Item }) {
   const where = item.source.name.startsWith(`${item.creator}, `) ? item.source.name.slice(item.creator.length + 2) : item.source.name;
   return (
     <View>
+      <MetaLine item={item} extra={item.source.date} tag />
       <View style={[styles.sheet, styles.broadside, { backgroundColor: typeColor(p, item.type) }]}>
         <View style={[styles.bsHead, { borderBottomColor: p.rule }]}>
           <Title title={item.title} size={34} style={{ lineHeight: 36 }} />
@@ -438,7 +520,7 @@ function Rhymes({ item }: { item: Item }) {
   const r = item.rhyme;
   return (
     <View>
-      <MetaLine item={item} extra={r ? `${r.then.year} and ${r.now.year}` : undefined} />
+      <MetaLine item={item} extra={r ? `${r.then.year} and ${r.now.year}` : undefined} tag />
       <Title title={item.title} size={40} style={{ marginTop: 14 }} />
       <Why item={item} heading={null} style={{ marginTop: 16 }} />
       {r ? (
@@ -461,7 +543,7 @@ const Leaf = memo(function Leaf({ k, side }: { k: 'then' | 'now'; side: { year: 
   return (
     <View style={[styles.leaf, { borderTopColor: p.ink }]}>
       <Text style={[styles.leafYear, { color: k === 'then' ? p.ink2 : p.ink }]}>{side.year}</Text>
-      <Text selectable style={[styles.leafQuote, { color: p.ink }]}>{side.quote}</Text>
+      <Text selectable style={[styles.leafQuote, { color: p.ink }]}>{curlQuotes(side.quote)}</Text>
       <Text style={[styles.leafCite, { color: p.ink2 }]}>{side.cite}</Text>
       <Text style={[styles.leafF, { color: p.ink2, textAlign: k === 'now' ? 'right' : 'left' }]}>{k}</Text>
     </View>
@@ -512,7 +594,7 @@ function Page({ item, haul }: { item: Item; haul: Haul }) {
   const p = usePalette();
   return (
     <View>
-      <MetaLine item={item} />
+      <MetaLine item={item} tag />
       <Title title={item.title} size={36} style={{ marginTop: 14 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
       <StartHereLine item={item} />
@@ -544,7 +626,7 @@ function Epigraph({ item }: { item: Item }) {
   if (quoteLength(ex.text) !== 'short') {
     return (
       <View>
-        <MetaLine item={item} extra={item.source.date} />
+        <MetaLine item={item} extra={item.source.date} tag />
         <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
         <View style={{ marginTop: 18 }}>
           <LeadQuotation text={ex.text} highlight={ex.highlight} mark={typeColor(p, item.type)} />
@@ -558,7 +640,7 @@ function Epigraph({ item }: { item: Item }) {
   }
   return (
     <View>
-      <MetaLine item={item} extra={item.source.date} />
+      <MetaLine item={item} extra={item.source.date} tag />
       <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
       <Text selectable style={[styles.epiQ, { color: p.ink, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.022 }]}>
         <Text style={{ color: ink, fontFamily: fonts.displayRegular }}>“</Text>
@@ -631,10 +713,17 @@ function Clipping({ item }: { item: Item }) {
           {field('DATE', item.source.date)}
         </View>
       </View>
-      <Highlighted text={ex.text} highlight={ex.highlight} color={p.bg + '9E'} style={styles.clipText} />
+      <Highlighted text={ex.text} highlight={ex.highlight} color={p.bg + '9E'} style={clipSetting[quoteLength(ex.text)]} />
     </View>
   );
 }
+
+/** A post steps down with its length, as the website sets it: a long thread in display type is a wall. */
+const clipSetting = {
+  short: { fontFamily: fonts.displayRegular, fontSize: 26, lineHeight: 34 },
+  medium: { fontFamily: fonts.displayRegular, fontSize: 22, lineHeight: 30 },
+  long: { fontFamily: fonts.text, fontSize: 18.5, lineHeight: 29 },
+} as const;
 
 /** A mounted print: the picture on its mount, then a museum label. */
 function Print({ item }: { item: Item }) {
@@ -727,7 +816,13 @@ function Label({ item, haul, n }: { item: Item; haul: Haul; n: number }) {
   if (item.creator) rows.push(['MADE BY', item.creator]);
   rows.push(['WHAT IT IS', item.source.name]);
   if (item.source.date) rows.push(['SINCE', item.source.date]);
-  if (item.excerpt) rows.push(['IN ITS OWN WORDS', <Highlighted key="own" text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.labOwn} />]);
+  // Its own words are a quotation, set by length and credited, never a wall of display type that could
+  // be read as the editor's (Censusnama, Haul 002).
+  if (item.excerpt)
+    rows.push([
+      'IN ITS OWN WORDS',
+      <Quotation key="own" text={item.excerpt.text} highlight={item.excerpt.highlight} mark={typeColor(p, item.type)} credit={[host ?? item.source.name]} checked />,
+    ]);
   if (host)
     rows.push([
       'WHERE',
@@ -916,6 +1011,16 @@ const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim(
 
 const styles = StyleSheet.create({
   sr: { position: 'absolute', width: 1, height: 1, opacity: 0 },
+  tape: { position: 'absolute', top: -11, width: 70, height: 20 },
+  tapeL: { left: -10, transform: [{ rotate: '-30deg' }] },
+  tapeR: { right: -10, transform: [{ rotate: '30deg' }] },
+  lg: { marginTop: 34 },
+  lgRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, paddingVertical: 7, borderBottomWidth: StyleSheet.hairlineWidth },
+  lgK: { fontFamily: fonts.text, fontSize: 15, lineHeight: 20, flexShrink: 1 },
+  lgFig: { fontFamily: fonts.displayRegular, fontSize: 21, lineHeight: 24, fontVariant: ['tabular-nums'] },
+  lgBar: { flexDirection: 'row', height: 8, marginTop: 12 },
+  tag: { marginTop: 22, borderTopWidth: 1, paddingTop: 8, flexDirection: 'row', alignItems: 'baseline', gap: 12, alignSelf: 'stretch' },
+  tagN: { fontFamily: fonts.displayRegular, fontSize: 22, lineHeight: 24, includeFontPadding: false },
   metaLine: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 22 },
   byline: { fontFamily: fonts.textItalic, fontSize: 19, marginTop: 12, includeFontPadding: false },
   whyHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -995,7 +1100,7 @@ const styles = StyleSheet.create({
   clipField: { gap: 2 },
   clipKey: { fontFamily: fonts.sansMedium, fontSize: 11, letterSpacing: 1.3 },
   clipVal: { fontFamily: fonts.sans, fontSize: 15, lineHeight: 20 },
-  clipText: { fontFamily: fonts.displayRegular, fontSize: 26, lineHeight: 34 },
+
 
   mount: { padding: 20 },
   mountGone: { width: '100%', borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', padding: 20 },
@@ -1017,7 +1122,6 @@ const styles = StyleSheet.create({
   labRow: { paddingVertical: 11, gap: 4 },
   labKey: { fontFamily: fonts.sansMedium, fontSize: 11.5, letterSpacing: 1 },
   labVal: { fontFamily: fonts.text, fontSize: 18, lineHeight: 25 },
-  labOwn: { fontFamily: fonts.displayRegular, fontSize: 21, lineHeight: 29 },
 
   actions: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 16 },
   save: { minHeight: 44, minWidth: 92, paddingHorizontal: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { haulSlug, type Audio, type Haul } from '@fdf/shared/haul';
-import { typeLabel, type ContentType } from '@fdf/shared/tokens';
+import { typeLabel, type ContentType, type Edition } from '@fdf/shared/tokens';
 import { fonts, GUTTER, typeColor, useEdition, usePalette } from '@/theme';
 import { Meta } from './type';
 import { MiniFingerprint } from './Fingerprint';
@@ -29,6 +29,25 @@ export function Flame({ size = 10, color }: { size?: number; color?: string }) {
 }
 
 const STRIKE = require('../../assets/marks/strike.png');
+
+/**
+ * An ornament per edition (2026-11-09, a signature), as the website sets it: each edition ink has its
+ * printer's ornament (white PNGs drawn from apps/web/public/marks/orn-*.svg), tinted in the Haul's ink.
+ */
+const ORNAMENTS: Record<Edition, number> = {
+  oxblood: require('../../assets/marks/orn-oxblood.png'),
+  teal: require('../../assets/marks/orn-teal.png'),
+  ochre: require('../../assets/marks/orn-ochre.png'),
+  plum: require('../../assets/marks/orn-plum.png'),
+  pine: require('../../assets/marks/orn-pine.png'),
+  umber: require('../../assets/marks/orn-umber.png'),
+  slate: require('../../assets/marks/orn-slate.png'),
+  olive: require('../../assets/marks/orn-olive.png'),
+};
+
+export function EditionMark({ edition, size = 14, color }: { edition: Edition; size?: number; color: string }) {
+  return <Image source={ORNAMENTS[edition]} accessible={false} importantForAccessibility="no" resizeMode="contain" style={{ width: size, height: size, tintColor: color }} />;
+}
 const CARET = require('../../assets/marks/caret.png');
 
 /**
@@ -167,11 +186,14 @@ export function RunHead({ haul, right, current }: { haul: Haul; right?: string; 
 
 /** The foot of a page: the Haul on the left, the folio in ember on the right. */
 /** The foot of a page, as the website sets it: the flame, then where the page sits ("Haul 001 · 9 of 23"). */
-export function Folio({ haul, n, of }: { haul: string; n?: number; of?: number }) {
+export function Folio({ haul, n, of, edition }: { haul: string; n?: number; of?: number; edition?: { name: Edition; ink: string } }) {
   const p = usePalette();
   return (
     <View style={[st.folio, { borderTopColor: p.rule }]}>
-      <Flame size={9} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Flame size={9} />
+        {edition ? <EditionMark edition={edition.name} color={edition.ink} /> : null}
+      </View>
       <Meta style={{ fontVariant: ['lining-nums'] }}>{n ? `${haul} · ${n}${of ? ` of ${of}` : ''}` : haul}</Meta>
     </View>
   );

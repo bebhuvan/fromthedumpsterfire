@@ -486,3 +486,43 @@ Dated, newest last. Don't reopen these without a new reason.
   and upkeep for a small list); Buttondown, which could send from the RSS feed by itself (the editor
   preferred Substack to start; both export the list, so moving later is easy); putting the reader's
   address in a link to Substack (personal data in a URL).
+
+## 2026-11-09 (design: the proof sheet)
+
+- **The editor chose "Proof sheet + slips" from `docs/DESIGN-REVIEW.md`** (three directions: proof
+  sheet, scrapbook by source, auction catalogue). Salvage is tightened, not replaced. Built: reading
+  size 18px on phones and 19px on desktop (was the reverse; 19px on a phone gave about 39 characters a
+  line); checked extracts as **salvage slips** (plate grey, torn top edge, credit and the machine's
+  check on a stub); quotations inside the editor's writing as **book quotations** (indented, hanging
+  mark, no rule); a **salvage tag** (number, kind, where from, length) on the item heads.
+- **"Matched word for word" is set in the machine's blue sans.** It is the machine's claim about the
+  words, not the source's words or the editor's, so by the house rule it is blue.
+- Rejected for now: the scrapbook (a form per source: tear sheets, letters, printouts), kept as a later
+  step for the commonest kinds once the Desk records the kind of source; the auction catalogue (pulls
+  the forms toward one template). Not yet built from the proof sheet: one modular type scale, and the
+  date the editor picked an item up in the tag (needs the capture date in the bundle, a shared schema
+  change for the Desk session).
+
+## 2026-11-09 (design: signatures)
+
+- **Seven signatures, all built at the editor's word ("All seven")**: the ledger, the date stamp, the
+  page that burned, taped plates, an ornament per edition, the archive as a card drawer, the slug and
+  the neighbours (DESIGN.md, Signatures). The aim, the editor's: some of the old internet's magic, when
+  sites did not all look the same, "within our own language". Rule kept: each signature lives in one
+  place and means one thing, and the weirdness comes from the magazine's own objects, not the old web's
+  costume. Rejected: hit counters, marquees, cursor trails, animated GIFs (nostalgia, not character).
+- **The ledger's counting rule lives in `@fdf/shared/ledger`** (a small new shared module, tested) so the
+  website and the app count the same words. Code blocks are not counted (neither prose nor quotation).
+- **Ornaments are drawn marks, not font glyphs**: the Newsreader subsets lack fleurons, and a fallback
+  font drew the hedera as a red emoji in a test.
+
+## 2026-11-09 (the field note continued)
+
+- **A long field note sets its opening on the cover and continues on its own page.** The editor: his
+  notes run long (Haul 002's past 4,000 words) and readers "might miss the other items that I've
+  actually worked hard to curate". Measured: the contents began about 31 phone screens down. The cover
+  now stops at a paragraph after about 450 words (`noteLead`) with a "Continued" line to
+  `/haul/<n>/note`, a new website page at the address the app's deep link already used (the old
+  redirect to `#field-note` is gone). Rejected: a "Read more" fold in place (a 5,000-word note unfolding
+  on the cover buries the contents again, and folded text is easy to miss); contents before the note
+  (the editor's letter is the front page of each issue); asking the editor to write shorter.

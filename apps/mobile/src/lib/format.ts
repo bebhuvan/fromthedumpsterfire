@@ -6,6 +6,12 @@ export function longDate(iso: string) {
   return `${d} ${MONTHS[(m ?? 1) - 1]} ${y}`;
 }
 
+/** "2026-10-15" → "15 Oct 2026", as a date stamp sets it. */
+export function stampDate(iso: string) {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return `${d} ${MONTHS[(m ?? 1) - 1]!.slice(0, 3)} ${y}`;
+}
+
 export function minutes(n?: number) {
   return n ? `${n} min` : '';
 }

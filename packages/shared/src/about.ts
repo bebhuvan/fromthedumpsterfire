@@ -59,6 +59,15 @@ export const editorNote: AboutParagraph[] = [
 ];
 
 /** The note as plain text, one paragraph per line (for the plain-text and Markdown editions). */
+/**
+ * The neighbours (2026-11-09, a signature): the editor's other places on the web, the old web's
+ * blogroll, at the foot of every page. Taken from his own list in the note above; his to edit.
+ */
+export const NEIGHBOURS: readonly string[] = ['akshara.ink', 'thisindianlife.today', 'lifeinindia.org', 'tipsheet.markets', 'poeticreveries.com', 'smallweb.blog', 'seneca.ink', 'hopeanddespair.world'];
+
+/** The footer's slug, as a printer's slug says what a page was set in and by whom. */
+export const SLUG = { setIn: 'Newsreader and Schibsted Grotesk', chosenBy: 'a person; read and checked by a machine' } as const;
+
 export const editorNoteText = (): string[] => editorNote.map((p) => p.map((s) => (typeof s === 'string' ? s : s.text)).join(''));
 
 /**

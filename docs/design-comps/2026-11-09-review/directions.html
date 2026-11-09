@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three directions</title>
+<style>
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2') format('woff2'); font-weight: 500; }
+:root { --bg: #FFFFFF; --ink: #141416; --ink2: #55555C; --rule: #E6E6EA; --plate: #F4F4F6; --machine: #4651D2; --ember: #FF4F1F; --ed: #0E6461; --apricot: #FFE0C2;
+  --serif: 'Newsreader Text', Georgia, serif; --display: 'Newsreader Display', Georgia, serif; --sans: 'Schibsted Grotesk', system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0F0F12; --ink: #F3F3F1; --ink2: #A2A2AA; --rule: #2A2A31; --plate: #1B1B20; --machine: #A3ACFF; --ember: #FF6A3D; --ed: #6FD0CB; --apricot: #4D2E14; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font: 18px/1.65 var(--serif); padding: 32px 24px 64px; }
+h1 { font: 500 2.6rem/1 var(--display); letter-spacing: -0.02em; }
+.intro { max-width: 48rem; margin: 14px 0 34px; font-size: 1.05rem; color: var(--ink2); }
+.row { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+.phone { width: 375px; height: 900px; overflow: hidden; padding: 0 16px; border: 1px solid var(--rule); position: relative; border-top: 6px solid var(--ed); }
+.phone::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: linear-gradient(transparent, var(--bg)); }
+.label { margin-top: 14px; font: 400 0.86rem/1.45 var(--sans); color: var(--ink2); max-width: 375px; }
+.label b { color: var(--ink); font-weight: 500; }
+.head { display: flex; justify-content: space-between; padding: 12px 0 10px; border-bottom: 1px solid var(--rule); font: 400 0.78rem var(--sans); color: var(--ed); }
+.head span:last-child { color: var(--ink2); }
+.meta { margin-top: 18px; font: 400 0.8rem var(--sans); color: var(--ink2); display: flex; gap: 12px; }
+.key { display: inline-block; width: 9px; height: 9px; background: var(--apricot); margin-right: 6px; }
+.t { font: 500 3rem/0.98 var(--display); letter-spacing: -0.03em; margin-top: 8px; }
+.by { margin-top: 10px; font: italic 400 1.05rem var(--serif); }
+.why { margin-top: 22px; font: 500 0.8rem var(--sans); color: var(--ink2); }
+.note p { margin-top: 10px; }
+.p19 .note p { font-size: 19px; line-height: 1.65; }
+.p18 .note p { font-size: 18px; line-height: 1.6; }
+.sign { font: italic 400 1em var(--display); color: var(--ember); }
+/* 1 Proof sheet */
+.tagline { margin-top: 18px; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; padding: 9px 0; border-block: 1px solid var(--ink); font: 400 0.74rem/1.45 var(--sans); color: var(--ink2); }
+.tagline b { font-weight: 500; color: var(--ink); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.68rem; }
+.lot { font: 500 0.95rem var(--display); color: var(--ed); }
+.slip { margin: 18px -4px 0; padding: 20px 16px 14px; background: var(--plate); position: relative;
+  mask: linear-gradient(#000, #000) 0 6px / 100% calc(100% - 6px) no-repeat, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 0 / 12px 6px repeat-x; }
+.slip .mk { position: absolute; left: 12px; top: 4px; font: 400 2.2rem/1 var(--display); color: var(--ed); }
+.slip p { margin-top: 12px; font-size: 16.5px; line-height: 1.6; }
+.slip .cap { margin-top: 10px; padding-top: 8px; border-top: 1px dashed color-mix(in srgb, var(--ink2) 50%, transparent); display: flex; justify-content: space-between; font: 400 0.72rem/1.4 var(--sans); color: var(--ink2); }
+.slip .cap i { font-style: normal; color: var(--machine); }
+.caret { position: relative; }
+.caret::before { content: '\2038'; position: absolute; left: -0.1em; top: -0.95em; color: var(--ember); font: 400 1.1em var(--serif); }
+/* 2 Scrapbook by source: an Aeon essay as a magazine tear sheet. */
+.tear { margin: 18px -6px 0; padding: 16px 18px 20px; background: var(--apricot); transform: rotate(-0.8deg);
+  mask: linear-gradient(#000, #000) 0 7px / 100% calc(100% - 14px) no-repeat, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 0 / 14px 7px repeat-x, conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 0 100% / 14px 7px repeat-x; }
+.tear .pub { display: flex; justify-content: space-between; font: 500 0.72rem var(--sans); letter-spacing: 0.14em; text-transform: uppercase; border-bottom: 1px solid var(--ink); padding-bottom: 6px; }
+.tear .tt { margin-top: 12px; font: 400 2.35rem/1 var(--display); letter-spacing: -0.02em; }
+.tear .tt em { font-style: italic; }
+.tear .dk { margin-top: 10px; font: 400 0.95rem/1.45 var(--serif); }
+.tear .bl { margin-top: 10px; font: 500 0.72rem var(--sans); letter-spacing: 0.1em; text-transform: uppercase; }
+.tape { position: absolute; width: 74px; height: 20px; background: color-mix(in srgb, var(--plate) 80%, transparent); border: 1px solid var(--rule); transform: rotate(-6deg); }
+/* 3 Auction lot */
+.lotno { margin-top: 26px; display: flex; align-items: baseline; gap: 12px; border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
+.lotno b { font: 400 3.4rem/0.9 var(--display); color: var(--ed); letter-spacing: -0.02em; }
+.lotno span { font: 500 0.72rem var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); }
+.l-t { margin-top: 14px; font: 400 2.2rem/1.04 var(--display); letter-spacing: -0.015em; }
+.l-t em { font-style: italic; }
+.prov { margin-top: 14px; font: 400 0.8rem/1.5 var(--sans); color: var(--ink2); }
+.prov dt { float: left; width: 7.5em; color: var(--ink); font-weight: 500; }
+.prov dd { margin-left: 7.5em; border-bottom: 1px solid var(--rule); padding-bottom: 4px; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h1>Three directions, one essay</h1>
+<p class="intro">"In Praise of the Dilettante" (Jay Miller, Aeon), Haul 002, item 2, at phone width. Now, then three directions for a stronger grammar. The last three also set the reading text at 18px instead of 19px, which fits about 45 characters to a line instead of 39.</p>
+<div class="row">
+
+<div>
+<div class="phone p19">
+<p class="head"><span>Haul 002 · The Uses and Abuses of History</span><span>Opening</span></p>
+<p class="meta"><span><span class="key"></span>Essay</span><span>Aeon, 30 October 2026</span></p>
+<p class="t">In Praise of the Dilettante</p>
+<p class="by">Jay Miller</p>
+<p class="why">Why it's here</p>
+<div class="note"><p>I love the word dilettante. I think I fell in love with it as soon as I discovered it, because I consider myself a textbook case. Not the textbook definition, mind you, which is almost entirely negative. Merriam-Webster defines a dilettante as “a person having a superficial interest in an art or a branch of knowledge.”</p><p>The moment I read those definitions, I wanted to reclaim the word, because it captured an approach to intellectual life I’ve had for a long time.</p></div>
+</div>
+<p class="label"><b>Now.</b> The magazine opening. Every essay in Haul 002 (nine of sixteen items) looks exactly like this, so the issue reads as one template repeated.</p>
+</div>
+
+<div>
+<div class="phone p18">
+<p class="head"><span>Haul 002 · The Uses and Abuses of History</span><span>Opening</span></p>
+<div class="tagline"><span class="lot">02</span><span><b>Salvaged</b> from Aeon, 30 Oct 2026 · 12 minutes · picked up 31 Oct</span></div>
+<p class="t">In Praise of the Dilettante</p>
+<p class="by">Jay Miller</p>
+<p class="why">Why it's here</p>
+<div class="note"><p>I love the word dilettante. I think I fell in love with it as soon as I discovered it, because I consider myself a textbook case. Not the textbook definition, mind you, which is almost entirely negative.</p></div>
+<div class="slip"><span class="mk">“</span><p>In the dilettante’s genes is a compulsion to pursue passions, deeply coupled with a refusal to shape a life or identity permanently around any one of them.</p><p class="cap"><span>JAY MILLER · Aeon</span><i>Matched word for word</i></p></div>
+<div class="note"><p>The moment I read those definitions, I wanted to reclaim the word.</p></div>
+</div>
+<p class="label"><b>1. Proof sheet</b> (recommended). Salvage, tightened: an 18px reading size, a salvage tag under the running head (lot number, where and when it was found), quotations as torn slips, and the editor's ember proof marks used as his signature in the page. Same forms, more character.</p>
+</div>
+
+<div>
+<div class="phone p18">
+<p class="head"><span>Haul 002 · The Uses and Abuses of History</span><span>Tear sheet</span></p>
+<div class="tear"><p class="pub"><span>Aeon</span><span>Essay · 30 Oct 2026</span></p><p class="tt">In Praise of <em>the Dilettante</em></p><p class="dk">Why the dilettante is the anti-hero of our over-optimised age</p><p class="bl">Jay Miller</p></div>
+<p class="why">Why it's here</p>
+<div class="note"><p>I love the word dilettante. I think I fell in love with it as soon as I discovered it, because I consider myself a textbook case. Not the textbook definition, mind you, which is almost entirely negative.</p><p>The moment I read those definitions, I wanted to reclaim the word.</p></div>
+</div>
+<p class="label"><b>2. Scrapbook by source.</b> Each piece pasted in as what it came from: a magazine essay as a torn tear sheet, a Substack post as a letter in the post, a blog post as a printout, a video as a contact sheet. The weirdest and most varied; risk of looking like a craft kit if overdone.</p>
+</div>
+
+<div>
+<div class="phone p18">
+<p class="head"><span>Haul 002 · The Uses and Abuses of History</span><span>Lot 2</span></p>
+<div class="lotno"><b>2</b><span>Lot · An essay</span></div>
+<p class="l-t">In Praise of <em>the Dilettante</em></p>
+<dl class="prov"><dt>Made by</dt><dd>Jay Miller</dd><dt>Found in</dt><dd>Aeon, 30 October 2026</dd><dt>Condition</dt><dd>Free to read · 12 minutes</dd></dl>
+<p class="why">Why it's here</p>
+<div class="note"><p>I love the word dilettante. I think I fell in love with it as soon as I discovered it, because I consider myself a textbook case. Not the textbook definition, mind you.</p></div>
+</div>
+<p class="label"><b>3. Auction catalogue.</b> Every item a numbered lot with its provenance as a ruled field list, titles quieter, the lot number loud in the Haul's ink. Calm, museum-like, very consistent; the least playful, and it flattens the forms toward one template.</p>
+</div>
+
+</div>
+</body>
+</html>

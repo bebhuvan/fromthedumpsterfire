@@ -1,0 +1,53 @@
+---
+// The field note on its own page (2026-11-09), where the cover's opening continues: the whole note,
+// signed, with its voice, then the way back to the contents. The app's deep link /haul/<n>/note opens
+// the app's FieldNote screen at the same address.
+import Base from '../../../layouts/Base.astro';
+import Title from '../../../components/Title.astro';
+import NoteBody from '../../../components/NoteBody.astro';
+import Voice from '../../../components/Voice.astro';
+import Unavailable from '../../../components/Unavailable.astro';
+import { haulSlug } from '@fdf/shared/haul';
+import { noteLead } from '@fdf/shared/fieldnote';
+import { editionOf } from '@fdf/shared/tokens';
+import { archive } from '../../../lib/runtime';
+import { findHaul, objects, paths, titleText } from '../../../lib/site';
+
+const found = findHaul(await archive(), Astro.params.n);
+if (found.kind === 'missing') return new Response(null, { status: 404 });
+if (found.kind === 'failed') Astro.response.status = 503;
+const haul = found.kind === 'ok' ? found.haul : undefined;
+const note = haul?.fieldNote;
+const minutes = note ? noteLead(note.body ?? note.paragraphs.map((p) => ({ kind: 'paragraph' as const, runs: [{ text: p }] }))).minutes : 0;
+const H = haul ? `Haul ${haulSlug(haul.number)}` : '';
+---
+{haul && note ? (
+  <Base
+    title={`${titleText(note.title)} · ${H}`}
+    description={haul.deck}
+    path={paths.note(haul.number)}
+    type="article"
+    publishedAt={haul.publishedAt}
+    edition={editionOf(haul.number, haul.edition)}
+    runhead={{ href: paths.haul(haul.number), left: `${H} · ${titleText(haul.title)}`, right: 'The field note' }}
+    folio={{ left: H, number: 'the field note' }}
+  >
+    <section class="wrap g fn fn-page" aria-labelledby="fn-title">
+      <p class="m meta tag"><span class="tag-n" aria-hidden="true">{haulSlug(haul.number)}</span><span>The field note</span><span>{minutes} minutes</span></p>
+      <div class="c fn-c">
+        <Title title={note.title} as="h1" class="h-sec" id="fn-title" />
+        {note.audio ? <Voice audio={note.audio} label="Hear it as I said it" /> : null}
+        <NoteBody note={note} />
+      </div>
+    </section>
+    <nav class="wrap g row next" aria-label="The contents of this Haul">
+      <p class="m mh">Next</p>
+      <a class="c next-a" href={`${paths.haul(haul.number)}#contents-title`}>
+        <span class="next-k">The contents</span>
+        <span class="next-t">{objects(haul.items.length)} in {H}</span>
+      </a>
+    </nav>
+  </Base>
+) : (
+  <Unavailable what={`Haul ${Astro.params.n}`} />
+)}

@@ -27,7 +27,7 @@ export const paths = {
   home: '/',
   haul: (n: number) => `/haul/${n}`,
   haulMd: (n: number) => `/haul/${n}.md`,
-  note: (n: number) => `/haul/${n}#field-note`,
+  note: (n: number) => `/haul/${n}/note`,
   item: (n: number, id: string) => `/haul/${n}/${id}`,
   itemMd: (n: number, id: string) => `/haul/${n}/${id}.md`,
   thread: (n: number, id: string) => `/haul/${n}/thread/${id}`,
@@ -115,6 +115,12 @@ function parts(iso: string) {
 export function longDate(iso: string) {
   const { y, m, d } = parts(iso);
   return `${d} ${MONTHS[m - 1]} ${y}`;
+}
+
+/** "2026-10-15" to "15 Oct 2026", as a date stamp sets it. */
+export function stampDate(iso: string) {
+  const { y, m, d } = parts(iso);
+  return `${d} ${MONTHS[m - 1]!.slice(0, 3)} ${y}`;
 }
 
 /** "2026-10-15" to "Thursday 15 October 2026". */

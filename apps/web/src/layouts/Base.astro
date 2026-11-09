@@ -3,7 +3,7 @@
 // optional running head under it, and an optional folio above the footer: the flame, then where the page sits.
 import '../styles/global.css';
 import { palettes } from '@fdf/shared/tokens';
-import { LICENCE } from '@fdf/shared/about';
+import { LICENCE, NEIGHBOURS, SLUG } from '@fdf/shared/about';
 import { absolute, EDITOR_NAME, paths, SITE_DESCRIPTION, SITE_NAME, SOURCE_URL } from '../lib/site';
 import { markdownMirrorFor } from '../worker/lib';
 import Masthead from '../components/Masthead.astro';
@@ -159,7 +159,7 @@ const nav = [
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    {folio ? <p class="wrap folio"><span class="folio-in"><span class="flame" aria-hidden="true"></span><span>{folio.left} · {folio.number}{folio.of ? ` of ${folio.of}` : ''}</span></span></p> : null}
+    {folio ? <p class="wrap folio"><span class="folio-in"><span><span class="flame" aria-hidden="true"></span>{edition ? <span class="orn-mark" aria-hidden="true"></span> : null}</span><span>{folio.left} · {folio.number}{folio.of ? ` of ${folio.of}` : ''}</span></span></p> : null}
     <footer class="wrap g foot" itemscope itemtype="https://schema.org/Periodical">
       <meta itemprop="name" content={SITE_NAME} />
       <meta itemprop="description" content={SITE_DESCRIPTION} />
@@ -179,6 +179,16 @@ const nav = [
         <a href={paths.feed}>RSS</a>
         <a href={paths.privacy}>Privacy</a>
         <a href={SOURCE_URL} rel="noopener noreferrer">The code</a>
+      </nav>
+      {/* The slug and the neighbours (2026-11-09, a signature): what the page was set in and by whom, as
+          a printer's slug says, and the editor's other places, the old web's blogroll. */}
+      <dl class="c foot-slug">
+        <div><dt>Set in</dt><dd>{SLUG.setIn}</dd></div>
+        <div><dt>Chosen by</dt><dd>{SLUG.chosenBy}</dd></div>
+      </dl>
+      <nav class="c foot-nb" aria-label="Neighbours: the editor's other places">
+        <p>Neighbours</p>
+        <ul>{NEIGHBOURS.map((h) => <li><a href={`https://${h}`} rel="noopener noreferrer">{h}</a></li>)}</ul>
       </nav>
       <p class="c foot-app">A mobile app is coming soon.</p>
       <p class="c foot-licence">{LICENCE.before}<a rel="license" itemprop="license" href={LICENCE.url}>{LICENCE.name}</a>{LICENCE.after}</p>

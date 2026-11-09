@@ -6,11 +6,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
 import { haulSlug, type Haul } from '@fdf/shared/haul';
+import { editionOf } from '@fdf/shared/tokens';
+import { noteLead } from '@fdf/shared/fieldnote';
 import { fonts, GUTTER, useEdition, usePalette } from '@/theme';
-import { longDate } from '@/lib/format';
+import { longDate, stampDate } from '@/lib/format';
 import { useReader } from '@/lib/store';
 import { Body, Machine, Meta, Title } from '@/ui/type';
-import { Action, Apparatus, Divider, Masthead, Ornament, Sign, TopBar, VoiceNote } from '@/ui/parts';
+import { EditionMark, Action, Apparatus, Divider, Masthead, Ornament, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Specimen } from '@/ui/Specimen';
 import { NoteBody } from '@/ui/NoteBody';
@@ -28,6 +30,7 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
   const resume = place && place.n === haul.number && place.item ? haul.items.find((i) => i.id === place.item) : undefined;
   const isLatestRead = resume ? haul.items.indexOf(resume) === haul.items.length - 1 : false;
   const note = haul.fieldNote;
+  const lead = noteLead(note.body ?? note.paragraphs.map((t) => ({ kind: 'paragraph' as const, runs: [{ text: t }] })));
   const thread = haul.threads[0];
   const numberOf = new Map(haul.items.map((i, k) => [i.id, k + 1]));
   const len = haul.title.text.length + (haul.title.italic?.length ?? 0);
@@ -52,6 +55,12 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
           {'\n'}
           {objects(haul.items.length)}
         </Text>
+        {/* The date stamp (2026-11-09, a signature), as the website sets it. Decorative: the date and
+            corrections are given in words on the cover. */}
+        <View style={styles.stamps} accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none">
+          <Stamp ink={ed} top="SALVAGED" date={stampDate(haul.publishedAt)} foot={`HAUL ${haulSlug(haul.number)}`} turn="-6deg" />
+          {haul.corrections?.length ? <Stamp ink={ed} top="CORRECTED" date={stampDate(haul.corrections.at(-1)!.date)} foot={`VERSION ${haul.version}`} turn="4deg" double /> : null}
+        </View>
       </View>
       <View style={{ paddingHorizontal: GUTTER }}>
         <Title title={haul.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.028 }} />
@@ -80,9 +89,26 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
           </View>
         ) : null}
         <View style={{ marginTop: 16 }}>
-          <NoteBody note={note} para={styles.para} gap={14} />
+          <NoteBody note={{ ...note, body: lead.blocks }} edition={editionOf(haul.number, haul.edition)} para={styles.para} gap={14} />
         </View>
-        <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
+        {lead.cut ? (
+          // A long note continues on its own page, as the website sets it, so the contents are not
+          // twenty-five screens down (noteLead).
+          // A printer's break in the Haul's ornament, then the way to the rest, as the website sets it.
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={`Read the rest of the note, ${lead.minutes} minutes`}
+            onPress={() => go.note(haul.number)}
+            hitSlop={8}
+            style={({ pressed }) => [styles.more, pressed && { opacity: 0.6 }]}
+          >
+            <EditionMark edition={editionOf(haul.number, haul.edition)} size={20} color={ed} />
+            <Text style={[styles.moreT, { color: p.ink, textDecorationColor: ed }]}>Read the rest of the note</Text>
+            <Text style={[styles.moreK, { color: p.ink2 }]}>{lead.minutes} minutes</Text>
+          </Pressable>
+        ) : (
+          <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
+        )}
       </View>
 
       {note.route.length ? (
@@ -152,9 +178,36 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
   );
 }
 
+/** A library date stamp in the Haul's ink, a few degrees off true. */
+function Stamp({ ink, top, date, foot, turn, double }: { ink: string; top: string; date: string; foot: string; turn: string; double?: boolean }) {
+  const face = (
+    <>
+      <Text style={[styles.stampK, { color: ink }]}>{top}</Text>
+      <Text style={[styles.stampD, { color: ink }]}>{date}</Text>
+      <Text style={[styles.stampK, { color: ink }]}>{foot}</Text>
+    </>
+  );
+  // React Native has no double border: the corrected stamp is a ruled box inside a ruled box.
+  return double ? (
+    <View style={[styles.stampOuter, { borderColor: ink, transform: [{ rotate: turn }] }]}>
+      <View style={[styles.stamp, { borderColor: ink, borderWidth: 1, opacity: 1 }]}>{face}</View>
+    </View>
+  ) : (
+    <View style={[styles.stamp, { borderColor: ink, transform: [{ rotate: turn }] }]}>{face}</View>
+  );
+}
+
 const styles = StyleSheet.create({
   topRow: { paddingHorizontal: GUTTER, minHeight: 36, justifyContent: 'center' },
   head: { paddingHorizontal: GUTTER, marginTop: 26 },
+  more: { alignItems: 'center', marginTop: 30, gap: 4 },
+  moreT: { fontFamily: fonts.displayItalic, fontSize: 21, lineHeight: 28, marginTop: 10, textDecorationLine: 'underline' },
+  moreK: { fontFamily: fonts.sans, fontSize: 12.5, lineHeight: 17 },
+  stamps: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12, marginLeft: 3 },
+  stamp: { borderWidth: 2, paddingHorizontal: 9, paddingTop: 4, paddingBottom: 3, alignItems: 'center', opacity: 0.85 },
+  stampOuter: { borderWidth: 1, padding: 2, opacity: 0.85 },
+  stampK: { fontFamily: fonts.sansMedium, fontSize: 9, letterSpacing: 1.4 },
+  stampD: { fontFamily: fonts.displayRegular, fontSize: 19, lineHeight: 22, marginVertical: 1 },
   noRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   noH: { fontFamily: fonts.sansMedium, fontSize: 13, letterSpacing: 1.6, includeFontPadding: false },
   noN: { fontFamily: fonts.displayRegular, fontSize: 54, lineHeight: 54, letterSpacing: -1.6, includeFontPadding: false, fontVariant: ['lining-nums'] },

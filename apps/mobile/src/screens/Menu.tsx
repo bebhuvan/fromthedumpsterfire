@@ -15,6 +15,7 @@ import { openSource } from '@/lib/open';
 import { go } from '@/nav';
 import { Flame, Masthead } from '@/ui/parts';
 import { Meta } from '@/ui/type';
+import { NEIGHBOURS, SLUG } from '@fdf/shared/about';
 import { Screen } from '@/ui/screen';
 import { EDITOR, mailEditor } from './Settings';
 
@@ -69,7 +70,28 @@ export function Menu() {
         <Line title="Send a find or a note" detail={EDITOR} onPress={mailEditor} external />
       </Part>
 
-      <View style={[styles.foot, { borderTopColor: p.rule }]}>
+      {/* The slug and the neighbours (2026-11-09, a signature), as the website's footer sets them. */}
+      <View style={[styles.slug, { borderTopColor: p.ink }]}>
+        {[['Set in', SLUG.setIn], ['Chosen by', SLUG.chosenBy]].map(([k, v]) => (
+          <View key={k} style={[styles.slugRow, { borderBottomColor: p.rule }]}>
+            <Meta style={{ width: 76 }}>{k}</Meta>
+            <Meta style={{ flex: 1, color: p.ink }}>{v}</Meta>
+          </View>
+        ))}
+      </View>
+      <Text style={[styles.nbH, { color: p.ink2 }]}>NEIGHBOURS</Text>
+      <Text style={[styles.nb, { color: p.ink }]}>
+        {NEIGHBOURS.map((h, i) => (
+          <Text key={h}>
+            <Text accessibilityRole="link" onPress={() => openSource(`https://${h}`, p)} style={{ textDecorationLine: 'underline', textDecorationColor: p.rule }}>
+              {h}
+            </Text>
+            {i < NEIGHBOURS.length - 1 ? <Text style={{ color: p.ink2, fontFamily: fonts.text }}>{'  ·  '}</Text> : null}
+          </Text>
+        ))}
+      </Text>
+
+      <View style={[styles.foot, { borderTopColor: p.rule, marginTop: 28 }]}>
         <Flame size={8} />
         <Meta style={{ flex: 1 }}>Version {Constants.expoConfig?.version ?? '0'} · fromthedumpsterfire.com</Meta>
       </View>
@@ -120,5 +142,9 @@ const styles = StyleSheet.create({
   detail: { fontFamily: fonts.text, fontSize: 15, lineHeight: 21, marginTop: 3 },
   figure: { fontFamily: fonts.displayRegular, fontSize: 24, lineHeight: 28, includeFontPadding: false, fontVariant: ['lining-nums', 'tabular-nums'] },
   ext: { fontFamily: fonts.sansMedium, fontSize: 16 },
+  slug: { marginTop: 44, borderTopWidth: 1 },
+  slugRow: { flexDirection: 'row', gap: 12, paddingVertical: 5, borderBottomWidth: StyleSheet.hairlineWidth },
+  nbH: { fontFamily: fonts.sansMedium, fontSize: 10.5, letterSpacing: 1.5, marginTop: 18 },
+  nb: { fontFamily: fonts.textItalic, fontSize: 16, lineHeight: 26, marginTop: 4 },
   foot: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 44, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
 });
