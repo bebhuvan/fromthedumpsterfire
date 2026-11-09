@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseHTML } from 'linkedom';
 import { auditDraft, normaliseTitle } from '../src/steps';
-import { relevant, firstSentence, bestSentence, pickHit } from '../src/wiki';
+import { relevant, firstSentence, bestSentence, pickHit, exactOutcome } from '../src/wiki';
 import { captionsToText, youtubeId } from '../src/extract/youtube';
 import { reflow, pageAt } from '../src/extract/pdf';
 import { extractArticle } from '../src/extract/html';
@@ -245,5 +245,19 @@ describe('Wikipedia search picks the article that names the phrase', () => {
     expect(pickHit('Stork family', [white, pfeil])?.title).toBe('White stork');
     expect(pickHit('Something else', [white, pfeil])?.title).toBe('White stork');
     expect(pickHit('x', [])).toBeNull();
+  });
+});
+
+describe('Wikipedia exact titles', () => {
+  const art = (title: string) => ({ title, extract: `${title} is an article.`, url: `https://en.wikipedia.org/wiki/${title}`, key: title });
+  it('never guesses past a title Wikipedia lists as ambiguous', () => {
+    // "Dilettante" is a disambiguation page; search then offered the record label "Dilettante Music".
+    expect(exactOutcome('Dilettante', 'ambiguous')).toBe('ambiguous');
+  });
+  it('takes an exact article whose title matches, and leaves the rest to search', () => {
+    expect(exactOutcome('Linux', art('Linux'))).toEqual(art('Linux'));
+    expect(exactOutcome('Either/Or (Kierkegaard book)', art('Either/Or (Kierkegaard book)'))).toEqual(art('Either/Or (Kierkegaard book)'));
+    expect(exactOutcome('Arrow stork', art('Unrelated page'))).toBeNull();
+    expect(exactOutcome('Linux', null)).toBeNull();
   });
 });

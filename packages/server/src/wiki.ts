@@ -17,13 +17,20 @@ const API = 'https://en.wikipedia.org';
 const headers = { 'user-agent': USER_AGENT, accept: 'application/json', 'api-user-agent': USER_AGENT };
 
 export async function wikiSummary(key: string): Promise<WikiSummary | null> {
+  const r = await wikiLookup(key);
+  return r && r !== 'ambiguous' ? r : null;
+}
+
+/** An article, Wikipedia's own "may refer to" page ('ambiguous'), or nothing. */
+async function wikiLookup(key: string): Promise<WikiSummary | 'ambiguous' | null> {
   const res = await fetch(`${API}/api/rest_v1/page/summary/${encodeURIComponent(key.replace(/ /g, '_'))}?redirect=true`, {
     headers,
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) return null;
   const j = (await res.json()) as Record<string, any>;
-  if (j.type === 'disambiguation' || !j.extract) return null;
+  if (j.type === 'disambiguation') return 'ambiguous';
+  if (!j.extract) return null;
   const url: string | undefined = j.content_urls?.desktop?.page;
   if (!url?.startsWith('https://en.wikipedia.org/wiki/')) return null;
   return { title: j.title, description: j.description, extract: j.extract, url, revision: j.revision ? String(j.revision) : undefined, key: j.titles?.canonical ?? key };
@@ -35,8 +42,10 @@ export async function resolveWikiTopic(query: string): Promise<WikiSummary | nul
   if (!q) return null;
   // An exact title (redirects followed) first: search ranks a broad article above the specific one
   // a reader asked for ("Arrow stork" searched gives "White stork"; the title "Pfeilstorch" is exact).
-  const exact = await wikiSummary(q).catch(() => null);
-  if (exact && relevant(q, exact.title)) return exact;
+  const exact = await wikiLookup(q).catch(() => null);
+  const first = exactOutcome(q, exact);
+  if (first === 'ambiguous') return null;
+  if (first) return first;
   const res = await fetch(`${API}/w/rest.php/v1/search/page?q=${encodeURIComponent(q)}&limit=3`, { headers, signal: AbortSignal.timeout(15_000) });
   if (!res.ok) return null;
   const j = (await res.json()) as { pages?: Array<{ key: string; title: string }> };
@@ -49,6 +58,17 @@ export async function resolveWikiTopic(query: string): Promise<WikiSummary | nul
     if (s && (relevant(q, s.title) || namesPhrase(q, s))) hits.push(s);
   }
   return pickHit(q, hits);
+}
+
+/**
+ * What the exact-title lookup settles. A title Wikipedia itself lists as ambiguous is never guessed:
+ * searching "Dilettante" returned a record label that shares the word. A topic is better left out
+ * than wrong; the model is asked for bracketed titles ("Either/Or (Kierkegaard book)") for this.
+ * An article only counts when its title shares a word with the query; otherwise search decides.
+ */
+export function exactOutcome(query: string, exact: WikiSummary | 'ambiguous' | null): WikiSummary | 'ambiguous' | null {
+  if (exact === 'ambiguous') return 'ambiguous';
+  return exact && relevant(query, exact.title) ? exact : null;
 }
 
 /** The hit that names the query in its title or lead, else the best-ranked one. */

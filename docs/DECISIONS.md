@@ -417,3 +417,18 @@ Dated, newest last. Don't reopen these without a new reason.
   it), still a guide beside the selection that warns and never blocks, still always beside the
   editor's note and a link to the original. Rejected: a quarter and 600 words (the quote starts to
   stand in for the original, the factor fair use and fair dealing weigh most) and no guide at all.
+
+## 2026-11-09
+
+- **A paper's passage comes after the editor's note, set as a quotation.** The offprint printed the
+  excerpt first, as its "abstract", in the body serif, so readers took the paper's words for the
+  editor's (the editor, on Haul 002's fertility and press-gang papers). It now sits under "From the
+  paper" as an extract with its rule, opening mark and credit, the way the opening form sets one.
+  Rejected: keeping it on top restyled (the editor allowed it, but every other form leads with the note).
+- **Further reading names the piece's own subject first, and an ambiguous title is never guessed.**
+  The "specific over general" rule had left Linux off a piece about Linux, and a bare "Dilettante"
+  (a Wikipedia disambiguation page) fell through to search and became a record label. The prompt now
+  puts the subject's own article first and asks for Wikipedia's bracketed titles; `resolveWikiTopic`
+  drops a title Wikipedia lists as ambiguous (`exactOutcome`). Rejected: picking the first article
+  on a disambiguation page (often the wrong sense) and a second model call to judge each card (cost
+  for something the editor ticks anyway).
