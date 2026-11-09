@@ -1187,7 +1187,8 @@ with at least 12 testers opted in for 14 days in a row before production is unlo
   architectures, `EXPO_PUBLIC_USE_SEED=0`). Raise `android.versionCode` in `app.json` for every upload.
 - **Permissions:** drawing over other apps and shared storage are blocked.
 - **Notifications:** Settings already has the on/off switch. Turning it off now deletes the token
-  on the server (the Desk Worker change is **not deployed yet**) and is retried at launch if missed.
+  on the server (deployed to production 2026-11-09, fdf-desk 3fcb7b3b, from 31cfaf9; `/v1/health` answers,
+  the Desk is still locked, and an opt-out for an unknown token is accepted) and is retried at launch if missed.
 - **Privacy page:** `/privacy`, live since the design deploy (fdf-web bb68d822).
 - **First Play bundle built** from `launch-2026-10-24` at 31cfaf9 (design work and the app's parity
   changes merged; runtime
