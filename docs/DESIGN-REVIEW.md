@@ -158,7 +158,11 @@ without the whole issue becoming a scrapbook.
 ## What I could not check
 
 - iOS: not built here.
-- The app was checked in the Android emulator on a release build carrying Haul 002's published bundle
-  as sample data; see STATUS for what was looked at. Text-size settings above 100 % were not tried.
+- The app was checked in the Android emulator (a 411 dp wide phone) on a release build carrying Haul
+  002's published bundle as sample data: the Censusnama label, a quotation inside a long note and the
+  paper page's order all match the website. Its long notes fit about 35 characters to a line, a little
+  fewer than the website's 39, which supports point 8. Dark mode, the clipping and text sizes above
+  100 % were not looked at in the app. A deep link to a sample item did not open it (the sample sits at
+  a different path by design), so pages were reached through search.
 - Production still shows the old faults until the editor deploys the web and ships an app update.
 - Search, the archive page and the threads pages were not reviewed in depth.
