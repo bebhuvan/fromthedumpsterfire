@@ -1189,7 +1189,8 @@ with at least 12 testers opted in for 14 days in a row before production is unlo
 - **Notifications:** Settings already has the on/off switch. Turning it off now deletes the token
   on the server (the Desk Worker change is **not deployed yet**) and is retried at launch if missed.
 - **Privacy page:** `/privacy`, live since the design deploy (fdf-web bb68d822).
-- **First Play bundle built** from `launch-2026-10-24` at 705a7a9 (design work merged; runtime
+- **First Play bundle built** from `launch-2026-10-24` at 31cfaf9 (design work and the app's parity
+  changes merged; runtime
   908c7f06), signed with the upload key, no blocked permissions, no sample Hauls, the eight edition
   ornaments and the Menu's "Hauls by email" inside. Copy kept at `~/Downloads/from-the-dumpster-fire-0.3.0-play-1.aab`.
   Not run on a phone. No over-the-air update reaches the sideloaded APKs (runtime e903061b): the
