@@ -20,7 +20,7 @@ interface Props {
   type?: 'website' | 'article';
   image?: { url: string; width: number; height: number; alt: string };
   /** Which top-level section is current, for aria-current in the nav. */
-  section?: 'latest' | 'threads' | 'archive' | 'shelf' | 'search' | 'about';
+  section?: 'latest' | 'threads' | 'archive' | 'shelf' | 'search' | 'about' | 'subscribe';
   noindex?: boolean;
   /** Running head under the header: left links back to the Haul, right names the form. */
   runhead?: { href: string; left: string; right?: string };
@@ -74,6 +74,9 @@ const nav = [
   { key: 'shelf', href: paths.shelf, label: 'Shelf' },
   { key: 'search', href: paths.search, label: 'Search' },
   { key: 'about', href: paths.about, label: 'About' },
+  // Hauls by email, last and always there (2026-11-09: footer-only links went unseen). The app keeps its
+  // five-word bar and has "Hauls by email" in its Menu.
+  { key: 'subscribe', href: paths.subscribe, label: 'Subscribe' },
 ] as const;
 ---
 <!doctype html>

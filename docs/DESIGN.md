@@ -164,7 +164,8 @@ The archive lists back issues as a run of editions, each with its number in its 
 ## The app's navigation
 
 The bar at the thumb is the website's navigation, same words and order, with Menu in About's place:
-Latest, Threads, Archive, Search, Menu, in small sans, the current word in ink with a short ember
+Latest, Threads, Archive, Search, Menu (the website's Subscribe, added 2026-11-09, is "Hauls by email" in
+the app's Menu: a sixth word would crowd the bar), in small sans, the current word in ink with a short ember
 rule under it. No icons. Reading pages (cover from the archive, item, field note, thread, saved,
 settings, about, shelf, book) open full screen above it with a back bar that names where back goes (an item's
 bar names its Haul). Top-level pages carry the small struck masthead, as the website's header does.
@@ -346,3 +347,10 @@ Sketches: `docs/design-comps/2026-11-09-review/signatures.html`.
 7. **The slug and the neighbours** (`SLUG`, `NEIGHBOURS` in `@fdf/shared/about`): the footer (the app's
    Menu) says what the page is set in and who chose it, as a printer's slug, and lists the editor's
    other places, the old web's blogroll. The list is the editor's to edit.
+
+## Hauls by email (2026-11-09)
+
+`/subscribe` shows the Substack list's own form (fromthedumpsterfire.substack.com). It is reached from
+**Subscribe**, the last word in the website's top menu (on phones the menu steps down a size, and on
+the home page a little more, so the theme switch stays on the row), from *New Hauls by email →* on the
+home page's nameplate strap, and quietly from the footer, About, each Haul's foot and the app's Menu.

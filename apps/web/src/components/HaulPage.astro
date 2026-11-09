@@ -72,7 +72,7 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
   {home ? (
     <section class="wrap nameplate" aria-label="From the Dumpster Fire">
       <p class="np-name"><Masthead /></p>
-      <p class="np-strap"><span>Irregular hauls of things worth salvaging from the internet and the archive</span><span>Chosen by one editor, read with machines</span></p>
+      <p class="np-strap"><span>Irregular hauls of things worth salvaging from the internet and the archive</span><span>Chosen by one editor, read with machines</span><a class="np-sub" href={paths.subscribe}>New Hauls by email <span aria-hidden="true">→</span></a></p>
     </section>
   ) : null}
   <section
