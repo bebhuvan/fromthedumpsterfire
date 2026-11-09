@@ -107,7 +107,7 @@ export function HaulSuggestions({ id }: { id: string }) {
                 <Line key={d.id} on={isIn(d.status)} state={rowState[d.id]} label="Margin note" onTick={(on) => void set('draft', it.id, d.id, on ? 'kept' : 'proposed')} onCut={() => void set('draft', it.id, d.id, 'cut')}>
                   <p className="note-text">{d.body.text}</p>
                   <span className="note-cite">
-                    {d.body.cite.kind === 'source' ? <>From the piece: “{clip(d.body.cite.quote, 140)}”</> : <>From Wikipedia: {d.body.cite.title}</>}
+                    {d.body.cite?.kind === 'source' ? <>From the piece: “{clip(d.body.cite.quote, 140)}”</> : d.body.cite?.kind === 'wiki' ? <>From Wikipedia: {d.body.cite.title}</> : null}
                   </span>
                 </Line>
               ))}
@@ -133,7 +133,7 @@ function Line({ on, state, label, onTick, onCut, children }: { on: boolean; stat
   return (
     <div className={`line-row${on ? ' on' : ''}`}>
       <label className="tick">
-        <input type="checkbox" checked={on} aria-label={on ? `${label}, included; untick to leave it out` : `Include this ${label.toLowerCase()}`} onChange={(e) => onTick(e.target.checked)} />
+        <input type="checkbox" checked={on} disabled={state === 'saving'} aria-label={on ? `${label}, included; untick to leave it out` : `Include this ${label.toLowerCase()}`} onChange={(e) => onTick(e.target.checked)} />
       </label>
       <div className="stack" style={{ gap: 6, flex: 1 }}>
         <span className="label machine">{label}</span>
@@ -155,7 +155,7 @@ function IdeaBody({ d }: { d: Draft<MarginalBody> }) {
   return (
     <>
       <p className="note-text">{d.body.text}</p>
-      {d.body.cite.kind === 'source' && (
+      {d.body.cite?.kind === 'source' && (
         <p className="serif small idea-quote">
           “{clip(d.body.cite.quote.replace(/\s*\n\s*/g, ' '), 220)}”{d.body.locator ? <span className="muted"> · {d.body.locator}</span> : null}
         </p>

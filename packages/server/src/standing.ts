@@ -38,12 +38,26 @@ export async function publishedItems(env: Env, haulId: string): Promise<{ versio
   const bundle = obj ? ((await obj.json().catch(() => null)) as Haul | null) : null;
   if (!bundle?.items) return { version: v.version, ids: new Set() };
   const rows = (
-    await env.DB.prepare('SELECT i.id, i.title, i.title_choice, i.url, i.canonical_url FROM haul_items hi JOIN items i ON i.id = hi.item_id WHERE hi.haul_id = ?').bind(haulId).all<ItemRow>()
+    await env.DB.prepare('SELECT i.id, i.title, i.title_choice, i.url, i.canonical_url FROM haul_items hi JOIN items i ON i.id = hi.item_id WHERE hi.haul_id = ? ORDER BY hi.position').bind(haulId).all<ItemRow>()
   ).results;
   const ids = matchBundleItems(rows, bundle);
   // Remember the answer so the tray never reads the bundle again for this version.
   await env.DB.prepare('UPDATE haul_versions SET item_ids = ? WHERE haul_id = ? AND version = ?').bind(JSON.stringify(ids), haulId, v.version).run();
   return { version: v.version, ids: new Set(ids) };
+}
+
+/**
+ * Every item readers have now, with the Haul and version that carries it: the latest version of each
+ * published Haul. An item taken out of a published Haul stays here until a correction drops it.
+ */
+async function inReadersHands(env: Env): Promise<Map<string, { haulId: string; number: number; version: number }>> {
+  const hauls = (await env.DB.prepare(`SELECT id, number FROM hauls WHERE status = 'published'`).all<{ id: string; number: number }>()).results;
+  const out = new Map<string, { haulId: string; number: number; version: number }>();
+  for (const h of hauls) {
+    const pub = await publishedItems(env, h.id);
+    if (pub) for (const id of pub.ids) out.set(id, { haulId: h.id, number: h.number, version: pub.version });
+  }
+  return out;
 }
 
 export interface HaulRef {
@@ -59,22 +73,24 @@ export async function standingFor(env: Env, item: Pick<ItemRow, 'id' | 'archived
     env.DB.prepare('SELECT h.id, h.number, h.status, h.version FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ?').bind(item.id).first<HaulRef>(),
     env.DB.prepare(`SELECT id, number FROM hauls WHERE status = 'draft' ORDER BY number DESC LIMIT 1`).first<{ id: string; number: number }>(),
   ]);
-  const pub = haul?.status === 'published' ? await publishedItems(env, haul.id) : null;
-  const publishedIn = pub?.ids.has(item.id) ? pub.version : null;
-  return { standing: itemStanding({ archived: Boolean(item.archived), haul: haul ?? null, publishedIn }), haul: haul ?? null, draft: draft ?? null };
+  const out = (await inReadersHands(env)).get(item.id);
+  const publishedIn = out && haul && out.haulId === haul.id ? out.version : null;
+  const stillOut = out && out.haulId !== haul?.id ? { number: out.number, version: out.version } : null;
+  return { standing: itemStanding({ archived: Boolean(item.archived), haul: haul ?? null, publishedIn, stillOut }), haul: haul ?? null, draft: draft ?? null };
 }
 
 /** Standing for many items at once (the tray): one look per published Haul. */
 export async function standings(env: Env, rows: Array<{ id: string; archived: number; haul_id: string | null; haul_number: number | null; haul_status: string | null; haul_version: number | null }>): Promise<Map<string, Standing>> {
-  const pubs = new Map<string, Awaited<ReturnType<typeof publishedItems>>>();
-  for (const id of new Set(rows.filter((r) => r.haul_status === 'published').map((r) => r.haul_id!))) pubs.set(id, await publishedItems(env, id));
-  const out = new Map<string, Standing>();
+  const hands = await inReadersHands(env);
+  const placed = new Map<string, Standing>();
   for (const r of rows) {
-    const pub = r.haul_id ? pubs.get(r.haul_id) : null;
+    const o = hands.get(r.id);
     const haul = r.haul_id ? { number: r.haul_number!, status: r.haul_status === 'published' ? ('published' as const) : ('draft' as const), version: r.haul_version ?? 0 } : null;
-    out.set(r.id, itemStanding({ archived: Boolean(r.archived), haul, publishedIn: pub?.ids.has(r.id) ? pub.version : null }));
+    const publishedIn = o && o.haulId === r.haul_id ? o.version : null;
+    const stillOut = o && o.haulId !== r.haul_id ? { number: o.number, version: o.version } : null;
+    placed.set(r.id, itemStanding({ archived: Boolean(r.archived), haul, publishedIn, stillOut }));
   }
-  return out;
+  return placed;
 }
 
 // ---------------------------------------------------------------- a whole Haul: review and suggestions

@@ -1155,7 +1155,11 @@ ranked, with screenshots in `docs/desk-review/`).
   title; Delete moved under More; library copy and pasted text available on every article.
 - Needs before deploy: `migrations/0011_version_items.sql` applied to production (through `cf`, see the
   wrangler-account note), then `npm run deploy:production`. Older versions fill in their item ids the
-  first time they are asked about.
+  first time they are asked about. 0011 also adds a unique index so an item is in one Haul at most; it
+  fails if production already has an item in two Hauls (check first:
+  `SELECT item_id FROM haul_items GROUP BY item_id HAVING COUNT(*) > 1`, expected empty).
+- An item taken out of a published Haul on the Haul page now says *Taken out of Haul N, but still
+  published* until a correction goes out.
 - Open (ranked in DESK-REVIEW): fold done steps on the item page, tray-first capture on a phone, the Haul
   page in sections on a phone, optimistic saves for the remaining item buttons, a lighter Settings page.
 

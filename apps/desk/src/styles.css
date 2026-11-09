@@ -315,6 +315,7 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
 /* A tick's tap area is the whole 44px square around the box, not the box alone. */
 .tick { display: inline-grid; place-items: center; flex: none; min-width: 44px; min-height: 44px; margin: -10px -6px -10px -12px; cursor: pointer; }
 .tick input { accent-color: var(--ink); width: 18px; height: 18px; margin: 0; cursor: pointer; }
+.tick input:disabled { opacity: 0.5; cursor: progress; }
 
 /* Where an item stands: one plain line and the one step that moves it on. */
 .standing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 14px; padding: 12px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
@@ -322,7 +323,7 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
 .standing-main { font: 600 14px/1.35 var(--sans); }
 .standing-main::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--ink2); vertical-align: 1px; }
 .st-published .standing-main::before { background: var(--ok); }
-.st-haul .standing-main::before, .st-next-version .standing-main::before { background: var(--warn); }
+.st-haul .standing-main::before, .st-next-version .standing-main::before, .st-withdrawn .standing-main::before { background: var(--warn); }
 .standing-acts { display: flex; flex-wrap: wrap; gap: 6px; }
 .ready .standing { border-color: color-mix(in srgb, var(--ink) 18%, transparent); }
 .line-row:not(.on) .note-text, .line-row:not(.on) .idea-quote { opacity: 0.72; }

@@ -776,7 +776,7 @@ function CheckedLines({ kind, drafts, act, tick, saving, autoCaptions = false }:
         return (
           <div key={d.id} className={`line-row${on ? ' on' : ''}`}>
             <label className="tick">
-              <input type="checkbox" checked={on} aria-label={on ? 'Included; untick to leave it out' : 'Include'} onChange={(e) => void tick('draft', d.id, e.target.checked ? 'kept' : 'proposed')} />
+              <input type="checkbox" checked={on} disabled={saving.has(d.id)} aria-label={on ? 'Included; untick to leave it out' : 'Include'} onChange={(e) => void tick('draft', d.id, e.target.checked ? 'kept' : 'proposed')} />
               {saving.has(d.id) && <span className="sr-only">Saving</span>}
             </label>
             <div className="stack" style={{ gap: 6, flex: 1 }}>
@@ -997,7 +997,7 @@ function WikiSection({ itemId, cards, act, tick, saving }: { itemId: string; car
         {live.map((c) => (
           <div key={c.id} className={`line-row${c.status === 'kept' ? ' on' : ''}`}>
             <label className="tick">
-              <input type="checkbox" checked={c.status === 'kept'} aria-label={c.status === 'kept' ? `Included: ${c.title}` : `Include ${c.title}`} onChange={(e) => void tick('wiki', c.id, e.target.checked ? 'kept' : 'proposed')} />
+              <input type="checkbox" checked={c.status === 'kept'} disabled={saving.has(c.id)} aria-label={c.status === 'kept' ? `Included: ${c.title}` : `Include ${c.title}`} onChange={(e) => void tick('wiki', c.id, e.target.checked ? 'kept' : 'proposed')} />
               {saving.has(c.id) && <span className="sr-only">Saving</span>}
             </label>
             <div style={{ flex: 1 }}>

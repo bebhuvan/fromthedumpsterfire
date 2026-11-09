@@ -40,6 +40,18 @@ describe('where an item stands', () => {
       { id: 'it_bush', archived: 1, haul_id: null, haul_number: null, haul_status: null, haul_version: null },
     ]);
     expect([...many.values()].map((s) => s.state)).toEqual(['published', 'next-version', 'archived']);
+
+    // Taken out of the published Haul on the Haul page: readers still have it until a correction.
+    await env.DB.prepare(`DELETE FROM haul_items WHERE item_id = 'it_jevons'`).run();
+    const gone = await standingFor(env, { id: 'it_jevons', archived: 0 });
+    expect(gone.standing).toMatchObject({ state: 'withdrawn', text: 'Taken out of Haul 001, but still published' });
+  });
+
+  it('keeps an item in one Haul at most', async () => {
+    const env = await seedHaul(makeEnv());
+    await env.DB.prepare(`INSERT INTO hauls (id, number, colophon, created_at, updated_at) VALUES ('hl_2', 2, '', ?, ?)`).bind(NOW, NOW).run();
+    await add(env, ['it_jevons']);
+    await expect(env.DB.prepare(`INSERT INTO haul_items (haul_id, item_id, position) VALUES ('hl_2', 'it_jevons', 0)`).run()).rejects.toThrow(/UNIQUE/);
   });
 
   it('works out an older version from its bundle once, and remembers it', async () => {

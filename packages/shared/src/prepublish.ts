@@ -15,18 +15,25 @@ export interface StandingInput {
   haul: { number: number; status: 'draft' | 'published'; version: number } | null;
   /** The latest published version of its Haul that carries the item, if any. */
   publishedIn: number | null;
+  /** A published Haul (other than `haul`) whose latest version still carries it: taken out, not yet corrected. */
+  stillOut?: { number: number; version: number } | null;
 }
 
 export interface Standing {
-  state: 'desk' | 'archived' | 'haul' | 'published' | 'next-version';
+  state: 'desk' | 'archived' | 'haul' | 'published' | 'next-version' | 'withdrawn';
   text: string;
   detail?: string;
 }
 
-export function itemStanding({ archived, haul, publishedIn }: StandingInput): Standing {
-  if (!haul) return archived ? { state: 'archived', text: 'Archived, not in a Haul' } : { state: 'desk', text: 'On the Desk, not in a Haul' };
+export function itemStanding({ archived, haul, publishedIn, stillOut }: StandingInput): Standing {
+  const out = stillOut ? `Haul ${haulSlug(stillOut.number)}` : '';
+  const outDetail = stillOut ? `Readers still have it in ${out}, version ${stillOut.version}, until you publish a correction of ${out}.` : undefined;
+  if (!haul) {
+    if (stillOut) return { state: 'withdrawn', text: `Taken out of ${out}, but still published`, detail: outDetail };
+    return archived ? { state: 'archived', text: 'Archived, not in a Haul' } : { state: 'desk', text: 'On the Desk, not in a Haul' };
+  }
   const name = `Haul ${haulSlug(haul.number)}`;
-  if (haul.status !== 'published') return { state: 'haul', text: `In ${name}, not yet published` };
+  if (haul.status !== 'published') return { state: 'haul', text: `In ${name}, not yet published`, ...(outDetail ? { detail: outDetail } : {}) };
   if (publishedIn == null)
     return { state: 'next-version', text: `In ${name}, not yet published`, detail: `${name} is out; this item reaches readers when you publish a correction.` };
   return { state: 'published', text: `Published in ${name}, version ${publishedIn}`, detail: 'Changes you make now reach readers only when you publish a correction.' };
@@ -93,8 +100,11 @@ function makerIssues(it: ItemForCheck): Issue[] {
   if (!who) return [{ kind: 'maker', severity: 'wrong', message: 'No maker named. Every work names the person who made it.', fix: 'details' }];
   const f = fold(who);
   const host = hostLabel(it.url);
-  if (PLATFORMS.has(f) || /\.(com|org|net|io|co|in|substack)\b/.test(f) || (host && who.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === host.replace(/-/g, '')))
+  if (PLATFORMS.has(f) || /\.(com|org|net|io|co|in|substack)\b/.test(f))
     return [{ kind: 'maker', severity: 'wrong', message: `Credited to "${who}", which is where it was published, not who made it. Name the author.`, fix: 'details' }];
+  // Paul Graham writes at paulgraham.com and NASA publishes at nasa.gov: the site's name can be the maker's.
+  if (host && who.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') === host.replace(/-/g, ''))
+    return [{ kind: 'maker', severity: 'doubt', message: `Credited to "${who}", the site's own name. Is that the person who made it?`, fix: 'details' }];
   if (it.sourceName && fold(it.sourceName) === f)
     return [{ kind: 'maker', severity: 'doubt', message: `The maker and the source are both "${who}". Is that a person, or the publication?`, fix: 'details' }];
   return [];
@@ -107,7 +117,7 @@ function dateIssues(it: ItemForCheck): Issue[] {
 
 /** What a paywall or sign-up wall leaves in place of the piece. */
 const TEASER =
-  /subscribe to (?:continue|keep) reading|this post is for paid subscribers|keep reading with a \d+-day free trial|already (?:a|have an?) (?:paid )?(?:subscriber|account)\?\s*(?:sign|log) in|(?:become|upgrade to) a (?:paid )?(?:member|subscriber) to (?:read|continue|unlock)|to continue reading,? (?:please )?(?:subscribe|sign in|log in|register)|reached your (?:free )?(?:article|story) limit|create a free account to (?:continue|keep) reading|this (?:article|story) is for (?:subscribers|members) only|members-only (?:post|story)/i;
+  /subscribe to (?:continue|keep) reading|this post is for paid subscribers|keep reading with a \d+-day free trial|already a paid subscriber\?|(?:become|upgrade to) a (?:paid )?(?:member|subscriber) to (?:read|continue|unlock)|to continue reading,? (?:please )?(?:subscribe|sign in|log in|register)|reached your (?:free )?(?:article|story) limit|create a free account to (?:continue|keep) reading|this (?:article|story) is for (?:subscribers|members) only|members-only (?:post|story)/i;
 
 /** Article-like types, where a short fetch usually means only the opening came through. */
 const PROSE: ReadonlySet<ContentType> = new Set(['essay', 'post', 'paper']);
@@ -138,7 +148,13 @@ export function quotationIssues(why: string, src: string): Issue[] {
     if (p.kind !== 'paragraph') continue;
     const bare = p.text.replace(/^["“'‘]+|["”'’]+$/g, '').trim();
     if (wordsIn(bare) >= 8 && src.includes(normalisedForMatch(bare))) {
-      out.push({ kind: 'quotation', severity: 'wrong', message: `"${clip(bare)}" is word for word from the piece but set as your words. Start the line with "> " so it prints as a quotation.`, fix: 'why' });
+      // In quotation marks it at least reads as a quotation; bare, it reads as the editor's words.
+      const marked = bare !== p.text.trim();
+      out.push(
+        marked
+          ? { kind: 'quotation', severity: 'doubt', message: `"${clip(bare)}" is a whole paragraph quoted from the piece. On a "> " line it prints set out as a quotation.`, fix: 'why' }
+          : { kind: 'quotation', severity: 'wrong', message: `"${clip(bare)}" is word for word from the piece but set as your words. Start the line with "> " so it prints as a quotation.`, fix: 'why' },
+      );
       continue;
     }
     for (const s of p.text.split(/(?<=[.!?])\s+(?=[\p{Lu}"“])/u)) {

@@ -16,6 +16,14 @@ describe('where an item stands', () => {
     expect(s).toMatchObject({ state: 'next-version', text: 'In Haul 002, not yet published' });
     expect(s.detail).toMatch(/publish a correction/);
   });
+  it('says when an item taken out of a published Haul is still in readers’ hands', () => {
+    const s = itemStanding({ archived: false, haul: null, publishedIn: null, stillOut: { number: 2, version: 3 } });
+    expect(s).toMatchObject({ state: 'withdrawn', text: 'Taken out of Haul 002, but still published' });
+    expect(s.detail).toMatch(/version 3/);
+    const moved = itemStanding({ archived: false, haul: { number: 3, status: 'draft', version: 0 }, publishedIn: null, stillOut: { number: 2, version: 3 } });
+    expect(moved.text).toBe('In Haul 003, not yet published');
+    expect(moved.detail).toMatch(/Haul 002/);
+  });
 });
 
 const SOURCE = `For centuries, bird migration was a mystery. In the early 1800s, dramatic evidence emerged supporting the theory of migration. White storks began appearing in Germany with African arrows embedded in their bodies. These birds became known as pfeilstorchs, or "arrow storks". Subscribe now to get more.`;
@@ -46,7 +54,8 @@ describe('before publishing', () => {
     expect(kinds({ creator: 'Substack' })).toEqual(['maker:wrong']);
     expect(kinds({ creator: 'YouTube' })).toEqual(['maker:wrong']);
     expect(kinds({ creator: 'astralcodexten.substack.com' })).toEqual(['maker:wrong']);
-    expect(kinds({ creator: 'The Conversation' })).toEqual(['maker:wrong']); // the site's own name
+    expect(kinds({ creator: 'The Conversation' })).toEqual(['maker:doubt']); // the site's own name
+    expect(kinds({ creator: 'Paul Graham', sourceName: 'Essays', url: 'https://paulgraham.com/hwh.html' })).toEqual(['maker:doubt']);
     expect(kinds({ creator: 'Aeon', sourceName: 'Aeon', url: 'https://example.org/x' })).toEqual(['maker:doubt']);
     expect(itemIssues({ ...base, creator: 'Substack' })[0]!.message).toContain('"Substack"');
   });
@@ -59,6 +68,8 @@ describe('before publishing', () => {
   it("catches a paywall's teaser stored as the piece", () => {
     expect(kinds({ source: { text: 'The opening paragraph. This post is for paid subscribers. Already a subscriber? Sign in', wordCount: 14 } })).toEqual(['teaser:wrong']);
     expect(kinds({ minutes: 12, source: { text: SOURCE, wordCount: 400 } })).toEqual(['teaser:doubt']);
+    // A free page's own sign-in prompt is not a paywall.
+    expect(kinds({ source: { text: `${SOURCE} Already have an account? Sign in`, wordCount: 50 } })).toEqual([]);
     expect(kinds({ type: 'podcast', minutes: 90, source: { text: SOURCE, wordCount: 400 } })).toEqual([]);
   });
 
@@ -68,6 +79,10 @@ describe('before publishing', () => {
     expect(issues.map((i) => `${i.kind}:${i.severity}`)).toEqual(['quotation:wrong']);
     expect(issues[0]!.message).toContain('"> "');
     expect(issues[0]!.fix).toBe('why');
+  });
+
+  it('only doubts a whole paragraph already in quotation marks', () => {
+    expect(kinds({ why: `I kept it.\n\n“White storks began appearing in Germany with African arrows embedded in their bodies.”` })).toEqual(['quotation:doubt']);
   });
 
   it('leaves alone a quotation already on a "> " line, or in quotation marks inside a sentence', () => {

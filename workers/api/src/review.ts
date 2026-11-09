@@ -22,7 +22,7 @@ reviewApi.post('/api/hauls/:id/items/:itemId', async (c) => {
   if (!current) {
     const last = await c.env.DB.prepare('SELECT MAX(position) AS p FROM haul_items WHERE haul_id = ?').bind(id).first<{ p: number | null }>();
     await c.env.DB.batch([
-      c.env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, ?)').bind(id, itemId, (last?.p ?? -1) + 1),
+      c.env.DB.prepare('INSERT OR IGNORE INTO haul_items (haul_id, item_id, position) VALUES (?, ?, ?)').bind(id, itemId, (last?.p ?? -1) + 1),
       c.env.DB.prepare('UPDATE hauls SET updated_at = ? WHERE id = ?').bind(nowIso(), id),
     ]);
   }
