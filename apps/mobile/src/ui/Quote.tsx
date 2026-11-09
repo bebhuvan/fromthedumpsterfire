@@ -66,13 +66,13 @@ export const Quotation = memo(function Quotation({
   if (slip)
     return (
       <View style={st.slipWrap}>
-        <View style={st.teeth} accessible={false}>
+        <View style={st.teeth} accessible={false} importantForAccessibility="no">
           {TEETH.map((i) => (
             <View key={i} style={[st.tooth, { borderBottomColor: p.plate }]} />
           ))}
         </View>
         <View style={[st.slip, { backgroundColor: p.plate }]}>
-          <Text accessible={false} style={[st.mark, { color: ink, fontSize: 48, lineHeight: 48, height: 22 }]}>
+          <Text accessible={false} importantForAccessibility="no" style={[st.mark, { color: ink, fontSize: 48, lineHeight: 48, height: 22 }]}>
             “
           </Text>
           {words}
@@ -88,7 +88,7 @@ export const Quotation = memo(function Quotation({
     );
   return (
     <View>
-      <Text accessible={false} style={[st.mark, { color: ink, fontSize: len === 'long' ? 52 : 64, lineHeight: len === 'long' ? 52 : 64, height: len === 'long' ? 26 : 32 }]}>
+      <Text accessible={false} importantForAccessibility="no" style={[st.mark, { color: ink, fontSize: len === 'long' ? 52 : 64, lineHeight: len === 'long' ? 52 : 64, height: len === 'long' ? 26 : 32 }]}>
         “
       </Text>
       <View style={len === 'long' ? [st.extract, { borderLeftColor: ink }] : null}>{words}</View>
@@ -116,7 +116,7 @@ export function LeadQuotation({ text, highlight, mark }: { text: string; highlig
   const size = lines ? Math.min(40, (width - 2 * GUTTER) / (lines.longest * 0.43)) : 34 * Math.min(k, 1.1);
   return (
     <View>
-      <Text accessible={false} style={[st.mark, { color: ink, fontSize: 64, lineHeight: 64, height: 32 }]}>
+      <Text accessible={false} importantForAccessibility="no" style={[st.mark, { color: ink, fontSize: 64, lineHeight: 64, height: 32 }]}>
         “
       </Text>
       <Text selectable accessibilityRole="header" maxFontSizeMultiplier={lines ? 1 : undefined} style={{ fontFamily: fonts.display, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.02, color: p.ink }}>

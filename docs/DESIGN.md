@@ -224,16 +224,17 @@ phones (the app 18pt); 19px on a phone left about 35–39 characters to a line.
   item's excerpt as an extract, a transcript's long passage, a tool's own words when long): a slip of
   plate grey with a torn top edge (a CSS mask on the web; a row of small triangles drawn with views in
   the app), one opening mark in the Haul's ink, the words a step smaller than the editor's (17px app),
-  and a stub below a dashed tear with the credit on the left and **Matched word for word** on the
-  right in the machine's blue sans, because that line is the machine's claim. Shorter checked quotations
-  (pull quotes, epigraphs) keep their display setting and carry the same blue check under the credit.
+  and a stub below a dashed tear with the credit and **Matched word for word** in the machine's blue
+  sans, because that line is the machine's claim (side by side where there is room on the web, the
+  check under the credit in the app). A pull quote keeps its display setting and carries the same
+  blue check under its credit. An epigraph (the quote form) is credited by name and carries no check.
 - **The book quotation** is a quotation inside the editor's own writing (a `> ` line in an item note
   or the field note), which he quotes and the machine has not checked: indented on both sides, a step
   smaller (0.9375em; `QUOTE_STEP` in the app), no rule, one opening mark in the Haul's ink hanging in
   the indent.
 
-**The salvage tag** (2026-11-09): on the opening, offprint, transcript, facing pages, broadside and
-epigraph, the meta line becomes a tag: the item's number in the Haul's ink (display, two digits) over an
+**The salvage tag** (2026-11-09): on the opening (and the forms that share its head: the book page and
+the figure), offprint, transcript, facing pages, broadside and epigraph, the meta line becomes a tag: the item's number in the Haul's ink (display, two digits) over an
 ink rule, then the kind, "Salvaged from" the source and date (the opening), and the length. In the
 margin from 1000px, over the title on phones.
 

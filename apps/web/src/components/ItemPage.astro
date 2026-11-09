@@ -139,7 +139,7 @@ const ogImage =
 
     {form === 'opening' || form === 'page' || form === 'figure' ? (
       <header class:list={['wrap', 'g', 'open', { fig: form === 'figure' }]}>
-        <p class="m meta tag"><span class="tag-n"><span class="sr">Item </span>{pad2(n)}</span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>Salvaged from {item.source.name}, {item.source.date}</span>{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
+        <p class="m meta tag"><span class="tag-n"><span class="sr">Item {n}</span><span aria-hidden="true">{pad2(n)}</span></span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>Salvaged from {item.source.name}, {item.source.date}</span>{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
         <Title title={item.title} as="h1" class:list={['mc', form === 'page' ? 'h-item' : 'essay-t', { 'essay-t-long': longTitle }]} id="item-title" />
         <p class="c byline">{item.creator}</p>
       </header>
@@ -149,7 +149,7 @@ const ogImage =
       <>
         <div class="wrap"><p class="runcite"><span>{item.creator}. {titleText(item.title)}. {item.source.name}, {item.source.date}.</span><span>{H}, item {n}</span></p></div>
         <header class="wrap g off">
-          <p class="m meta tag"><span class="tag-n"><span class="sr">Item </span>{pad2(n)}</span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
+          <p class="m meta tag"><span class="tag-n"><span class="sr">Item {n}</span><span aria-hidden="true">{pad2(n)}</span></span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
           <div class="c off-c">
             <Title title={item.title} as="h1" class="off-t" id="item-title" />
             <p class="off-by">{item.creator}</p>
@@ -160,7 +160,7 @@ const ogImage =
 
     {form === 'transcript' || form === 'facing' ? (
       <header class="wrap g tr-head">
-        <p class="m meta tag"><span class="tag-n"><span class="sr">Item </span>{pad2(n)}</span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{form === 'facing' && item.rhyme ? <span>{item.rhyme.then.year} and {item.rhyme.now.year}</span> : null}{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
+        <p class="m meta tag"><span class="tag-n"><span class="sr">Item {n}</span><span aria-hidden="true">{pad2(n)}</span></span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{form === 'facing' && item.rhyme ? <span>{item.rhyme.then.year} and {item.rhyme.now.year}</span> : null}{item.minutes ? <span>{minutesLong(item.minutes)}</span> : null}</p>
         <div class="c">
           <Title title={item.title} as="h1" class="h-item" id="item-title" />
           {form === 'transcript' ? <p class="byline">{item.creator}</p> : null}
@@ -180,7 +180,7 @@ const ogImage =
 
     {form === 'broadside' && item.excerpt ? (
       <div class="wrap g bs-lay">
-        <p class="m meta tag"><span class="tag-n"><span class="sr">Item </span>{pad2(n)}</span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{item.source.date ? <span>{item.source.date}</span> : null}</p>
+        <p class="m meta tag"><span class="tag-n"><span class="sr">Item {n}</span><span aria-hidden="true">{pad2(n)}</span></span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span>{item.source.date ? <span>{item.source.date}</span> : null}</p>
         <figure class="bs">
           <header class="bs-head">
             <h1 class="bs-t" id="item-title"><Title title={item.title} as="span" /></h1>
@@ -222,7 +222,7 @@ const ogImage =
 
     {form === 'epigraph' && item.excerpt ? (
       <header class="wrap g epi">
-        <p class="m meta tag"><span class="tag-n"><span class="sr">Item </span>{pad2(n)}</span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.date}</span></p>
+        <p class="m meta tag"><span class="tag-n"><span class="sr">Item {n}</span><span aria-hidden="true">{pad2(n)}</span></span><span><span class="key" aria-hidden="true"></span>{typeLabel[item.type]}</span><span>{item.source.date}</span></p>
         <figure class="epi-f">
           <h1 class="sr" id="item-title">{titleText(item.title)}, {item.creator}</h1>
           {epiLead ? (

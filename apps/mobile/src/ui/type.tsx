@@ -92,7 +92,7 @@ export function EditorNote({ why, lead = false, sign = true, style }: { why: Ite
       {blocks.map((b, i) =>
         b.kind === 'quotation' ? (
           <View key={i} style={[s.bookQuote, { gap: gap * 0.7 }]}>
-            <Text accessible={false} style={[s.bookMark, { color: ink }]}>
+            <Text accessible={false} importantForAccessibility="no" style={[s.bookMark, { color: ink }]}>
               “
             </Text>
             {b.paragraphs.map((rs, j) => (

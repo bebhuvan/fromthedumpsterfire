@@ -54,7 +54,7 @@ export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle
         if (b.kind === 'quotation')
           return (
             <View key={i} style={[s.quote, { gap: gap * 0.7 }]}>
-              <Text accessible={false} style={[s.mark, { color: ink }]}>
+              <Text accessible={false} importantForAccessibility="no" style={[s.mark, { color: ink }]}>
                 “
               </Text>
               {b.paragraphs.map((runs, j) => (

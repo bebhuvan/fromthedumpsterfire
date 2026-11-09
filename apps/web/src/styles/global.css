@@ -192,7 +192,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
    smaller, indented on both sides, no rule, one opening mark in the Haul's ink hanging in the indent.
    The rule alone left long quotations reading as more of the editor's prose. Shared with .note-q. */
 .fn-q, .ed-note .note-q { position: relative; padding: 0 0.8em 0 1.7em; }
-.fn-q::before, .ed-note .note-q::before { content: '\201C'; position: absolute; left: -0.04em; top: -0.16em; font: 400 2.9em/1 var(--display); color: var(--ed, var(--ink2)); }
+.fn-q::before, .ed-note .note-q::before { content: '\201C' / ''; position: absolute; left: -0.04em; top: -0.16em; font: 400 2.9em/1 var(--display); color: var(--ed, var(--ink2)); }
 .fn-q { margin: 1.1em 0 0; font-size: 0.9375em; }
 .fn-q p { margin-top: 0.6em; }
 .fn-q p:first-child { margin-top: 0; }

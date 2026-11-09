@@ -305,7 +305,7 @@ function Figure({ item }: { item: Item }) {
   const size = len <= 24 ? 46 : len <= 44 ? 38 : 32;
   return (
     <View>
-      <MetaLine item={item} />
+      <MetaLine item={item} tag />
       <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.025 }} />
       {item.creator ? <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text> : null}
       <Why item={item} heading={null} style={{ marginTop: 20 }} />
@@ -451,6 +451,7 @@ function Poem({ item }: { item: Item }) {
   const where = item.source.name.startsWith(`${item.creator}, `) ? item.source.name.slice(item.creator.length + 2) : item.source.name;
   return (
     <View>
+      <MetaLine item={item} extra={item.source.date} tag />
       <View style={[styles.sheet, styles.broadside, { backgroundColor: typeColor(p, item.type) }]}>
         <View style={[styles.bsHead, { borderBottomColor: p.rule }]}>
           <Title title={item.title} size={34} style={{ lineHeight: 36 }} />
@@ -555,7 +556,7 @@ function Page({ item, haul }: { item: Item; haul: Haul }) {
   const p = usePalette();
   return (
     <View>
-      <MetaLine item={item} />
+      <MetaLine item={item} tag />
       <Title title={item.title} size={36} style={{ marginTop: 14 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
       <StartHereLine item={item} />
