@@ -1141,6 +1141,69 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   row from their lines. Worked around by using `sequential` and `multiples`; the editor will start a
   session for the fix.
 
+## The Desk on a phone: where items stand, a check before publishing, ticks per Haul (2026-11-09, branch `claude/amazing-curran-8defdc`; not deployed)
+
+From the editor's use on Haul 002 and a walk through every screen at phone width (`docs/DESK-REVIEW.md`,
+ranked, with screenshots in `docs/desk-review/`).
+
+- Every item says where it stands under its title (on the Desk / in Haul N, not yet published /
+  published in version N), with **Add to Haul N**, **Open Haul N** and **Take out**. The tray groups
+  *Published* apart.
+- Every Haul has **Check before publishing** (`/haul/:id/check`: per item, *Fix* or *Look*, each linked to
+  the step) and **Tick suggestions** (`/haul/:id/suggestions`: every note, idea and Wikipedia card).
+- Ticks and the Haul's order update at once; 44px tap areas on ticks; *Still to do* under each item's
+  title; Delete moved under More; library copy and pasted text available on every article.
+- Needs before deploy: `migrations/0011_version_items.sql` applied to production (through `cf`, see the
+  wrangler-account note), then `npm run deploy:production`. Older versions fill in their item ids the
+  first time they are asked about. 0011 also adds a unique index so an item is in one Haul at most; it
+  fails if production already has an item in two Hauls (check first:
+  `SELECT item_id FROM haul_items GROUP BY item_id HAVING COUNT(*) > 1`, expected empty).
+- An item taken out of a published Haul on the Haul page now says *Taken out of Haul N, but still
+  published* until a correction goes out.
+- Open (ranked in DESK-REVIEW): fold done steps on the item page, tray-first capture on a phone, the Haul
+  page in sections on a phone, optimistic saves for the remaining item buttons, a lighter Settings page.
+- **The quieter Desk** (same branch, after the editor approved the comps): Salvage look; item page
+  with the note first, folded steps and one *Go through N waiting* step; keep-or-skip screens for an
+  item and a whole Haul; the Haul page in printed order with marks, hold-to-move and Publish in reach.
+  Checked at 390px in light and dark with headless Chromium; not yet tried on the editor's phone.
+- **Deployed to production 2026-11-09** on the editor's "take it live": migration 0011 applied to
+  `fdf-desk` D1 through `cf` (no item was in two Hauls), then `fdf-pipeline` and `fdf-desk` deployed
+  from branch `claude/amazing-curran-8defdc`. Checked: `/v1/health` answers, the Desk still sits behind
+  Access, and on the real data all 39 published items read *Published in Haul 00N, version 4*. The
+  check on Haul 002 finds two items with no date (6, Robert Caro; 15, Censusnama) plus doubts.
+  `launch-2026-10-24` must be fast-forwarded to this branch before the next deploy from it.
+
+
+## Google Play release, preparation (2026-11-09; not uploaded)
+
+The editor's Play developer account (personal) is verified. Personal accounts must run a closed test
+with at least 12 testers opted in for 14 days in a row before production is unlocked.
+- **Signing:** upload key `~/.config/fdf/play/upload.keystore` (made 2026-11-09, alias `upload`,
+  SHA-256 `D7:82:51:1C:01:7C:16:4D:DE:A4:89:AF:E2:AF:28:E4:48:6F:1D:65:98:1E:80:FB:46:21:F1:89:86:8E:BA:3B`).
+  Back up the whole `~/.config/fdf/play/` folder with the update-signing key. Losing it means asking
+  Google to reset the upload key.
+- **Build:** `cd apps/mobile && npm run prebuild:android && npm run build:android:play` gives
+  `android/app/build/outputs/bundle/release/app-release.aab` (versionCode 1, version 0.3.0, all three
+  architectures, `EXPO_PUBLIC_USE_SEED=0`). Raise `android.versionCode` in `app.json` for every upload.
+- **Permissions:** drawing over other apps and shared storage are blocked.
+- **Notifications:** Settings already has the on/off switch. Turning it off now deletes the token
+  on the server (the Desk Worker change is **not deployed yet**) and is retried at launch if missed.
+- **Privacy page:** `/privacy` on the website (**not deployed yet**).
+- **Not done:** the design branch `claude/heuristic-visvesvaraya-55cce2` is not merged (waiting on the
+  editor); store listing, screenshots, data-safety and content-rating forms; app links need the Play
+  app-signing SHA-256 (Play Console › App integrity) as `ANDROID_CERT_SHA256`. Phones with the
+  sideloaded APK (debug-signed) must uninstall it before installing from Play.
+
+## Hauls by email (2026-11-09; built, not deployed)
+
+`/subscribe` with Substack's form, links in the footer ("By email"), About, each Haul's foot ("The
+next Haul"), the empty home page and the app's Menu ("Hauls by email"); the privacy page says
+Substack holds the list. **Waiting on the editor's Substack address**: until `NEWSLETTER` in
+`apps/web/src/lib/newsletter.ts` is set, the page says the list opens soon. Checked locally with
+Substack's own publication as a stand-in: the frame loads under the CSP with no console errors, at
+390px and 1280px, light and dark (screenshots in `docs/design-comps/2026-11-09-subscribe/`). Substack's
+form is white in dark mode; it has no dark version. The app's Menu line needs a new build or an
+over-the-air update to reach phones.
 ## 2026-11-09: design review and small fixes (branch claude/heuristic-visvesvaraya-55cce2, not deployed)
 
 - **`docs/DESIGN-REVIEW.md`**: what works, what was off (ranked, with screenshots), a house style for

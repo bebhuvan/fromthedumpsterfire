@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import { File, Paths } from 'expo-file-system';
 import type { ContentType } from '@fdf/shared/tokens';
 import type { Title } from '@fdf/shared/haul';
+import type { PushState } from './pushState';
 
 export type ThemePref = 'system' | 'light' | 'dark';
 export type TextSize = 'small' | 'regular' | 'large' | 'larger';
@@ -32,8 +33,8 @@ interface State {
   saved: SavedFind[]; // newest first
   read: string[]; // "n:itemId"
   place: Place | null;
-  /** New-Haul notifications. `registered` is false until the server has the token. */
-  push: { on: boolean; token?: string; platform?: string; registered: boolean };
+  /** New-Haul notifications. `registered` is false until the server has the current choice. */
+  push: PushState;
 }
 
 const DEFAULTS: State = { v: 1, theme: 'system', textSize: 'regular', keepAllHauls: true, saved: [], read: [], place: null, push: { on: false, registered: false } };

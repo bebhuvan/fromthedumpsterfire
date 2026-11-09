@@ -279,6 +279,12 @@ Inspect existing drafts before changing them. Other useful API routes: `/api/pla
 `/api/books/ID/notes` and `/api/shelf/preview`. Read their schemas in `workers/api/src` before
 submitting unfamiliar payloads; do not guess field names. All responses report server refusals.
 
+Before a Haul goes out, read what the editor's check page shows: `GET /api/hauls/ID/review` (per item,
+each issue with `severity` *wrong* or *doubt*, a plain `message` and where it is fixed) and
+`GET /api/hauls/ID/suggestions` (every note, idea and Wikipedia card still to tick). `GET /api/items/ID`
+carries `standing` (on the Desk, in a Haul not yet published, or published in version N);
+`POST /api/hauls/ID/items/ITEM` adds one item to the end of a Haul.
+
 ## Charts
 
 Charts have their own commands (`docs/CHARTS.md` has the spec and the rules):

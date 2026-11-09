@@ -432,6 +432,60 @@ Dated, newest last. Don't reopen these without a new reason.
   drops a title Wikipedia lists as ambiguous (`exactOutcome`). Rejected: picking the first article
   on a disambiguation page (often the wrong sense) and a second model call to judge each card (cost
   for something the editor ticks anyway).
+- **Every item says where it stands, and each published version records its items.** The editor added
+  two items to Haul 002 and could not tell whether readers had them. Items now say *On the Desk*, *In
+  Haul N, not yet published* or *Published in Haul N, version V*, worked out from a new
+  `haul_versions.item_ids` (0011) written at publish; older versions are matched once from their
+  bundle and the answer stored. Rejected: matching by bundle slug on every request (breaks when an item
+  is retitled after publishing, and reads R2 for every tray load) and comparing timestamps (an item
+  added after publishing and an item edited after publishing look the same).
+- **A check before publishing that advises, never blocks.** `@fdf/shared/prepublish` looks for what
+  publish allows but the editor would want to know: a platform credited as the maker ("Substack"), a
+  missing date, a paywall teaser stored as the piece, a whole paragraph of the editor's note that is
+  word for word from the piece but not on a `> ` line (it would print as the editor's words), Wikipedia
+  cards that are disambiguation pages or not mentioned in the piece or the note, and unticked
+  suggestions. Each is *Fix* or *Look* with a link to the step. Rejected: making them publish errors
+  (an institution can be its own maker, a sentence can be shared by chance, and a card not named in the
+  piece can still be the right rabbit hole).
+- **Ticks show at once.** Ticking a note, idea or card, and reordering a Haul, update the screen before
+  the Desk answers and go back with the reason if refused. Rejected: keeping the wait-and-reload (the
+  editor's "janky" on a phone network is mostly this).
+- **The Desk follows Salvage, adapted for a tool** (the editor approved the comps in
+  `docs/design-comps/2026-11-09-desk/`). Lines and space instead of tinted rounded boxes; square
+  buttons, and only the next step looks like one; the editor's part marked *B.* in ember and the
+  machine's part MACHINE in blue, as the site's transcripts do; settled steps fold to one line.
+  Rejected: a restyle of the old twelve-step page (the length, not the paint, was the problem).
+- **The machine's offers are answered one at a time: Keep or Skip.** Keep prints the line; Skip
+  sets it aside (`cut`), Back undoes. Only what the editor keeps prints, as before. Every line stays
+  reachable on the item page to edit or tick. Rejected: printing offers unless skipped (it would
+  turn the editor's tick into an opt-out).
+
+- **The Play Store build is made on the editor's laptop, signed with an upload key kept outside the
+  project, with Play App Signing holding the key readers' phones check.** The key is
+  `~/.config/fdf/play/upload.keystore` with its passwords in `keystore.properties` beside it (both
+  readable only by the editor's account); `apps/mobile/plugins/release-signing.js` adds it to the
+  generated Gradle file, so Continuous Native Generation still owns `android/`.
+  `npm run build:android:play` makes the `.aab` with the sample Hauls switched off. The first upload is
+  by hand in Play Console (Google's API cannot create an app's first release). Rejected: EAS Build and
+  EAS Submit (an Expo account and cloud builds for something this laptop already does, and the app
+  already keeps its updates off Expo's servers); keeping the debug key (Play refuses it, and anyone
+  holding the debug key could sign an "update").
+- **Unused Android permissions are blocked** in `app.json`: drawing over other apps and shared
+  storage, which libraries ask for and the reader app never uses. Play reviewers question both.
+- **Turning notifications off deletes the phone's token on the server**, and the phone sends that
+  refusal again at next launch if the server missed it. Rejected: keeping the row marked off (nothing
+  should be kept for a reader who said no, and the privacy page can then say so plainly).
+- **A privacy page at `/privacy`**, linked from the footer and given to Google Play as the app's
+  policy. It describes what the code does; change it with the code.
+- **Hauls by email go through Substack** (the editor's choice). Substack keeps the list and sends one
+  email per Haul; the editor writes each email there. `/subscribe` shows Substack's own form in a
+  frame from the one origin in `NEWSLETTER` (`apps/web/src/lib/newsletter.ts`, which accepts only a bare
+  https origin), and the CSP's `frame-src` gains that origin and nothing else; no Substack script runs
+  on our pages. Linked quietly from the footer, About, the foot of every Haul, the empty home page and
+  the app's Menu (which opens the page in a browser tab). Rejected: running our own mail (deliverability
+  and upkeep for a small list); Buttondown, which could send from the RSS feed by itself (the editor
+  preferred Substack to start; both export the list, so moving later is easy); putting the reader's
+  address in a link to Substack (personal data in a URL).
 
 ## 2026-11-09 (design: the proof sheet)
 

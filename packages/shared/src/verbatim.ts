@@ -64,6 +64,11 @@ function normaliseWithMap(s: string, keepCase = false): { text: string; map: num
   return { text: out, map };
 }
 
+/** Text as the matcher compares it (whitespace collapsed, quotes and dashes folded, lower case), to test many quotes against one source. */
+export function normalisedForMatch(s: string): string {
+  return normaliseWithMap(s).text;
+}
+
 /**
  * Find a quotation in the source. Returns the exact source span and the source's own text for it,
  * or null if the quote is not there. Quotation marks or ellipses wrapping the quote are ignored.

@@ -1,8 +1,7 @@
 // Screenshot comps with headless Chrome over CDP: full page, light and dark, at given widths.
 // node docs/design-comps/_shared/shoot.mjs <dir-with-html> <outdir> [widths=390,1280] [pages=all]
-// CHROME=/usr/bin/chromium picks another browser.
 import { spawn } from 'node:child_process';
-import { readdirSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 
@@ -13,7 +12,9 @@ mkdirSync(out, { recursive: true });
 const port = 9300 + Math.floor(Math.random() * 500);
 // A throwaway browser profile outside the repo, removed when the shots are done.
 const profile = mkdtempSync(join(tmpdir(), 'fdf-shoot-'));
-const chrome = spawn(process.env.CHROME ?? '/usr/bin/google-chrome', ['--headless=new', `--remote-debugging-port=${port}`, '--no-first-run', '--hide-scrollbars', '--allow-file-access-from-files', '--user-data-dir=' + profile, 'about:blank'], { stdio: 'ignore' });
+// Chrome where it is installed, else Chromium; $CHROME overrides both.
+const browser = process.env.CHROME ?? ['/usr/bin/google-chrome', '/usr/bin/chromium'].find((b) => existsSync(b)) ?? '/usr/bin/google-chrome';
+const chrome = spawn(browser, ['--headless=new', `--remote-debugging-port=${port}`, '--no-first-run', '--hide-scrollbars', '--allow-file-access-from-files', '--user-data-dir=' + profile, 'about:blank'], { stdio: 'ignore' });
 let list;
 for (let i = 0; i < 60 && !list; i++) {
   await new Promise((r) => setTimeout(r, 200));

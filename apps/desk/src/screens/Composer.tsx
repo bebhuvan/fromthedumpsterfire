@@ -1,36 +1,54 @@
 // The Haul composer: order the items, write the field note (with the machine's questions and a
 // drafted route), preview the bundle as readers will get it, and publish.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { haulSlug, type Haul, type RouteStep } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
 import { embedLinks, noteParts, partsPlain } from '@fdf/shared/fieldnote';
+import { plainPath, plainProblem } from '@fdf/shared/prepublish';
 import { EDITIONS, editionOf, SWATCHES, typeLabel } from '@fdf/shared/tokens';
-import { api, displayTitle, parseChecks, type HaulDetail, type HaulRecord, type Note, type PreviewResult, type PublishResult, type TrayItem } from '../api';
+import { api, displayTitle, type HaulDetail, type HaulRecord, type Note, type PreviewResult, type PublishResult, type TrayItem, type HaulReviewItem } from '../api';
 import { Link, safeHref, SaveNote, useAutosave, useLoad, useToast } from '../lib/core';
 import { NoteCompare, Spinner, TextArea, VoiceNote } from '../ui/parts';
 import { Preview } from './Preview';
 import { PlatesSection } from './Plates';
 import { FormatBadge } from '../ui/parts';
 import { drawCard, drawItemCard, drawItemCards } from '../lib/card';
+import { HaulList } from './HaulList';
+import { haulMark } from '../lib/offers';
 
 
 export function Composer({ id }: { id: string }) {
   const toast = useToast();
   const { data, reload, setData } = useLoad(() => api.get<HaulDetail>(`/api/hauls/${id}`), [id]);
   const tray = useLoad(() => api.get<{ items: TrayItem[] }>('/api/items?view=tray'), [id]);
+  const review = useLoad(() => api.get<{ items: HaulReviewItem[] }>(`/api/hauls/${id}/review`), [id]);
   const [busy, setBusy] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Arriving from the check page (/haul/x#field-note): bring that part into view.
+  const loaded = Boolean(data);
+  useEffect(() => {
+    const target = location.hash.slice(1);
+    if (loaded && target) requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: 'start' }));
+  }, [loaded]);
 
   if (!data) return <p className="tray-empty">Opening…</p>;
   const h = data.haul;
   const save = (b: Partial<HaulRecord>) => api.patch<HaulDetail>(`/api/hauls/${id}`, b).then(setData);
   const ids = data.items.map((i) => i.id);
+  // The new order shows at once; if the Desk refuses it, the old order comes back with the reason.
   const setItems = async (next: string[]) => {
+    const before = data;
+    const known = new Map<string, HaulDetail['items'][number]>([...(tray.data?.items ?? []).map((t) => [t.id, { ...t, why_text: null }] as const), ...data.items.map((i) => [i.id, i] as const)]);
+    setData({ ...data, items: next.map((x) => known.get(x)).filter((x): x is HaulDetail['items'][number] => Boolean(x)) });
     try {
       setData(await api.put<HaulDetail>(`/api/hauls/${id}/items`, { itemIds: next }));
+      // Marks and the publish bar count from the new order and the new set of items.
+      void review.reload();
     } catch (e) {
-      toast(e instanceof Error ? e.message : String(e), true);
+      setData(before);
+      toast(`Not saved: ${e instanceof Error ? e.message : String(e)}`, true);
     }
   };
   const available = (tray.data?.items ?? []).filter((i) => !i.haul_number && !ids.includes(i.id) && i.status === 'ready');
@@ -48,47 +66,21 @@ export function Composer({ id }: { id: string }) {
 
   return (
     <div className="composer" style={{ ['--type' as string]: `var(--${h.swatch})` }}>
-      <aside className="col-items sticky stack" style={{ gap: 14 }}>
-        <div>
-          <div className="label">Haul {haulSlug(h.number)} · {h.status === 'published' ? `published v${h.version}` : 'draft'}</div>
-          <h2 className="h2" style={{ marginTop: 6 }}>
-            In this Haul · {data.items.length}
-          </h2>
-          <p className="small muted" style={{ margin: '4px 0 0' }}>A Haul is 6 to 20 objects.</p>
-        </div>
-        <ol className="order">
-          {data.items.map((it, i) => {
-            const checks = parseChecks(it.checks);
-            const failing = Object.entries(checks).filter(([k, v]) => v === 'fail' && k !== 'drafting').map(([k]) => k);
-            return (
-              <li key={it.id} data-type={it.type}>
-                <span className="n num">{i + 1}</span>
-                <span>
-                  <Link to={`/item/${it.id}`} className="t" style={{ textDecoration: 'none' }}>
-                    {displayTitle(it)}
-                  </Link>
-                  <span className="small" style={{ display: 'block' }}>
-                    <span className="muted">{typeLabel[it.type]}</span>
-                    {failing.length ? <span className="bad"> · fix {failing.join(', ')}</span> : <span className="ok"> · checks pass</span>}
-                  </span>
-                </span>
-                <span className="row" style={{ gap: 2 }}>
-                  <button className="btn quiet small" aria-label="Move up" disabled={i === 0} onClick={() => setItems(move(ids, i, -1))}>
-                    ↑
-                  </button>
-                  <button className="btn quiet small" aria-label="Move down" disabled={i === ids.length - 1} onClick={() => setItems(move(ids, i, 1))}>
-                    ↓
-                  </button>
-                  <button className="btn quiet small" aria-label="Remove from Haul" onClick={() => setItems(ids.filter((x) => x !== it.id))}>
-                    ✕
-                  </button>
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-        <div>
-          <div className="label" style={{ marginBottom: 6 }}>Ready in the tray · {available.length}</div>
+      <section className="col-items stack" style={{ gap: 0 }}>
+        <header className="haul-head" style={{ ['--ed' as string]: `var(--ed-${editionOf(h.number, h.edition ?? undefined)})` }}>
+          <div className="haul-no">
+            HAUL {haulSlug(h.number)} <span className="muted">· {h.status === 'published' ? `published, version ${h.version}` : 'draft'}</span>
+          </div>
+          <a href="#cover" className={`haul-title${h.title_text ? '' : ' empty'}`}>
+            {h.title_text || 'Untitled'} {h.title_italic && <i>{h.title_italic}</i>}
+          </a>
+          {h.deck ? <p className="haul-deck">{h.deck}</p> : <a href="#cover" className="haul-deck empty">Add a deck</a>}
+        </header>
+        <Readiness haulId={id} count={data.items.length} review={review.data?.items ?? null} error={review.error} onRetry={() => void review.reload()} />
+        <HaulList haulId={id} items={data.items} review={review.data?.items ?? null} onOrder={(next) => void setItems(next)} />
+        <p className="small muted hl-hint">Hold an item to move it. A Haul is 6 to 20 objects.</p>
+        <details className="add-from-tray">
+          <summary className="small">Add from the tray · {available.length} ready</summary>
           <ul className="tray">
             {available.map((it) => (
               <li key={it.id}>
@@ -103,15 +95,15 @@ export function Composer({ id }: { id: string }) {
                   <span className="tray-title">{displayTitle(it)}</span>
                   <span className="tray-meta">
                     <span className="dot">{typeLabel[it.type]}</span>
-                    <span>Add to Haul</span>
+                    <span>Add to the end</span>
                   </span>
                 </a>
               </li>
             ))}
-            {!available.length && <li className="small muted" style={{ padding: '6px 14px' }}>Nothing else is ready.</li>}
+            {!available.length && <li className="small muted" style={{ padding: '10px 12px' }}>Nothing else is ready.</li>}
           </ul>
-        </div>
-      </aside>
+        </details>
+      </section>
 
       <div className="stack" style={{ gap: 30 }}>
         <Masthead haul={h} save={save} />
@@ -124,19 +116,73 @@ export function Composer({ id }: { id: string }) {
         <FieldNote haul={h} save={save} items={data.items} busy={busy} onMachine={machine} onRetryEmbeds={() => api.post<HaulDetail>(`/api/hauls/${id}/field-note/embeds`, {}).then(setData)} />
       </div>
 
-      <aside className="sticky stack" style={{ gap: 16 }}>
+      <aside className="sticky stack" id="publish" style={{ gap: 16 }}>
         <PublishPanel haulId={id} haul={h} versions={data.versions} onPublished={reload} onPreview={() => setShowPreview((s) => !s)} showing={showPreview} />
         {showPreview && <PreviewLoader haulId={id} />}
       </aside>
+      <PublishFoot haulId={id} haul={h} review={review.data?.items ?? null} />
     </div>
   );
 }
 
-function move<T>(a: T[], i: number, d: number): T[] {
-  const b = [...a];
-  const [x] = b.splice(i, 1);
-  b.splice(i + d, 0, x!);
-  return b;
+// ---------------------------------------------------------------- how ready the Haul is
+
+/** One line: how many items are ready, to look at, to fix; and the one step that helps most. */
+function Readiness({ haulId, count, review, error, onRetry }: { haulId: string; count: number; review: HaulReviewItem[] | null; error: string | null; onRetry: () => void }) {
+  if (!count) return <p className="haul-ready muted">No items yet. Add them from an item's page, or from the tray below.</p>;
+  if (error && !review)
+    return (
+      <p className="haul-ready bad">
+        Could not check the items: {error}{' '}
+        <button type="button" className="link-btn" onClick={onRetry}>
+          Try again
+        </button>
+      </p>
+    );
+  if (!review) return <p className="haul-ready muted">Checking every item…</p>;
+  const marks = review.map((r) => haulMark(r.issues));
+  const n = (m: string) => marks.filter((x) => x === m).length;
+  const waiting = review.some((r) => r.issues.some((i) => i.kind === 'unticked'));
+  return (
+    <div className="haul-ready">
+      <span className="ok">
+        <b>{n('ok')}</b> ready
+      </span>
+      {n('look') > 0 && (
+        <span className="warn">
+          <b>{n('look')}</b> to look at
+        </span>
+      )}
+      {n('fix') > 0 && (
+        <span className="bad">
+          <b>{n('fix')}</b> to fix
+        </span>
+      )}
+      <span className="top-spacer" />
+      {waiting && <Link to={`/haul/${haulId}/decide`}>Go through offers</Link>}
+      <Link to={`/haul/${haulId}/check`}>Full check</Link>
+    </div>
+  );
+}
+
+/** On a phone, Publish stays in reach at the bottom and says what stands in its way. */
+function PublishFoot({ haulId, haul, review }: { haulId: string; haul: HaulRecord; review: HaulReviewItem[] | null }) {
+  const fix = (review ?? []).flatMap((r, i) => r.issues.filter((x) => x.severity === 'wrong').map((x) => ({ n: i + 1, x })));
+  const label = haul.status === 'published' ? 'Publish a correction' : `Publish Haul ${haulSlug(haul.number)}`;
+  return (
+    <div className="publish-foot">
+      {fix.length > 0 ? (
+        <Link to={`/haul/${haulId}/check`} className="btn primary go is-blocked">
+          {label} <span aria-hidden="true">→</span>
+        </Link>
+      ) : (
+        <a href="#publish" className="btn primary go">
+          {label} <span aria-hidden="true">→</span>
+        </a>
+      )}
+      <div className="small muted">{fix.length ? `${fix.length} to fix first, starting with item ${fix[0]!.n}` : 'Check, preview and publish below'}</div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------- masthead
@@ -144,7 +190,7 @@ function move<T>(a: T[], i: number, d: number): T[] {
 function Masthead({ haul, save }: { haul: HaulRecord; save: (b: Partial<HaulRecord>) => Promise<void> }) {
   const deck = useAutosave(`deck:${haul.id}`, haul.deck, (v) => save({ deck: v }));
   return (
-    <section className="section">
+    <section className="section" id="cover">
       <div className="label">The cover</div>
       <div className="row" style={{ alignItems: 'flex-end' }}>
         <label className="field" style={{ flex: '2 1 240px' }}>
@@ -224,7 +270,7 @@ function FieldNote({ haul, save, items, busy, onMachine, onRetryEmbeds }: { haul
   const [note, setNote] = useState<Note | null>(null);
   const lines = useMemo(() => sentences(body.value), [body.value]);
   return (
-    <section className="stack" style={{ gap: 26 }}>
+    <section className="stack" id="field-note" style={{ gap: 26 }}>
       <div className="section">
         <div className="row between">
           <h2 className="h2">The field note</h2>
@@ -485,7 +531,15 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
     }
   }
 
-  const problems = check ? [...check.problems.map((p) => `${p.itemTitle ? `${p.itemTitle}: ` : ''}${p.message}`), ...check.bundleErrors.map((e) => `${e.path}: ${e.message}`)] : [];
+  const problems = check
+    ? [
+        ...check.problems.map((p) => `${p.itemTitle ? `${p.itemTitle}: ` : ''}${plainProblem(p.message).text}`),
+        ...check.bundleErrors.map((e) => {
+          const w = plainPath(e.path);
+          return `${w.item != null ? `Item ${w.item + 1}, ${w.where}` : w.where}: ${e.message}`;
+        }),
+      ]
+    : [];
   return (
     <section className="panel plate stack">
       <div className="label ink">{published ? `Published · v${haul.version}` : 'Publish'}</div>
@@ -511,7 +565,9 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
         <>
           {problems.length ? (
             <div>
-              <div className="small bad" style={{ fontWeight: 600 }}>{problems.length} thing{problems.length === 1 ? '' : 's'} to fix before publishing</div>
+              <div className="small bad" style={{ fontWeight: 600 }}>
+                {problems.length} thing{problems.length === 1 ? '' : 's'} to fix before publishing. <Link to={`/haul/${haulId}/check`}>See each with where to fix it</Link>
+              </div>
               <ul className="problems">
                 {problems.slice(0, 30).map((p, i) => (
                   <li key={i}>{p}</li>

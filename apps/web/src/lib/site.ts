@@ -37,6 +37,8 @@ export const paths = {
   book: (id: string) => `/shelf/${id}`,
   archive: '/archive',
   about: '/about',
+  privacy: '/privacy',
+  subscribe: '/subscribe',
   search: '/search',
   feed: '/feed.xml',
   llms: '/llms.txt',

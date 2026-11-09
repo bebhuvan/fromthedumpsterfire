@@ -169,6 +169,11 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
     </section>
   ))}
 
+  <section class="wrap g row" aria-labelledby="next-title">
+    <h2 class="m mh" id="next-title">The next Haul</h2>
+    <p class="c">Hauls come when there is enough worth sending. <a href={paths.subscribe}>Get the next one by email</a>, or follow the <a href={paths.feed}>RSS feed</a>.</p>
+  </section>
+
   <section class="wrap g row colo" aria-labelledby="colophon-title">
     <h2 class="m mh" id="colophon-title">Colophon</h2>
     <div class="c">

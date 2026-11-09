@@ -7,6 +7,7 @@ export * from './ingest';
 export * from './steps';
 export * from './voice';
 export * from './publish';
+export * from './standing';
 export * from './fcm';
 export * from './haul-drafts';
 export { checkLink, USER_AGENT } from './extract/http';

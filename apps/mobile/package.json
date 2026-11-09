@@ -33,7 +33,8 @@
     "typecheck": "tsc --noEmit",
     "doctor": "expo-doctor",
     "build:android": "cd android && ./gradlew :app:createBundleReleaseJsAndAssets --rerun && ./gradlew assembleRelease -PreactNativeArchitectures=${ARCH:-arm64-v8a}",
-    "prebuild:android": "expo prebuild -p android --clean"
+    "prebuild:android": "expo prebuild -p android --clean",
+    "build:android:play": "cd android && EXPO_PUBLIC_USE_SEED=0 ./gradlew :app:createBundleReleaseJsAndAssets --rerun && EXPO_PUBLIC_USE_SEED=0 ./gradlew bundleRelease"
   },
   "private": true,
   "expo": {

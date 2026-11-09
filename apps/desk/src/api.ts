@@ -6,6 +6,7 @@ import type { BundleIssue } from '@fdf/shared/validate';
 import type { StyleResult } from '@fdf/shared/style';
 import type { BookStatus, Spine } from '@fdf/shared/shelf';
 import type { Chart, ChartData, ChartMeasure, ChartSource } from '@fdf/shared/charts';
+import type { Issue, Standing } from '@fdf/shared/prepublish';
 
 export class ApiError extends Error {
   constructor(
@@ -93,6 +94,10 @@ export interface TrayItem {
   archived: number;
   capture_text: string | null;
   haul_number: number | null;
+  haul_id?: string | null;
+  haul_status?: string | null;
+  /** Where it stands: on the Desk, in a Haul, published. */
+  standing?: Standing;
   /** 1 when an excerpt is chosen. */
   has_excerpt: number;
   /** Big ideas the editor ticked. */
@@ -284,7 +289,10 @@ export interface ItemDetail {
   checks: Check[];
   notes: Note[];
   run: { status: string; step: string | null; error: string | null; started_at: string } | null;
-  haul: { id: string; number: number; status: string } | null;
+  haul: { id: string; number: number; status: string; version: number } | null;
+  standing: Standing;
+  /** The newest draft Haul, where a one-tap add puts the item. */
+  draftHaul: { id: string; number: number } | null;
   connections: Array<{ id: string; to_item_id: string; to_title: string | null; type: string; note: string; suggestion_id?: string | null }>;
   plates: PlateCandidate[];
   suggestions: Suggestion[];
@@ -536,7 +544,33 @@ export interface ShelfCheck {
   url?: string;
 }
 
-export type { Title, StyleResult };
+/** What POST/DELETE /api/hauls/:id/items/:itemId return. */
+export interface StandingResult {
+  standing: Standing;
+  haul: { id: string; number: number; status: string; version: number } | null;
+  draft: { id: string; number: number } | null;
+}
+
+export interface HaulReviewItem {
+  id: string;
+  type: ContentType;
+  title: string | null;
+  title_choice: string | null;
+  url: string | null;
+  issues: Issue[];
+}
+
+export interface HaulSuggestionItem {
+  id: string;
+  type: ContentType;
+  title: string | null;
+  title_choice: string | null;
+  url: string | null;
+  drafts: Draft<MarginalBody>[];
+  wiki: WikiCard[];
+}
+
+export type { Title, StyleResult, Issue, Standing };
 
 export function displayTitle(t: { title: string | null; title_choice: string | null; url?: string | null; capture_text?: string | null }): string {
   try {

@@ -197,6 +197,13 @@ describe('POST /v1/devices (public)', () => {
     expect(writes.length).toBe(1);
     expect(writes[0]).toMatch(/INSERT INTO devices/);
   });
+  it('forgets a phone that turns notifications off', async () => {
+    const { env: e, writes } = env();
+    const res = await app.request(`${BASE}/v1/devices`, json({ token: 'fcm:' + 'c'.repeat(60), platform: 'android', enabled: false }), e);
+    expect(res.status).toBe(200);
+    expect(writes.length).toBe(1);
+    expect(writes[0]).toMatch(/DELETE FROM devices WHERE token/);
+  });
   it('refuses non-JSON bodies', async () => {
     const { env: e } = env();
     const res = await app.request(`${BASE}/v1/devices`, { method: 'POST', headers: { 'content-type': 'text/plain', 'content-length': '10' }, body: 'token=abc' }, e);
