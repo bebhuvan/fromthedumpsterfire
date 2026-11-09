@@ -97,6 +97,13 @@ describe('Wikipedia relevance', () => {
       'Robert Allan Caro is an American journalist and author known for his biographies of United States public figures Robert Moses and Lyndon B. Johnson.',
     );
     expect(firstSentence('Martin Luther King Jr. was an American minister and activist. He led the movement.')).toBe('Martin Luther King Jr. was an American minister and activist.');
+    // Scholarly abbreviations before a year or a name do not end the sentence either.
+    expect(firstSentence('Thomas Tallis was an English composer of sacred music, born c. 1505 in Kent. He served four monarchs.')).toBe(
+      'Thomas Tallis was an English composer of sacred music, born c. 1505 in Kent.',
+    );
+    expect(firstSentence('The study by Geruso et al. found that fertility fell in most countries. It was widely cited.')).toBe(
+      'The study by Geruso et al. found that fertility fell in most countries.',
+    );
     expect(bestSentence('Johnson was elected in an open race to succeed retiring Democratic incumbent W. Lee O\'Daniel in 1948. He beat Coke Stevenson by 87 votes in the primary election.', 'Coke Stevenson primary election votes')).toBe(
       'He beat Coke Stevenson by 87 votes in the primary election.',
     );

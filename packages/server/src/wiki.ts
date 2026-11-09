@@ -109,9 +109,11 @@ export function wikiKeyFromUrl(raw: string): string | null {
   }
 }
 
-// A full stop after an initial ("Lyndon B. Johnson") or a short title ("Jr.", "St.") does not end a
-// sentence: cutting there printed "Robert Moses and Lyndon B." on Haul 002's cards.
-const NOT_AN_END = /(?:^|[\s(])(?:[A-Z]|Jr|Sr|Dr|Mr|Mrs|Ms|St|Mt|vs|No|Co|Inc|Ltd|Gen|Col|Lt|Rev|Hon|Prof)\.$/;
+// A full stop after an initial ("Lyndon B. Johnson"), a short title ("Jr.", "St.") or a scholarly
+// abbreviation ("c. 1505", "pp.", "et al.") does not end a sentence: cutting there printed "Robert
+// Moses and Lyndon B." on Haul 002's cards. When in doubt the sentence runs on ("World War I. It…"
+// stays one): a card a sentence long is better than one cut mid-name.
+const NOT_AN_END = /(?:^|[\s(])(?:[A-Za-z]|Jr|Sr|Dr|Mr|Mrs|Ms|St|Mt|vs|No|Co|Inc|Ltd|Gen|Col|Lt|Rev|Hon|Prof|ca|pp|vol|al|approx|fl|cf|viz|esp)\.$/;
 
 /** Wikipedia's lead split into whole sentences, verbatim. */
 export function sentencesOf(text: string): string[] {
