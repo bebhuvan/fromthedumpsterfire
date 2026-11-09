@@ -142,7 +142,7 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
       {note.audio ? <Voice audio={note.audio} label="Hear it as I said it" /> : null}
       <NoteBody note={{ ...note, body: lead.blocks }} signed={!lead.cut} />
       {lead.cut ? (
-        <p class="fn-more"><a href={paths.note(haul.number)}><span class="fn-more-k">Continued</span><span class="fn-more-t">The whole note, {lead.minutes} minutes</span><span aria-hidden="true">→</span></a></p>
+        <p class="fn-more"><span class="fn-more-orn" aria-hidden="true"></span><a href={paths.note(haul.number)}>Read the rest of the note</a><span class="fn-more-t">{lead.minutes} minutes</span></p>
       ) : null}
     </div>
   </section>

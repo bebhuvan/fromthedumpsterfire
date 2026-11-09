@@ -12,7 +12,7 @@ import { fonts, GUTTER, useEdition, usePalette } from '@/theme';
 import { longDate, stampDate } from '@/lib/format';
 import { useReader } from '@/lib/store';
 import { Body, Machine, Meta, Title } from '@/ui/type';
-import { Action, Apparatus, Divider, Masthead, Ornament, Sign, TopBar, VoiceNote } from '@/ui/parts';
+import { EditionMark, Action, Apparatus, Divider, Masthead, Ornament, Sign, TopBar, VoiceNote } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
 import { Specimen } from '@/ui/Specimen';
 import { NoteBody } from '@/ui/NoteBody';
@@ -94,15 +94,17 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
         {lead.cut ? (
           // A long note continues on its own page, as the website sets it, so the contents are not
           // twenty-five screens down (noteLead).
+          // A printer's break in the Haul's ornament, then the way to the rest, as the website sets it.
           <Pressable
             accessibilityRole="link"
-            accessibilityLabel={`Continued: the whole note, ${lead.minutes} minutes`}
+            accessibilityLabel={`Read the rest of the note, ${lead.minutes} minutes`}
             onPress={() => go.note(haul.number)}
-            style={({ pressed }) => [styles.more, { borderColor: p.ink }, pressed && { opacity: 0.6 }]}
+            hitSlop={8}
+            style={({ pressed }) => [styles.more, pressed && { opacity: 0.6 }]}
           >
-            <Text style={[styles.moreK, { color: ed }]}>CONTINUED</Text>
-            <Text style={[styles.moreT, { color: p.ink }]}>The whole note, {lead.minutes} minutes</Text>
-            <Text style={[styles.moreT, { color: p.ink }]}>→</Text>
+            <EditionMark edition={editionOf(haul.number, haul.edition)} size={20} color={ed} />
+            <Text style={[styles.moreT, { color: p.ink, textDecorationColor: ed }]}>Read the rest of the note</Text>
+            <Text style={[styles.moreK, { color: p.ink2 }]}>{lead.minutes} minutes</Text>
           </Pressable>
         ) : (
           <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
@@ -198,9 +200,9 @@ function Stamp({ ink, top, date, foot, turn, double }: { ink: string; top: strin
 const styles = StyleSheet.create({
   topRow: { paddingHorizontal: GUTTER, minHeight: 36, justifyContent: 'center' },
   head: { paddingHorizontal: GUTTER, marginTop: 26 },
-  more: { flexDirection: 'row', alignItems: 'baseline', gap: 12, marginTop: 22, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1 },
-  moreK: { fontFamily: fonts.sansMedium, fontSize: 11, letterSpacing: 1.5 },
-  moreT: { fontFamily: fonts.displayItalic, fontSize: 19, lineHeight: 24, flexShrink: 1 },
+  more: { alignItems: 'center', marginTop: 30, gap: 4 },
+  moreT: { fontFamily: fonts.displayItalic, fontSize: 21, lineHeight: 28, marginTop: 10, textDecorationLine: 'underline' },
+  moreK: { fontFamily: fonts.sans, fontSize: 12.5, lineHeight: 17 },
   stamps: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12, marginLeft: 3 },
   stamp: { borderWidth: 2, paddingHorizontal: 9, paddingTop: 4, paddingBottom: 3, alignItems: 'center', opacity: 0.85 },
   stampOuter: { borderWidth: 1, padding: 2, opacity: 0.85 },

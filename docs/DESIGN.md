@@ -134,8 +134,10 @@ carries the flame and the struck masthead, the editor's words, the credit and th
 
 **A long field note continues on its own page** (2026-11-09, `noteLead` in `@fdf/shared/fieldnote`).
 Past 700 words the cover sets the note's opening (about 450 words, ending on a whole paragraph, never
-after a heading or inside a quotation, and never leaving a rest under 200 words) and then a ruled line,
-*CONTINUED · The whole note, 21 minutes →*, to `/haul/<n>/note` (the app's FieldNote screen at the same
+after a heading or inside a quotation, and never leaving a rest under 200 words), then a printer's
+break in the Haul's own ornament and, centred under it, *Read the rest of the note* in the display
+italic (underlined in the edition ink) with the reading time small in sans, linking to `/haul/<n>/note`
+(the editor's pick of four sketches, `continued.html`; a ruled "Continued" bar looked like a button) (the app's FieldNote screen at the same
 address). The words are not changed, only where the cover stops; the opening is not signed, the note's
 page is. Under the date, "Sixteen objects in this Haul ↓" jumps to the contents. Haul 002's contents
 moved from about 31 phone screens down to under 5 (desktop: 17 to under 4).
