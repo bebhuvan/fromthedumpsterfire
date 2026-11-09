@@ -1126,11 +1126,14 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .orn::before, .orn::after { content: ''; width: 48px; height: 1px; background: var(--rule); }
 .orn .flame { width: 14px; height: 26px; }
 
-/* On a phone the measure is already short: big lines (titles, quotation leads, epithets) run the whole
-   width and only avoid a lone last word, never balanced into equal short lines under a cap. */
+/* On a phone the measure is already short: big lines run the whole width, never balanced into equal
+   short lines under a cap. Titles fill each line and accept a lone last word (the editor: "Pollution as
+   / Growth Killer" wasted the line); quotation leads and epithets only avoid one. */
 @media (max-width: 640px) {
-  .epi-lead, .sp-eql, .sp-eq, .qt-short .qt-q p, .lf-q p, .epi-q p, .cover-title, .cv-t,
-  .essay-t, .sp-et, .h-item, .bs-t, .sp-pti, .sp-hw, .sp-ot, .lf-epi, .sp-lf-e, .ch-t, .next-t {
+  .cover-title, .cv-t, .essay-t, .sp-et, .h-item, .bs-t, .sp-pti, .sp-hw, .sp-ot, .ch-t, .next-t {
+    text-wrap: wrap; max-width: none;
+  }
+  .epi-lead, .sp-eql, .sp-eq, .qt-short .qt-q p, .lf-q p, .epi-q p, .lf-epi, .sp-lf-e {
     text-wrap: pretty; max-width: none;
   }
 }
