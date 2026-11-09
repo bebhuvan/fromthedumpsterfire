@@ -10,6 +10,7 @@ import { fonts, usePalette, useTextScale } from '@/theme';
 import { openSource } from '@/lib/open';
 import { useEditionInk } from './edition';
 import { AudioBlock, Post, Video } from './Blocks';
+import { QUOTE_STEP } from './type';
 
 export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle; gap: number }) {
   const p = usePalette();
@@ -17,6 +18,7 @@ export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle
   const ink = useEditionInk() ?? p.ink2;
   const body: NoteBlock[] = note.body ?? note.paragraphs.map((t) => ({ kind: 'paragraph', runs: [{ text: t }] }));
   const size = { fontSize: (para.fontSize ?? 18) * k, lineHeight: (para.lineHeight ?? 27) * k };
+  const quoted = { fontSize: size.fontSize * QUOTE_STEP, lineHeight: size.lineHeight * QUOTE_STEP };
 
   const words = (runs: NoteRun[]) =>
     linkGroups(markRuns(runs, note.highlight)).map((g, i) => {
@@ -53,7 +55,7 @@ export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle
           return (
             <View key={i} style={[s.quote, { borderLeftColor: ink, gap: gap * 0.7 }]}>
               {b.paragraphs.map((runs, j) => (
-                <Text key={j} selectable style={[s.base, para, size, { color: p.ink }]}>
+                <Text key={j} selectable style={[s.base, para, quoted, { color: p.ink }]}>
                   {words(runs)}
                 </Text>
               ))}

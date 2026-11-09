@@ -182,7 +182,9 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 /* The field note set out (NoteBody.astro): headings, quotations, links, and embeds in the column. */
 .fn-h { font: 500 1.375rem/1.2 var(--display); letter-spacing: -0.006em; margin-top: 1.9em; text-wrap: wrap; }
 .fn-h + p { margin-top: 0.5em; }
-.fn-q { margin: 1.1em 0 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); }
+/* A quotation in the editor's words is set a step smaller than them, on a rule in the Haul's ink, as a
+   book sets a block quotation: the rule alone left long quotations reading as more of the editor's prose. */
+.fn-q { margin: 1.1em 0 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); font-size: 0.9375em; }
 .fn-q p { margin-top: 0.6em; }
 .fn-q p:first-child { margin-top: 0; }
 .fn-c > p a, .fn-q a { text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 55%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
@@ -756,6 +758,9 @@ blockquote > p + p { margin-top: 0.65em; }
 .clip-handle { color: var(--ink2); }
 @media (max-width: 520px) { .clip-head { grid-template-columns: auto auto; row-gap: 10px; } .clip-head div:first-child { grid-column: 1 / -1; } }
 .clip-text p { font: 400 clamp(1.5625rem, 3.2vw, 2.25rem)/1.28 var(--display); letter-spacing: -0.008em; white-space: pre-line; text-wrap: pretty; }
+/* A post steps down with its length, as a quotation does: a long thread in 36px display is a wall. */
+.clip-medium p { font-size: clamp(1.3125rem, 2.3vw, 1.6875rem); line-height: 1.34; letter-spacing: 0; }
+.clip-long p { font: 400 1.1875rem/1.6 var(--serif); }
 .clip mark { background: color-mix(in srgb, var(--bg) 62%, transparent); }
 /* A post inside another item (Block 'post'): the clipping, smaller, with the link to it under. */
 .post { background: var(--tint); padding: 0 clamp(18px, 3vw, 28px) clamp(18px, 3vw, 26px); }
@@ -801,7 +806,13 @@ blockquote > p + p { margin-top: 0.65em; }
 .lab-dl div:last-child { border-bottom: 0; }
 .lab-dl dt { font: 500 0.75rem/1.5 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); }
 .lab-dl dd { margin: 0; font-size: 1.125rem; }
-.lab-own dd p { font: 400 1.3125rem/1.4 var(--display); }
+/* Its own words are a quotation set by length (Quote.astro), a step down inside the label: a site's
+   long blurb in display serif read as a wall in the editor's type (Censusnama, Haul 002). */
+.lab-own .qt-short .qt-q p { font-size: clamp(1.375rem, 2.6vw, 1.75rem); }
+.lab-own .qt-medium .qt-q p { font-size: 1.25rem; }
+.lab-own .qt-long .qt-q p { font-size: 1.0625rem; }
+.lab-own .qt-cap { margin-top: 4px; }
+.lab-own .qt .qt-mark { position: static; height: 0.36em; margin-top: 2px; font-size: 3rem; }
 @media (max-width: 520px) { .lab-dl div { grid-template-columns: minmax(0, 1fr); } }
 
 /* Specimens of the newer forms on the cover. */
@@ -1039,7 +1050,7 @@ blockquote > p + p { margin-top: 0.65em; }
 /* A quotation from the source, set out in the note: the source's words, so upright, on a rule in the
    Haul's ink (as the field note's quotations are). */
 .ed-note .note-q { margin: 0.95em 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); }
-.ed-note .note-q p { font-style: normal; }
+.ed-note .note-q p { font-style: normal; font-size: 0.9375em; line-height: 1.6; }
 .ed-note .note-q:last-child { margin-bottom: 0; }
 .ed-note .note-q:first-child { margin-top: 0; }
 .ed-note .note-q + p, .ed-note p + .note-q { margin-top: 0.95em; }

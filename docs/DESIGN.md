@@ -45,7 +45,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Type | Form | On the page |
 |---|---|---|
 | essay, post | magazine opening | huge title across margin and column; the why as an italic standfirst; the excerpt as a pull-in with the editor's highlight in the type colour; machine notes beside it in the margin |
-| paper | journal offprint | a running citation line; centred title and authors; numbered sections (Why it's here, From the paper, Notes, References) with the numbers hanging in the margin. The editor's note comes first; the passage is set as a quotation (extract, rule, credit), never in the body type where it could read as the editor's |
+| paper | journal offprint | a running citation line; centred title and authors; numbered sections (Why it's here, From the paper, Notes, then References after the figures, as a printed paper closes) with the numbers hanging in the margin. The editor's note comes first; the passage is set as a quotation (extract, rule, credit), never in the body type where it could read as the editor's. Its cover specimen heads the passage with its locator or "From the paper", never "Abstract" |
 | talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps with the dateline under it, **B.** in ember italic for the editor, MACHINE in blue once for all the machine's notes (one turn); a line or two of the speaker's words runs past the column at 30–46px; a longer passage is set as an extract (reading size, opening mark, rule, credit), never as a wall of display type in the editor's serif |
 | poem | broadside | one sheet in the poem colour, the poem alone in Newsreader Text italic (28–44px, leading 1.38), poet and source at the foot |
 | rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
@@ -54,7 +54,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | speech | transcript | as a talk: the speaker in the margin |
 | quote | epigraph | the words alone in Display Medium at 40–88px, hanging quotation marks, the speaker in spaced caps over the occasion. Only a line or two is set that large: past 30 words the type steps down, and past 80 words it reads as a passage at 21–26px (`quoteLength` in `lib/forms.ts`), on the item page and in the Haul's list alike |
 | letter | the letter | a sheet in lilac: place and date ranged right, "From … to …" in sans, the body in Newsreader Text keeping its line breaks, the name it was signed with in display italic at the foot, the holder under a hairline |
-| social | clipping | a sheet in aqua headed by fields (From, with name and handle; On, the platform; Date) over a rule, the post in display at 25–36px. Never the platform's embed |
+| social | clipping | a sheet in aqua headed by fields (From, with name and handle; On, the platform; Date) over a rule, the post in display at 25–36px, stepping down with its length as a quotation does (`quoteLength`: past 30 words 21–27px, past 80 words the reading serif). Never the platform's embed |
 
 An X post inside another item (the `post` block, 2026-10-31) is the same clipping, smaller: aqua,
 the From/On/Date fields over an ink rule, the words in display at 20–25px (21px in the app), then
@@ -62,7 +62,7 @@ the From/On/Date fields over an ink rule, the words in display at 20–25px (21p
 so. Never X's embed.
 | image | mounted print | the picture in a plate-grey mount, a museum label beside it (from 1000px) or under it: title, maker and date, where it is from, credit and licence |
 | book | jacket | the book set in type as a 2:3 jacket in lilac in the margin (or its cover, if the editor uploaded one), the title as a heading, a line from inside under a rule |
-| tool | specimen label | a ruled box with a tint strip on its top edge: the name huge, then fields (Made by, What it is, Since, In its own words, Where) |
+| tool | specimen label | a ruled box with a tint strip on its top edge: the name huge, then fields (Made by, What it is, Since, In its own words, Where). Its own words are a quotation set by length, with the opening mark and a credit (the site, matched word for word): a site's long blurb in display serif read as the editor's (Censusnama, Haul 002) |
 | life | the life | the name set huge and stacked (display 500, to 168px) with the years under it in the display italic, the epithet in the blue sans; a portrait only if one cleared the credit rule (the item's plate, small, in the air); the editor's note as the standfirst; a 2pt ink rule and the label, generated from the sources ("Written by Claude from …", whole works in the serif italic); the profile in short sections, sans in the deeper reading blue (`machineText`), each paragraph's sources and pages in the margin; the person's own words as the pull quote in the display italic; numbers as a ledger (figure in display, what it counts in sans); a life in dates with the years hanging in the margin; further reading; what it was written from, and how it was checked |
 | chart | the figure | a magazine opening whose loud thing is the chart: the title, the why as standfirst, then the first chart drawn large from its data. On the cover its specimen is its own chart, drawn small |
 
@@ -214,6 +214,11 @@ text, never machine text, never a fill.
 | Code | DM Mono 400, italic for comments | code blocks only; the app uses the system monospace |
 
 React Native cannot drive the optical-size axis, so the app ships static cuts (text and display).
+
+A quotation inside the editor's words (a `> ` line in an item note or the field note) is upright, on a
+2px rule in the Haul's ink, and a step smaller than his words (0.9375em; `QUOTE_STEP` in the app), as a
+book sets a block quotation: in a long note, which is upright too, the rule alone left the quotation
+reading as more of the note.
 
 Headlines wrap plainly (`text-wrap: wrap`): each line fills the measure, and a single word on the last
 line is accepted. `balance` (even line lengths) and `pretty` (which pulls a word down to avoid a lone

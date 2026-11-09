@@ -6,6 +6,9 @@ import { fonts, usePalette, useTextScale } from '@/theme';
 import { openSource } from '@/lib/open';
 import { useEditionInk } from './edition';
 
+/** A quotation inside the editor's words is set this much smaller than them (web: 0.9375em). */
+export const QUOTE_STEP = 0.9375;
+
 type Props = { children: ReactNode; style?: StyleProp<TextStyle>; selectable?: boolean };
 
 /** Applies the reader's text-size preference to a style's font size and line height. */
@@ -57,6 +60,9 @@ export function EditorNote({ why, lead = false, sign = true, style }: { why: Ite
   const size = lead && words <= 45 ? 21 : 19;
   const gap = size * 0.9 * k;
   const text = { fontFamily: long ? fonts.text : fonts.textItalic, fontSize: size * k, lineHeight: size * (long ? 1.62 : 1.55) * k, color: p.ink };
+  // A quotation is upright and a step smaller than the editor's words, as the website sets it, so a
+  // quotation inside a long upright note never reads as more of the note.
+  const quoted = { fontFamily: fonts.text, fontSize: text.fontSize * QUOTE_STEP, lineHeight: size * QUOTE_STEP * 1.6 * k };
   const blocks = noteBlocks(why);
   const last = blocks.length - 1;
   const signMark = (
@@ -86,7 +92,7 @@ export function EditorNote({ why, lead = false, sign = true, style }: { why: Ite
         b.kind === 'quotation' ? (
           <View key={i} style={{ borderLeftWidth: 2, borderLeftColor: ink, paddingLeft: 14, gap: gap * 0.7 }}>
             {b.paragraphs.map((rs, j) => (
-              <Text key={j} selectable style={[s.base, text, { fontFamily: fonts.text }]}>
+              <Text key={j} selectable style={[s.base, text, quoted]}>
                 {runs(rs, true)}
               </Text>
             ))}

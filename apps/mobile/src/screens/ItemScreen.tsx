@@ -83,7 +83,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
       ) : null}
       <Blocks blocks={blocks} source={item.source.name} />
       <Ideas item={item} />
-      {form === 'offprint' ? null : <SeeAlso haul={haul} item={item} />}
+      {form === 'offprint' ? <PaperReferences item={item} haul={haul} /> : <SeeAlso haul={haul} item={item} />}
       <Source item={item} />
       <Actions haul={haul} item={item} />
       {next ? <NextItem n={haul.number} at={at + 2} item={next} /> : <Finished haul={haul} />}
@@ -317,7 +317,6 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
     });
   if (item.plate) sections.push({ h: 'Figure', body: <PlateView item={item} style={{ marginTop: 0 }} /> });
   if (item.marginalia.length) sections.push({ h: 'Notes', body: <Notes item={item} style={{ marginTop: 0 }} /> });
-  if (item.wiki.length || item.connections.length) sections.push({ h: 'References', body: <SeeAlso haul={haul} item={item} bare /> });
   return (
     <View>
       <View style={[styles.runcite, { borderColor: p.rule }]}>
@@ -330,15 +329,35 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
       </View>
       <StartHereLine item={item} />
       {sections.map((s, i) => (
-        <View key={s.h} style={styles.sec}>
-          <Text style={[styles.secN, { color: p.ink2 }]} accessible={false}>{i + 1}</Text>
-          <View style={{ flex: 1 }}>
-            <Text accessibilityRole="header" style={[styles.secH, { color: p.ink }]}>{s.h}</Text>
-            {s.body}
-          </View>
-        </View>
+        <PaperSection key={s.h} n={i + 1} h={s.h}>
+          {s.body}
+        </PaperSection>
       ))}
     </View>
+  );
+}
+
+function PaperSection({ n, h, children }: { n: number; h: string; children: ReactNode }) {
+  const p = usePalette();
+  return (
+    <View style={styles.sec}>
+      <Text style={[styles.secN, { color: p.ink2 }]} accessible={false}>{n}</Text>
+      <View style={{ flex: 1 }}>
+        <Text accessibilityRole="header" style={[styles.secH, { color: p.ink }]}>{h}</Text>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+/** A paper's references close it, after its figures (charts and other blocks), as a printed paper's do. */
+function PaperReferences({ item, haul }: { item: Item; haul: Haul }) {
+  if (!item.wiki.length && !item.connections.length) return null;
+  const n = 2 + (item.excerpt ? 1 : 0) + (item.plate ? 1 : 0) + (item.marginalia.length ? 1 : 0);
+  return (
+    <PaperSection n={n} h="References">
+      <SeeAlso haul={haul} item={item} bare />
+    </PaperSection>
   );
 }
 
@@ -631,10 +650,17 @@ function Clipping({ item }: { item: Item }) {
           {field('DATE', item.source.date)}
         </View>
       </View>
-      <Highlighted text={ex.text} highlight={ex.highlight} color={p.bg + '9E'} style={styles.clipText} />
+      <Highlighted text={ex.text} highlight={ex.highlight} color={p.bg + '9E'} style={clipSetting[quoteLength(ex.text)]} />
     </View>
   );
 }
+
+/** A post steps down with its length, as the website sets it: a long thread in display type is a wall. */
+const clipSetting = {
+  short: { fontFamily: fonts.displayRegular, fontSize: 26, lineHeight: 34 },
+  medium: { fontFamily: fonts.displayRegular, fontSize: 22, lineHeight: 30 },
+  long: { fontFamily: fonts.text, fontSize: 18.5, lineHeight: 29 },
+} as const;
 
 /** A mounted print: the picture on its mount, then a museum label. */
 function Print({ item }: { item: Item }) {
@@ -727,7 +753,13 @@ function Label({ item, haul, n }: { item: Item; haul: Haul; n: number }) {
   if (item.creator) rows.push(['MADE BY', item.creator]);
   rows.push(['WHAT IT IS', item.source.name]);
   if (item.source.date) rows.push(['SINCE', item.source.date]);
-  if (item.excerpt) rows.push(['IN ITS OWN WORDS', <Highlighted key="own" text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.labOwn} />]);
+  // Its own words are a quotation, set by length and credited, never a wall of display type that could
+  // be read as the editor's (Censusnama, Haul 002).
+  if (item.excerpt)
+    rows.push([
+      'IN ITS OWN WORDS',
+      <Quotation key="own" text={item.excerpt.text} highlight={item.excerpt.highlight} mark={typeColor(p, item.type)} credit={[host ?? item.source.name, 'matched word for word against the source']} />,
+    ]);
   if (host)
     rows.push([
       'WHERE',
@@ -995,7 +1027,7 @@ const styles = StyleSheet.create({
   clipField: { gap: 2 },
   clipKey: { fontFamily: fonts.sansMedium, fontSize: 11, letterSpacing: 1.3 },
   clipVal: { fontFamily: fonts.sans, fontSize: 15, lineHeight: 20 },
-  clipText: { fontFamily: fonts.displayRegular, fontSize: 26, lineHeight: 34 },
+
 
   mount: { padding: 20 },
   mountGone: { width: '100%', borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', padding: 20 },
@@ -1017,7 +1049,6 @@ const styles = StyleSheet.create({
   labRow: { paddingVertical: 11, gap: 4 },
   labKey: { fontFamily: fonts.sansMedium, fontSize: 11.5, letterSpacing: 1 },
   labVal: { fontFamily: fonts.text, fontSize: 18, lineHeight: 25 },
-  labOwn: { fontFamily: fonts.displayRegular, fontSize: 21, lineHeight: 29 },
 
   actions: { flexDirection: 'row', alignItems: 'center', gap: 18, marginTop: 16 },
   save: { minHeight: 44, minWidth: 92, paddingHorizontal: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
