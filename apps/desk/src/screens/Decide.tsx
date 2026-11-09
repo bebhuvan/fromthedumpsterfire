@@ -63,7 +63,9 @@ function Deck({ title, back, offers, acrossItems = false, listHref }: { title: s
   }
 
   useKeys({ ArrowRight: () => answer('kept'), ArrowLeft: () => answer('cut'), Backspace: undo, Escape: () => navigate(back) }, [offer, answers]);
-  useEffect(() => window.scrollTo({ top: 0 }), [at]);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [at]);
 
   const head = (
     <div className="deck-top">

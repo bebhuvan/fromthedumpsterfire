@@ -558,3 +558,42 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
 .add-kinds { gap: 0; margin-left: -8px; }
 .add-kinds .btn[aria-pressed='true'] { color: var(--ink); text-decoration-color: currentColor; font-weight: 500; }
 .cand-text.clamped { max-height: 8.5em; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent); mask-image: linear-gradient(to bottom, #000 60%, transparent); cursor: pointer; }
+
+/* ---- the Haul as readers see it (2026-11-09): cover, items in order with their marks, Publish in reach ---- */
+.haul-head { padding: 4px 0 18px; border-bottom: 1px solid var(--rule); }
+.haul-no { font: 600 12px/1 var(--sans); letter-spacing: 0.14em; color: var(--ed, var(--ink)); }
+.haul-no .muted { letter-spacing: 0; font-weight: 400; }
+.haul-title { display: block; font: 400 clamp(32px, 6vw, 40px)/1.02 var(--display); letter-spacing: -0.01em; margin: 10px 0 10px; text-decoration: none; }
+.haul-title.empty, .haul-deck.empty { color: var(--ink2); }
+.haul-deck { display: block; font: italic 16px/1.45 var(--serif); color: var(--ink2); margin: 0; }
+.haul-ready { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); font-size: 13.5px; margin: 0; }
+.haul-ready b { font-weight: 600; }
+.haul-ready a { color: var(--ink2); min-height: 32px; display: inline-flex; align-items: center; }
+.haul-list { list-style: none; margin: 0; padding: 0; }
+.haul-list li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--rule); align-items: start; touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.haul-list.dragging li { transition: transform 0.1s; }
+.haul-list li.moving { background: var(--bg); box-shadow: 0 0 0 1px var(--ink); position: relative; z-index: 2; padding-left: 10px; padding-right: 10px; margin: 0 -10px; }
+.hl-n { font: 500 12.5px/1.7 var(--sans); color: var(--ink2); }
+.hl-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink2); margin-bottom: 3px; }
+.hl-sw { width: 9px; height: 9px; background: var(--type, var(--rule)); flex: none; }
+.hl-title { display: block; font: 400 18.5px/1.25 var(--display); text-decoration: none; }
+.hl-why { font: italic 14.5px/1.45 var(--serif); color: var(--ink2); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hl-why.missing { color: var(--warn); font-style: normal; font-family: var(--sans); font-size: 13px; }
+.hl-issue { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 13.5px; margin-top: 6px; }
+.hl-issue.wrong { color: var(--bad); } .hl-issue.doubt { color: var(--warn); }
+.hl-issue a { color: var(--ink); font-weight: 500; min-height: 40px; display: inline-flex; align-items: center; padding-left: 8px; }
+.hl-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.hl-mark { font-size: 12.5px; white-space: nowrap; padding-top: 2px; min-height: 18px; }
+.hl-mark.ok { color: var(--ok); } .hl-mark.look { color: var(--warn); } .hl-mark.fix { color: var(--bad); }
+.hl-more { border: 0; background: none; color: var(--ink2); font-size: 18px; min-width: 44px; min-height: 40px; cursor: pointer; margin-right: -12px; }
+.hl-menu { margin-top: 6px; gap: 0; margin-left: -8px; }
+.hl-hint { margin: 10px 0 0; }
+.add-from-tray { margin-top: 14px; }
+.add-from-tray > summary { cursor: pointer; color: var(--ink2); min-height: 44px; display: flex; align-items: center; }
+.publish-foot { display: none; }
+@media (max-width: 1240px) {
+  .publish-foot { display: flex; flex-direction: column; gap: 6px; position: sticky; bottom: 0; z-index: 12; grid-column: 1 / -1; margin: 0 calc(-1 * var(--gutter)); padding: 12px var(--gutter) 14px; background: var(--bg); border-top: 1px solid var(--rule); text-align: center; }
+  .publish-foot .go { display: flex; justify-content: space-between; min-height: 52px; font-size: 15px; padding: 0 18px; }
+  .publish-foot .go.is-blocked { opacity: 0.4; }
+}
+@media (max-width: 760px) { .publish-foot { bottom: calc(66px + env(safe-area-inset-bottom)); } }
