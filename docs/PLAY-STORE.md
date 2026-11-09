@@ -27,8 +27,8 @@ privacy page (`apps/web/src/pages/privacy.astro`) is the source for the data ans
   > and dark pages, and one notification when a new Haul arrives, if you want it. No accounts, no
   > advertising, no tracking.
 
-- **App icon:** 512 × 512 PNG (from `apps/mobile/assets/icon.png`, scaled).
-- **Feature graphic:** 1024 × 500 PNG. To be made.
+- **App icon:** 512 × 512 PNG: `docs/brand/play/app-icon-512.png` (from `apps/mobile/assets/icon.png`, scaled, no transparency).
+- **Feature graphic:** 1024 × 500 PNG: `docs/brand/play/feature-graphic-1024x500.png` (the ember mark and the struck masthead with the strap line, on ink; 2026-11-09).
 - **Phone screenshots:** 2 to 8, portrait, from a real phone or the emulator with a published Haul:
   the cover, an item with an excerpt, the field note, Threads, Settings.
 - **Category:** Books & Reference (suggested). News & Magazines also fits a magazine, but Play then
