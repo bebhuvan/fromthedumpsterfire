@@ -11,8 +11,10 @@ import { openSource } from '@/lib/open';
 import { useEditionInk } from './edition';
 import { AudioBlock, Post, Video } from './Blocks';
 import { QUOTE_STEP } from './type';
+import { EditionMark } from './parts';
+import type { Edition } from '@fdf/shared/tokens';
 
-export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle; gap: number }) {
+export function NoteBody({ note, para, gap, edition }: { note: FieldNote; para: TextStyle; gap: number; edition?: Edition }) {
   const p = usePalette();
   const k = useTextScale();
   const ink = useEditionInk() ?? p.ink2;
@@ -47,9 +49,17 @@ export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle
           );
         if (b.kind === 'heading')
           return (
-            <Text key={i} accessibilityRole="header" style={[s.base, s.heading, { color: p.ink, fontSize: 21 * k, lineHeight: 26 * k }]}>
+            <View key={i}>
+              {/* The edition's ornament between sections (not over the first heading), as on the website. */}
+              {edition && i > 0 ? (
+                <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 2 }}>
+                  <EditionMark edition={edition} size={20} color={ink} />
+                </View>
+              ) : null}
+            <Text accessibilityRole="header" style={[s.base, s.heading, { color: p.ink, fontSize: 21 * k, lineHeight: 26 * k }]}>
               {curlQuotes(b.text)}
             </Text>
+            </View>
           );
         if (b.kind === 'quotation')
           return (
