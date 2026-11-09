@@ -14,6 +14,8 @@ import { Settings } from './screens/Settings';
 import { Links } from './screens/Links';
 import { Shelf } from './screens/Shelf';
 import { BookPage } from './screens/Book';
+import { HaulCheck } from './screens/HaulCheck';
+import { HaulSuggestions } from './screens/HaulSuggestions';
 
 export function App() {
   return (
@@ -69,8 +71,10 @@ function Shell() {
   let screen;
   const item = /^\/item\/([\w-]+)/.exec(path);
   const haul = /^\/haul\/([\w-]+)/.exec(path);
+  const haulPart = /^\/haul\/([\w-]+)\/(check|suggestions)$/.exec(path);
   const book = /^\/shelf\/([a-z0-9-]+)/.exec(path);
   if (item) screen = <ItemReview id={item[1]!} />;
+  else if (haulPart) screen = haulPart[2] === 'check' ? <HaulCheck id={haulPart[1]!} /> : <HaulSuggestions id={haulPart[1]!} />;
   else if (haul) screen = <Composer id={haul[1]!} />;
   else if (book) screen = <BookPage id={book[1]!} />;
   else if (path === '/shelf') screen = <Shelf />;

@@ -51,7 +51,7 @@ export interface ItemForCheck {
 }
 
 /** Where the editor fixes it: a part of the item page, or the Haul's suggestions page. */
-export type FixAt = 'details' | 'why' | 'source' | 'notes' | 'suggestions';
+export type FixAt = 'details' | 'why' | 'source' | 'notes' | 'suggestions' | 'excerpt' | 'plate' | 'item';
 
 export interface Issue {
   kind: 'maker' | 'quotation' | 'teaser' | 'date' | 'wiki' | 'unticked';
@@ -215,3 +215,23 @@ const HAUL_FIELDS: Array<[RegExp, string]> = [
   [/^route/, 'The route'],
   [/^threads/, 'A thread'],
 ];
+
+const CHECK: Record<string, [string, FixAt]> = {
+  why: ['Your note', 'why'],
+  quotes: ['The excerpt', 'excerpt'],
+  citations: ['Notes and ideas', 'notes'],
+  style: ['House style', 'notes'],
+  links: ['Links', 'details'],
+};
+
+/** One of publish's own problems about an item ("citations: 0 of 5 notes cited"), as words and where to fix it. */
+export function plainProblem(message: string): { text: string; fix: FixAt } {
+  const m = /^(\w+): (.*)$/s.exec(message);
+  if (m && CHECK[m[1]!]) return { text: `${CHECK[m[1]!]![0]}: ${m[2]}`, fix: CHECK[m[1]!]![1] };
+  const text = message.charAt(0).toUpperCase() + message.slice(1);
+  if (/quotation in your note/.test(message)) return { text, fix: 'why' };
+  if (/kept (?:note|idea)/.test(message)) return { text, fix: 'notes' };
+  if (/plate|picture/i.test(message)) return { text, fix: 'plate' };
+  if (/links have not been checked/.test(message)) return { text, fix: 'details' };
+  return { text, fix: 'item' };
+}

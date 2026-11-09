@@ -1,7 +1,7 @@
 // The Haul composer: order the items, write the field note (with the machine's questions and a
 // drafted route), preview the bundle as readers will get it, and publish.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { haulSlug, type Haul, type RouteStep } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
 import { embedLinks, noteParts, partsPlain } from '@fdf/shared/fieldnote';
@@ -22,15 +22,27 @@ export function Composer({ id }: { id: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
+  // Arriving from the check page (/haul/x#field-note): bring that part into view.
+  const loaded = Boolean(data);
+  useEffect(() => {
+    const target = location.hash.slice(1);
+    if (loaded && target) requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ block: 'start' }));
+  }, [loaded]);
+
   if (!data) return <p className="tray-empty">Opening…</p>;
   const h = data.haul;
   const save = (b: Partial<HaulRecord>) => api.patch<HaulDetail>(`/api/hauls/${id}`, b).then(setData);
   const ids = data.items.map((i) => i.id);
+  // The new order shows at once; if the Desk refuses it, the old order comes back with the reason.
   const setItems = async (next: string[]) => {
+    const before = data;
+    const known = new Map<string, HaulDetail['items'][number]>([...(tray.data?.items ?? []).map((t) => [t.id, { ...t, why_text: null }] as const), ...data.items.map((i) => [i.id, i] as const)]);
+    setData({ ...data, items: next.map((x) => known.get(x)).filter((x): x is HaulDetail['items'][number] => Boolean(x)) });
     try {
       setData(await api.put<HaulDetail>(`/api/hauls/${id}/items`, { itemIds: next }));
     } catch (e) {
-      toast(e instanceof Error ? e.message : String(e), true);
+      setData(before);
+      toast(`Not saved: ${e instanceof Error ? e.message : String(e)}`, true);
     }
   };
   const available = (tray.data?.items ?? []).filter((i) => !i.haul_number && !ids.includes(i.id) && i.status === 'ready');
@@ -55,6 +67,14 @@ export function Composer({ id }: { id: string }) {
             In this Haul · {data.items.length}
           </h2>
           <p className="small muted" style={{ margin: '4px 0 0' }}>A Haul is 6 to 20 objects.</p>
+          <div className="row" style={{ marginTop: 12, gap: 6 }}>
+            <Link to={`/haul/${id}/check`} className="btn primary small">
+              Check before publishing
+            </Link>
+            <Link to={`/haul/${id}/suggestions`} className="btn small">
+              Tick suggestions
+            </Link>
+          </div>
         </div>
         <ol className="order">
           {data.items.map((it, i) => {
@@ -69,7 +89,7 @@ export function Composer({ id }: { id: string }) {
                   </Link>
                   <span className="small" style={{ display: 'block' }}>
                     <span className="muted">{typeLabel[it.type]}</span>
-                    {failing.length ? <span className="bad"> · fix {failing.join(', ')}</span> : <span className="ok"> · checks pass</span>}
+                    {failing.length ? <span className="bad"> · to fix: {failing.map((k) => FAILING[k] ?? k).join(', ')}</span> : <span className="ok"> · checks pass</span>}
                   </span>
                 </span>
                 <span className="row" style={{ gap: 2 }}>
@@ -132,6 +152,9 @@ export function Composer({ id }: { id: string }) {
   );
 }
 
+/** A failing check, as the editor would name what needs doing. */
+const FAILING: Record<string, string> = { why: 'your note', citations: 'notes', quotes: 'the excerpt', links: 'links', style: 'house style' };
+
 function move<T>(a: T[], i: number, d: number): T[] {
   const b = [...a];
   const [x] = b.splice(i, 1);
@@ -144,7 +167,7 @@ function move<T>(a: T[], i: number, d: number): T[] {
 function Masthead({ haul, save }: { haul: HaulRecord; save: (b: Partial<HaulRecord>) => Promise<void> }) {
   const deck = useAutosave(`deck:${haul.id}`, haul.deck, (v) => save({ deck: v }));
   return (
-    <section className="section">
+    <section className="section" id="cover">
       <div className="label">The cover</div>
       <div className="row" style={{ alignItems: 'flex-end' }}>
         <label className="field" style={{ flex: '2 1 240px' }}>
@@ -224,7 +247,7 @@ function FieldNote({ haul, save, items, busy, onMachine, onRetryEmbeds }: { haul
   const [note, setNote] = useState<Note | null>(null);
   const lines = useMemo(() => sentences(body.value), [body.value]);
   return (
-    <section className="stack" style={{ gap: 26 }}>
+    <section className="stack" id="field-note" style={{ gap: 26 }}>
       <div className="section">
         <div className="row between">
           <h2 className="h2">The field note</h2>
@@ -511,7 +534,9 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
         <>
           {problems.length ? (
             <div>
-              <div className="small bad" style={{ fontWeight: 600 }}>{problems.length} thing{problems.length === 1 ? '' : 's'} to fix before publishing</div>
+              <div className="small bad" style={{ fontWeight: 600 }}>
+                {problems.length} thing{problems.length === 1 ? '' : 's'} to fix before publishing. <Link to={`/haul/${haulId}/check`}>See each with where to fix it</Link>
+              </div>
               <ul className="problems">
                 {problems.slice(0, 30).map((p, i) => (
                   <li key={i}>{p}</li>

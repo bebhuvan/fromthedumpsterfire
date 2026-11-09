@@ -268,12 +268,12 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
 
 const IN_FLIGHT = /queued|fetching|reading|drafting|checking/;
 
-export function statusText(i: Pick<TrayItem, 'status' | 'status_detail' | 'has_excerpt' | 'kept_ideas' | 'has_why' | 'checks' | 'haul_number'>): { text: string; tone: '' | 'warn' | 'bad' } {
+export function statusText(i: Pick<TrayItem, 'status' | 'status_detail' | 'has_excerpt' | 'kept_ideas' | 'has_why' | 'checks' | 'haul_number' | 'standing'>): { text: string; tone: '' | 'warn' | 'bad' } {
   if (i.status === 'failed') return { text: `Failed: ${(i.status_detail ?? '').slice(0, 80)}`, tone: 'bad' };
   if (i.status === 'paused') return { text: 'Paused at the spend ceiling', tone: 'warn' };
   if (IN_FLIGHT.test(i.status)) return { text: i.status_detail ?? `${i.status[0]!.toUpperCase()}${i.status.slice(1)}…`, tone: '' };
   const checks = parseChecks(i.checks);
-  if (i.haul_number) return { text: `In Haul ${i.haul_number}`, tone: '' };
+  if (i.haul_number) return { text: i.standing?.text ?? `In Haul ${i.haul_number}`, tone: '' };
   if (checks.links === 'fail') return { text: 'A link failed to resolve', tone: 'warn' };
   const todo = [!i.has_why && 'your note', !i.has_excerpt && !i.kept_ideas && 'an excerpt'].filter(Boolean);
   if (todo.length) return { text: `Needs ${todo.join(' and ')}`, tone: 'warn' };
@@ -296,10 +296,12 @@ export function TrayList({ view = 'tray', refresh = 0, selected, keyboard = fals
       { name: 'Waiting on you', items: [] },
       { name: 'Being read', items: [] },
       { name: 'Needs attention', items: [] },
-      { name: 'In a Haul', items: [] },
+      { name: 'In a Haul, not yet published', items: [] },
+      { name: 'Published', items: [] },
     ];
     for (const i of items) {
-      if (i.haul_number) g[3]!.items.push(i);
+      if (i.standing?.state === 'published') g[4]!.items.push(i);
+      else if (i.haul_number) g[3]!.items.push(i);
       else if (IN_FLIGHT.test(i.status)) g[1]!.items.push(i);
       else if (i.status === 'failed' || i.status === 'paused') g[2]!.items.push(i);
       else g[0]!.items.push(i);

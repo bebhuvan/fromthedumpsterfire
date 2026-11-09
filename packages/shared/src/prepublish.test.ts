@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { itemIssues, itemStanding, plainPath, quotationIssues, type ItemForCheck } from './prepublish';
+import { itemIssues, itemStanding, plainPath, plainProblem, quotationIssues, type ItemForCheck } from './prepublish';
 import { normalisedForMatch } from './verbatim';
 
 describe('where an item stands', () => {
@@ -105,5 +105,12 @@ describe('the publish check in plain words', () => {
     expect(plainPath('fieldNote.paragraphs')).toEqual({ where: 'The field note' });
     expect(plainPath('fieldNote.title.text')).toEqual({ where: "The field note's title" });
     expect(plainPath('deck')).toEqual({ where: 'The deck' });
+  });
+  it("turns publish's problems into words and a place to fix them", () => {
+    expect(plainProblem('citations: 0 of 5 notes cited and checked')).toEqual({ text: 'Notes and ideas: 0 of 5 notes cited and checked', fix: 'notes' });
+    expect(plainProblem('why: No "why it\'s here" yet')).toEqual({ text: 'Your note: No "why it\'s here" yet', fix: 'why' });
+    expect(plainProblem('a quotation in your note is not in the source word for word ("x")').fix).toBe('why');
+    expect(plainProblem('the chosen plate is missing; pick it again or choose no plate')).toMatchObject({ text: 'The chosen plate is missing; pick it again or choose no plate', fix: 'plate' });
+    expect(plainProblem('this Rhyme needs a bridge').fix).toBe('item');
   });
 });

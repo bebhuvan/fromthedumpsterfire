@@ -3,7 +3,7 @@
 // further reading to include, a plate, and what is still missing. Everything else sits under More.
 // The editor's words in serif, the machine's in blue sans.
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { checkStyle } from '@fdf/shared/style';
 import { excerptAdvice, isPunctuated } from '@fdf/shared/quoting';
 import { type ContentType } from '@fdf/shared/tokens';
@@ -18,6 +18,7 @@ import { RhymeEditor } from './Rhyme';
 import { LifeEditor } from './Life';
 import { BlocksSection, PictureForm } from './Blocks';
 import { ShelfLink } from './Shelf';
+import { StandingBar } from '../ui/Standing';
 
 const IN_FLIGHT = /queued|fetching|reading|drafting|checking/;
 
@@ -29,6 +30,7 @@ export function ItemReview({ id }: { id: string }) {
 }
 
 type Act = <T>(label: string, fn: () => Promise<T>, done?: string) => Promise<T | undefined>;
+type Tick = (what: 'draft' | 'wiki', rowId: string, status: string) => Promise<void>;
 
 function ItemReviewInner({ id }: { id: string }) {
   const toast = useToast();
@@ -38,6 +40,42 @@ function ItemReviewInner({ id }: { id: string }) {
   const [pane, setPane] = useState<'work' | 'piece'>('work');
   usePoll(reload, Boolean(data && IN_FLIGHT.test(data.item.status)), 3500);
   useKeys({ Escape: () => navigate('/') }, []);
+
+  // A tick shows at once; if the Desk refuses it, it goes back and says why.
+  const [saving, setSaving] = useState<ReadonlySet<string>>(new Set());
+  const tick: Tick = async (what, rowId, status) => {
+    const set = (st: string) =>
+      setData((d) => (d ? (what === 'draft' ? { ...d, drafts: d.drafts.map((x) => (x.id === rowId ? { ...x, status: st as Draft['status'] } : x)) } : { ...d, wiki: d.wiki.map((x) => (x.id === rowId ? { ...x, status: st as WikiCard['status'] } : x)) }) : d));
+    const before = what === 'draft' ? data?.drafts.find((x) => x.id === rowId)?.status : data?.wiki.find((x) => x.id === rowId)?.status;
+    set(status);
+    setSaving((p) => new Set(p).add(rowId));
+    try {
+      await api.patch(what === 'draft' ? `/api/drafts/${rowId}` : `/api/wiki/${rowId}`, { status });
+    } catch (e) {
+      if (before) set(before);
+      toast(`Not saved: ${e instanceof Error ? e.message : String(e)}`, true);
+    } finally {
+      setSaving((p) => {
+        const n = new Set(p);
+        n.delete(rowId);
+        return n;
+      });
+    }
+  };
+
+  // Arriving from the Haul's check (/item/x#step-why): open the part to fix and bring it into view.
+  const loaded = Boolean(data);
+  useEffect(() => {
+    const target = location.hash.slice(1);
+    if (!loaded || !target) return;
+    if (target === 'step-source') setPane('piece');
+    requestAnimationFrame(() => {
+      const el = document.getElementById(target);
+      const more = el?.closest('details');
+      if (more) more.open = true;
+      el?.scrollIntoView({ block: 'start' });
+    });
+  }, [loaded, id]);
 
   const act: Act = async (label, fn, done) => {
     setBusy(label);
@@ -80,6 +118,7 @@ function ItemReviewInner({ id }: { id: string }) {
           </span>
           <h1 className="display">{displayTitle(item)}</h1>
           {item.creator && <div className="serif" style={{ fontSize: 19, fontStyle: 'italic', marginTop: 6 }}>{item.creator}</div>}
+          <StandingBar detail={data} onChange={reload} />
           <div className="status-line">
             {flight ? (
               <Spinner text={`${item.status_detail ?? item.status}${data.run?.step ? ` · ${data.run.step}` : ''}`} />
@@ -138,8 +177,18 @@ function ItemReviewInner({ id }: { id: string }) {
             )}
             {source && (source.extractor === 'ocr' || source.extractor === 'pasted') && <SourceFix id={id} text={source.text} imageUrl={item.file_key ? `/api/items/${id}/file` : null} onSaved={reload} />}
             {!flight && (
-              <div className="row" style={{ marginTop: 10, gap: 6 }}>
+              <div className="row" id="step-source" style={{ marginTop: 10, gap: 6 }}>
                 {(['talk', 'video', 'podcast'].includes(item.type) || item.status === 'failed') && <TranscriptBox id={id} hasSource={Boolean(source)} onSaved={reload} />}
+                {!['talk', 'video', 'podcast'].includes(item.type) && item.status !== 'failed' && item.kind !== 'image' && source && (
+                  <>
+                    {item.url && (
+                      <button className="btn quiet small" disabled={!!busy} onClick={() => act('library', () => api.post(`/api/items/${id}/library`), 'Reading your saved copy')}>
+                        Use my library copy
+                      </button>
+                    )}
+                    <TranscriptBox id={id} hasSource onSaved={reload} as="text" />
+                  </>
+                )}
                 {(['paper', 'essay', 'passage'].includes(item.type) || item.status === 'failed') && item.kind !== 'image' && <PdfUpload id={id} hasSource={Boolean(source)} onSaved={reload} />}
               </div>
             )}
@@ -147,7 +196,7 @@ function ItemReviewInner({ id }: { id: string }) {
 
           <div className="steps">
             {item.status === 'failed' && !flight && <FetchFailed detail={data} act={act} />}
-            <Step n={next()} title="Why it's here" done={Boolean(item.why_text?.trim())} hint="Your words, typed or dictated. Never reworded.">
+            <Step id="step-why" n={next()} title="Why it's here" done={Boolean(item.why_text?.trim())} hint="Your words, typed or dictated. Never reworded.">
               <WhySection key={`why-${id}`} detail={data} onSaved={reload} />
             </Step>
 
@@ -170,14 +219,14 @@ function ItemReviewInner({ id }: { id: string }) {
             )}
 
             {(source || !EXCERPT_OPTIONAL.has(item.type)) && (
-              <Step n={next()} title="The excerpt" optional={EXCERPT_OPTIONAL.has(item.type)} done={Boolean(chosen)} hint={ideas.length ? 'Optional when you include big ideas below.' : 'The passage readers get. Up to two paragraphs.'}>
+              <Step id="step-excerpt" n={next()} title="The excerpt" optional={EXCERPT_OPTIONAL.has(item.type)} done={Boolean(chosen)} hint={ideas.length ? 'Optional when you include big ideas below.' : 'The passage readers get. Up to two paragraphs.'}>
                 <ExcerptSection detail={data} chosen={chosen} act={act} />
               </Step>
             )}
 
             {ideas.length > 0 && (
               <Step n={next()} title="The big ideas" done={ideas.some(isIn)} hint="For a long piece. Tick the ones to print, in the machine's voice, each with where it is said.">
-                <CheckedLines kind="idea" drafts={ideas} act={act} autoCaptions={Boolean(source && ['captions-auto', 'captions', 'transcript', 'whisper'].includes(source.extractor) && !isPunctuated(source.text))} />
+                <CheckedLines kind="idea" drafts={ideas} act={act} tick={tick} saving={saving} autoCaptions={Boolean(source && ['captions-auto', 'captions', 'transcript', 'whisper'].includes(source.extractor) && !isPunctuated(source.text))} />
               </Step>
             )}
 
@@ -195,17 +244,17 @@ function ItemReviewInner({ id }: { id: string }) {
               <TitleSection detail={data} onPatch={patch} />
             </Step>
 
-            <Step n={next()} title="Notes and further reading" optional hint="Only what you tick is printed. Each line was checked against its source.">
-              {notes.length > 0 ? <CheckedLines kind="marginal" drafts={notes} act={act} /> : <p className="small muted" style={{ margin: 0 }}>The machine found nothing that needed a note.</p>}
+            <Step id="step-notes" n={next()} title="Notes and further reading" optional hint="Only what you tick is printed. Each line was checked against its source.">
+              {notes.length > 0 ? <CheckedLines kind="marginal" drafts={notes} act={act} tick={tick} saving={saving} /> : <p className="small muted" style={{ margin: 0 }}>The machine found nothing that needed a note.</p>}
               {setAside > 0 && <p className="small muted" style={{ margin: 0 }}>{setAside} more {setAside === 1 ? 'line was' : 'lines were'} set aside: the checker could not confirm {setAside === 1 ? 'it' : 'them'} from the source.</p>}
-              <WikiSection itemId={id} cards={data.wiki} act={act} />
+              <WikiSection itemId={id} cards={data.wiki} act={act} tick={tick} saving={saving} />
             </Step>
 
-            <Step n={next()} title="" optional bare>
+            <Step id="step-plate" n={next()} title="" optional bare>
               <PlatesSection target={{ kind: 'item', id }} plates={data.plates} decision={data.item.plate} onChange={reload} title={<StepTitle n={n} title="Plate" optional />} />
             </Step>
 
-            <Ready detail={data} chosen={chosen} ideasIn={ideas.filter(isIn).length} busy={busy === 'check'} onRecheck={() => act('check', () => api.post(`/api/items/${id}/check`), 'Checked')} />
+            <Ready onPlaced={reload} detail={data} chosen={chosen} ideasIn={ideas.filter(isIn).length} busy={busy === 'check'} onRecheck={() => act('check', () => api.post(`/api/items/${id}/check`), 'Checked')} />
 
             <details className="section more">
               <summary className="h2">More</summary>
@@ -322,10 +371,15 @@ function StepTitle({ n, title, done, optional }: { n: number; title: string; don
   );
 }
 
-function Step({ n, title, done, optional, hint, bare, children }: { n: number; title: string; done?: boolean; optional?: boolean; hint?: string; bare?: boolean; children: ReactNode }) {
-  if (bare) return <div className="step">{children}</div>;
+function Step({ id, n, title, done, optional, hint, bare, children }: { id?: string; n: number; title: string; done?: boolean; optional?: boolean; hint?: string; bare?: boolean; children: ReactNode }) {
+  if (bare)
+    return (
+      <div className="step" id={id}>
+        {children}
+      </div>
+    );
   return (
-    <section className="step section" aria-label={title}>
+    <section className="step section" id={id} aria-label={title}>
       <h2 className="h2">
         <StepTitle n={n} title={title} done={done} optional={optional} />
       </h2>
@@ -700,7 +754,7 @@ function ExcerptSection({ detail, chosen, act }: { detail: ItemDetail; chosen: E
 
 // ---------------------------------------------------------------- notes and ideas: tick to include
 
-function CheckedLines({ kind, drafts, act, autoCaptions = false }: { kind: 'idea' | 'marginal'; drafts: Draft<MarginalBody>[]; act: Act; autoCaptions?: boolean }) {
+function CheckedLines({ kind, drafts, act, tick, saving, autoCaptions = false }: { kind: 'idea' | 'marginal'; drafts: Draft<MarginalBody>[]; act: Act; tick: Tick; saving: ReadonlySet<string>; autoCaptions?: boolean }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [text, setText] = useState('');
   const style = checkStyle(text);
@@ -717,12 +771,10 @@ function CheckedLines({ kind, drafts, act, autoCaptions = false }: { kind: 'idea
         const flagged = b.verdict === 'partly' || b.verdict === 'unsupported';
         return (
           <div key={d.id} className={`line-row${on ? ' on' : ''}`}>
-            <input
-              type="checkbox"
-              checked={on}
-              aria-label={on ? 'Included; untick to leave it out' : 'Include'}
-              onChange={(e) => void act('note', () => api.patch(`/api/drafts/${d.id}`, { status: e.target.checked ? 'kept' : 'proposed' }))}
-            />
+            <label className="tick">
+              <input type="checkbox" checked={on} aria-label={on ? 'Included; untick to leave it out' : 'Include'} onChange={(e) => void tick('draft', d.id, e.target.checked ? 'kept' : 'proposed')} />
+              {saving.has(d.id) && <span className="sr-only">Saving</span>}
+            </label>
             <div className="stack" style={{ gap: 6, flex: 1 }}>
               {editing === d.id ? (
                 <>
@@ -916,7 +968,7 @@ const ANGLE: Record<string, string> = {
 
 // ---------------------------------------------------------------- wikipedia: tick to include
 
-function WikiSection({ itemId, cards, act }: { itemId: string; cards: WikiCard[]; act: Act }) {
+function WikiSection({ itemId, cards, act, tick, saving }: { itemId: string; cards: WikiCard[]; act: Act; tick: Tick; saving: ReadonlySet<string> }) {
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [summary, setSummary] = useState('');
@@ -927,12 +979,10 @@ function WikiSection({ itemId, cards, act }: { itemId: string; cards: WikiCard[]
       <div className="lines">
         {live.map((c) => (
           <div key={c.id} className={`line-row${c.status === 'kept' ? ' on' : ''}`}>
-            <input
-              type="checkbox"
-              checked={c.status === 'kept'}
-              aria-label={c.status === 'kept' ? `Included: ${c.title}` : `Include ${c.title}`}
-              onChange={(e) => void act('wiki', () => api.patch(`/api/wiki/${c.id}`, { status: e.target.checked ? 'kept' : 'proposed' }))}
-            />
+            <label className="tick">
+              <input type="checkbox" checked={c.status === 'kept'} aria-label={c.status === 'kept' ? `Included: ${c.title}` : `Include ${c.title}`} onChange={(e) => void tick('wiki', c.id, e.target.checked ? 'kept' : 'proposed')} />
+              {saving.has(c.id) && <span className="sr-only">Saving</span>}
+            </label>
             <div style={{ flex: 1 }}>
               <a className="serif" style={{ fontSize: 16 }} href={safeHref(c.url)} target="_blank" rel="noreferrer noopener">
                 {c.title} ↗
@@ -988,7 +1038,7 @@ function WikiSection({ itemId, cards, act }: { itemId: string; cards: WikiCard[]
 
 const BLOCKING = ['links', 'quotes', 'citations', 'style'];
 
-function Ready({ detail, chosen, ideasIn, busy, onRecheck }: { detail: ItemDetail; chosen: Excerpt | null; ideasIn: number; busy: boolean; onRecheck: () => void }) {
+function Ready({ detail, chosen, ideasIn, busy, onRecheck, onPlaced }: { detail: ItemDetail; chosen: Excerpt | null; ideasIn: number; busy: boolean; onRecheck: () => void; onPlaced: () => void }) {
   const { item, checks } = detail;
   if (IN_FLIGHT.test(item.status)) return null;
   const todo: string[] = [];
@@ -1002,7 +1052,10 @@ function Ready({ detail, chosen, ideasIn, busy, onRecheck }: { detail: ItemDetai
     <section className={`step section ready${ready ? ' is-ready' : ''}`} aria-label="Ready for a Haul">
       <h2 className="h2">{ready ? 'Ready for a Haul' : 'Before it can go in a Haul'}</h2>
       {ready ? (
-        <p className="small" style={{ margin: 0 }}>Everything that prints has been checked. Add it to a Haul from the Hauls page.</p>
+        <>
+          <p className="small" style={{ margin: 0 }}>Everything that prints has been checked.</p>
+          <StandingBar detail={detail} onChange={onPlaced} />
+        </>
       ) : (
         <ul className="todo">
           {todo.map((t) => (
@@ -1042,7 +1095,7 @@ function DetailsSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: 
     </label>
   );
   return (
-    <div className="stack" style={{ gap: 10 }}>
+    <div className="stack" id="step-details" style={{ gap: 10 }}>
       <h3 className="h3">Details</h3>
       <label className="field">
         <span className="label">What kind of thing it is</span>
