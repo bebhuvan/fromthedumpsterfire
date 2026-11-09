@@ -1173,3 +1173,23 @@ ranked, with screenshots in `docs/desk-review/`).
   check on Haul 002 finds two items with no date (6, Robert Caro; 15, Censusnama) plus doubts.
   `launch-2026-10-24` must be fast-forwarded to this branch before the next deploy from it.
 
+
+## Google Play release, preparation (2026-11-09; not uploaded)
+
+The editor's Play developer account (personal) is verified. Personal accounts must run a closed test
+with at least 12 testers opted in for 14 days in a row before production is unlocked.
+- **Signing:** upload key `~/.config/fdf/play/upload.keystore` (made 2026-11-09, alias `upload`,
+  SHA-256 `D7:82:51:1C:01:7C:16:4D:DE:A4:89:AF:E2:AF:28:E4:48:6F:1D:65:98:1E:80:FB:46:21:F1:89:86:8E:BA:3B`).
+  Back up the whole `~/.config/fdf/play/` folder with the update-signing key. Losing it means asking
+  Google to reset the upload key.
+- **Build:** `cd apps/mobile && npm run prebuild:android && npm run build:android:play` gives
+  `android/app/build/outputs/bundle/release/app-release.aab` (versionCode 1, version 0.3.0, all three
+  architectures, `EXPO_PUBLIC_USE_SEED=0`). Raise `android.versionCode` in `app.json` for every upload.
+- **Permissions:** drawing over other apps and shared storage are blocked.
+- **Notifications:** Settings already has the on/off switch. Turning it off now deletes the token
+  on the server (the Desk Worker change is **not deployed yet**) and is retried at launch if missed.
+- **Privacy page:** `/privacy` on the website (**not deployed yet**).
+- **Not done:** the design branch `claude/heuristic-visvesvaraya-55cce2` is not merged (waiting on the
+  editor); store listing, screenshots, data-safety and content-rating forms; app links need the Play
+  app-signing SHA-256 (Play Console › App integrity) as `ANDROID_CERT_SHA256`. Phones with the
+  sideloaded APK (debug-signed) must uninstall it before installing from Play.

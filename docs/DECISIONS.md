@@ -460,3 +460,20 @@ Dated, newest last. Don't reopen these without a new reason.
   reachable on the item page to edit or tick. Rejected: printing offers unless skipped (it would
   turn the editor's tick into an opt-out).
 
+- **The Play Store build is made on the editor's laptop, signed with an upload key kept outside the
+  project, with Play App Signing holding the key readers' phones check.** The key is
+  `~/.config/fdf/play/upload.keystore` with its passwords in `keystore.properties` beside it (both
+  readable only by the editor's account); `apps/mobile/plugins/release-signing.js` adds it to the
+  generated Gradle file, so Continuous Native Generation still owns `android/`.
+  `npm run build:android:play` makes the `.aab` with the sample Hauls switched off. The first upload is
+  by hand in Play Console (Google's API cannot create an app's first release). Rejected: EAS Build and
+  EAS Submit (an Expo account and cloud builds for something this laptop already does, and the app
+  already keeps its updates off Expo's servers); keeping the debug key (Play refuses it, and anyone
+  holding the debug key could sign an "update").
+- **Unused Android permissions are blocked** in `app.json`: drawing over other apps and shared
+  storage, which libraries ask for and the reader app never uses. Play reviewers question both.
+- **Turning notifications off deletes the phone's token on the server**, and the phone sends that
+  refusal again at next launch if the server missed it. Rejected: keeping the row marked off (nothing
+  should be kept for a reader who said no, and the privacy page can then say so plainly).
+- **A privacy page at `/privacy`**, linked from the footer and given to Google Play as the app's
+  policy. It describes what the code does; change it with the code.
