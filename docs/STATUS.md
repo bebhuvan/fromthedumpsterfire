@@ -1226,3 +1226,20 @@ over-the-air update to reach phones.
 - **The field note continued**: past 700 words the cover sets the note's opening and a "Continued" line
   to the note's own page (`/haul/<n>/note`, new on the website); a jump to the contents under the date.
   Web and app. Not deployed.
+
+## Deployed 2026-11-09 (evening): the design work, the subscribe and privacy pages
+
+On the editor's "Push it": `claude/heuristic-visvesvaraya-55cce2` merged into `launch-2026-10-24`
+(with the Desk's and the Play Store session's work; conflicts were additions on both sides), verify
+835/835, then:
+- **Website** `fdf-web` version `bb68d822` (rollback: `8a780ce7`). Checked live on phones and desktop:
+  the proof sheet, the signatures, the field note continued (`/haul/<n>/note`), `/subscribe` with
+  fromthedumpsterfire.substack.com's form, `/privacy`, the burned 404.
+- **Pipeline** `fdf-pipeline` version `65d5ed5c` (rollback: `ab79ee81`): Wikipedia summaries no longer
+  stop at an initial or "c.". The Desk Worker was not redeployed here (the Play Store session's API
+  change is its own to ship).
+- **No over-the-air app update**: the Play Store signing work changed the app's native fingerprint
+  (runtime `908c7f06`, was `e903061b`), so an update now would reach no installed copy. The app's
+  design changes ship in the first Play Store build, which must be built from this branch or later.
+- Pushed `launch-2026-10-24` to GitHub (gitleaks: no leaks in the 57 new commits).
+- Substack artwork for the list is in `docs/brand/substack/`.
