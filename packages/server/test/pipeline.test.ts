@@ -92,6 +92,17 @@ describe('Wikipedia relevance', () => {
   });
   it('takes a full first sentence, not an initial', () => {
     expect(firstSentence('J. R. R. Tolkien was an English writer and philologist. He wrote The Hobbit.')).toBe('J. R. R. Tolkien was an English writer and philologist.');
+    // Haul 002's cards were cut at a middle initial: "… Robert Moses and Lyndon B."
+    expect(firstSentence('Robert Allan Caro is an American journalist and author known for his biographies of United States public figures Robert Moses and Lyndon B. Johnson. He won two Pulitzers.')).toBe(
+      'Robert Allan Caro is an American journalist and author known for his biographies of United States public figures Robert Moses and Lyndon B. Johnson.',
+    );
+    expect(firstSentence('Martin Luther King Jr. was an American minister and activist. He led the movement.')).toBe('Martin Luther King Jr. was an American minister and activist.');
+    expect(bestSentence('Johnson was elected in an open race to succeed retiring Democratic incumbent W. Lee O\'Daniel in 1948. He beat Coke Stevenson by 87 votes in the primary election.', 'Coke Stevenson primary election votes')).toBe(
+      'He beat Coke Stevenson by 87 votes in the primary election.',
+    );
+    expect(bestSentence('Johnson was elected in an open race to succeed retiring Democratic incumbent W. Lee O\'Daniel in 1948. The race was close and bitterly fought.', 'open race incumbent')).toBe(
+      'Johnson was elected in an open race to succeed retiring Democratic incumbent W. Lee O\'Daniel in 1948.',
+    );
   });
 });
 
