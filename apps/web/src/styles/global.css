@@ -137,7 +137,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 
 /* Page heads (archive, threads, about, search, errors). */
 .page-head { padding-block: clamp(28px, 6vw, 72px) 24px; row-gap: 14px; }
-.h-title { font: 500 clamp(2.25rem, 5vw, 3.5rem)/1.02 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.h-title { font: 500 clamp(2.25rem, 5vw, 3.5rem)/1.02 var(--display); letter-spacing: -0.015em; text-wrap: pretty; }
 .deck { margin-top: 14px; font-size: 1.3125rem; line-height: 1.45; color: var(--ink2); max-width: 32em; }
 
 /* ---------- The waiting page: the struck masthead is the one loud thing. ---------- */
@@ -155,7 +155,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 /* ---------- The Haul cover: the ghost number is the one loud thing. ---------- */
 /* On the home page the cover carries the nameplate, as a magazine's front does. */
 .nameplate { padding-block: clamp(20px, 4vw, 44px) 0; position: relative; z-index: 2; }
-.np-name { font: 500 clamp(2.125rem, 10.2vw, 7rem)/0.95 var(--display); letter-spacing: -0.03em; text-wrap: balance; }
+.np-name { font: 500 clamp(2.125rem, 10.2vw, 7rem)/0.95 var(--display); letter-spacing: -0.03em; text-wrap: pretty; }
 .np-name .mast-line > span[aria-hidden] { white-space: normal; }
 .np-name i { font-weight: 400; letter-spacing: -0.01em; }
 .np-name s { font-weight: 400; color: var(--ink2); text-decoration-thickness: 0.07em; text-decoration-color: var(--ember); text-decoration-skip-ink: none; }
@@ -167,7 +167,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .numeral { display: block; margin-right: calc(-0.2em - var(--gut)); text-align: right; font: 500 clamp(12.5rem, 62vw, 47.5rem)/0.74 var(--display); letter-spacing: -0.04em; color: var(--tint); user-select: none; white-space: nowrap; padding-top: 0.12em; margin-bottom: -0.1em; }
 .gmeta, .cover-title, .cover-deck { position: relative; z-index: 1; }
 .gmeta { font: 400 0.875rem/1.4 var(--sans); color: var(--ink2); margin-bottom: 16px; }
-.cover-title { font-weight: 500; font-size: clamp(3.25rem, 12vw, 8.25rem); line-height: 0.95; letter-spacing: -0.025em; max-width: 7.2em; text-wrap: balance; }
+.cover-title { font-weight: 500; font-size: clamp(3.25rem, 12vw, 8.25rem); line-height: 0.95; letter-spacing: -0.025em; max-width: 7.2em; text-wrap: pretty; }
 .cover-deck { font-size: 1.25rem; line-height: 1.45; max-width: 25em; margin-top: 20px; }
 @media (min-width: 700px) {
   .ghost-in { padding-block: 190px 72px; }
@@ -180,7 +180,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .fn-c > p { margin-top: 0.8em; }
 .fn-c .voice { margin-top: 16px; }
 /* The field note set out (NoteBody.astro): headings, quotations, links, and embeds in the column. */
-.fn-h { font: 500 1.375rem/1.2 var(--display); letter-spacing: -0.006em; margin-top: 1.9em; text-wrap: balance; }
+.fn-h { font: 500 1.375rem/1.2 var(--display); letter-spacing: -0.006em; margin-top: 1.9em; text-wrap: pretty; }
 .fn-h + p { margin-top: 0.5em; }
 .fn-q { margin: 1.1em 0 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); }
 .fn-q p { margin-top: 0.6em; }
@@ -189,7 +189,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .fn-c > p a:hover, .fn-q a:hover { text-decoration-color: var(--ed, var(--ink)); }
 .fn-blocks { margin-block: 1.6em 0.4em; }
 .fn-blocks .blk { display: grid; row-gap: 10px; }
-.h-sec { font: 500 1.875rem/1.1 var(--display); letter-spacing: -0.01em; text-wrap: balance; }
+.h-sec { font: 500 1.875rem/1.1 var(--display); letter-spacing: -0.01em; text-wrap: pretty; }
 .fn-m { order: 2; }
 @media (min-width: 1000px) { .fn-m { order: 0; padding-top: 6px; } }
 .route { margin-top: 12px; display: grid; gap: 10px; }
@@ -221,7 +221,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 
 .sp-opening .sp-obj { border: 1px solid var(--rule); padding: 18px 20px 20px; gap: 6px; }
 .sp-meta { font: 400 0.75rem var(--sans); color: var(--ink2); }
-.sp-et { font: 500 clamp(2.75rem, 7vw, 4.75rem)/0.94 var(--display); letter-spacing: -0.035em; margin-top: 6px; text-wrap: balance; }
+.sp-et { font: 500 clamp(2.75rem, 7vw, 4.75rem)/0.94 var(--display); letter-spacing: -0.035em; margin-top: 6px; text-wrap: pretty; }
 .sp-et.sz-m { font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 0.97; }
 .sp-et.sz-s { font-size: clamp(1.875rem, 3.6vw, 2.5rem); line-height: 1; letter-spacing: -0.02em; }
 .sp-et em { font-weight: 400; }
@@ -231,7 +231,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 
 .sp-broadside .sp-obj { background: var(--tint); padding: 24px 20px 20px; gap: 18px; }
 .sp-ptt { display: grid; gap: 4px; padding-bottom: 14px; border-bottom: 1px solid var(--hair); }
-.sp-pti { font: 500 1.75rem/1.05 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.sp-pti { font: 500 1.75rem/1.05 var(--display); letter-spacing: -0.015em; text-wrap: pretty; }
 .sp-pf { font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
 /* The poem's own lines; a line too long for the column turns over under a hanging indent. */
 .sp-pt { display: grid; font: italic 400 1.125rem/1.5 var(--serif); }
@@ -263,7 +263,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .sp-cardprint { grid-column: 2; grid-row: 2 / span 3; width: 100%; height: auto; margin-top: 12px; outline: 1px solid var(--hair); outline-offset: -1px; }
 .sp-ce { font-size: 0.9375rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .sp-call { display: flex; justify-content: space-between; font: 500 0.6875rem var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; }
-.sp-hw { font: 500 1.875rem/1 var(--display); margin-top: 10px; text-wrap: balance; }
+.sp-hw { font: 500 1.875rem/1 var(--display); margin-top: 10px; text-wrap: pretty; }
 .sp-hw i { font-weight: 400; }
 .sp-d { font-style: italic; font-size: 0.875rem; color: var(--ink2); padding-bottom: 8px; border-bottom: 1px solid var(--hair); align-self: start; }
 .sp-punch { position: absolute; left: 50%; bottom: 12px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--bg); }
@@ -317,7 +317,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .note { margin-top: 12px; }
 .note:first-child { margin-top: 0; }
 .m-notes { margin-top: 14px; }
-.h-item { font: 500 clamp(2.25rem, 5.2vw, 3.75rem)/1.02 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.h-item { font: 500 clamp(2.25rem, 5.2vw, 3.75rem)/1.02 var(--display); letter-spacing: -0.015em; text-wrap: pretty; }
 .plate { padding-block: 16px; }
 .plate img { width: 100%; }
 .plate figcaption { margin-top: 10px; display: grid; gap: 4px; font-size: 1rem; font-style: italic; }
@@ -343,7 +343,7 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .sa-k { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; font: 500 0.75rem/1.5 var(--sans); color: var(--ink2); }
 .sa-rel { font-weight: 400; }
 .sa-rel::before { content: '· '; }
-.sa-t { font: 500 1.375rem/1.2 var(--display); color: var(--ink); text-decoration: none; text-wrap: balance; }
+.sa-t { font: 500 1.375rem/1.2 var(--display); color: var(--ink); text-decoration: none; text-wrap: pretty; }
 a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .sa:hover::before { height: 12px; top: -12px; }
 .sa:hover .sa-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.16em; }
@@ -362,7 +362,7 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .orig { display: grid; background: color-mix(in srgb, var(--tint) 34%, var(--bg)); border-top: 2px solid var(--ink); color: var(--ink); text-decoration: none; }
 .orig-b { display: grid; gap: 10px; padding: 18px 24px 22px; }
 .orig-k { display: flex; align-items: baseline; font: 500 0.8125rem/1.4 var(--sans); color: var(--ink2); letter-spacing: 0.01em; overflow-wrap: anywhere; }
-.orig-t { font: 500 clamp(1.5rem, 3.4vw, 2.125rem)/1.14 var(--display); letter-spacing: -0.012em; text-wrap: balance; }
+.orig-t { font: 500 clamp(1.5rem, 3.4vw, 2.125rem)/1.14 var(--display); letter-spacing: -0.012em; text-wrap: pretty; }
 .orig-t em { font-family: var(--display); font-style: italic; font-weight: 400; letter-spacing: -0.005em; }
 .orig-long { font-size: clamp(1.25rem, 2.6vw, 1.625rem); line-height: 1.22; }
 .orig .nw { white-space: nowrap; }
@@ -392,7 +392,7 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 
 /* Magazine opening (essay, post): the title is the moment. */
 .open { padding-block: clamp(24px, 5vw, 64px) 8px; row-gap: 14px; }
-.essay-t { font-weight: 500; font-size: clamp(3.5rem, 12vw, 10.25rem); line-height: 0.94; letter-spacing: -0.035em; text-wrap: balance; }
+.essay-t { font-weight: 500; font-size: clamp(3.5rem, 12vw, 10.25rem); line-height: 0.94; letter-spacing: -0.035em; text-wrap: pretty; }
 .essay-t-long { font-size: clamp(2.75rem, 8vw, 7rem); line-height: 0.98; }
 @media (min-width: 1000px) { .open .meta { grid-row: 1 / 3; align-self: end; padding-bottom: 0.6em; } .open .essay-t { grid-column: 2 / -1; } }
 .pull { padding-block: 20px 28px; row-gap: 14px; }
@@ -448,7 +448,7 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 @media (max-width: 640px) { .bs { margin-inline: calc(-1 * var(--gut)); } }
 .bs-lay { padding-top: 20px; }
 .bs-head { display: grid; gap: 8px; padding-bottom: 18px; border-bottom: 1px solid var(--hair); }
-.bs-t { font: 500 clamp(2.125rem, 5vw, 3.5rem)/1.02 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+.bs-t { font: 500 clamp(2.125rem, 5vw, 3.5rem)/1.02 var(--display); letter-spacing: -0.02em; text-wrap: pretty; }
 .bs-by { font: 600 0.75rem/1.4 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; }
 .bs-poem { display: grid; gap: 1.1em; font: italic 400 clamp(1.1875rem, 2.6vw, 1.75rem)/1.5 var(--serif); }
 .bs-stanza { display: grid; }
@@ -484,7 +484,7 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .card-lay { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 16px 24px; }
 .card { position: relative; background: var(--tint); padding: 24px 20px 72px; }
 .c-call { display: flex; justify-content: space-between; font: 500 0.7812rem/1.4 var(--sans); color: var(--ink2); margin-bottom: 24px; font-variant-numeric: tabular-nums; }
-.c-head { font: 500 clamp(2.5rem, 6vw, 3.875rem)/1 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.c-head { font: 500 clamp(2.5rem, 6vw, 3.875rem)/1 var(--display); letter-spacing: -0.015em; text-wrap: pretty; }
 .hw-the { font-weight: 400; }
 .c-dates { font-size: 1.125rem; font-style: italic; margin: 8px 0 22px; padding-bottom: 14px; border-bottom: 1px solid var(--hair); color: var(--ink2); }
 .c-ed { font-size: 1.1875rem; line-height: 1.6; max-width: 34rem; }
@@ -515,7 +515,7 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 /* ---------- About. ---------- */
 /* The title opens the page as a magazine opening does; the two voices are a transcript. */
 .ab-open { padding-block: clamp(24px, 5vw, 64px) 28px; row-gap: 14px; }
-.ab-t { font-weight: 500; font-size: clamp(3.5rem, 11vw, 9.375rem); line-height: 0.94; letter-spacing: -0.035em; text-wrap: balance; }
+.ab-t { font-weight: 500; font-size: clamp(3.5rem, 11vw, 9.375rem); line-height: 0.94; letter-spacing: -0.035em; text-wrap: pretty; }
 .ab-open .deck { margin-top: 12px; }
 @media (min-width: 1000px) { .ab-open .meta { grid-row: 1 / 3; align-self: end; padding-bottom: 0.6em; } .ab-t { grid-column: 2 / -1; } }
 .ab-note-body { max-width: 38rem; }
@@ -622,7 +622,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .cv-no { display: grid; gap: 4px; align-content: start; font: 400 0.875rem/1.4 var(--sans); color: var(--ink2); }
 .cv-h { font: 500 0.8125rem/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ed); }
 .cv-n { font: 400 clamp(3.5rem, 7vw, 5.75rem)/0.8 var(--display); letter-spacing: -0.03em; color: var(--ed); font-variant-numeric: lining-nums; margin: 6px 0 12px; }
-.cv-t { font-weight: 500; font-size: clamp(3.125rem, 9.4vw, 8rem); line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance; max-width: 8.4em; }
+.cv-t { font-weight: 500; font-size: clamp(3.125rem, 9.4vw, 8rem); line-height: 0.95; letter-spacing: -0.03em; text-wrap: pretty; max-width: 8.4em; }
 .cv-t em { font-weight: 400; }
 .cv-deck { font-size: clamp(1.1875rem, 1.7vw, 1.4375rem); line-height: 1.45; max-width: 27em; margin-top: 22px; }
 .cv-plate { display: none; }
@@ -778,7 +778,7 @@ blockquote > p + p { margin-top: 0.65em; }
 /* ---------- The jacket (book): the book set in type in the margin, the line from inside beside it. ---------- */
 .jk { padding-block: clamp(24px, 5vw, 64px) 8px; row-gap: 24px; align-items: start; }
 .jk-jacket { display: grid; grid-template-rows: 1fr auto auto; aspect-ratio: 2 / 3; width: min(220px, 60vw); background: var(--tint); padding: 24px 18px 16px; outline: 1px solid var(--hair); outline-offset: -1px; box-shadow: inset 7px 0 0 color-mix(in srgb, var(--ink) 9%, transparent); }
-.jk-jt { font: 500 1.75rem/1.02 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.jk-jt { font: 500 1.75rem/1.02 var(--display); letter-spacing: -0.015em; text-wrap: pretty; }
 .jk-jt em { font-weight: 400; }
 .jk-ja { font: italic 400 1rem/1.3 var(--serif); padding-top: 10px; border-top: 1px solid var(--hair); }
 .jk-jp { margin-top: 18px; font: 500 0.6562rem/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); }
@@ -795,7 +795,7 @@ blockquote > p + p { margin-top: 0.65em; }
 @media (min-width: 1000px) { .lab { grid-column: 2 / -1; margin-left: -48px; } }
 .lab-k { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; font: 500 0.7812rem/1.4 var(--sans); color: var(--ink2); }
 .lab-k span:last-child { font-variant-numeric: tabular-nums; }
-.lab-t { font: 500 clamp(2.75rem, 6.4vw, 5rem)/0.95 var(--display); letter-spacing: -0.03em; margin: 14px 0 18px; text-wrap: balance; }
+.lab-t { font: 500 clamp(2.75rem, 6.4vw, 5rem)/0.95 var(--display); letter-spacing: -0.03em; margin: 14px 0 18px; text-wrap: pretty; }
 .lab-dl { margin: 0; border-top: 1px solid var(--ink); }
 .lab-dl div { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 4px 16px; padding-block: 11px; border-bottom: 1px solid var(--rule); align-items: baseline; }
 .lab-dl div:last-child { border-bottom: 0; }
@@ -806,7 +806,7 @@ blockquote > p + p { margin-top: 0.65em; }
 
 /* Specimens of the newer forms on the cover. */
 .sp-epigraph .sp-obj { padding: 4px 0 6px; gap: 12px; }
-.sp-eq { font: 500 clamp(1.75rem, 3.4vw, 2.5rem)/1.05 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+.sp-eq { font: 500 clamp(1.75rem, 3.4vw, 2.5rem)/1.05 var(--display); letter-spacing: -0.02em; text-wrap: pretty; }
 .sp-eq.q-medium { font-size: clamp(1.3125rem, 2.2vw, 1.625rem); line-height: 1.18; letter-spacing: -0.01em; }
 .sp-eq.q-long { font: 400 1.0625rem/1.4 var(--display); letter-spacing: 0; text-wrap: pretty; }
 .sp-eq::before { content: '\201C'; color: var(--ed, var(--ink2)); font-weight: 400; }
@@ -814,7 +814,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .sp-eq.q-lead::after { content: none; }
 .sp-eq.q-lead { display: grid; gap: 12px; }
 .sp-eq.q-lead::before { margin-top: 12px; font-size: 4rem; line-height: 0.8; height: 0.36em; }
-.sp-eql { font: 500 clamp(1.875rem, 3.6vw, 2.5rem)/1.06 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+.sp-eql { font: 500 clamp(1.875rem, 3.6vw, 2.5rem)/1.06 var(--display); letter-spacing: -0.02em; text-wrap: pretty; }
 .sp-eqr { font: 400 1.0625rem/1.55 var(--serif); color: var(--ink); letter-spacing: 0; max-width: 34em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .sp-ew { display: grid; gap: 2px; font: 600 0.6875rem/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; padding-top: 8px; border-top: 1px solid var(--ink); max-width: 18rem; }
 .sp-ewo { font: italic 400 0.875rem/1.4 var(--serif); letter-spacing: 0; text-transform: none; color: var(--ink2); }
@@ -830,7 +830,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .sp-mount img { width: 100%; outline: 1px solid var(--hair); outline-offset: -1px; }
 .sp-jacket .sp-obj { align-items: flex-start; }
 .sp-jk { display: grid; grid-template-rows: 1fr auto; aspect-ratio: 2 / 3; width: min(190px, 70%); background: var(--tint); padding: 18px 14px 12px; outline: 1px solid var(--hair); outline-offset: -1px; box-shadow: inset 6px 0 0 color-mix(in srgb, var(--ink) 9%, transparent); }
-.sp-jt { font: 500 1.4375rem/1.02 var(--display); letter-spacing: -0.012em; text-wrap: balance; }
+.sp-jt { font: 500 1.4375rem/1.02 var(--display); letter-spacing: -0.012em; text-wrap: pretty; }
 .sp-jt em { font-weight: 400; }
 .sp-ja { font: italic 400 0.8125rem/1.3 var(--serif); padding-top: 8px; border-top: 1px solid var(--hair); }
 .sp-label .sp-obj { border: 1px solid var(--ink); padding: 14px 16px 10px; gap: 0; border-top: 8px solid var(--tint); }
@@ -860,7 +860,7 @@ blockquote > p + p { margin-top: 0.65em; }
 /* Titles are never cut: a long one takes two lines down the spine, as printed spines do. */
 .spn-t { writing-mode: vertical-rl; font: 500 1.1875rem/1 var(--display); letter-spacing: -0.005em; white-space: nowrap; }
 .spn-long { width: 66px !important; }
-.spn-long .spn-t { font-size: 1rem; line-height: 1.08; white-space: normal; text-wrap: balance; max-block-size: none; }
+.spn-long .spn-t { font-size: 1rem; line-height: 1.08; white-space: normal; text-wrap: pretty; max-block-size: none; }
 .spn-t em { font-weight: 400; }
 .spn-a { writing-mode: vertical-rl; font: 600 0.5938rem/1 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.85; }
 .spn-w1 { width: 44px; } .spn-w2 { width: 52px; } .spn-w3 { width: 60px; }
@@ -913,7 +913,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .ch-head { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--ink); }
 .ch-n { font: 500 0.75rem/1.3 var(--sans); color: var(--ink2); letter-spacing: 0.01em; margin-bottom: 4px; }
 .ch-n span { color: var(--ember); }
-.ch-t { font: 500 clamp(1.5rem, 2.6vw, 1.9375rem)/1.1 var(--display); letter-spacing: -0.014em; text-wrap: balance; max-width: 32rem; }
+.ch-t { font: 500 clamp(1.5rem, 2.6vw, 1.9375rem)/1.1 var(--display); letter-spacing: -0.014em; text-wrap: pretty; max-width: 32rem; }
 .ch-note { font: italic 400 1.0625rem/1.42 var(--serif); max-width: 34rem; text-wrap: pretty; margin-top: 2px; }
 .ch-units { margin-top: 10px; font: 400 0.8125rem/1.45 var(--sans); color: var(--ink2); max-width: 40rem; }
 .ch-plot { container-type: inline-size; margin-top: 14px; }
@@ -945,7 +945,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .ch-tbl .na { color: var(--ink2); }
 /* The figure as a specimen on the cover: its own chart, drawn small. */
 .sp-figure .sp-obj { border: 1px solid var(--rule); padding: 16px 18px 14px; gap: 12px; }
-.sp-fig-t { font: 500 clamp(1.5rem, 2.6vw, 2rem)/1.05 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.sp-fig-t { font: 500 clamp(1.5rem, 2.6vw, 2rem)/1.05 var(--display); letter-spacing: -0.015em; text-wrap: pretty; }
 .sp-fig-t em { font-weight: 400; }
 .sp-fig-svg { display: block; width: 100%; height: auto; }
 .sp-fig-src { font: 400 0.75rem/1.4 var(--sans); color: var(--ink2); }
@@ -954,7 +954,7 @@ blockquote > p + p { margin-top: 0.65em; }
 /* ---------- The life (Lives): one person, the machine's profile from named sources. ---------- */
 /* The name set large is the loud thing; the years under it in the display italic, a headstone's line. */
 .lf-head { padding-block: clamp(20px, 5vw, 56px) 4px; }
-.lf-name { font: 500 clamp(4rem, 20vw, 10.5rem)/0.92 var(--display); letter-spacing: -0.035em; margin-top: 14px; text-wrap: balance; }
+.lf-name { font: 500 clamp(4rem, 20vw, 10.5rem)/0.92 var(--display); letter-spacing: -0.035em; margin-top: 14px; text-wrap: pretty; }
 .lf-years { font: 400 clamp(1.875rem, 7vw, 4rem)/1 var(--display); font-style: italic; color: var(--ink2); font-variant-numeric: lining-nums; margin-top: 0.22em; }
 .lf-epi { font: 500 1.0625rem/1.4 var(--sans); color: var(--machine); margin-top: 18px; max-width: 30ch; }
 /* A portrait only when it cleared the credit rule: small, in the air beside the name on wide screens. */
@@ -1067,7 +1067,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .qt-mark { display: block; height: 0.36em; margin-top: 4px; font: 400 4.5rem/0.8 var(--display); color: var(--ed, var(--ink2)); user-select: none; }
 .qt-q p { text-wrap: pretty; }
 .qt-q p + p { margin-top: 0.75em; }
-.qt-short .qt-q p { font: 400 clamp(1.75rem, 3.4vw, 2.5rem)/1.15 var(--display); letter-spacing: -0.012em; text-wrap: balance; }
+.qt-short .qt-q p { font: 400 clamp(1.75rem, 3.4vw, 2.5rem)/1.15 var(--display); letter-spacing: -0.012em; text-wrap: pretty; }
 .qt-medium .qt-q p { font: 400 clamp(1.375rem, 2.3vw, 1.6875rem)/1.36 var(--display); letter-spacing: -0.004em; }
 .qt-long .qt-mark { font-size: 3.5rem; }
 .qt-long .qt-q { padding-left: 18px; border-left: 2px solid var(--ed, var(--ink2)); }
@@ -1082,7 +1082,7 @@ blockquote > p + p { margin-top: 0.65em; }
 
 /* A long epigraph: its opening clauses large, the rest in the reading type. */
 .epi-q.q-lead p::before, .epi-q.q-lead p::after { content: none; }
-.epi-lead { font: 500 clamp(2.25rem, 6vw, 4.5rem)/1.04 var(--display); letter-spacing: -0.022em; text-wrap: balance; max-width: 16em; }
+.epi-lead { font: 500 clamp(2.25rem, 6vw, 4.5rem)/1.04 var(--display); letter-spacing: -0.022em; text-wrap: pretty; max-width: 16em; }
 .epi-lead .qt-mark { height: 0.4em; margin: 0 0 0.12em; font-size: 1.5em; line-height: 0.8; font-weight: 400; }
 .epi-q .epi-rest { margin-top: 0.9em; max-width: 38rem; font: 400 clamp(1.1875rem, 1.8vw, 1.3125rem)/1.65 var(--serif); letter-spacing: 0; text-wrap: pretty; }
 .epi-q .epi-rest + .epi-rest { margin-top: 0.75em; }
