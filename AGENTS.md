@@ -141,7 +141,8 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   links go through `safeHref` (http/https only). No inline scripts or styles: the CSP in
   `src/worker/lib.ts` is `script-src 'self'; style-src 'self'` (plus Cloudflare Web Analytics' beacon, which
   the edge injects: `static.cloudflareinsights.com` for the script, `cloudflareinsights.com` to report), and `frame-src` names only the players
-  `embedSrc` in `@fdf/shared/haul` can build (youtube-nocookie, Vimeo, Spotify, Apple Podcasts).
+  `embedSrc` in `@fdf/shared/haul` can build (youtube-nocookie, Vimeo, Spotify, Apple Podcasts), plus the
+  newsletter's Substack origin for its sign-up form on `/subscribe` once `NEWSLETTER` is set (`src/lib/newsletter.ts`).
   Positions (the fingerprint) are classes on a 100-column grid, never inline styles.
 - Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
   sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.

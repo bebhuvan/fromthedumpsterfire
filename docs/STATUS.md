@@ -1193,3 +1193,14 @@ with at least 12 testers opted in for 14 days in a row before production is unlo
   editor); store listing, screenshots, data-safety and content-rating forms; app links need the Play
   app-signing SHA-256 (Play Console › App integrity) as `ANDROID_CERT_SHA256`. Phones with the
   sideloaded APK (debug-signed) must uninstall it before installing from Play.
+
+## Hauls by email (2026-11-09; built, not deployed)
+
+`/subscribe` with Substack's form, links in the footer ("By email"), About, each Haul's foot ("The
+next Haul"), the empty home page and the app's Menu ("Hauls by email"); the privacy page says
+Substack holds the list. **Waiting on the editor's Substack address**: until `NEWSLETTER` in
+`apps/web/src/lib/newsletter.ts` is set, the page says the list opens soon. Checked locally with
+Substack's own publication as a stand-in: the frame loads under the CSP with no console errors, at
+390px and 1280px, light and dark (screenshots in `docs/design-comps/2026-11-09-subscribe/`). Substack's
+form is white in dark mode; it has no dark version. The app's Menu line needs a new build or an
+over-the-air update to reach phones.

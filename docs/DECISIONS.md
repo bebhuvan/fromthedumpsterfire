@@ -477,3 +477,12 @@ Dated, newest last. Don't reopen these without a new reason.
   should be kept for a reader who said no, and the privacy page can then say so plainly).
 - **A privacy page at `/privacy`**, linked from the footer and given to Google Play as the app's
   policy. It describes what the code does; change it with the code.
+- **Hauls by email go through Substack** (the editor's choice). Substack keeps the list and sends one
+  email per Haul; the editor writes each email there. `/subscribe` shows Substack's own form in a
+  frame from the one origin in `NEWSLETTER` (`apps/web/src/lib/newsletter.ts`, which accepts only a bare
+  https origin), and the CSP's `frame-src` gains that origin and nothing else; no Substack script runs
+  on our pages. Linked quietly from the footer, About, the foot of every Haul, the empty home page and
+  the app's Menu (which opens the page in a browser tab). Rejected: running our own mail (deliverability
+  and upkeep for a small list); Buttondown, which could send from the RSS feed by itself (the editor
+  preferred Substack to start; both export the list, so moving later is easy); putting the reader's
+  address in a link to Substack (personal data in a URL).
