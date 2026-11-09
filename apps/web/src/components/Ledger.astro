@@ -1,0 +1,42 @@
+---
+// The ledger (2026-11-09, a signature): at the foot of an item, whose words are on the page, counted
+// by code from the bundle (@fdf/shared/ledger): the editor's in his italic, the source's in the serif,
+// the machine's in the blue sans, and a bar in those three inks. Widths are classes on a 20-column
+// grid (the CSP allows no inline styles). Mirrors Ledger in apps/mobile/src/screens/ItemScreen.tsx.
+import { ledger } from '@fdf/shared/ledger';
+import type { Item } from '@fdf/shared/haul';
+
+interface Props {
+  item: Item;
+}
+const { item } = Astro.props;
+const l = ledger(item);
+const counts = [l.editor, l.source, l.machine];
+const total = counts.reduce((a, b) => a + b, 0);
+// Largest remainder, so the parts fill exactly 20 columns and nothing counted shows as nothing.
+const raw = counts.map((c) => (total ? (c / total) * 20 : 0));
+const cols = raw.map((r, i) => (counts[i] ? Math.max(1, Math.floor(r)) : 0));
+for (let left = 20 - cols.reduce((a, b) => a + b, 0); left > 0; left--) {
+  const i = raw.map((r, j) => (counts[j] ? r - cols[j]! : -1)).reduce((best, r, j, rs) => (r > rs[best]! ? j : best), 0);
+  cols[i]! += 1;
+}
+while (cols.reduce((a, b) => a + b, 0) > 20) cols[cols.indexOf(Math.max(...cols))]! -= 1;
+const n = (x: number) => x.toLocaleString('en-GB');
+---
+{total ? (
+  <section class="wrap g row ledger" aria-label="The ledger: whose words are on this page">
+    <p class="m mh" aria-hidden="true">The ledger</p>
+    <div class="c lg">
+      <dl class="lg-rows">
+        <div class="lg-ed"><dt>Words by the editor</dt><dd>{n(l.editor)}</dd></div>
+        {l.source ? <div class="lg-src"><dt>Words from the source, matched</dt><dd>{n(l.source)}</dd></div> : null}
+        {l.machine ? <div class="lg-mc"><dt>Words by the machine, checked</dt><dd>{n(l.machine)}</dd></div> : null}
+      </dl>
+      <p class="lg-bar" aria-hidden="true">
+        {cols[0] ? <i class={`lg-b lg-b-ed w-${cols[0]}`}></i> : null}
+        {cols[1] ? <i class={`lg-b lg-b-src w-${cols[1]}`}></i> : null}
+        {cols[2] ? <i class={`lg-b lg-b-mc w-${cols[2]}`}></i> : null}
+      </p>
+    </div>
+  </section>
+) : null}
