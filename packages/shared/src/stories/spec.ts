@@ -6,6 +6,15 @@ import { figuresIn } from '../charts/figures';
 import { checkStyle } from '../style';
 import { EDITIONS, type Edition } from '../tokens';
 import type { Pt } from './geom';
+import type { BarsFigure } from './forms/bars';
+import type { BumpFigure } from './forms/bump';
+import type { DumbbellFigure } from './forms/dumbbell';
+import type { HeatmapFigure } from './forms/heatmap';
+import type { MapFigure } from './forms/map';
+import type { RidgelineFigure } from './forms/ridgeline';
+import type { ScatterFigure } from './forms/scatter';
+import type { SlopeFigure } from './forms/slope';
+import type { TrailFigure } from './forms/trail';
 
 export interface Source {
   maker: string;
@@ -106,7 +115,10 @@ export interface PyramidFigure {
   tickFormat: 'million';
 }
 
-export type Figure = LinesFigure | SwarmFigure | MultiplesFigure | StackFigure | PyramidFigure;
+export type Figure =
+  | LinesFigure | SwarmFigure | MultiplesFigure | StackFigure | PyramidFigure
+  | SlopeFigure | DumbbellFigure | BarsFigure | HeatmapFigure | RidgelineFigure | BumpFigure
+  | ScatterFigure | TrailFigure | MapFigure;
 
 export interface Plate {
   key: string;
@@ -144,36 +156,23 @@ export interface Story {
 
 // ---- Validation -------------------------------------------------------------------------------
 
-/** Every number a story's machine words may cite: its rows, its axes and rules, its facts. */
+/**
+ * Every finite number anywhere in a value: a figure's rows, axes, rules and bins alike, and the
+ * figures written in its own labels ("Births per woman, 2023"), as the chart kit counts a chart's
+ * stated metadata.
+ */
+function numbersIn(v: unknown, out: Set<number>): void {
+  if (typeof v === 'number') { if (Number.isFinite(v)) out.add(v); return; }
+  if (typeof v === 'string') { for (const f of figuresIn(v)) out.add(f.value); return; }
+  if (Array.isArray(v)) { for (const x of v) numbersIn(x, out); return; }
+  if (v && typeof v === 'object') for (const x of Object.values(v)) numbersIn(x, out);
+}
+
+/** Every number a story's machine words may cite: its figures' data and its facts. */
 export function citable(story: Story): number[] {
   const nums = new Set<number>();
-  const add = (v: number) => Number.isFinite(v) && nums.add(v);
-  const pts = (p: Pt[]) => p.forEach(([x, y]) => (add(x), add(y)));
-  for (const f of story.facts) add(f.value);
-  for (const pl of story.plates) {
-    const f = pl.figure;
-    if (f.form === 'lines') {
-      if (f.seam !== undefined) add(f.seam);
-      for (const p of f.panels) {
-        for (const s of p.series) { pts(s.points); if (s.range) Object.values(s.range).forEach(pts); }
-        p.rules?.forEach((r) => add(r.y));
-        p.zones?.forEach((z) => (add(z.from), add(z.to)));
-      }
-    } else if (f.form === 'swarm') {
-      add(f.seam);
-      f.items.forEach((i) => (typeof i.at === 'number' && add(i.at), add(i.weight)));
-      if (f.step) pts(f.step.points);
-    } else if (f.form === 'multiples') {
-      f.panels.forEach((p) => pts(p.points));
-      if (f.context) pts(f.context.points);
-      if (f.rule) add(f.rule.y);
-    } else if (f.form === 'stack') {
-      f.layers.forEach((l) => pts(l.points));
-    } else {
-      f.groups.forEach((g) => add(g.start));
-      [f.solid, f.outline].forEach((s) => [...s.left, ...s.right].forEach(add));
-    }
-  }
+  for (const f of story.facts) numbersIn(f.value, nums);
+  for (const p of story.plates) numbersIn(p.figure, nums);
   return [...nums];
 }
 
@@ -251,6 +250,11 @@ export function validateStory(story: Story, editorText: string): string[] {
         if (!(Math.abs(tot - 100) <= 0.6)) { errs.push(`${at}: the layers must add to 100 at every point (${tot.toFixed(1)} at ${f.layers[0]!.points[i]![0]}).`); break; }
       }
       if (f.layers.some((l) => l.points.some(([, v]) => v < 0))) errs.push(`${at}: a share cannot be negative.`);
+    } else if (f.form === 'bars') {
+      if (f.x.domain[0] !== 0 || f.bars.some((b) => !(b.value >= 0))) errs.push(`${at}: bars start at zero and are never negative.`);
+    } else if (f.form === 'heatmap' || f.form === 'map') {
+      const b = f.form === 'map' ? f.bins : { width: f.step, perSide: f.perSide };
+      if (!(b.width > 0) || b.perSide < 1 || b.perSide > 5) errs.push(`${at}: the ramp needs a positive bin width and one to five bins a side.`);
     } else if (f.form === 'pyramid') {
       const n = f.groups.length;
       if ([f.solid.left, f.solid.right, f.outline.left, f.outline.right].some((a) => a.length !== n || a.some((v) => !(v >= 0)))) errs.push(`${at}: every age group needs a count of zero or more on both sides, in both years.`);

@@ -17,6 +17,8 @@ Read these before working:
 - `docs/EDITORIAL.md`: agent/terminal editing from Codex or Claude Code, credentials, remote sessions,
   payloads and the shared Desk workflow. Use `npm run editorial -- --help`; never bypass the API
   with ad-hoc database writes or public-bucket uploads.
+- `docs/DATA-STORIES.md`: the weekly data story's grammar (plates, voices, marks, forms, honesty) and
+  its code in `packages/shared/src/stories`.
 - `docs/CHARTS.md`: the chart kit: forms, data spec, the honesty validator's rules, source adapters,
   how a chart is added on the Desk and from the terminal, and how the app gets its pictures.
 - `docs/VOICE.md`: the editor's measured writing voice and the AI patterns to keep out of machine
@@ -61,7 +63,8 @@ packages/shared   schema types, design tokens, style check, voice profile, verba
                   rules: checkLifeDraft, assembleLife, lifeByline, figures traced to quotes), highlight
                   (code tokens at publish), fingerprint, fieldnote (the field note's marks: headings,
                   quotations, links, italics, embed links; noteParts, noteBody; an item note's quotations, links and italics: itemNote), ledger (whose words are on an item's page, counted), shelf (the books the editor is reading:
-                  Shelf, validateShelf, shelfOrder), charts (src/charts: spec, validateChart,
+                  Shelf, validateShelf, shelfOrder), stories (src/stories: the data-story grammar,
+                  docs/DATA-STORIES.md: Story, validateStory, forms drawn as chart scenes), charts (src/charts: spec, validateChart,
                   renderer with one file per form in forms/, labels, glosses, CSV, bandSummary, maps in
                   geo/, app pictures and share pictures)
 migrations/       D1 migrations

@@ -1,6 +1,6 @@
 """Rows for the chart gallery, from the same Our World in Data CSVs of UN World Population Prospects
 2024 as prep.py: fertility, median age and population for every country of a million people or more,
-1950 to 2100. Usage: python3 -I prep_gallery.py <dir with the OWID csvs> data/gallery.json"""
+1950 to 2100. Usage: python3 -I prep_gallery.py <dir with the OWID csvs> ../../../packages/shared/fixtures/stories/gallery.json"""
 import csv, json, re, sys, collections
 
 RAW, OUT = sys.argv[1], sys.argv[2]

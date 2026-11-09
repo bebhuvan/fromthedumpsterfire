@@ -8,6 +8,15 @@ import { widthOf } from './place';
 import { drawLines } from './forms/lines';
 import { drawMultiples, drawPyramid, drawStack } from './forms/small';
 import { drawSwarm } from './forms/swarm';
+import { drawBars } from './forms/bars';
+import { drawBump } from './forms/bump';
+import { drawDumbbell } from './forms/dumbbell';
+import { drawHeatmap } from './forms/heatmap';
+import { drawMap } from './forms/map';
+import { drawRidgeline } from './forms/ridgeline';
+import { drawScatter } from './forms/scatter';
+import { drawSlope } from './forms/slope';
+import { drawTrail } from './forms/trail';
 import type { Figure, Plate } from './spec';
 
 export function drawFigure(f: Figure, dev: Device, fold = false): Scene {
@@ -22,6 +31,24 @@ export function drawFigure(f: Figure, dev: Device, fold = false): Scene {
       return drawStack(f, dev);
     case 'pyramid':
       return drawPyramid(f, dev);
+    case 'slope':
+      return drawSlope(f, dev);
+    case 'dumbbell':
+      return drawDumbbell(f, dev);
+    case 'bars':
+      return drawBars(f, dev);
+    case 'heatmap':
+      return drawHeatmap(f, dev);
+    case 'ridgeline':
+      return drawRidgeline(f, dev);
+    case 'bump':
+      return drawBump(f, dev);
+    case 'scatter':
+      return drawScatter(f, dev);
+    case 'trail':
+      return drawTrail(f, dev);
+    case 'map':
+      return drawMap(f, dev);
   }
 }
 
@@ -47,6 +74,20 @@ export function keyOf(f: Figure): { mark: KeyMark; text: string }[] {
     if (f.rule) add('reference', f.rule.label);
   } else if (f.form === 'stack') {
     if (f.seam !== undefined) add('zone', 'Projected');
+  } else if (f.form === 'bump') {
+    add('estimated', 'Estimated');
+    add('projected', 'Projected');
+  } else if (f.form === 'trail') {
+    add('estimated', 'Estimated');
+    if (f.members.some((m) => m.projectedFrom !== undefined)) add('projected', 'Projected');
+    if (f.rule) add('reference', f.rule.label);
+  } else if (f.form === 'ridgeline') {
+    if (f.ridges.some((r) => r.role === 'projected')) add('zone', 'Projected');
+    if (f.rule) add('reference', f.rule.label);
+  } else if ((f.form === 'slope' || f.form === 'scatter') && f.rule) {
+    add('reference', f.rule.label);
+  } else if ((f.form === 'bars' || f.form === 'dumbbell') && f.rule) {
+    add('reference', f.rule.label);
   }
   return out;
 }

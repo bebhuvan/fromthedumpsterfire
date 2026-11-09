@@ -8,7 +8,17 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { groupTransform, nodeAttrs, type Scene, type SceneNode } from '../../../packages/shared/src/charts/scene';
-import { drawFigure, drawKey, plateWidth, validateStory, type Plate, type Story } from '../../../packages/shared/src/stories';
+import { citable, drawFigure, drawKey, plateWidth, untraced, validateStory, type Figure, type Plate, type Story } from '../../../packages/shared/src/stories';
+import type { Gallery } from '../../../packages/shared/src/stories/forms/gallery.fixture';
+import { slopeFixture } from '../../../packages/shared/src/stories/forms/slope.fixture';
+import { dumbbellFixture } from '../../../packages/shared/src/stories/forms/dumbbell.fixture';
+import { barsFixture } from '../../../packages/shared/src/stories/forms/bars.fixture';
+import { cascadeFixture } from '../../../packages/shared/src/stories/forms/heatmap.fixture';
+import { ridgelineFixture } from '../../../packages/shared/src/stories/forms/ridgeline.fixture';
+import { bumpFixture } from '../../../packages/shared/src/stories/forms/bump.fixture';
+import { scatterFixture } from '../../../packages/shared/src/stories/forms/scatter.fixture';
+import { trailFixture } from '../../../packages/shared/src/stories/forms/trail.fixture';
+import { mapFixture } from '../../../packages/shared/src/stories/forms/map.fixture';
 import { EDITIONS, editionInk, palettes } from '../../../packages/shared/src/tokens';
 import { chartVars } from '../../../packages/shared/src/charts/scene';
 import { tokensCss } from '../../../apps/web/src/lib/tokens-css';
@@ -29,7 +39,7 @@ function svg(s: Scene, label: string): string {
   }).join('');
   return `<svg class="ch" viewBox="0 0 ${s.width} ${Math.ceil(s.height)}" width="${s.width}" height="${Math.ceil(s.height)}" role="img" aria-label="${esc(label)}">${walk(s.nodes)}</svg>`;
 }
-const roman = (k: number) => ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'][k - 1]!;
+const roman = (k: number) => ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'][k - 1]!;
 
 const fonts = ['NewsreaderText-Regular:Newsreader Text:400:normal', 'NewsreaderText-Italic:Newsreader Text:400:italic', 'NewsreaderDisplay-Regular:Newsreader Display:400:normal', 'NewsreaderDisplay-Medium:Newsreader Display:500:normal', 'NewsreaderDisplay-Italic:Newsreader Display:400:italic', 'Schibsted-Regular:Schibsted Grotesk:400:normal', 'Schibsted-Medium:Schibsted Grotesk:500:normal', 'Schibsted-SemiBold:Schibsted Grotesk:600:normal']
   .map((f) => { const [file, fam, w, st] = f.split(':'); return `@font-face{font-family:'${fam}';src:url('../../../apps/web/public/fonts/${file}.woff2') format('woff2');font-weight:${w};font-style:${st};font-display:swap}`; }).join('');
@@ -127,7 +137,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.55 'Newsreader T
 .colophon ul{margin:0 0 12px;padding-left:18px}
 `;
 
-const nav = (on: string) => `<div class="combar"><b>Data stories</b><a href="atlas.html" class="${on === 'atlas' ? 'on' : ''}">The fertility story</a><a href="inks.html" class="${on === 'inks' ? 'on' : ''}">Ink specimen</a><a href="plates.html">First drafts</a><span>Drawn by packages/shared/src/stories · title is a placeholder</span></div>`;
+const nav = (on: string) => `<div class="combar"><b>Data stories</b><a href="atlas.html" class="${on === 'atlas' ? 'on' : ''}">The fertility story</a><a href="gallery.html" class="${on === 'gallery' ? 'on' : ''}">Gallery of forms</a><a href="inks.html" class="${on === 'inks' ? 'on' : ''}">Ink specimen</a><a href="plates.html">First drafts</a><span>Drawn by packages/shared/src/stories · title is a placeholder</span></div>`;
 const head = (title: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${css}</style></head>`;
 
 function plateHtml(p: Plate, n: number): string {
@@ -186,4 +196,52 @@ ${story.movements.map((m) => `<div class="mv"><span class="caps">Movement ${m.nu
 </style><div class="band"></div>${nav('inks')}<main class="wrap"><p class="intro">The same two plates in each of the eight edition inks, light and dark. Every colour is a role (the story's ink, the greys, the machine's blue) read from the tokens; nothing is chosen per plate. Each ink is tested: the story line against the ground, text set on the ink, the hatching.</p><div class="cells">${cells}</div></main></body></html>`;
   writeFileSync(join(here, 'inks.html'), html);
 }
-console.log('built atlas.html and inks.html from the story');
+
+// The gallery: every form in the grammar, each drawn from real rows, wide and phone.
+{
+  const g: Gallery = JSON.parse(readFileSync(join(root, 'packages/shared/fixtures/stories/gallery.json'), 'utf8'));
+  const from = (k: string) => story.plates.find((p) => p.key === k)!;
+  const map = mapFixture(g);
+  const cascade = cascadeFixture(g), bars = barsFixture(g), bump = bumpFixture(g);
+  const entries: { name: string; use: string; figure: Figure; caption: string; fold?: boolean; facts?: { key: string; value: number; method: string }[] }[] = [
+    { name: 'Lines', use: 'Change over time, with every other member for shape, the source’s projection dashed and its ranges hatched, references and named zones; one or more panels on one time axis.', figure: from('fall').figure, caption: from('fall').caption },
+    { name: 'Swarm', use: 'Every member placed at the moment something happened to it, sized by its weight; a step panel above on the same time scale. The fold-out form.', figure: from('crossing').figure, caption: from('crossing').caption, fold: true },
+    { name: 'Heatmap', use: 'A value for every member and every year at once, on a diverging ramp turned on a meaningful midpoint; members grouped and ordered by when something happened.', figure: cascade, caption: `Total fertility rate of the ${cascade.rows.length} most populous countries, each year, ordered by when it fell below 2.1.`, facts: [{ key: 'rows', value: cascade.rows.length, method: 'Countries on the heatmap.' }] },
+    { name: 'Map', use: 'A value for every country, binned on the same ramp; India drawn as India depicts its boundaries; no data in quiet grey.', figure: map, caption: `Total fertility rate in 2023.${map.unmapped.length ? ` Not on the map: ${map.unmapped.join(', ')}.` : ''}` },
+    { name: 'Scatter', use: 'Two measures together, each circle a member sized by its weight, the members the words name labelled on the plot.', figure: scatterFixture(g), caption: 'Median age against total fertility rate in 2023; circle area is population.' },
+    { name: 'Trail', use: 'How a few members moved through two measures over time: a path each, a dot every ten years, the projection dashed.', figure: trailFixture(g), caption: 'Median age against total fertility rate, 1950 to 2023, and the UN projection to 2100.' },
+    { name: 'Ridgeline', use: 'How a distribution shifts: one density a moment on one height scale, its median marked, the projected moment hatched.', figure: ridgelineFixture(g), caption: 'Total fertility rate across countries in six years; the last is the UN projection.' },
+    { name: 'Slope', use: 'Change between two moments for a dozen or so members, labels spread so none collide.', figure: slopeFixture(g), caption: 'Total fertility rate in 1990 and 2023.' },
+    { name: 'Dumbbell', use: 'Two values for each member, then (a ring) and now (a dot), sorted by now.', figure: dumbbellFixture(g), caption: 'Total fertility rate in 1970 and 2023.' },
+    { name: 'Bars', use: 'Amounts ranked, from zero, values at the tips, a reference where the words need one.', figure: bars, caption: `The ${bars.bars.length} lowest total fertility rates in 2023, with the world’s.`, facts: [{ key: 'bars', value: bars.bars.length, method: 'Countries on the chart.' }] },
+    { name: 'Bump', use: 'Rankings over time: ranks worked out by code among the members shown, names at both ends.', figure: bump, caption: `Rank by population among the ${bump.lines.length} most populous countries of 2023, every ten years.`, facts: [{ key: 'lines', value: bump.lines.length, method: 'Countries ranked.' }, { key: 'step', value: 10, method: 'Years between ranks.' }] },
+    { name: 'Multiples', use: 'The same measure for a few members on one shared scale, each against a grey reference.', figure: from('twelve').figure, caption: from('twelve').caption },
+    { name: 'Stack', use: 'Shares of a whole over time, adding to 100, the projected years hatched.', figure: from('regions').figure, caption: from('regions').caption },
+    { name: 'Pyramid', use: 'A population by age and sex, now in the ink and a later year as a silhouette over it.', figure: from('pyramid').figure, caption: from('pyramid').caption },
+  ];
+  // Every figure in a caption must be in the figure's own rows.
+  for (const e of entries) {
+    const nums = citable({ facts: [{ key: 'replacement', value: 2.1, method: 'Replacement fertility, a definition.' }, ...(e.facts ?? [])], plates: [{ figure: e.figure } as Plate] } as unknown as Story);
+    const bad = untraced(e.caption, nums);
+    if (bad.length) throw new Error(`Gallery "${e.name}": ${bad.join(', ')} not in its rows`);
+  }
+  const card = (e: (typeof entries)[number], n: number) => {
+    const p = { fold: e.fold } as Plate;
+    const wide = drawFigure(e.figure, 'wide', e.fold), phone = drawFigure(e.figure, 'phone');
+    const kw = drawKey(e.figure, 'wide', plateWidth(p, 'wide')), kp = drawKey(e.figure, 'phone', 340);
+    return `<section class="beat${e.fold ? ' fold' : ''}" id="f-${e.figure.form}">
+<div class="m"><div class="no">${roman(n) ?? n}</div><div class="caps">${esc(e.name)}</div><p class="gx-form">${esc(e.figure.form)}</p></div>
+<div class="c"><p class="body gx-use">${esc(e.use)}</p></div>
+<figure class="plate fig"><span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span>
+<div class="plate-head"><span class="pn"><small>Form</small>${esc(e.name)}</span><span class="caps">${esc(e.figure.form)}</span></div>
+${kw ? `<div class="key"><div class="wide">${svg(kw, 'Key')}</div><div class="phone">${svg(kp!, 'Key')}</div></div>` : '<div class="key"></div>'}
+<div class="wide">${svg(wide, e.caption)}</div><div class="phone">${svg(phone, e.caption)}</div>
+<figcaption class="cap">${esc(e.caption)} <span>United Nations, World Population Prospects 2024, via Our World in Data.</span></figcaption></figure></section>`;
+  };
+  const html = `${head('Gallery of forms')}<body class="e-${story.edition}"><style>.gx-form{font:12px/1.3 'DM Mono',ui-monospace,monospace;color:var(--ink2);margin:6px 0 0}.gx-use{color:var(--ink2)}.no{font-size:30px}.gx-end{height:80px}</style><div class="band"></div>${nav('gallery')}
+<main class="wrap"><header class="open grid"><div class="c"><div class="caps kicker">Data stories · the grammar’s forms</div><h1 class="title">A gallery of forms</h1>
+<p class="by">Fourteen forms, each drawn by <span class="mach">packages/shared/src/stories</span> from real UN rows, in the plate, the key and the colours every story uses. Every label is placed against the marks; none collide at either width.</p></div></header>
+${entries.map((e, i) => card(e, i + 1)).join('')}<div class="gx-end"></div></main></body></html>`;
+  writeFileSync(join(here, 'gallery.html'), html);
+}
+console.log('built atlas.html, gallery.html and inks.html from the story and the gallery');

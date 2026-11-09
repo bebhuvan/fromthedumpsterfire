@@ -461,3 +461,22 @@ Dated, newest last. Don't reopen these without a new reason.
   website and the app count the same words. Code blocks are not counted (neither prose nor quotation).
 - **Ornaments are drawn marks, not font glyphs**: the Newsreader subsets lack fleurons, and a fallback
   font drew the hedera as a red emoji in a test.
+
+## 2026-11-09 (data stories: the grammar, codified)
+
+- **A weekly data story is told as plates, "Atlas"** (the editor, on the comps in
+  `docs/design-comps/data-stories/`: "I like the direction"). Numbered, framed plates in movements, the
+  UN's projections hatched ("not yet"), the editor's own words in the margin, a ledger to open and a
+  colophon to close. The machine writes the story's words (the editor: "the commentary is written by
+  the model"), so headlines and prose are the machine's blue sans, every figure traced to the rows.
+  Rejected: a newsroom desk with scroll-drawn lines (generic; motion added nothing) and an almanac of
+  sparklines in sentences (gimmicky, cramped).
+- **The grammar is code in `packages/shared/src/stories`, drawn as chart-kit scenes** (`docs/DATA-STORIES.md`).
+  The website already sets scenes inline with colour classes and the Desk Worker already rasterises them
+  for the app, so a story needs no second renderer. Rejected: a separate SVG-string renderer (the comps'
+  first version), which would have needed its own picture path and its own colour CSS.
+- **Hatching is drawn as line segments, not SVG patterns**, so it renders the same inline, in resvg and
+  in any viewer, with no pattern ids to collide between two figures on a page.
+- **Facts carry derived numbers.** A story stores the numbers code worked out from its rows (a quartile, a
+  count, a peak), each with its method; machine words may cite a row or a fact and nothing else.
+- **The scene gains `dash` and `so` (stroke opacity)**, the only change to the chart kit.

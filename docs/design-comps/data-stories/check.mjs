@@ -56,6 +56,8 @@ for (const p of pages) for (const width of widths) {
   await send('Runtime.evaluate', { expression: 'document.fonts.ready', awaitPromise: true });
   const m = await send('Runtime.evaluate', { expression: probe, returnByValue: true });
   const found = JSON.parse(m.result.result.value);
+  const figures = (await send('Runtime.evaluate', { expression: "document.querySelectorAll('svg.ds, svg.ch').length", returnByValue: true })).result.result.value;
+  if (!figures) found.push({ fig: p, kind: 'no figures on the page', a: '' });
   failures += found.length;
   console.log(`${p} @${width}: ${found.length ? found.length + ' problems' : 'clean'}`);
   for (const f of found) console.log(`  ${f.kind}: "${f.a}"${f.b ? ` and "${f.b}"` : ''}  [${f.fig}]`);

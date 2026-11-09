@@ -2,15 +2,17 @@
 // what it must, and every plate of the fertility story draws at both widths with no label on
 // another or off its figure.
 
-import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import { ALL_INKS } from './ink';
 import { drawFigure, drawKey, keyOf } from './plate';
 import { untraced, validateStory, type Story } from './spec';
 import { expectClean, texts } from './testkit';
 
-const story: Story = JSON.parse(readFileSync(new URL('../../fixtures/stories/fertility.json', import.meta.url), 'utf8'));
-const note = readFileSync(new URL('../../fixtures/stories/fertility-editor-note.txt', import.meta.url), 'utf8');
+// The package's types leave out Node, so node:fs is loaded as the chart kit's tests load it.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const fs: any = await import('node:fs' as string);
+const story: Story = JSON.parse(fs.readFileSync(new URL('../../fixtures/stories/fertility.json', import.meta.url), 'utf8'));
+const note: string = fs.readFileSync(new URL('../../fixtures/stories/fertility-editor-note.txt', import.meta.url), 'utf8');
 const copy = (): Story => JSON.parse(JSON.stringify(story));
 
 describe('inks', () => {
