@@ -1166,4 +1166,10 @@ ranked, with screenshots in `docs/desk-review/`).
   with the note first, folded steps and one *Go through N waiting* step; keep-or-skip screens for an
   item and a whole Haul; the Haul page in printed order with marks, hold-to-move and Publish in reach.
   Checked at 390px in light and dark with headless Chromium; not yet tried on the editor's phone.
+- **Deployed to production 2026-11-09** on the editor's "take it live": migration 0011 applied to
+  `fdf-desk` D1 through `cf` (no item was in two Hauls), then `fdf-pipeline` and `fdf-desk` deployed
+  from branch `claude/amazing-curran-8defdc`. Checked: `/v1/health` answers, the Desk still sits behind
+  Access, and on the real data all 39 published items read *Published in Haul 00N, version 4*. The
+  check on Haul 002 finds two items with no date (6, Robert Caro; 15, Censusnama) plus doubts.
+  `launch-2026-10-24` must be fast-forwarded to this branch before the next deploy from it.
 
