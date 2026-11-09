@@ -1,4 +1,5 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import type { ScrollView } from 'react-native';
 import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
@@ -18,25 +19,37 @@ export const BAND = 4;
  * Pages of a Haul pass its edition ink: a band across the top edge, as on the website, so a reader
  * knows which Haul they are in before reading a word. It stays put while the page scrolls.
  */
+/** Scroll the page to a point in its body (a y from onLayout of one of the page's own blocks). */
+const ScrollToBody = createContext<(y: number) => void>(() => {});
+export const useScrollToBody = () => useContext(ScrollToBody);
+
 export function Screen({ children, header, edition }: { children: ReactNode; header?: ReactNode; edition?: string }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const y = useRef(new Animated.Value(0)).current;
+  const scroller = useRef<ScrollView>(null);
+  const bodyY = useRef(0);
+  const scrollToBody = useCallback((at: number) => scroller.current?.scrollTo({ y: Math.max(0, bodyY.current + at - insets.top - 8), animated: true }), [insets.top]);
   const scrim = y.interpolate({ inputRange: [0, insets.top + 24], outputRange: [0, 1], extrapolate: 'clamp' });
 
   return (
     <View style={{ flex: 1, backgroundColor: p.bg }}>
       <Animated.ScrollView
+        ref={scroller}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 28 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y } } }], { useNativeDriver: true })}
       >
-        {header}
-        <EditionInk.Provider value={edition}>
-          <View style={styles.body}>{children}</View>
-        </EditionInk.Provider>
+        <ScrollToBody.Provider value={scrollToBody}>
+          {header}
+          <EditionInk.Provider value={edition}>
+            <View style={styles.body} onLayout={(e) => (bodyY.current = e.nativeEvent.layout.y)}>
+              {children}
+            </View>
+          </EditionInk.Provider>
+        </ScrollToBody.Provider>
       </Animated.ScrollView>
       <Animated.View pointerEvents="none" style={[styles.scrim, { height: insets.top, backgroundColor: p.bg, opacity: scrim }]} />
       {edition ? <View pointerEvents="none" accessible={false} style={[styles.band, { backgroundColor: edition }]} /> : null}

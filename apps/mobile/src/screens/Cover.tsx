@@ -2,6 +2,7 @@
 // edition ink, the title (the loud thing), the deck, and the fingerprint: every object on one line by
 // the year it was made. Then the field note and its route, and the contents as specimens of each
 // find's own form.
+import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
@@ -13,7 +14,7 @@ import { longDate, stampDate } from '@/lib/format';
 import { useReader } from '@/lib/store';
 import { Body, Machine, Meta, Title } from '@/ui/type';
 import { EditionMark, Action, Apparatus, Divider, Masthead, Ornament, Sign, TopBar, VoiceNote } from '@/ui/parts';
-import { Screen } from '@/ui/screen';
+import { useScrollToBody, Screen } from '@/ui/screen';
 import { Specimen } from '@/ui/Specimen';
 import { NoteBody } from '@/ui/NoteBody';
 import { Fingerprint, objects } from '@/ui/Fingerprint';
@@ -30,6 +31,7 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
   const resume = place && place.n === haul.number && place.item ? haul.items.find((i) => i.id === place.item) : undefined;
   const isLatestRead = resume ? haul.items.indexOf(resume) === haul.items.length - 1 : false;
   const note = haul.fieldNote;
+  const contentsY = useRef(0);
   const lead = noteLead(note.body ?? note.paragraphs.map((t) => ({ kind: 'paragraph' as const, runs: [{ text: t }] })));
   const thread = haul.threads[0];
   const numberOf = new Map(haul.items.map((i, k) => [i.id, k + 1]));
@@ -45,16 +47,18 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
           <Masthead size={16} />
         </View>
       )}
-      <View style={styles.head} accessible accessibilityLabel={`Haul ${haul.number}, ${longDate(haul.publishedAt)}, ${objects(haul.items.length).toLowerCase()}`}>
-        <View style={styles.noRow}>
-          <Text style={[styles.noH, { color: ed }]}>HAUL</Text>
-          <Text style={[styles.noN, { color: ed }]}>{haulSlug(haul.number)}</Text>
+      <View style={styles.head}>
+        <View accessible accessibilityLabel={`Haul ${haul.number}, ${longDate(haul.publishedAt)}`}>
+          <View style={styles.noRow}>
+            <Text style={[styles.noH, { color: ed }]}>HAUL</Text>
+            <Text style={[styles.noN, { color: ed }]}>{haulSlug(haul.number)}</Text>
+          </View>
+          <Text style={[styles.noMeta, { color: p.ink2 }]}>
+            {weekday(haul.publishedAt)} {longDate(haul.publishedAt)}
+          </Text>
         </View>
-        <Text style={[styles.noMeta, { color: p.ink2 }]}>
-          {weekday(haul.publishedAt)} {longDate(haul.publishedAt)}
-          {'\n'}
-          {objects(haul.items.length)}
-        </Text>
+        {/* Straight to the contents, as the website's cover does, past a long field note. */}
+        <JumpToContents label={`${objects(haul.items.length)} in this Haul`} at={contentsY} />
         {/* The date stamp (2026-11-09, a signature), as the website sets it. Decorative: the date and
             corrections are given in words on the cover. */}
         <View style={styles.stamps} accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none">
@@ -136,7 +140,7 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
       ) : null}
 
       <Ornament style={{ marginTop: 40 }} />
-      <View style={{ marginTop: 36 }}>
+      <View style={{ marginTop: 36 }} onLayout={(e) => (contentsY.current = e.nativeEvent.layout.y)}>
         <View style={[styles.contentsHead, { borderTopColor: p.ink }]}>
           <Apparatus>In this Haul</Apparatus>
           <Text style={[styles.contentsSub, { color: p.ink2 }]}>{objects(haul.items.length)}, each set in its own printed form</Text>
@@ -178,6 +182,24 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
   );
 }
 
+/** "Sixteen objects in this Haul ↓": straight to the contents. Rendered inside the Screen, whose
+ * scroller it asks to move (the cover itself sits outside it). */
+function JumpToContents({ label, at }: { label: string; at: { current: number } }) {
+  const p = usePalette();
+  const scrollToBody = useScrollToBody();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: go to the contents`}
+      onPress={() => scrollToBody(at.current)}
+      hitSlop={8}
+      style={({ pressed }) => [{ alignSelf: 'flex-start' }, pressed && { opacity: 0.6 }]}
+    >
+      <Text style={[styles.noMeta, styles.jump, { color: p.ink2, textDecorationColor: p.rule }]}>{label} ↓</Text>
+    </Pressable>
+  );
+}
+
 /** A library date stamp in the Haul's ink, a few degrees off true. */
 function Stamp({ ink, top, date, foot, turn, double }: { ink: string; top: string; date: string; foot: string; turn: string; double?: boolean }) {
   const face = (
@@ -203,6 +225,7 @@ const styles = StyleSheet.create({
   more: { alignItems: 'center', marginTop: 30, gap: 4 },
   moreT: { fontFamily: fonts.displayItalic, fontSize: 21, lineHeight: 28, marginTop: 10, textDecorationLine: 'underline' },
   moreK: { fontFamily: fonts.sans, fontSize: 12.5, lineHeight: 17 },
+  jump: { textDecorationLine: 'underline' },
   stamps: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12, marginLeft: 3 },
   stamp: { borderWidth: 2, paddingHorizontal: 9, paddingTop: 4, paddingBottom: 3, alignItems: 'center', opacity: 0.85 },
   stampOuter: { borderWidth: 1, padding: 2, opacity: 0.85 },

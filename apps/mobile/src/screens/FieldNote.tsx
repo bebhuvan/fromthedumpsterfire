@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { haulSlug, type Haul } from '@fdf/shared/haul';
 import { editionOf } from '@fdf/shared/tokens';
+import { noteLead } from '@fdf/shared/fieldnote';
 import { fonts, typeColor, useEdition, usePalette } from '@/theme';
-import { Machine, Title } from '@/ui/type';
+import { Machine, Meta, Title } from '@/ui/type';
 import { NoteBody } from '@/ui/NoteBody';
 import { Action, Apparatus, Folio, RunHead, Sign, TopBar, VoiceNote, playable } from '@/ui/parts';
 import { Screen } from '@/ui/screen';
@@ -16,6 +17,7 @@ export function FieldNote({ haul }: { haul: Haul }) {
   const thread = haul.threads[0];
 
   const ed = useEdition(haul);
+  const minutes = noteLead(note.body ?? note.paragraphs.map((t) => ({ kind: 'paragraph' as const, runs: [{ text: t }] }))).minutes;
 
   return (
     <Screen
@@ -27,7 +29,12 @@ export function FieldNote({ haul }: { haul: Haul }) {
         </View>
       }
     >
-      <Title title={note.title} size={44} style={{ marginTop: 24 }} />
+      {/* The salvage tag, as the website's note page sets it: the Haul's number, what this is, its length. */}
+      <View style={[styles.tag, { borderTopColor: p.ink }]} accessible accessibilityLabel={`Haul ${haul.number}, the field note, ${minutes} minutes`}>
+        <Text style={[styles.tagN, { color: ed }]}>{haulSlug(haul.number)}</Text>
+        <Meta>The field note · {minutes} minutes</Meta>
+      </View>
+      <Title title={note.title} size={44} style={{ marginTop: 16 }} />
 
       {note.audio && playable(note.audio) ? (
         <View style={{ marginTop: 22 }}>
@@ -67,6 +74,8 @@ export function FieldNote({ haul }: { haul: Haul }) {
 }
 
 const styles = StyleSheet.create({
+  tag: { marginTop: 22, borderTopWidth: 1, paddingTop: 8, flexDirection: 'row', alignItems: 'baseline', gap: 12 },
+  tagN: { fontFamily: fonts.displayRegular, fontSize: 22, lineHeight: 24, includeFontPadding: false },
   para: { fontFamily: fonts.text, fontSize: 18, lineHeight: 28.5 },
   step: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 7 },
   day: { width: 40, fontFamily: fonts.sansMedium, fontSize: 12, marginTop: 4 },

@@ -93,7 +93,7 @@ years ago (recent things spread apart, old ones still sit where they belong; the
 scale). On the website (2026-10-25 facelift) each mark is a small dot in its type's colour, ringed in ink,
 on a hairline stem, numbered in small grey figures that turn ember on hover; marks whose labels would
 touch rise into higher lanes. The axis is a hairline with a tick under each year, the last year in the
-edition ink. On a phone the numbers drop and the lanes sit lower. (The app still draws squares.) On the cover it is full size;
+edition ink. On a phone the numbers drop and the lanes sit lower. The app draws the same dots (2026-11-09; they were squares there). On the cover it is full size;
 in every item's running head it is a row of ticks with the current item tall; in the archive each back
 issue carries its own. No two Hauls draw the same one.
 
