@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { haulSlug, type Haul, type RouteStep } from '@fdf/shared/haul';
 import { checkStyle } from '@fdf/shared/style';
 import { embedLinks, noteParts, partsPlain } from '@fdf/shared/fieldnote';
+import { plainPath, plainProblem } from '@fdf/shared/prepublish';
 import { EDITIONS, editionOf, SWATCHES, typeLabel } from '@fdf/shared/tokens';
 import { api, displayTitle, parseChecks, type HaulDetail, type HaulRecord, type Note, type PreviewResult, type PublishResult, type TrayItem } from '../api';
 import { Link, safeHref, SaveNote, useAutosave, useLoad, useToast } from '../lib/core';
@@ -508,7 +509,15 @@ function PublishPanel({ haulId, haul, versions, onPublished, onPreview, showing 
     }
   }
 
-  const problems = check ? [...check.problems.map((p) => `${p.itemTitle ? `${p.itemTitle}: ` : ''}${p.message}`), ...check.bundleErrors.map((e) => `${e.path}: ${e.message}`)] : [];
+  const problems = check
+    ? [
+        ...check.problems.map((p) => `${p.itemTitle ? `${p.itemTitle}: ` : ''}${plainProblem(p.message).text}`),
+        ...check.bundleErrors.map((e) => {
+          const w = plainPath(e.path);
+          return `${w.item != null ? `Item ${w.item + 1}, ${w.where}` : w.where}: ${e.message}`;
+        }),
+      ]
+    : [];
   return (
     <section className="panel plate stack">
       <div className="label ink">{published ? `Published · v${haul.version}` : 'Publish'}</div>

@@ -119,6 +119,7 @@ function ItemReviewInner({ id }: { id: string }) {
           <h1 className="display">{displayTitle(item)}</h1>
           {item.creator && <div className="serif" style={{ fontSize: 19, fontStyle: 'italic', marginTop: 6 }}>{item.creator}</div>}
           <StandingBar detail={data} onChange={reload} />
+          <StillToDo detail={data} chosen={chosen} ideasIn={ideas.filter(isIn).length} />
           <div className="status-line">
             {flight ? (
               <Spinner text={`${item.status_detail ?? item.status}${data.run?.step ? ` · ${data.run.step}` : ''}`} />
@@ -143,7 +144,6 @@ function ItemReviewInner({ id }: { id: string }) {
             <button className="btn quiet small" disabled={!!busy} onClick={() => act('archive', () => patch({ archived: !item.archived }), item.archived ? 'Back in the tray' : 'Archived')}>
               {item.archived ? 'Unarchive' : 'Archive'}
             </button>
-            <DeleteItem id={id} busy={!!busy} />
           </div>
         </header>
 
@@ -269,6 +269,10 @@ function ItemReviewInner({ id }: { id: string }) {
                   </button>
                 </div>
                 <p className="small muted" style={{ margin: 0 }}>Redrafting keeps everything you chose, kept or edited.</p>
+                <div className="row">
+                  <DeleteItem id={id} busy={!!busy} />
+                  <span className="small muted">Deleting is for good. Archive (at the top) keeps it, out of the tray.</span>
+                </div>
                 <ItemSuggestions itemId={id} suggestions={data.suggestions} onChange={reload} />
                 <ConnectionsSection detail={data} act={act} />
               </div>
@@ -1038,15 +1042,54 @@ function WikiSection({ itemId, cards, act, tick, saving }: { itemId: string; car
 
 const BLOCKING = ['links', 'quotes', 'citations', 'style'];
 
+const CHECK_STEP: Record<string, string> = { links: 'step-details', quotes: 'step-excerpt', citations: 'step-notes', style: 'step-notes' };
+
+/** What still stands between the item and a Haul, each with the step where it is done. */
+function todoFor(detail: ItemDetail, chosen: Excerpt | null, ideasIn: number): Array<{ text: string; short: string; step: string }> {
+  const { item, checks } = detail;
+  const todo: Array<{ text: string; short: string; step: string }> = [];
+  if (!item.why_text?.trim()) todo.push({ text: "Say why it's here.", short: 'your note', step: 'step-why' });
+  if (item.type === 'image' && !detail.plates.some((p) => p.status === 'chosen' && p.id === item.plate)) todo.push({ text: 'Add the picture, with its credit and licence.', short: 'the picture', step: 'step-plate' });
+  if (!chosen && !ideasIn && !EXCERPT_OPTIONAL.has(item.type))
+    todo.push({ text: 'Choose an excerpt' + (detail.drafts.some((d) => d.kind === 'idea' && d.status !== 'rejected') ? ', or tick some big ideas.' : '.'), short: 'an excerpt', step: 'step-excerpt' });
+  for (const c of checks.filter((c: Check) => c.status === 'fail' && BLOCKING.includes(c.name)))
+    todo.push({ text: `${CHECK_NAMES[c.name] ?? c.name}: ${c.detail.summary ?? 'failed'}`, short: (CHECK_NAMES[c.name] ?? c.name).toLowerCase(), step: CHECK_STEP[c.name] ?? 'step-why' });
+  return todo;
+}
+
+/** At the top of the item, on a phone above a long page: what is left, each a jump to its step. */
+function StillToDo({ detail, chosen, ideasIn }: { detail: ItemDetail; chosen: Excerpt | null; ideasIn: number }) {
+  if (IN_FLIGHT.test(detail.item.status) || detail.item.status === 'failed') return null;
+  const todo = todoFor(detail, chosen, ideasIn);
+  if (!todo.length) return null;
+  return (
+    <p className="still-to-do small">
+      <span className="warn">Still to do:</span>{' '}
+      {todo.map((t, i) => (
+        <span key={t.step + t.short}>
+          {i > 0 && ' · '}
+          <a
+            href={`#${t.step}`}
+            onClick={(e) => {
+              e.preventDefault();
+              const el = document.getElementById(t.step);
+              const more = el?.closest('details');
+              if (more) more.open = true;
+              el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }}
+          >
+            {t.short}
+          </a>
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function Ready({ detail, chosen, ideasIn, busy, onRecheck, onPlaced }: { detail: ItemDetail; chosen: Excerpt | null; ideasIn: number; busy: boolean; onRecheck: () => void; onPlaced: () => void }) {
   const { item, checks } = detail;
   if (IN_FLIGHT.test(item.status)) return null;
-  const todo: string[] = [];
-  if (!item.why_text?.trim()) todo.push("Say why it's here.");
-  if (item.type === 'image' && !detail.plates.some((p) => p.status === 'chosen' && p.id === item.plate)) todo.push('Add the picture, with its credit and licence.');
-  if (!chosen && !ideasIn && !EXCERPT_OPTIONAL.has(item.type)) todo.push('Choose an excerpt' + (detail.drafts.some((d) => d.kind === 'idea' && d.status !== 'rejected') ? ', or tick some big ideas.' : '.'));
-  const failing = checks.filter((c: Check) => c.status === 'fail' && BLOCKING.includes(c.name));
-  for (const c of failing) todo.push(`${CHECK_NAMES[c.name] ?? c.name}: ${c.detail.summary ?? 'failed'}`);
+  const todo = todoFor(detail, chosen, ideasIn).map((t) => t.text);
   const ready = todo.length === 0;
   return (
     <section className={`step section ready${ready ? ' is-ready' : ''}`} aria-label="Ready for a Haul">

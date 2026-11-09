@@ -495,3 +495,5 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
 .sugg-bar { font: 600 15px/1.4 var(--sans); }
 [id^='step-'] { scroll-margin-top: 80px; }
 #cover, #field-note { scroll-margin-top: 80px; }
+.still-to-do { margin: 10px 0 0; line-height: 1.6; }
+.still-to-do a { color: var(--ink); font-weight: 600; display: inline-block; padding: 12px 4px; margin: -12px 0; }
