@@ -1,6 +1,6 @@
 // Screenshot comps with headless Chrome over CDP: full page, light and dark, at given widths.
 // node docs/design-comps/_shared/shoot.mjs <dir-with-html> <outdir> [widths=390,1280] [pages=all]
-// CHROME=/usr/bin/chromium picks another browser.
+// CHROME=/usr/bin/chromium picks another browser; REDUCED_MOTION=1 asks pages for still figures; MAX_HEIGHT (default 8000) caps the page height.
 import { spawn } from 'node:child_process';
 import { readdirSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -31,14 +31,14 @@ ws.addEventListener('message', (e) => {
 const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
 await send('Page.enable');
 for (const p of pages) for (const width of widths) for (const scheme of ['light', 'dark']) {
-  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }, ...(process.env.REDUCED_MOTION ? [{ name: 'prefers-reduced-motion', value: 'reduce' }] : [])] });
   await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 600 });
   await send('Page.navigate', { url: dir.startsWith('http') ? dir + p : 'file://' + resolve(dir, p + '.html') });
   await new Promise((r) => setTimeout(r, 800));
   const m = await send('Runtime.evaluate', { expression: 'JSON.stringify([document.documentElement.scrollHeight, document.documentElement.scrollWidth])', returnByValue: true });
   const [h, sw] = JSON.parse(m.result.result.value);
   if (sw > width) console.log(`OVERFLOW ${p} @${width}: scrollWidth ${sw}`);
-  const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: Math.min(h, 8000), scale: 1 } });
+  const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: Math.min(h, Number(process.env.MAX_HEIGHT ?? 8000)), scale: 1 } });
   writeFileSync(join(out, `${p.replace(/^\/$/, 'home').replace(/^\//, '').replace(/\//g, '_')}-${width}-${scheme}.png`), Buffer.from(shot.result.data, 'base64'));
 }
 ws.close();
