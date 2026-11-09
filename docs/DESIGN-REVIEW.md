@@ -170,3 +170,28 @@ without the whole issue becoming a scrapbook.
   a different path by design), so pages were reached through search.
 - Production still shows the old faults until the editor deploys the web and ships an app update.
 - Search, the archive page and the threads pages were not reviewed in depth.
+
+## Signatures: a little of the old web, in our own language
+
+The editor asked (2026-11-09) whether the site could recapture some of the old internet's magic, when
+no two sites looked alike and many were a little weird. Yes, with one condition: the weirdness comes
+from what the magazine already is (an editor's desk, proof marks, printed objects, salvage, fire), not
+from the old web's costume (hit counters, marquees, cursor trails). Each signature is used in one
+place and means one thing. `signatures.html` (`shots/signatures-1320-light.png`) sketches seven:
+
+1. **The ledger.** At the foot of each item, whose words are on the page, counted by code from the
+   bundle: the editor's (italic), the source's, matched (serif), the machine's, checked (blue), with a
+   bar in those three inks. The hit counter turned into the house's promise. *Recommended first.*
+2. **The date stamp.** The cover's date as a library stamp in the Haul's ink, a few degrees off true;
+   a second CORRECTED stamp when a Haul is corrected.
+3. **The page that burned.** The 404 on a sheet with a corner burned away, charred in ember: the one
+   page where the fire is literal.
+4. **Taped plates.** Public-domain plates held on with two strips of tape. Plates only.
+5. **An ornament per edition.** A printer's fleuron per Haul in its ink, between the field note's
+   sections and at the end of each item; drawn as marks like the flame (the fonts lack the glyphs).
+6. **The archive as a card drawer.** Each Haul an index card with its tab in its ink, like See also.
+7. **The slug and the neighbours.** The footer as a printer's slug (set in, last salvaged, chosen by)
+   and a neighbours line, the old web's blogroll; the list would be the editor's.
+
+All seven are CSS and markup on the web (masks for the burn and the fleurons, no script) and views in
+the app; none needs a dependency or a schema change. The ledger counts words already in the bundle.
