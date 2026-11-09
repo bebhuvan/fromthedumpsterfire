@@ -142,12 +142,17 @@ app.post('/v1/devices', async (c) => {
   }
   const p = deviceSchema.safeParse(body);
   if (!p.success) return c.json({ error: 'Expected { token, platform: "android" | "ios", enabled }' }, 400);
+  // Turning notifications off forgets the phone entirely: nothing is kept for a reader who said no.
+  if (!p.data.enabled) {
+    await c.env.DB.prepare('DELETE FROM devices WHERE token = ?').bind(p.data.token).run();
+    return c.json({ ok: true });
+  }
   const now = nowIso();
   await c.env.DB.prepare(
     `INSERT INTO devices (token, platform, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
      ON CONFLICT (token) DO UPDATE SET platform = excluded.platform, enabled = excluded.enabled, updated_at = excluded.updated_at, failures = 0`,
   )
-    .bind(p.data.token, p.data.platform, p.data.enabled ? 1 : 0, now, now)
+    .bind(p.data.token, p.data.platform, 1, now, now)
     .run();
   return c.json({ ok: true });
 });
