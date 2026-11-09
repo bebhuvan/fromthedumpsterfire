@@ -8,7 +8,7 @@ import { checkStyle } from '@fdf/shared/style';
 import { excerptAdvice, isPunctuated } from '@fdf/shared/quoting';
 import { type ContentType } from '@fdf/shared/tokens';
 import { api, displayTitle, type Check, type Draft, type Excerpt, type ItemDetail, type MarginalBody, type Note, type Title, type TitleBody, type TrayItem, type WikiCard } from '../api';
-import { navigate, safeHref, SaveNote, useAutosave, useKeys, useLoad, usePoll, useToast } from '../lib/core';
+import { Link, navigate, safeHref, SaveNote, useAutosave, useKeys, useLoad, usePoll, useToast } from '../lib/core';
 import { ChecksPanel, deskTypeForm, deskTypeLabel, NoteCompare, Spinner, TextArea, TypeSelect, VoiceNote } from '../ui/parts';
 import { Reader, type Selection } from './Reader';
 import { TrayList } from './Tray';
@@ -128,7 +128,7 @@ function ItemReviewInner({ id }: { id: string }) {
             ) : item.status === 'paused' ? (
               <span className="warn">{item.status_detail}</span>
             ) : (
-              <span>Read and drafted · captured {new Date(item.captured_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+              <span>Captured {new Date(item.captured_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })}</span>
             )}
             <span className="top-spacer" />
             {safeHref(item.canonical_url || item.url) && (
@@ -196,7 +196,7 @@ function ItemReviewInner({ id }: { id: string }) {
 
           <div className="steps">
             {item.status === 'failed' && !flight && <FetchFailed detail={data} act={act} />}
-            <Step id="step-why" n={next()} title="Why it's here" done={Boolean(item.why_text?.trim())} hint="Your words, typed or dictated. Never reworded.">
+            <Step id="step-why" n={next()} voice="editor" title="Your note" done={Boolean(item.why_text?.trim())} hint={item.why_text?.trim() ? undefined : 'Why it is here, typed or dictated. Never reworded.'}>
               <WhySection key={`why-${id}`} detail={data} onSaved={reload} />
             </Step>
 
@@ -224,42 +224,63 @@ function ItemReviewInner({ id }: { id: string }) {
               </Step>
             )}
 
-            {ideas.length > 0 && (
-              <Step n={next()} title="The big ideas" done={ideas.some(isIn)} hint="For a long piece. Tick the ones to print, in the machine's voice, each with where it is said.">
-                <CheckedLines kind="idea" drafts={ideas} act={act} tick={tick} saving={saving} autoCaptions={Boolean(source && ['captions-auto', 'captions', 'transcript', 'whisper'].includes(source.extractor) && !isPunctuated(source.text))} />
-              </Step>
-            )}
-
             {(ideas.length > 0 || ['talk', 'video', 'podcast', 'paper'].includes(item.type)) && (
               <Step n={next()} title="Start here" optional done={Boolean(item.start_at)} hint="For a long piece: the moment a reader should begin, and a few words on why. Printed near the top.">
                 <StartHereSection detail={data} ideas={ideas} onPatch={patch} />
               </Step>
             )}
 
+            {/* Settled things, one line each; "change" opens the step. */}
+            <div className="folds">
+              <Fold id="step-title" k="Title" summary={<>{displayTitle(item)}<small>{item.title_choice ? 'Your choice' : 'The original'}</small></>}>
+                <TitleSection detail={data} onPatch={patch} />
+              </Fold>
+              <Fold id="step-plate" k="Plate" summary={plateSummary(data)} open={!data.item.plate}>
+                <PlatesSection target={{ kind: 'item', id }} plates={data.plates} decision={data.item.plate} onChange={reload} title="Plate" />
+              </Fold>
+              <Fold id="step-details" k="Details" summary={detailsSummary(item)}>
+                <DetailsSection detail={data} onPatch={patch} />
+              </Fold>
+            </div>
+
+            <section className="step section" id="step-notes" aria-label="The machine's offer">
+              <h2 className="voice-head">
+                <span className="who machine-who">MACHINE</span>
+                <span className="what">Its offer · checked against the sources</span>
+              </h2>
+              <MachineOffer id={id} ideas={ideas} notes={notes} cards={data.wiki} />
+              <details className="every-line">
+                <summary className="small">See every line, edit one, or add a Wikipedia article</summary>
+                <div className="stack" style={{ gap: 18, marginTop: 12 }}>
+                  {ideas.length > 0 && (
+                    <>
+                      <div className="label machine">Big ideas</div>
+                      <CheckedLines kind="idea" drafts={ideas} act={act} tick={tick} saving={saving} autoCaptions={Boolean(source && ['captions-auto', 'captions', 'transcript', 'whisper'].includes(source.extractor) && !isPunctuated(source.text))} />
+                    </>
+                  )}
+                  {notes.length > 0 ? (
+                    <>
+                      <div className="label machine">Margin notes</div>
+                      <CheckedLines kind="marginal" drafts={notes} act={act} tick={tick} saving={saving} />
+                    </>
+                  ) : (
+                    <p className="small muted" style={{ margin: 0 }}>The machine found nothing that needed a margin note.</p>
+                  )}
+                  {setAside > 0 && <p className="small muted" style={{ margin: 0 }}>{setAside} more {setAside === 1 ? 'line was' : 'lines were'} set aside: the checker could not confirm {setAside === 1 ? 'it' : 'them'} from the source.</p>}
+                  <WikiSection itemId={id} cards={data.wiki} act={act} tick={tick} saving={saving} />
+                </div>
+              </details>
+            </section>
+
             <Step n={next()} title="Add to this item" optional done={(data.blocks ?? []).length > 0} hint="Pull quotes, code, a video, a podcast or recording, pictures. Printed after your note, in this order.">
               <BlocksSection detail={data} onChange={reload} />
-            </Step>
-
-            <Step n={next()} title="Title" done={Boolean(item.title_choice)} hint={item.title_choice ? undefined : 'The original title is used unless you pick another.'}>
-              <TitleSection detail={data} onPatch={patch} />
-            </Step>
-
-            <Step id="step-notes" n={next()} title="Notes and further reading" optional hint="Only what you tick is printed. Each line was checked against its source.">
-              {notes.length > 0 ? <CheckedLines kind="marginal" drafts={notes} act={act} tick={tick} saving={saving} /> : <p className="small muted" style={{ margin: 0 }}>The machine found nothing that needed a note.</p>}
-              {setAside > 0 && <p className="small muted" style={{ margin: 0 }}>{setAside} more {setAside === 1 ? 'line was' : 'lines were'} set aside: the checker could not confirm {setAside === 1 ? 'it' : 'them'} from the source.</p>}
-              <WikiSection itemId={id} cards={data.wiki} act={act} tick={tick} saving={saving} />
-            </Step>
-
-            <Step id="step-plate" n={next()} title="" optional bare>
-              <PlatesSection target={{ kind: 'item', id }} plates={data.plates} decision={data.item.plate} onChange={reload} title={<StepTitle n={n} title="Plate" optional />} />
             </Step>
 
             <Ready onPlaced={reload} detail={data} chosen={chosen} ideasIn={ideas.filter(isIn).length} busy={busy === 'check'} onRecheck={() => act('check', () => api.post(`/api/items/${id}/check`), 'Checked')} />
 
             <details className="section more">
-              <summary className="h2">More</summary>
+              <summary className="small">More: redraft, fetch again, connections, delete</summary>
               <div className="stack" style={{ gap: 26, marginTop: 14 }}>
-                <DetailsSection detail={data} onPatch={patch} />
                 <div className="row">
                   <button className="btn small" disabled={!!busy || flight || !source} onClick={() => act('redraft', () => api.post(`/api/items/${id}/redraft`), 'Redrafting')}>
                     Redraft titles, excerpts and notes
@@ -375,7 +396,7 @@ function StepTitle({ n, title, done, optional }: { n: number; title: string; don
   );
 }
 
-function Step({ id, n, title, done, optional, hint, bare, children }: { id?: string; n: number; title: string; done?: boolean; optional?: boolean; hint?: string; bare?: boolean; children: ReactNode }) {
+function Step({ id, n, title, done, optional, hint, bare, voice, children }: { id?: string; n: number; title: string; done?: boolean; optional?: boolean; hint?: string; bare?: boolean; voice?: 'editor'; children: ReactNode }) {
   if (bare)
     return (
       <div className="step" id={id}>
@@ -384,9 +405,16 @@ function Step({ id, n, title, done, optional, hint, bare, children }: { id?: str
     );
   return (
     <section className="step section" id={id} aria-label={title}>
-      <h2 className="h2">
-        <StepTitle n={n} title={title} done={done} optional={optional} />
-      </h2>
+      {voice === 'editor' ? (
+        <h2 className="voice-head">
+          <span className="who">B.</span>
+          <span className="what">{title}</span>
+        </h2>
+      ) : (
+        <h2 className="h2">
+          <StepTitle n={n} title={title} done={done} optional={optional} />
+        </h2>
+      )}
       {hint && <p className="small muted step-hint">{hint}</p>}
       {children}
     </section>
@@ -399,16 +427,47 @@ function WhySection({ detail, onSaved }: { detail: ItemDetail; onSaved: () => vo
   const { item } = detail;
   const why = useAutosave(`why:${item.id}`, item.why_text ?? '', (v) => api.patch(`/api/items/${item.id}`, { why_text: v }));
   const [note, setNote] = useState<Note | null>(detail.notes.find((n) => n.target === 'why') ?? null);
+  // A written note reads as it will print; tap it (or Edit) to write. An empty one opens ready to type.
+  const [editing, setEditing] = useState(!why.value.trim());
+  const [whole, setWhole] = useState(false);
+  const words = why.value.trim().split(/\s+/).filter(Boolean).length;
+  if (!editing && why.value.trim())
+    return (
+      <>
+        <div className={`note-read${whole || words < 90 ? '' : ' clamped'}`} onClick={() => setEditing(true)} title="Tap to edit">
+          {why.value
+            .split(/\n\s*\n/)
+            .filter((p) => p.trim())
+            .map((p, i) => (
+              <p key={i} className={p.trim().startsWith('>') ? 'quoted' : undefined}>
+                {p.trim().replace(/^>\s?/gm, '')}
+              </p>
+            ))}
+        </div>
+        <div className="row note-acts">
+          <button type="button" className="btn quiet small" onClick={() => setEditing(true)}>
+            Edit
+          </button>
+          {words >= 90 && (
+            <button type="button" className="btn quiet small" onClick={() => setWhole((w) => !w)}>
+              {whole ? 'Show less' : `Read all ${words} words`}
+            </button>
+          )}
+          <SaveNote state={why.state} />
+        </div>
+      </>
+    );
   return (
     <>
       <TextArea
         className="editor"
         value={why.value}
+        autoFocus={Boolean(why.value.trim())}
         onChange={(e) => why.onChange(e.target.value)}
         onSubmit={() => void why.flush().then(onSaved)}
         onBlur={() => void why.flush().then(onSaved)}
         placeholder="Why you pulled this out of the fire, the way you would tell a friend."
-        aria-label="Why it's here"
+        aria-label="Your note"
       />
       <p className="small muted">
         A blank line starts a paragraph. <code>&gt; </code> before a line quotes the source (it must be there word for word; … marks words left out),{' '}
@@ -425,6 +484,11 @@ function WhySection({ detail, onSaved }: { detail: ItemDetail; onSaved: () => vo
             }}
           />
           <SaveNote state={why.state} />
+          {why.value.trim() && (
+            <button type="button" className="btn quiet small" onClick={() => void why.flush().then(() => setEditing(false))}>
+              Done
+            </button>
+          )}
         </div>
         {item.why_note_id && (
           <label className="row small muted">
@@ -686,6 +750,8 @@ function Passage({ text, hl }: { text: string; hl?: [number, number] | null }) {
 
 function ExcerptSection({ detail, chosen, act }: { detail: ItemDetail; chosen: Excerpt | null; act: Act }) {
   const candidates = detail.excerpts.filter((e) => !e.chosen);
+  // Proposed passages show their opening; a tap shows the whole passage.
+  const [openCands, setOpenCands] = useState<ReadonlySet<string>>(new Set());
   const [locator, setLocator] = useState(chosen?.locator ?? '');
   const words = detail.source?.word_count ?? 0;
   const type = detail.item.type as ContentType;
@@ -736,7 +802,7 @@ function ExcerptSection({ detail, chosen, act }: { detail: ItemDetail; chosen: E
             return (
               <div key={c.id} className="cand-card">
                 {c.why && <p className="machine small" style={{ margin: 0 }}>{c.why}</p>}
-                <div className="serif cand-text">
+                <div className={`serif cand-text${openCands.has(c.id) ? '' : ' clamped'}`} onClick={() => setOpenCands((x) => new Set(x).add(c.id))}>
                   <Passage text={c.text} hl={chl} />
                 </div>
                 <div className="row between">
@@ -1223,6 +1289,94 @@ function ConnectionsSection({ detail, act }: { detail: ItemDetail; act: Act }) {
         </button>
       </div>
       <p className="small muted" style={{ margin: 0 }}>Connections publish only between items in the same Haul.</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- folds and the machine's offer
+
+/** A settled step as one line; "change" opens it. Opens by itself when the page is sent to it (#id). */
+function Fold({ id, k, summary, open: startOpen = false, children }: { id: string; k: string; summary: ReactNode; open?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(startOpen || location.hash === `#${id}`);
+  if (!open)
+    return (
+      <div className="fold" id={id}>
+        <span className="k">{k}</span>
+        <span className="v">{summary}</span>
+        <button type="button" className="link-btn" onClick={() => setOpen(true)}>
+          change
+        </button>
+      </div>
+    );
+  return (
+    <div className="fold-open" id={id}>
+      {children}
+      <button type="button" className="link-btn small fold-close" onClick={() => setOpen(false)}>
+        Fold {k.toLowerCase()} away
+      </button>
+    </div>
+  );
+}
+
+function plateSummary(d: ItemDetail): ReactNode {
+  if (d.item.plate === 'none') return <>No plate<small>Chosen: none</small></>;
+  const p = d.plates.find((x) => x.status === 'chosen' && x.id === d.item.plate);
+  if (!p) return <>Not chosen yet<small>{d.plates.filter((x) => x.status === 'candidate').length} found in the collections</small></>;
+  return (
+    <>
+      {[p.creator, p.date].filter(Boolean).join(', ') || p.title}
+      <small>
+        {p.institution} · {p.licence}
+      </small>
+    </>
+  );
+}
+
+function detailsSummary(item: ItemDetail['item']): ReactNode {
+  const missing = [!item.creator?.trim() && 'maker', !item.source_date?.trim() && item.year == null && 'date', !item.url && !item.file_key && 'link'].filter(Boolean);
+  return (
+    <>
+      {[item.creator, item.source_name, item.source_date].filter(Boolean).join(' · ') || 'Nothing set'}
+      <small className={missing.length ? 'warn' : undefined}>{missing.length ? `Missing: ${missing.join(', ')}` : 'Maker, date and link set'}</small>
+    </>
+  );
+}
+
+/** What the machine offers, as one step: go through what is waiting, one at a time. */
+function MachineOffer({ id, ideas, notes, cards }: { id: string; ideas: Draft<MarginalBody>[]; notes: Draft<MarginalBody>[]; cards: WikiCard[] }) {
+  const live = cards.filter((c) => c.status !== 'cut');
+  const waiting = [...ideas, ...notes].filter((d) => d.status === 'proposed').length + live.filter((c) => c.status === 'proposed').length;
+  const kept = [...ideas, ...notes].filter(isIn);
+  const keptCards = live.filter((c) => c.status === 'kept');
+  const parts = [notes.length && `${notes.length} margin note${notes.length === 1 ? '' : 's'}`, live.length && `${live.length} Wikipedia card${live.length === 1 ? '' : 's'}`, ideas.length && `${ideas.length} big idea${ideas.length === 1 ? '' : 's'}`].filter(Boolean);
+  if (!parts.length) return <p className="small muted" style={{ margin: 0 }}>Nothing yet. The machine offers notes, ideas and further reading once it has read the piece.</p>;
+  return (
+    <div className="offer">
+      <p className="small muted" style={{ margin: '0 0 12px' }}>
+        {parts.join(', ')}. Only what you keep is printed.
+      </p>
+      {waiting > 0 ? (
+        <Link to={`/item/${id}/decide`} className="btn primary go">
+          Go through {waiting} waiting <span aria-hidden="true">→</span>
+        </Link>
+      ) : (
+        <p className="small ok" style={{ margin: 0 }}>Every offer has an answer.</p>
+      )}
+      {(kept.length > 0 || keptCards.length > 0) && (
+        <div className="kept">
+          <div className="small muted">Kept</div>
+          <ul>
+            {kept.map((d) => (
+              <li key={d.id}>{d.body.text}</li>
+            ))}
+            {keptCards.map((c) => (
+              <li key={c.id} className="w">
+                {c.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

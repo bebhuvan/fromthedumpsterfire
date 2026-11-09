@@ -82,7 +82,7 @@ export function BlocksSection({ detail, onChange }: { detail: ItemDetail; onChan
       )}
       <div className="row add-kinds" role="group" aria-label="Add">
         {(Object.keys(KIND_LABEL) as Kind[]).map((k) => (
-          <button key={k} type="button" className={`btn small${open === k ? ' primary' : ''}`} aria-pressed={open === k} onClick={() => setOpen(open === k ? null : k)}>
+          <button key={k} type="button" className="btn quiet small" aria-pressed={open === k} onClick={() => setOpen(open === k ? null : k)}>
             {KIND_LABEL[k]}
           </button>
         ))}
