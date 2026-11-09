@@ -47,7 +47,7 @@ export function Note({ children, style }: Props) {
 
 /**
  * The editor's note as they wrote it: their paragraphs, their links on their own words (opened like
- * any source), italic titles, quotations from the source on a rule in the edition ink, signed "B." in
+ * any source), italic titles, quotations from the source indented under a hanging mark in the edition ink, signed "B." in
  * ember at the end (under a closing quotation). A line or two is set larger (`lead`); a long note (an
  * essay of their own) is set upright, as prose is read. Straight marks are set curly for display.
  */
@@ -57,7 +57,8 @@ export function EditorNote({ why, lead = false, sign = true, style }: { why: Ite
   const ink = useEditionInk() ?? p.ink2;
   const words = why.text.split(/\s+/).length;
   const long = words > 120;
-  const size = lead && words <= 45 ? 21 : 19;
+  // 18 at reading size (2026-11-09): 19 left about 35 characters to a line on a phone.
+  const size = lead && words <= 45 ? 21 : 18;
   const gap = size * 0.9 * k;
   const text = { fontFamily: long ? fonts.text : fonts.textItalic, fontSize: size * k, lineHeight: size * (long ? 1.62 : 1.55) * k, color: p.ink };
   // A quotation is upright and a step smaller than the editor's words, as the website sets it, so a
@@ -90,7 +91,10 @@ export function EditorNote({ why, lead = false, sign = true, style }: { why: Ite
     <View style={[{ gap }, style]}>
       {blocks.map((b, i) =>
         b.kind === 'quotation' ? (
-          <View key={i} style={{ borderLeftWidth: 2, borderLeftColor: ink, paddingLeft: 14, gap: gap * 0.7 }}>
+          <View key={i} style={[s.bookQuote, { gap: gap * 0.7 }]}>
+            <Text accessible={false} style={[s.bookMark, { color: ink }]}>
+              “
+            </Text>
             {b.paragraphs.map((rs, j) => (
               <Text key={j} selectable style={[s.base, text, quoted]}>
                 {runs(rs, true)}
@@ -143,9 +147,13 @@ export function Highlighted({ text, highlight, color, style }: { text: string; h
 
 export const s = StyleSheet.create({
   base: { includeFontPadding: false },
-  body: { fontFamily: fonts.text, fontSize: 19, lineHeight: 29.5 },
+  body: { fontFamily: fonts.text, fontSize: 18, lineHeight: 28.5 },
   note: { fontFamily: fonts.textItalic, fontSize: 20, lineHeight: 30 },
   label: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3, textTransform: 'uppercase' },
   machine: { fontFamily: fonts.sans, fontSize: 14.5, lineHeight: 22.5 },
   meta: { fontFamily: fonts.sansMedium, fontSize: 12.5, lineHeight: 18 },
+  // A quotation inside the editor's words, as a book sets one (2026-11-09, as the website does):
+  // indented both sides, no rule, one opening mark in the Haul's ink hanging in the indent.
+  bookQuote: { paddingLeft: 26, paddingRight: 10, marginVertical: 4 },
+  bookMark: { position: 'absolute', left: -1, top: -10, fontFamily: fonts.displayRegular, fontSize: 46, lineHeight: 52, includeFontPadding: false },
 });

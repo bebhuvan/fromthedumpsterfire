@@ -42,7 +42,7 @@ const lines = (code: string) => code.replace(/\n$/, '').split('\n').length;
         const endsRun = blocks[blocks.indexOf(b) + 1]?.kind !== 'quote';
         return (
           <div class:list={[g, 'blk blk-quote', { 'qt-runs-on': !endsRun }]}>
-            <Quote class={c || undefined} text={b.text} credit={endsRun ? [b.locator ?? '', source ? `${source} · matched word for word` : 'matched word for word against the source'] : [b.locator ?? '']} />
+            <Quote class={c || undefined} text={b.text} credit={endsRun ? [b.locator ?? '', source ?? ''] : [b.locator ?? '']} checked={endsRun} />
           </div>
         );
       }

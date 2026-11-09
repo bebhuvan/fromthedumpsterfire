@@ -35,11 +35,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   margin: 0; position: relative; overflow-x: hidden;
   background: var(--bg); color: var(--ink);
-  font: 1.125rem/1.6 var(--serif);
+  font: 1.1875rem/1.62 var(--serif);
   font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; overflow-wrap: break-word;
 }
-/* Phones read at a size up: the column is short, so the type can be generous. */
-@media (max-width: 640px) { body { font-size: 1.1875rem; } }
+/* Reading size (2026-11-09, the proof sheet): 19px on wide screens, 18px on phones, where 19px left
+   about 39 characters to a line and long notes read choppy; 18px gives about 45. */
+@media (max-width: 640px) { body { font-size: 1.125rem; } }
 h1, h2, h3, p, ol, ul, figure, blockquote { margin: 0; }
 ol, ul { list-style: none; padding: 0; }
 img { max-width: 100%; height: auto; display: block; }
@@ -119,6 +120,11 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .mh { font: 500 0.875rem/1.4 var(--sans); color: var(--ink2); }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 400 0.875rem/1.45 var(--sans); color: var(--ink2); }
 @media (min-width: 1000px) { .meta { flex-direction: column; padding-top: 0.5em; } }
+/* The salvage tag (2026-11-09, the proof sheet): an item's number in the Haul's ink over an ink rule,
+   then its kind, where it was salvaged from and its length, like the tag on a lot. */
+.tag { border-top: 1px solid var(--ink); padding-top: 8px; align-items: baseline; }
+.tag-n { font: 400 1.375rem/1 var(--display); color: var(--ed, var(--ink)); font-variant-numeric: lining-nums tabular-nums; letter-spacing: -0.01em; }
+@media (min-width: 1000px) { .tag { padding-top: 10px; gap: 3px; } .tag-n { font-size: 1.75rem; margin-bottom: 4px; } }
 
 /* The editor's hand: "B." in ember italic; at the end of the field note it is the end mark. */
 .endmark { font-size: 1.3em; line-height: 0; margin-left: 0.15em; }
@@ -182,9 +188,12 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 /* The field note set out (NoteBody.astro): headings, quotations, links, and embeds in the column. */
 .fn-h { font: 500 1.375rem/1.2 var(--display); letter-spacing: -0.006em; margin-top: 1.9em; text-wrap: wrap; }
 .fn-h + p { margin-top: 0.5em; }
-/* A quotation in the editor's words is set a step smaller than them, on a rule in the Haul's ink, as a
-   book sets a block quotation: the rule alone left long quotations reading as more of the editor's prose. */
-.fn-q { margin: 1.1em 0 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); font-size: 0.9375em; }
+/* A quotation in the editor's words is set as a book sets a block quotation (2026-11-09): a step
+   smaller, indented on both sides, no rule, one opening mark in the Haul's ink hanging in the indent.
+   The rule alone left long quotations reading as more of the editor's prose. Shared with .note-q. */
+.fn-q, .ed-note .note-q { position: relative; padding: 0 0.8em 0 1.7em; }
+.fn-q::before, .ed-note .note-q::before { content: '\201C'; position: absolute; left: -0.04em; top: -0.16em; font: 400 2.9em/1 var(--display); color: var(--ed, var(--ink2)); }
+.fn-q { margin: 1.1em 0 0; font-size: 0.9375em; }
 .fn-q p { margin-top: 0.6em; }
 .fn-q p:first-child { margin-top: 0; }
 .fn-c > p a, .fn-q a { text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 55%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
@@ -1035,6 +1044,7 @@ blockquote > p + p { margin-top: 0.65em; }
    note (an essay of the editor's own) upright, as prose is read. */
 .ed-note { max-width: 36rem; }
 .ed-note p { font: italic 400 1.1875rem/1.6 var(--serif); text-wrap: pretty; }
+@media (max-width: 640px) { .ed-note p { font-size: 1.125rem; } }
 .ed-note p + p { margin-top: 0.85em; }
 .note-lead p { font-size: 1.375rem; line-height: 1.5; }
 .note-long p { font-style: normal; font-size: inherit; line-height: 1.65; }
@@ -1049,7 +1059,7 @@ blockquote > p + p { margin-top: 0.65em; }
 .note-long p em, .c-ed .ed-note p em, .ed-note .note-q p em { font-style: italic; }
 /* A quotation from the source, set out in the note: the source's words, so upright, on a rule in the
    Haul's ink (as the field note's quotations are). */
-.ed-note .note-q { margin: 0.95em 0; padding-left: 1.1em; border-left: 2px solid var(--ed, var(--ink)); }
+.ed-note .note-q { margin: 1.1em 0; }
 .ed-note .note-q p { font-style: normal; font-size: 0.9375em; line-height: 1.6; }
 .ed-note .note-q:last-child { margin-bottom: 0; }
 .ed-note .note-q:first-child { margin-top: 0; }
@@ -1085,6 +1095,18 @@ blockquote > p + p { margin-top: 0.65em; }
 .qt-long .qt-q p { font: 400 1em/1.65 var(--serif); }
 .qt-cap { margin-top: 10px; font: 400 0.8125rem/1.5 var(--sans); color: var(--ink2); max-width: 36rem; }
 .qt-cap::before { content: ''; display: block; width: 36px; margin-bottom: 8px; border-top: 1px solid var(--ink); }
+.qt-cap .qt-chk { display: block; font-size: inherit; line-height: inherit; }
+/* The salvage slip (2026-11-09, the proof sheet): a checked extract is a cutting from the source, a
+   slip of plate grey with a torn top edge (a CSS mask), set a step smaller and narrower than the
+   editor's words, its credit and the machine's check on a stub below a dashed tear. */
+.qt-slip { max-width: 36rem; margin-inline: -6px; padding: 20px 18px 13px; background: var(--plate);
+  mask: linear-gradient(#000 0 0) 0 6px / 100% calc(100% - 6px) no-repeat, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 0 / 12px 6px repeat-x; }
+.qt-slip .qt-mark { height: 0.42em; margin-top: 0; font-size: 3rem; }
+.qt-slip .qt-q { padding-left: 0; border-left: 0; }
+.qt-slip .qt-q p { font-size: 0.9375em; line-height: 1.62; }
+.qt-slip .qt-cap { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 16px; margin-top: 14px; padding-top: 9px; border-top: 1px dashed color-mix(in srgb, var(--ink2) 55%, transparent); max-width: none; }
+.qt-slip .qt-cap::before { content: none; }
+.qt-slip .qt-chk { text-align: right; margin-left: auto; }
 .qt mark { padding: 0 0.06em; margin: 0 -0.06em; }
 @media (min-width: 1000px) {
   .qt-short, .qt-medium { position: relative; }

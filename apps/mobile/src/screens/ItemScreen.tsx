@@ -4,7 +4,7 @@
 // letter is the letter, a post is a clipping, a picture is a mounted print, a book is its jacket and
 // a tool is a specimen label, and a chart-led item is the figure (lib/forms.ts, the website's choice).
 // Rich media follows (ui/Blocks.tsx, charts in ui/Chart.tsx).
-import { memo, useState, type ReactNode } from 'react';
+import { createContext, memo, useContext, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { curlQuotes, haulSlug, notePlain, quoteLength, sourceAction, speechSetting, type Haul, type Item } from '@fdf/shared/haul';
@@ -72,6 +72,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
   const blocks = lead ? item.blocks?.filter((b) => b !== lead) : item.blocks;
 
   return (
+    <ItemNumber.Provider value={at + 1}>
     <Screen header={header} edition={ed}>
       {body[form]}
       {WHY_AFTER.has(form) ? (
@@ -89,16 +90,36 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
       {next ? <NextItem n={haul.number} at={at + 2} item={next} /> : <Finished haul={haul} />}
       <Folio haul={`Haul ${haulSlug(haul.number)}`} n={at + 1} of={haul.items.length} />
     </Screen>
+    </ItemNumber.Provider>
   );
 }
 
 // ---------- shared pieces ----------
 
-function MetaLine({ item, extra }: { item: Item; extra?: string }) {
-  return (
-    <View style={styles.metaLine}>
+/** The item's number in its Haul, for the salvage tag. */
+const ItemNumber = createContext(0);
+
+/**
+ * The kind, where it came from and its length. As a salvage tag (2026-11-09, the proof sheet, as the
+ * website sets it on the same forms): the item's number in the Haul's ink over an ink rule first.
+ */
+function MetaLine({ item, extra, tag }: { item: Item; extra?: string; tag?: boolean }) {
+  const p = usePalette();
+  const ink = useEditionInk() ?? p.ink;
+  const n = useContext(ItemNumber);
+  const line = (
+    <View style={[styles.metaLine, tag && n ? { marginTop: 0, flexShrink: 1 } : null]}>
       <Key type={item.type} />
-      <Meta>{joinMeta(extra ?? `${item.source.name}, ${item.source.date}`, minutes(item.minutes))}</Meta>
+      <Meta>{joinMeta(extra ?? `${tag ? 'Salvaged from ' : ''}${item.source.name}, ${item.source.date}`, minutes(item.minutes))}</Meta>
+    </View>
+  );
+  if (!tag || !n) return line;
+  return (
+    <View style={[styles.tag, { borderTopColor: p.ink }]}>
+      <Text accessibilityLabel={`Item ${n}`} style={[styles.tagN, { color: ink }]}>
+        {String(n).padStart(2, '0')}
+      </Text>
+      {line}
     </View>
   );
 }
@@ -243,7 +264,7 @@ function Essay({ item, haul }: { item: Item; haul: Haul }) {
   const size = len <= 18 ? 62 : len <= 32 ? 48 : 38;
   return (
     <View>
-      <MetaLine item={item} />
+      <MetaLine item={item} tag />
       <Title title={item.title} size={size} style={{ marginTop: 14, lineHeight: size * 1.0, letterSpacing: -size * 0.03 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}</Text>
       <Why item={item} heading={null} style={{ marginTop: 22 }} />
@@ -262,7 +283,8 @@ function Essay({ item, haul }: { item: Item; haul: Haul }) {
             text={item.excerpt.text}
             highlight={item.excerpt.highlight}
             mark={typeColor(p, item.type)}
-            credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+            credit={[item.creator, item.source.name, item.excerpt.locator]}
+            checked
           />
           <ShareQuote haul={haul} item={item} />
         </View>
@@ -309,7 +331,8 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
             text={item.excerpt.text}
             highlight={item.excerpt.highlight}
             mark={typeColor(p, item.type)}
-            credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+            credit={[item.creator, item.source.name, item.excerpt.locator]}
+            checked
           />
           <ShareQuote haul={haul} item={item} />
         </View>
@@ -323,7 +346,7 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
         <Meta>{item.creator}. {titleText(item)}. {item.source.name}, {item.source.date}.</Meta>
       </View>
       <View style={{ alignItems: 'center', marginTop: 26 }}>
-        <MetaLine item={item} extra="Offprint" />
+        <MetaLine item={item} extra="Offprint" tag />
         <Title title={item.title} size={titleText(item).length > 30 ? 30 : 36} style={{ textAlign: 'center', marginTop: 14 }} />
         <Text style={[styles.byline, { color: p.ink, textAlign: 'center' }]}>{item.creator}</Text>
       </View>
@@ -369,7 +392,7 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
   const dateline = [item.place, item.source.date].filter(Boolean).join(', ');
   return (
     <View>
-      <MetaLine item={item} extra={label} />
+      <MetaLine item={item} extra={label} tag />
       <Title title={item.title} size={titleText(item).length > 26 ? 38 : 46} style={{ marginTop: 14 }} />
       <Text style={[styles.byline, { color: p.ink }]}>{item.creator}, {item.source.name}</Text>
       <StartHereLine item={item} />
@@ -389,7 +412,8 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
                   text={item.excerpt.text}
                   highlight={item.excerpt.highlight}
                   mark={typeColor(p, item.type)}
-                  credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+                  credit={[item.creator, item.source.name, item.excerpt.locator]}
+                  checked
                 />
               )}
               <ShareQuote haul={haul} item={item} />
@@ -457,7 +481,7 @@ function Rhymes({ item }: { item: Item }) {
   const r = item.rhyme;
   return (
     <View>
-      <MetaLine item={item} extra={r ? `${r.then.year} and ${r.now.year}` : undefined} />
+      <MetaLine item={item} extra={r ? `${r.then.year} and ${r.now.year}` : undefined} tag />
       <Title title={item.title} size={40} style={{ marginTop: 14 }} />
       <Why item={item} heading={null} style={{ marginTop: 16 }} />
       {r ? (
@@ -563,7 +587,7 @@ function Epigraph({ item }: { item: Item }) {
   if (quoteLength(ex.text) !== 'short') {
     return (
       <View>
-        <MetaLine item={item} extra={item.source.date} />
+        <MetaLine item={item} extra={item.source.date} tag />
         <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
         <View style={{ marginTop: 18 }}>
           <LeadQuotation text={ex.text} highlight={ex.highlight} mark={typeColor(p, item.type)} />
@@ -577,7 +601,7 @@ function Epigraph({ item }: { item: Item }) {
   }
   return (
     <View>
-      <MetaLine item={item} extra={item.source.date} />
+      <MetaLine item={item} extra={item.source.date} tag />
       <Text accessibilityRole="header" style={styles.sr}>{titleText(item)}, {item.creator}</Text>
       <Text selectable style={[styles.epiQ, { color: p.ink, fontSize: size, lineHeight: size * 1.06, letterSpacing: -size * 0.022 }]}>
         <Text style={{ color: ink, fontFamily: fonts.displayRegular }}>“</Text>
@@ -758,7 +782,7 @@ function Label({ item, haul, n }: { item: Item; haul: Haul; n: number }) {
   if (item.excerpt)
     rows.push([
       'IN ITS OWN WORDS',
-      <Quotation key="own" text={item.excerpt.text} highlight={item.excerpt.highlight} mark={typeColor(p, item.type)} credit={[host ?? item.source.name, 'matched word for word against the source']} />,
+      <Quotation key="own" text={item.excerpt.text} highlight={item.excerpt.highlight} mark={typeColor(p, item.type)} credit={[host ?? item.source.name]} checked />,
     ]);
   if (host)
     rows.push([
@@ -948,6 +972,8 @@ const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim(
 
 const styles = StyleSheet.create({
   sr: { position: 'absolute', width: 1, height: 1, opacity: 0 },
+  tag: { marginTop: 22, borderTopWidth: 1, paddingTop: 8, flexDirection: 'row', alignItems: 'baseline', gap: 12, alignSelf: 'stretch' },
+  tagN: { fontFamily: fonts.displayRegular, fontSize: 22, lineHeight: 24, includeFontPadding: false },
   metaLine: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 22 },
   byline: { fontFamily: fonts.textItalic, fontSize: 19, marginTop: 12, includeFontPadding: false },
   whyHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

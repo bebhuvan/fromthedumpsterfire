@@ -66,7 +66,7 @@ export function FieldNote({ haul }: { haul: Haul }) {
 }
 
 const styles = StyleSheet.create({
-  para: { fontFamily: fonts.text, fontSize: 18.5, lineHeight: 28 },
+  para: { fontFamily: fonts.text, fontSize: 18, lineHeight: 28.5 },
   step: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 7 },
   day: { width: 40, fontFamily: fonts.sansMedium, fontSize: 12, marginTop: 4 },
   key: { width: 8, height: 8, marginTop: 8, marginRight: 10, borderWidth: StyleSheet.hairlineWidth },

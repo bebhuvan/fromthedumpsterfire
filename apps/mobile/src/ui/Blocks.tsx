@@ -28,7 +28,8 @@ export function Blocks({ blocks, source }: { blocks?: Block[]; source?: string }
               <Quotation
                 key={i}
                 text={b.text}
-                credit={endsRun ? [b.locator ?? '', source ? `${source} · matched word for word` : 'matched word for word against the source'] : [b.locator ?? '']}
+                credit={endsRun ? [b.locator ?? '', source ?? ''] : [b.locator ?? '']}
+                checked={endsRun}
               />
             );
           }

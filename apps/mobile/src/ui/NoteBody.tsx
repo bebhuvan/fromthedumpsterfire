@@ -1,5 +1,5 @@
 // The field note as the editor set it out (FieldNote.body), as the website sets it: paragraphs with
-// their links (opened like any source) and italic titles, section headings, quotations with a rule
+// their links (opened like any source) and italic titles, section headings, quotations indented under a hanging mark
 // in the edition ink, and videos, podcasts and X posts between the paragraphs (ui/Blocks.tsx). The
 // highlighted line is marked; straight marks are set curly for display. Without a body, the plain
 // paragraphs as before.
@@ -53,7 +53,10 @@ export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle
           );
         if (b.kind === 'quotation')
           return (
-            <View key={i} style={[s.quote, { borderLeftColor: ink, gap: gap * 0.7 }]}>
+            <View key={i} style={[s.quote, { gap: gap * 0.7 }]}>
+              <Text accessible={false} style={[s.mark, { color: ink }]}>
+                “
+              </Text>
               {b.paragraphs.map((runs, j) => (
                 <Text key={j} selectable style={[s.base, para, quoted, { color: p.ink }]}>
                   {words(runs)}
@@ -74,5 +77,7 @@ export function NoteBody({ note, para, gap }: { note: FieldNote; para: TextStyle
 const s = StyleSheet.create({
   base: { includeFontPadding: false },
   heading: { fontFamily: fonts.display, marginTop: 14 },
-  quote: { borderLeftWidth: 2, paddingLeft: 14 },
+  // As a book sets a block quotation, as EditorNote and the website do: indented, a hanging mark, no rule.
+  quote: { paddingLeft: 26, paddingRight: 10, marginVertical: 4 },
+  mark: { position: 'absolute', left: -1, top: -10, fontFamily: fonts.displayRegular, fontSize: 46, lineHeight: 52, includeFontPadding: false },
 });
