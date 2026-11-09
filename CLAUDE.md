@@ -55,9 +55,11 @@ workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
                   threads (connect.ts), rhymes, blocks, the shelf (shelf.ts), the editor's library
-                  (library.ts), Lives (lives.ts), publish, the field note's embeds (fieldnote.ts), FCM
+                  (library.ts), Lives (lives.ts), publish, the field note's embeds (fieldnote.ts), where
+                  items stand and a Haul's review and suggestions (standing.ts), FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
-                  validator, quoting (excerpt length guide, when to draw out big ideas), life (a Life's
+                  validator, quoting (excerpt length guide, when to draw out big ideas), prepublish (where an
+                  item stands and the checks before publishing: itemStanding, itemIssues), life (a Life's
                   rules: checkLifeDraft, assembleLife, lifeByline, figures traced to quotes), highlight
                   (code tokens at publish), fingerprint, fieldnote (the field note's marks: headings,
                   quotations, links, italics, embed links; noteParts, noteBody; an item note's quotations, links and italics: itemNote), shelf (the books the editor is reading:

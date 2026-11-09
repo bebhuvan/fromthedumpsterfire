@@ -1140,3 +1140,22 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   "no data", and its key runs past the data (to −0.6 for fertility); crowded line-end labels drift a
   row from their lines. Worked around by using `sequential` and `multiples`; the editor will start a
   session for the fix.
+
+## The Desk on a phone: where items stand, a check before publishing, ticks per Haul (2026-11-09, branch `claude/amazing-curran-8defdc`; not deployed)
+
+From the editor's use on Haul 002 and a walk through every screen at phone width (`docs/DESK-REVIEW.md`,
+ranked, with screenshots in `docs/desk-review/`).
+
+- Every item says where it stands under its title (on the Desk / in Haul N, not yet published /
+  published in version N), with **Add to Haul N**, **Open Haul N** and **Take out**. The tray groups
+  *Published* apart.
+- Every Haul has **Check before publishing** (`/haul/:id/check`: per item, *Fix* or *Look*, each linked to
+  the step) and **Tick suggestions** (`/haul/:id/suggestions`: every note, idea and Wikipedia card).
+- Ticks and the Haul's order update at once; 44px tap areas on ticks; *Still to do* under each item's
+  title; Delete moved under More; library copy and pasted text available on every article.
+- Needs before deploy: `migrations/0011_version_items.sql` applied to production (through `cf`, see the
+  wrangler-account note), then `npm run deploy:production`. Older versions fill in their item ids the
+  first time they are asked about.
+- Open (ranked in DESK-REVIEW): fold done steps on the item page, tray-first capture on a phone, the Haul
+  page in sections on a phone, optimistic saves for the remaining item buttons, a lighter Settings page.
+

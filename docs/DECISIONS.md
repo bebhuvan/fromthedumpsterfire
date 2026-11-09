@@ -432,3 +432,22 @@ Dated, newest last. Don't reopen these without a new reason.
   drops a title Wikipedia lists as ambiguous (`exactOutcome`). Rejected: picking the first article
   on a disambiguation page (often the wrong sense) and a second model call to judge each card (cost
   for something the editor ticks anyway).
+- **Every item says where it stands, and each published version records its items.** The editor added
+  two items to Haul 002 and could not tell whether readers had them. Items now say *On the Desk*, *In
+  Haul N, not yet published* or *Published in Haul N, version V*, worked out from a new
+  `haul_versions.item_ids` (0011) written at publish; older versions are matched once from their
+  bundle and the answer stored. Rejected: matching by bundle slug on every request (breaks when an item
+  is retitled after publishing, and reads R2 for every tray load) and comparing timestamps (an item
+  added after publishing and an item edited after publishing look the same).
+- **A check before publishing that advises, never blocks.** `@fdf/shared/prepublish` looks for what
+  publish allows but the editor would want to know: a platform credited as the maker ("Substack"), a
+  missing date, a paywall teaser stored as the piece, a whole paragraph of the editor's note that is
+  word for word from the piece but not on a `> ` line (it would print as the editor's words), Wikipedia
+  cards that are disambiguation pages or not mentioned in the piece or the note, and unticked
+  suggestions. Each is *Fix* or *Look* with a link to the step. Rejected: making them publish errors
+  (an institution can be its own maker, a sentence can be shared by chance, and a card not named in the
+  piece can still be the right rabbit hole).
+- **Ticks show at once.** Ticking a note, idea or card, and reordering a Haul, update the screen before
+  the Desk answers and go back with the reason if refused. Rejected: keeping the wait-and-reload (the
+  editor's "janky" on a phone network is mostly this).
+
