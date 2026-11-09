@@ -418,9 +418,6 @@ a.sa-t::after { content: ''; position: absolute; inset: 0; }
 .off-c { text-align: center; }
 .off-t { font-weight: 500; font-size: clamp(2.125rem, 4.4vw, 3.125rem); line-height: 1.06; letter-spacing: -0.01em; text-wrap: balance; }
 .off-by { margin-top: 10px; font-style: italic; font-size: 1.1875rem; }
-.abstract { padding: 20px 0 8px; margin-inline: clamp(0px, 3vw, 40px); font-size: 1.0625rem; }
-.abstract h2 { font: 500 0.875rem/1.4 var(--sans); text-align: center; margin-bottom: 10px; }
-.abstract p { margin-top: 8px; }
 .sec { padding-block: 24px; row-gap: 4px; }
 .sec-n { font: 400 1.875rem/1 var(--display); color: var(--ink2); }
 @media (min-width: 1000px) { .sec-n { text-align: right; padding-top: 2px; } }

@@ -369,17 +369,9 @@ const ogImage =
 
     {form === 'offprint' ? (
       <>
-        {item.excerpt ? (
-          <section class="wrap g" aria-labelledby="abs">
-            <div class="c abstract">
-              <h2 id="abs">{item.excerpt.locator || 'Abstract'}</h2>
-              <blockquote cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
-              <p class="small ink2">As the editor marked it, {matched}.</p>
-            </div>
-          </section>
-        ) : null}
         {[
           { h: "Why it's here", kind: 'why' },
+          ...(item.excerpt ? [{ h: 'From the paper', kind: 'excerpt' }] : []),
           ...(item.marginalia.length ? [{ h: 'Notes', kind: 'notes' }] : []),
           ...(item.wiki.length ? [{ h: 'References', kind: 'refs' }] : []),
         ].map((s, i) => (
@@ -392,6 +384,9 @@ const ogImage =
                   <Note why={item.why} />
                   {item.why.audio ? <Voice audio={item.why.audio} label="This note, in my voice" /> : null}
                 </>
+              ) : null}
+              {s.kind === 'excerpt' && item.excerpt ? (
+                <Quote extract text={item.excerpt.text} highlight={item.excerpt.highlight} cite={item.source.url} credit={[item.creator, item.source.name, item.excerpt.locator, matched]} />
               ) : null}
               {s.kind === 'notes' ? <Notes notes={item.marginalia} wiki={item.wiki} /> : null}
               {s.kind === 'refs' ? (

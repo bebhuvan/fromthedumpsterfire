@@ -299,6 +299,22 @@ function Figure({ item }: { item: Item }) {
 function Paper({ item, haul }: { item: Item; haul: Haul }) {
   const p = usePalette();
   const sections: { h: string; body: ReactNode }[] = [{ h: "Why it's here", body: <Why item={item} heading={null} style={{ marginTop: 0 }} /> }];
+  if (item.excerpt)
+    sections.push({
+      h: 'From the paper',
+      body: (
+        <View>
+          <Quotation
+            extract
+            text={item.excerpt.text}
+            highlight={item.excerpt.highlight}
+            mark={typeColor(p, item.type)}
+            credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+          />
+          <ShareQuote haul={haul} item={item} />
+        </View>
+      ),
+    });
   if (item.plate) sections.push({ h: 'Figure', body: <PlateView item={item} style={{ marginTop: 0 }} /> });
   if (item.marginalia.length) sections.push({ h: 'Notes', body: <Notes item={item} style={{ marginTop: 0 }} /> });
   if (item.wiki.length || item.connections.length) sections.push({ h: 'References', body: <SeeAlso haul={haul} item={item} bare /> });
@@ -313,12 +329,6 @@ function Paper({ item, haul }: { item: Item; haul: Haul }) {
         <Text style={[styles.byline, { color: p.ink, textAlign: 'center' }]}>{item.creator}</Text>
       </View>
       <StartHereLine item={item} />
-      {item.excerpt ? (
-        <View style={{ marginTop: 26, paddingHorizontal: 8 }}>
-          <Text accessibilityRole="header" style={[styles.abstractHead, { color: p.ink }]}>{item.excerpt.locator === 'Abstract' ? 'Abstract' : item.excerpt.locator}</Text>
-          <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.abstract} />
-        </View>
-      ) : null}
       {sections.map((s, i) => (
         <View key={s.h} style={styles.sec}>
           <Text style={[styles.secN, { color: p.ink2 }]} accessible={false}>{i + 1}</Text>
@@ -910,8 +920,6 @@ const styles = StyleSheet.create({
   caption: { fontFamily: fonts.textItalic, fontSize: 15, lineHeight: 21, marginTop: 10 },
 
   runcite: { marginTop: 18, paddingVertical: 9, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
-  abstractHead: { fontFamily: fonts.sansBold, fontSize: 13, textAlign: 'center', marginBottom: 8 },
-  abstract: { fontFamily: fonts.text, fontSize: 17, lineHeight: 26 },
   sec: { flexDirection: 'row', gap: 14, marginTop: 30 },
   secN: { width: 22, fontFamily: fonts.displayRegular, fontSize: 26, lineHeight: 28, textAlign: 'right', includeFontPadding: false },
   secH: { fontFamily: fonts.display, fontSize: 22, lineHeight: 28, marginBottom: 10, includeFontPadding: false },

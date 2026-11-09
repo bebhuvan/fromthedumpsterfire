@@ -45,7 +45,7 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Type | Form | On the page |
 |---|---|---|
 | essay, post | magazine opening | huge title across margin and column; the why as an italic standfirst; the excerpt as a pull-in with the editor's highlight in the type colour; machine notes beside it in the margin |
-| paper | journal offprint | a running citation line; centred title and authors; the abstract block; numbered sections (Why it's here, Notes, References) with the numbers hanging in the margin |
+| paper | journal offprint | a running citation line; centred title and authors; numbered sections (Why it's here, From the paper, Notes, References) with the numbers hanging in the margin. The editor's note comes first; the passage is set as a quotation (extract, rule, credit), never in the body type where it could read as the editor's |
 | talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps with the dateline under it, **B.** in ember italic for the editor, MACHINE in blue once for all the machine's notes (one turn); the speaker's words run past the column at 30–46px |
 | poem | broadside | one sheet in the poem colour, the poem alone in Newsreader Text italic (28–44px, leading 1.38), poet and source at the foot |
 | rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
