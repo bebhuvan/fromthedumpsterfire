@@ -143,7 +143,7 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
           <Text style={[st.by, { color: p.ink, textAlign: 'center', fontSize: 14 }]}>{item.creator}</Text>
           {ex ? (
             <>
-              <Text style={[st.abHead, { color: p.ink }]}>Abstract</Text>
+              <Text style={[st.abHead, { color: p.ink }]}>{ex.locator || 'From the paper'}</Text>
               <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.abText} />
             </>
           ) : null}

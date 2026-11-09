@@ -84,7 +84,7 @@ export function hostOf(url: string): string {
 /** What a Haul holds, each type with the printed form it is set in (waiting page, About). */
 export const formGuide: { type: ContentType; name: string; form: Form; how: string; detail: string }[] = [
   { type: 'essay', name: 'Essays', form: 'opening', how: 'opened as a feature opens in print.', detail: 'The title set huge, the reason it is here as the standfirst.' },
-  { type: 'paper', name: 'Papers', form: 'offprint', how: 'as offprints: abstract first, sections numbered.', detail: 'Abstract first, sections numbered, references at the end.' },
+  { type: 'paper', name: 'Papers', form: 'offprint', how: 'as offprints: sections numbered, the paper quoted after my note.', detail: 'Sections numbered: why it is here, a passage from the paper set as a quotation, notes, references.' },
   { type: 'talk', name: 'Talks and podcasts', form: 'transcript', how: 'as transcripts, speakers in the margin.', detail: 'Speakers in the margin, the line that matters set large.' },
   { type: 'poem', name: 'Poems', form: 'broadside', how: 'as broadsides: one sheet, nothing else on it.', detail: "One sheet in the poem's colour, nothing else on it." },
   { type: 'rhymes', name: 'Rhymes', form: 'facing', how: 'as facing pages: then on the left, now on the right.', detail: 'Then on the left, now on the right, the link between them in the gutter.' },
