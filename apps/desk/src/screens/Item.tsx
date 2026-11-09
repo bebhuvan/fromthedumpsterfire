@@ -96,7 +96,7 @@ function ItemReviewInner({ id }: { id: string }) {
   const { item, source } = data;
   const flight = IN_FLIGHT.test(item.status);
   const chosen = data.excerpts.find((e) => e.chosen) ?? null;
-  const patch = (b: Record<string, unknown>) => api.patch<{ item: ItemDetail['item'] }>(`/api/items/${id}`, b).then((r) => setData({ ...data, item: r.item }));
+  const patch = (b: Record<string, unknown>) => api.patch<{ item: ItemDetail['item'] }>(`/api/items/${id}`, b).then((r) => setData((d) => d && { ...d, item: r.item }));
   const visible = (kind: string) => data.drafts.filter((d) => d.kind === kind && d.status !== 'rejected');
   const at = (d: Draft<MarginalBody>) => (d.body.cite.kind === 'source' ? d.body.cite.start : 0);
   const ideas = (visible('idea') as Draft<MarginalBody>[]).sort((a, b) => at(a) - at(b));
@@ -915,11 +915,23 @@ function TitleSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: Re
       seenTitles.add(k);
       return true;
     });
-  const current: Title | null = item.title_choice ? JSON.parse(item.title_choice) : null;
+  const toast = useToast();
+  // The pick shows at once; if the Desk refuses it, the previous title comes back.
+  const [picked, setPicked] = useState<Title | null>(null);
+  const saved: Title | null = item.title_choice ? JSON.parse(item.title_choice) : null;
+  const current: Title | null = picked ?? saved;
   const [custom, setCustom] = useState<Title>(current ?? { text: item.title ?? '' });
   const isSame = (a: Title | null, b: Title | null) => !!a && !!b && a.text === b.text && (a.italic ?? '') === (b.italic ?? '');
   const original: Title | null = item.title ? { text: item.title } : null;
-  const choose = (t: Title) => void onPatch({ title_choice: t.italic ? { text: t.text, italic: t.italic } : { text: t.text } });
+  const choose = (t: Title) => {
+    setPicked(t);
+    onPatch({ title_choice: t.italic ? { text: t.text, italic: t.italic } : { text: t.text } })
+      .then(() => setPicked(null))
+      .catch((e) => {
+        setPicked(null);
+        toast(`Title not saved: ${e instanceof Error ? e.message : String(e)}`, true);
+      });
+  };
   const customStyle = useMemo(() => checkStyle([custom.text, custom.italic].filter(Boolean).join(' '), { strict: false }), [custom]);
   return (
     <fieldset style={{ border: 0, margin: 0, padding: 0 }} className="stack">
@@ -976,6 +988,7 @@ function WikiSection({ itemId, cards, act, tick, saving }: { itemId: string; car
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<string | null>(null);
   const [summary, setSummary] = useState('');
+  const [finding, setFinding] = useState(false);
   const live = cards.filter((c) => c.status !== 'cut');
   return (
     <div className="stack" style={{ gap: 8 }}>
@@ -1026,12 +1039,14 @@ function WikiSection({ itemId, cards, act, tick, saving }: { itemId: string; car
         className="row"
         onSubmit={(e) => {
           e.preventDefault();
-          if (q.trim()) void act('wiki', () => api.post(`/api/items/${itemId}/wiki`, { query: q.trim() }).then(() => setQ('')), 'Added from Wikipedia');
+          if (!q.trim() || finding) return;
+          setFinding(true);
+          void act('wiki', () => api.post(`/api/items/${itemId}/wiki`, { query: q.trim() }).then(() => setQ('')), 'Added from Wikipedia').finally(() => setFinding(false));
         }}
       >
         <input className="input" style={{ flex: '1 1 200px' }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Add a Wikipedia article by name" />
-        <button className="btn small" type="submit" disabled={!q.trim()}>
-          Find
+        <button className="btn small" type="submit" disabled={!q.trim() || finding}>
+          {finding ? 'Finding…' : 'Find'}
         </button>
       </form>
     </div>
