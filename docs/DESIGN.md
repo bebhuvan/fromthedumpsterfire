@@ -293,3 +293,34 @@ mask (`apps/web/public/marks/flame.svg`) painted ember; in the app it is a white
 (`apps/mobile/assets/marks/flame.png`) tinted ember. Sources and every size are generated from one
 drawing (see STATUS for the files). The masthead is *From the* ~~Internet~~ Dumpster Fire, the strike
 and caret drawn in ember.
+
+## Signatures (2026-11-09)
+
+Seven small things an editor at a desk would do to a page, each in one place and meaning one thing:
+the old web's spirit (a person's hand everywhere, no two sites alike) in the magazine's own language.
+Sketches: `docs/design-comps/2026-11-09-review/signatures.html`.
+
+1. **The ledger** (`@fdf/shared/ledger`, `Ledger.astro`, `LedgerRows` in the app): at the foot of
+   each item, whose words are on the page, counted by code from the bundle. The editor's (his note, his
+   notes on connections and ideas, where to start) in the italic; the source's, matched (the excerpt,
+   pull quotes, posts, ideas' passages, rhymes, a Life's quoted words) in the serif; the machine's,
+   checked (margin notes, ideas, the rhyme's bridge, a Life's profile) in the blue sans; then a bar in
+   ink, plate and machine blue (a 20-column grid on the web, the CSP allowing no inline widths).
+2. **The date stamp**: the cover's date as a library stamp in the Haul's ink, rotated a few degrees
+   ("Salvaged · 8 Nov 2026 · Haul 002"), and a double-ruled "Corrected · date · Version n" when the
+   Haul has corrections. In the margin from 1000px, in a row under the date on phones and in the app.
+   Decorative (`aria-hidden`): the date and corrections are in words on the cover.
+3. **The page that burned**: the 404 on a plate-grey sheet whose bottom-right corner is burned away
+   (`public/marks/burn.svg`, a mask) with a charred rim (`burn-edge.svg`) in darkened ember. Web only;
+   the app has no missing-page screen.
+4. **Taped plates**: an item's public-domain plate held on with two strips of tape (butter, three
+   quarters opaque, rotated 30°). Item plates only; block pictures and charts stay clean.
+5. **An ornament per edition**: each edition ink has its printer's ornament (`public/marks/orn-<edition>.svg`;
+   white PNGs of the same drawings in `apps/mobile/assets/marks/`), painted in the Haul's ink, between the
+   field note's sections and beside the flame in each item's closing folio. Oxblood a leaf, teal four
+   petals, ochre an asterism, plum a lozenge, pine a trefoil, umber a sun, slate a cross, olive a wave.
+6. **The archive as a card drawer**: each Haul an index card, its tab (the date it went out) standing up
+   in its ink at its own place along the drawer, a punch hole, the drawer's front a 3px ink rule.
+7. **The slug and the neighbours** (`SLUG`, `NEIGHBOURS` in `@fdf/shared/about`): the footer (the app's
+   Menu) says what the page is set in and who chose it, as a printer's slug, and lists the editor's
+   other places, the old web's blogroll. The list is the editor's to edit.

@@ -115,6 +115,12 @@ export function longDate(iso: string) {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
+/** "2026-10-15" to "15 Oct 2026", as a date stamp sets it. */
+export function stampDate(iso: string) {
+  const { y, m, d } = parts(iso);
+  return `${d} ${MONTHS[m - 1]!.slice(0, 3)} ${y}`;
+}
+
 /** "2026-10-15" to "Thursday 15 October 2026". */
 export function fullDate(iso: string) {
   const { y, m, d } = parts(iso);

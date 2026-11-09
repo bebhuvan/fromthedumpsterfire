@@ -1157,3 +1157,6 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
 - **The proof sheet, built** (the editor's pick): 18px reading on phones, 19px on desktop; checked
   extracts as torn salvage slips with "Matched word for word" in the machine's blue; quotations in the
   editor's notes as book quotations; a salvage tag on item heads. Web and app. Not deployed.
+- **Seven signatures, built** (the editor's pick): the ledger, the cover's date stamp, the 404 that
+  burned, taped plates, an ornament per edition, the archive as a card drawer, the footer's slug and
+  neighbours. Web and app (the 404 is web only). Not deployed.

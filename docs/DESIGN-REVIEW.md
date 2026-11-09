@@ -173,6 +173,8 @@ without the whole issue becoming a scrapbook.
 
 ## Signatures: a little of the old web, in our own language
 
+**Decided:** the editor chose all seven; built on this branch (DESIGN.md, Signatures).
+
 The editor asked (2026-11-09) whether the site could recapture some of the old internet's magic, when
 no two sites looked alike and many were a little weird. Yes, with one condition: the weirdness comes
 from what the magazine already is (an editor's desk, proof marks, printed objects, salvage, fire), not

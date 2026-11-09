@@ -16,6 +16,7 @@ import {
   absolute,
   EDITOR_NAME,
   fullDate,
+  stampDate,
   haulCoverImage,
   haulLastmod,
   longDate,
@@ -91,6 +92,13 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
       <link itemprop="url" href={absolute(paths.home)} />
     </span>
     <div class="wrap g cv">
+      {/* The date stamp (2026-11-09, a signature): the cover's date as a library stamp in the Haul's
+          ink, a few degrees off true, and a second stamp when the Haul has been corrected. Decorative:
+          the date and the corrections are given in words elsewhere on the page. */}
+      <p class="cv-stamps" aria-hidden="true">
+        <span class="stamp">Salvaged<b>{stampDate(haul.publishedAt)}</b>Haul {slug}</span>
+        {haul.corrections?.length ? <span class="stamp stamp-c">Corrected<b>{stampDate(haul.corrections.at(-1)!.date)}</b>Version {haul.version}</span> : null}
+      </p>
       <p class="m cv-no"><span class="cv-h">Haul</span><span class="cv-n" aria-hidden="true">{slug}</span><span><time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time></span><span>{objects(haul.items.length)}</span></p>
       <div class="cv-c">
         <h1 class="cv-t display" id="haul-title" itemprop="name headline"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>

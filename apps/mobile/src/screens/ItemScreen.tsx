@@ -9,7 +9,7 @@ import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
 import { curlQuotes, haulSlug, notePlain, quoteLength, sourceAction, speechSetting, type Haul, type Item } from '@fdf/shared/haul';
 import { useEditionInk } from '@/ui/edition';
-import { typeLabel, type ContentType } from '@fdf/shared/tokens';
+import { editionOf, typeLabel, type ContentType } from '@fdf/shared/tokens';
 import { fonts, GUTTER, typeColor, useEdition, usePalette, useScheme, useTextScale } from '@/theme';
 import { formName, formOf, headword, hostOf, speaker, titleText, type Form } from '@/lib/forms';
 import { joinMeta, minutes } from '@/lib/format';
@@ -28,6 +28,7 @@ import { Blocks, Credit, Picture } from '@/ui/Blocks';
 import { Chart } from '@/ui/Chart';
 import { firstChart } from '@/lib/chart';
 import { LifeForm } from '@/ui/Life';
+import { ledger } from '@fdf/shared/ledger';
 
 /** Index form of a two-word name: "Joseph Bazalgette" becomes "Bazalgette, Joseph". */
 const inverted = (n: string) => {
@@ -87,14 +88,48 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
       {form === 'offprint' ? <PaperReferences item={item} haul={haul} /> : <SeeAlso haul={haul} item={item} />}
       <Source item={item} />
       <Actions haul={haul} item={item} />
+      <LedgerRows item={item} />
       {next ? <NextItem n={haul.number} at={at + 2} item={next} /> : <Finished haul={haul} />}
-      <Folio haul={`Haul ${haulSlug(haul.number)}`} n={at + 1} of={haul.items.length} />
+      <Folio haul={`Haul ${haulSlug(haul.number)}`} n={at + 1} of={haul.items.length} edition={{ name: editionOf(haul.number, haul.edition), ink: ed }} />
     </Screen>
     </ItemNumber.Provider>
   );
 }
 
 // ---------- shared pieces ----------
+
+/**
+ * The ledger (2026-11-09, a signature), as the website sets it (Ledger.astro): whose words are on the
+ * page, counted from the bundle, the editor's in his italic, the source's in the serif, the machine's
+ * in blue, and a bar in those three inks.
+ */
+function LedgerRows({ item }: { item: Item }) {
+  const p = usePalette();
+  const l = ledger(item);
+  const total = l.editor + l.source + l.machine;
+  if (!total) return null;
+  const row = (label: ReactNode, value: number) => (
+    <View style={[styles.lgRow, { borderBottomColor: p.rule }]}>
+      {label}
+      <Text style={[styles.lgFig, { color: p.ink }]}>{value.toLocaleString('en-GB')}</Text>
+    </View>
+  );
+  return (
+    <View style={styles.lg} accessibilityLabel="The ledger: whose words are on this page">
+      <Apparatus>The ledger</Apparatus>
+      <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: p.ink }}>
+        {row(<Text style={[styles.lgK, { color: p.ink, fontFamily: fonts.textItalic }]}>Words by the editor</Text>, l.editor)}
+        {l.source ? row(<Text style={[styles.lgK, { color: p.ink }]}>Words from the source, matched</Text>, l.source) : null}
+        {l.machine ? row(<Text style={[styles.lgK, { color: p.machine, fontFamily: fonts.sans, fontSize: 13.5 }]}>Words by the machine, checked</Text>, l.machine) : null}
+      </View>
+      <View style={styles.lgBar} accessible={false} importantForAccessibility="no-hide-descendants">
+        {l.editor ? <View style={{ flex: l.editor, backgroundColor: p.ink }} /> : null}
+        {l.source ? <View style={{ flex: l.source, backgroundColor: p.plate, borderWidth: StyleSheet.hairlineWidth, borderColor: p.rule }} /> : null}
+        {l.machine ? <View style={{ flex: l.machine, backgroundColor: p.machine }} /> : null}
+      </View>
+    </View>
+  );
+}
 
 /** The item's number in its Haul, for the salvage tag. */
 const ItemNumber = createContext(0);
@@ -184,7 +219,7 @@ function Ideas({ item }: { item: Item }) {
           <Text style={[styles.ideaN, { color: p.ember }]}>{i + 1}</Text>
           <View style={{ flex: 1 }}>
             <Machine>{curlQuotes(m.text)}</Machine>
-            {m.quote ? <Text selectable style={[styles.ideaQ, { color: p.ink }]}>“{m.quote}”</Text> : null}
+            {m.quote ? <Text selectable style={[styles.ideaQ, { color: p.ink }]}>“{curlQuotes(m.quote)}”</Text> : null}
             {m.locator ? <Meta style={{ marginTop: 4, fontSize: 11.5 }}>{m.locator}</Meta> : null}
             {m.reaction ? (
               <Note style={{ marginTop: 8, fontSize: 17, lineHeight: 25 }}>
@@ -249,6 +284,9 @@ function PlateView({ item, style }: { item: Item; style?: object }) {
         resizeMode="cover"
         style={{ width: '100%', aspectRatio: plate.width / plate.height, backgroundColor: p.plate }}
       />
+      {/* Taped plates (2026-11-09, a signature), as the website sets them: two strips of tape. */}
+      <View style={[styles.tape, styles.tapeL, { backgroundColor: p.swatch.butter + 'BD' }]} pointerEvents="none" />
+      <View style={[styles.tape, styles.tapeR, { backgroundColor: p.swatch.butter + 'BD' }]} pointerEvents="none" />
       <Text style={[styles.caption, { color: p.ink }]}>{plate.caption}</Text>
       <Credit plate={plate} />
     </View>
@@ -505,7 +543,7 @@ const Leaf = memo(function Leaf({ k, side }: { k: 'then' | 'now'; side: { year: 
   return (
     <View style={[styles.leaf, { borderTopColor: p.ink }]}>
       <Text style={[styles.leafYear, { color: k === 'then' ? p.ink2 : p.ink }]}>{side.year}</Text>
-      <Text selectable style={[styles.leafQuote, { color: p.ink }]}>{side.quote}</Text>
+      <Text selectable style={[styles.leafQuote, { color: p.ink }]}>{curlQuotes(side.quote)}</Text>
       <Text style={[styles.leafCite, { color: p.ink2 }]}>{side.cite}</Text>
       <Text style={[styles.leafF, { color: p.ink2, textAlign: k === 'now' ? 'right' : 'left' }]}>{k}</Text>
     </View>
@@ -973,6 +1011,14 @@ const firstSentence = (s: string) => (/^.*?[.!?](\s|$)/.exec(s)?.[0] ?? s).trim(
 
 const styles = StyleSheet.create({
   sr: { position: 'absolute', width: 1, height: 1, opacity: 0 },
+  tape: { position: 'absolute', top: -11, width: 70, height: 20 },
+  tapeL: { left: -10, transform: [{ rotate: '-30deg' }] },
+  tapeR: { right: -10, transform: [{ rotate: '30deg' }] },
+  lg: { marginTop: 34 },
+  lgRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, paddingVertical: 7, borderBottomWidth: StyleSheet.hairlineWidth },
+  lgK: { fontFamily: fonts.text, fontSize: 15, lineHeight: 20, flexShrink: 1 },
+  lgFig: { fontFamily: fonts.displayRegular, fontSize: 21, lineHeight: 24, fontVariant: ['tabular-nums'] },
+  lgBar: { flexDirection: 'row', height: 8, marginTop: 12 },
   tag: { marginTop: 22, borderTopWidth: 1, paddingTop: 8, flexDirection: 'row', alignItems: 'baseline', gap: 12, alignSelf: 'stretch' },
   tagN: { fontFamily: fonts.displayRegular, fontSize: 22, lineHeight: 24, includeFontPadding: false },
   metaLine: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 22 },

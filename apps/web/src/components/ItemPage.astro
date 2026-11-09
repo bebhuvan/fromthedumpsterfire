@@ -14,6 +14,7 @@ import Note from './Note.astro';
 import Quote from './Quote.astro';
 import Ideas from './Ideas.astro';
 import Blocks from './Blocks.astro';
+import Ledger from './Ledger.astro';
 import Credit from './Credit.astro';
 import StartHere from './StartHere.astro';
 import SeeAlso from './SeeAlso.astro';
@@ -323,14 +324,14 @@ const ogImage =
         <div class="spread">
           <section class="leaf leaf-then" aria-label={`Then, ${item.rhyme.then.year}`}>
             <p class="leaf-y">{item.rhyme.then.year}</p>
-            <blockquote><p class="leaf-q">{item.rhyme.then.quote}</p></blockquote>
+            <blockquote><p class="leaf-q">{curlQuotes(item.rhyme.then.quote)}</p></blockquote>
             <p class="leaf-c">{item.rhyme.then.cite}</p>
             <p class="leaf-f" aria-hidden="true">then</p>
           </section>
           <div class="gutter"><p class="machine"><span class="sr">The machine's bridge: </span>{item.rhyme.bridge}</p></div>
           <section class="leaf leaf-now" aria-label={`Now, ${item.rhyme.now.year}`}>
             <p class="leaf-y">{item.rhyme.now.year}</p>
-            <blockquote><p class="leaf-q">{item.rhyme.now.quote}</p></blockquote>
+            <blockquote><p class="leaf-q">{curlQuotes(item.rhyme.now.quote)}</p></blockquote>
             <p class="leaf-c">{item.rhyme.now.cite}</p>
             <p class="leaf-f" aria-hidden="true">now</p>
           </section>
@@ -483,6 +484,8 @@ const ogImage =
     ) : null}
 
     <div class="wrap"><SeeAlso haul={haul} item={item} allHauls={allHauls} noWiki={form === 'offprint'} /></div>
+
+    <Ledger item={item} />
   </article>
 
   <nav class="wrap g row next" aria-label="Next in this Haul">

@@ -6,7 +6,7 @@ import Title from '../components/Title.astro';
 import Fingerprint from '../components/Fingerprint.astro';
 import { editionOf } from '@fdf/shared/tokens';
 import { archive } from '../lib/runtime';
-import { longDate, objects, paths, titleText } from '../lib/site';
+import { stampDate, longDate, objects, paths, titleText } from '../lib/site';
 
 const { hauls } = await archive();
 ---
@@ -26,9 +26,10 @@ const { hauls } = await archive();
   <section class="wrap g contents" aria-label="Hauls">
     {hauls.length ? (
       <ol class="mc arch" reversed>
-        {hauls.map((h) => (
+        {hauls.map((h, i) => (
           <li class={`e-${editionOf(h.number, h.edition)}`}>
             <a href={paths.haul(h.number)} aria-label={`Haul ${h.number}: ${titleText(h.title)}`}>
+              <span class={`ar-tab tab-${i % 4}`} aria-hidden="true">{stampDate(h.publishedAt)}</span>
               <span class="ar-num" aria-hidden="true"><span class="ar-h">Haul</span>{haulSlug(h.number)}</span>
               <span class="ar-main">
                 <span class="ar-date">{longDate(h.publishedAt)} · {objects(h.items.length).toLowerCase()}{h.version > 1 ? ` · corrected, version ${h.version}` : ''}</span>

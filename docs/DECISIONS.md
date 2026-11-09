@@ -448,3 +448,16 @@ Dated, newest last. Don't reopen these without a new reason.
   the forms toward one template). Not yet built from the proof sheet: one modular type scale, and the
   date the editor picked an item up in the tag (needs the capture date in the bundle, a shared schema
   change for the Desk session).
+
+## 2026-11-09 (design: signatures)
+
+- **Seven signatures, all built at the editor's word ("All seven")**: the ledger, the date stamp, the
+  page that burned, taped plates, an ornament per edition, the archive as a card drawer, the slug and
+  the neighbours (DESIGN.md, Signatures). The aim, the editor's: some of the old internet's magic, when
+  sites did not all look the same, "within our own language". Rule kept: each signature lives in one
+  place and means one thing, and the weirdness comes from the magazine's own objects, not the old web's
+  costume. Rejected: hit counters, marquees, cursor trails, animated GIFs (nostalgia, not character).
+- **The ledger's counting rule lives in `@fdf/shared/ledger`** (a small new shared module, tested) so the
+  website and the app count the same words. Code blocks are not counted (neither prose nor quotation).
+- **Ornaments are drawn marks, not font glyphs**: the Newsreader subsets lack fleurons, and a fallback
+  font drew the hedera as a red emoji in a test.
