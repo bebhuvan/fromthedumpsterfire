@@ -181,6 +181,7 @@ export function sitemap(hauls: Haul[], shelf?: Shelf | null): string {
     { loc: absolute(paths.threads), lastmod: latestMod },
     { loc: absolute(paths.search), lastmod: latestMod },
     { loc: absolute(paths.about) },
+    { loc: absolute(paths.privacy) },
     { loc: absolute(paths.llms), lastmod: latestMod },
     { loc: absolute(paths.llmsFull), lastmod: latestMod },
   ];
