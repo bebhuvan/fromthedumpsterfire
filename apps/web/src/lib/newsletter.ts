@@ -3,7 +3,7 @@
 // subscribe page shows Substack's own form in a frame, the CSP lets that one origin in as a frame,
 // and nothing else from Substack runs on our pages. While it is null the page says the list opens soon.
 
-export const NEWSLETTER: string | null = null;
+export const NEWSLETTER: string | null = 'https://fromthedumpsterfire.substack.com';
 
 export type Newsletter = { home: string; subscribe: string; embed: string; origin: string };
 

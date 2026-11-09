@@ -27,5 +27,7 @@ describe('CSP frame-src', () => {
     expect(frame.slice(0, 4)).toEqual(players);
     expect(frame.length).toBeLessThanOrEqual(5);
     for (const src of frame.slice(4)) expect(newsletterFor(src)?.origin).toBe(src);
+    // The list is open (2026-11-09): the subscribe page's form comes from the publication's own origin.
+    expect(frame).toContain('https://fromthedumpsterfire.substack.com');
   });
 });
