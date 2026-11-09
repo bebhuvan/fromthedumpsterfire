@@ -101,6 +101,13 @@ describe('before publishing', () => {
   it('flags Wikipedia cards that are ambiguous or off topic', () => {
     expect(kinds({ keptCards: [{ id: 'w1', title: 'White stork', extract: 'The white stork is a large bird.' }] })).toEqual([]);
     expect(kinds({ keptCards: [{ id: 'w2', title: 'Mercury', extract: 'Mercury may refer to: a planet, an element…' }] })).toEqual(['wiki:wrong']);
+    // An article that mentions another sense later is still an article (the Dunning–Kruger card in Haul 002).
+    expect(
+      kinds({
+        why: 'On the Dunning–Kruger effect.',
+        keptCards: [{ id: 'w5', title: 'Dunning–Kruger effect', extract: 'The Dunning–Kruger effect is a cognitive bias in which people with limited competence in a specific area give overly positive assessments of their ability. The term may also refer to the tendency of high performers to underestimate their skills.' }],
+      }),
+    ).toEqual([]);
     expect(kinds({ keptCards: [{ id: 'w3', title: 'Dilettante (record label)', extract: 'A British record label.' }] })).toEqual(['wiki:doubt']);
     // A bracketed qualifier is not held against the card.
     expect(kinds({ keptCards: [{ id: 'w4', title: 'Pfeilstorch (bird)', extract: 'A Pfeilstorch is a stork injured by an arrow.' }] })).toEqual([]);

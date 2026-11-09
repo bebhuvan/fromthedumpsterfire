@@ -175,7 +175,8 @@ function wikiIssues(it: ItemForCheck, src: string): Issue[] {
   const out: Issue[] = [];
   const context = `${src} ${normalisedForMatch(`${it.why} ${it.title}`)}`;
   for (const c of it.keptCards) {
-    if (/\(disambiguation\)/i.test(c.title) || /\bmay (?:also )?refer to\b/i.test(c.extract)) {
+    // A disambiguation page opens "Mercury may refer to:"; an article can say "the term may also refer to" later on.
+    if (/\(disambiguation\)/i.test(c.title) || /^[^.]{0,160}\bmay (?:also )?refer to\b/i.test(c.extract)) {
       out.push({ kind: 'wiki', severity: 'wrong', message: `The Wikipedia card "${c.title}" is a list of meanings, not an article. Untick it or add the specific article.`, fix: 'notes' });
       continue;
     }
