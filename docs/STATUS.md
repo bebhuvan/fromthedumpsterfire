@@ -1162,4 +1162,8 @@ ranked, with screenshots in `docs/desk-review/`).
   published* until a correction goes out.
 - Open (ranked in DESK-REVIEW): fold done steps on the item page, tray-first capture on a phone, the Haul
   page in sections on a phone, optimistic saves for the remaining item buttons, a lighter Settings page.
+- **The quieter Desk** (same branch, after the editor approved the comps): Salvage look; item page
+  with the note first, folded steps and one *Go through N waiting* step; keep-or-skip screens for an
+  item and a whole Haul; the Haul page in printed order with marks, hold-to-move and Publish in reach.
+  Checked at 390px in light and dark with headless Chromium; not yet tried on the editor's phone.
 

@@ -25,10 +25,10 @@ on this branch (not deployed); **Open** means not yet done.
 | 6 | **What is left to do sat at the bottom of a very long page.** "Before it can go in a Haul" came after the plate grid, 5,000px or more down on a phone. | item page | **Fixed**: a *Still to do: your note · an excerpt* line under the title, each a jump to its step. |
 | 7 | **Delete sat right next to Archive** in the item header (it asks first, but it is the one irreversible button). | item page | **Fixed**: Delete moved under More, with a line saying Archive keeps the item. |
 | 8 | **No way to replace a teaser on an item that "worked".** Paste-the-text and library copy only appeared after a failed fetch; a paywall preview that fetched "successfully" had no way out but refetch. | item page | **Fixed**: *Use my library copy* and *Paste the text yourself* sit under the piece for every article. |
-| 9 | **The item page is too long on a phone** (5,000 to 9,000px: twelve steps, plate grid, checks, More). Done steps stay full size. | item page | **Open**. Proposal: fold a done step to its one-line summary (tap to open), and put the plate grid behind "Choose a plate". |
+| 9 | **The item page is too long on a phone** (5,000 to 9,000px: twelve steps, plate grid, checks, More). Done steps stay full size. | item page | **Fixed** (quieter Desk): your note reads as it will print (tap to edit); title, plate and details fold to one line each; the machine's notes, ideas and cards are one *Go through N waiting* step; proposed passages show their opening. |
 | 10 | **The capture box fills the first phone screen**; the tray starts below the fold, so the editor scrolls past Voice note, Upload audio and PDF buttons to see what is waiting. | Tray | **Fixed**: until something is pasted, only the paste box and Voice note show, and the tray starts on the first screen (`after-tray.jpg`). |
-| 11 | **The Haul page on a phone is one long column**: the order list, then every ready tray item, then cover, plate, field note, questions, route, colophon, and Publish last. | Haul page | **Partly fixed**: Check and Tick are now at the top. **Open**: sections as tabs on a phone (Items, Cover, Field note, Publish). |
-| 12 | **Reordering is ↑ and ↓ only**, one step per tap, each tap a round trip. | Haul page | **Partly fixed** (each tap is now instant). **Open**: "move to position…" for long moves. |
+| 11 | **The Haul page on a phone is one long column**: the order list, then every ready tray item, then cover, plate, field note, questions, route, colophon, and Publish last. | Haul page | **Fixed** (quieter Desk): the page opens with the cover and the items in printed order, each with its mark and first problem; the tray folds away; Publish stays at the bottom of a phone screen. The cover and field note editors follow below. |
+| 12 | **Reordering is ↑ and ↓ only**, one step per tap, each tap a round trip. | Haul page | **Fixed**: hold an item to drag it anywhere; ⋯ moves it up, down or to the top. |
 | 13 | **Labels in the machine's terms.** "fix why", "fix citations", "Read and drafted", "Auto" for the theme, "checks pass". | Haul page, item header | **Partly fixed**: the Haul list says "to fix: your note, notes". **Open**: the status line and theme button. |
 | 14 | **Settings is a 7,000px engineer's page** on a phone (every model chain spelled out). | Settings | **Open**. Proposal: spend and keys first; model chains folded under "How the machine is set up". |
 | 15 | **Small controls elsewhere**: the edit links on notes and Wikipedia cards, "All checks", the tray's Tray/Archived tabs (27px), the title radio rows are fine (whole row). | various | **Partly fixed**: the tray tabs are 44px on a phone. **Open**: the rest. |
@@ -42,6 +42,15 @@ on this branch (not deployed); **Open** means not yet done.
 - What is left on an item sits under its title.
 - Each published version now records which items it carries (`migrations/0011_version_items.sql`);
   older versions are worked out once from their published bundle.
+
+## The quieter Desk (same day, after the comps were approved)
+
+The comps in `docs/design-comps/2026-11-09-desk/` were built: the Desk now follows the site's Salvage
+language (square buttons, underlines for the current tab, hairline rules in place of tinted rounded
+boxes), the item page leads with the editor's note (*B.*) and folds settled steps, the machine's offer
+is gone through one at a time on a keep-or-skip screen (`/item/:id/decide`, `/haul/:id/decide`), and the
+Haul page reads as the Haul. Screenshots: `quiet-item.jpg`, `quiet-deck.jpg`, `quiet-haul.jpg`,
+`quiet-dark.jpg`.
 
 ## Not done here
 

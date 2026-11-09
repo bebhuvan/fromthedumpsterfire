@@ -450,4 +450,13 @@ Dated, newest last. Don't reopen these without a new reason.
 - **Ticks show at once.** Ticking a note, idea or card, and reordering a Haul, update the screen before
   the Desk answers and go back with the reason if refused. Rejected: keeping the wait-and-reload (the
   editor's "janky" on a phone network is mostly this).
+- **The Desk follows Salvage, adapted for a tool** (the editor approved the comps in
+  `docs/design-comps/2026-11-09-desk/`). Lines and space instead of tinted rounded boxes; square
+  buttons, and only the next step looks like one; the editor's part marked *B.* in ember and the
+  machine's part MACHINE in blue, as the site's transcripts do; settled steps fold to one line.
+  Rejected: a restyle of the old twelve-step page (the length, not the paint, was the problem).
+- **The machine's offers are answered one at a time: Keep or Skip.** Keep prints the line; Skip
+  sets it aside (`cut`), Back undoes. Only what the editor keeps prints, as before. Every line stays
+  reachable on the item page to edit or tick. Rejected: printing offers unless skipped (it would
+  turn the editor's tick into an opt-out).
 

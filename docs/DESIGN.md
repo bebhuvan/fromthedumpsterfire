@@ -227,6 +227,18 @@ title and its cover specimen) and on large pull quotes.
   column (38rem), air (the rest), with a 40–72px gap. `.m`, `.c`, `.mc` place things.
 - Phone: one column; margin content moves under the thing it annotates.
 
+## The Desk (2026-11-09)
+
+The Desk is a working tool for one editor on a phone, set in the same language. Comps:
+`docs/design-comps/2026-11-09-desk/` (approved). Hairline rules and space, never tinted rounded boxes
+or pills; square buttons, and only the next step on a screen is one (the rest are quiet underlined
+links); the current tab is underlined. The editor's part is headed *B.* in ember display italic and
+set in the serif; the machine's part is headed MACHINE in blue spaced caps and set in the blue sans.
+A settled step folds to one line (what was chosen, then "change"). The machine's offers are answered
+one at a time on a keep-or-skip screen with Keep and Skip at the thumb. The Haul page reads as the
+Haul: its cover, then each item in printed order with a mark (✓, Look, Fix). Colours are the site's
+tokens (`packages/shared/src/tokens.ts`, via `apps/desk/src/theme.ts`).
+
 ## Tokens
 
 Defined in `packages/shared/src/tokens.ts`.
