@@ -1121,3 +1121,22 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   public-domain plates; the Haul's and each item's share card drawn with the Desk's `card.ts`. The deck
   and the plate captions were written in the session and are the editor's to replace. Working notes:
   `.editorial/haul-002/README.md`.
+
+## 2026-11-09: Haul 002 versions 2 and 3, the shelf, paper pages, Wikipedia picks
+
+- **Paper pages** (offprint, website and app): the editor's note comes first; the paper's passage
+  follows under "From the paper" as an extract (rule, opening mark, credit). Deployed (fdf-web
+  05c6c910; app update 8350d74a for runtime e903061b, signature verified).
+- **Wikipedia cards**: the reading prompt puts the piece's own subject first and asks for bracketed
+  titles; `resolveWikiTopic` no longer guesses past a disambiguation page (`exactOutcome`, tested).
+  Deployed (fdf-pipeline 9a9146f7, fdf-desk 1aaa2df3). Existing items keep their cards.
+- **The shelf** published for the first time: six books (`shelf/shelf.json` v1).
+- **Haul 002** retitled "The Uses and Abuses of History" (v2), now 15 items: added Buntz on McCarthy
+  (read from the editor's PDF), Dan Silver's note and Scott Alexander's "The Toxoplasma of Rage"
+  (the editor's entries), three fertility charts from UN data via Our World in Data on the
+  Geruso–Spears item, and ticked margin notes, ideas and Wikipedia cards. v3 credits Silver by name
+  (the capture had "Substack").
+- **Chart kit, open**: a diverging choropleth fills values near the midpoint with a grey that reads as
+  "no data", and its key runs past the data (to −0.6 for fertility); crowded line-end labels drift a
+  row from their lines. Worked around by using `sequential` and `multiples`; the editor will start a
+  session for the fix.
