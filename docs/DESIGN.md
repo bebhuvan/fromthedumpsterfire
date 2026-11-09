@@ -215,10 +215,11 @@ text, never machine text, never a fill.
 
 React Native cannot drive the optical-size axis, so the app ships static cuts (text and display).
 
-Headlines wrap with `text-wrap: pretty`: lines fill the measure and only a lone last word is avoided.
-`balance` (even line lengths) left boxed and left-aligned titles looking squeezed with a gap on the right
-(the editor, 2026-11-09), so it is kept only where text is centred (a paper's title and its cover
-specimen) and on large pull quotes.
+Headlines wrap plainly (`text-wrap: wrap`): each line fills the measure, and a single word on the last
+line is accepted. `balance` (even line lengths) and `pretty` (which pulls a word down to avoid a lone
+last word) both left boxed, left-aligned titles looking squeezed with a gap on the right (the editor,
+2026-11-09: "Pollution as / Growth Killer"). `balance` stays only where text is centred (a paper's
+title and its cover specimen) and on large pull quotes.
 
 ## Layout (web)
 
