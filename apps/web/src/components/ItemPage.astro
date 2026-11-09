@@ -3,7 +3,7 @@
 // a broadside, facing pages, a catalogue card or a page from the book. Every form shares the working
 // margin (meta, the machine's notes, speakers, section numbers), the running head, the thumb tab and
 // the folio. Mirrors apps/mobile/src/screens/ItemScreen.tsx.
-import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, sourceAction, speechSetting, type Haul, type Item } from '@fdf/shared/haul';
 import { editionOf, typeLabel } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
@@ -421,8 +421,12 @@ const ogImage =
       <section class="wrap transcript" aria-label="From the transcript">
         {item.excerpt ? (
           <div class="g tl tl-said">
-            <p class="m who">{speaker(item.creator)}<span class="when">{item.source.name}, {item.source.date}</span></p>
-            <blockquote class="c said" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+            <p class="m who">{speaker(item.creator)}<span class="when">{[item.source.name, item.source.date].filter(Boolean).join(', ')}</span></p>
+            {speechSetting(item.excerpt.text) === 'line' ? (
+              <blockquote class="c said" cite={safeHref(item.source.url)}><Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} /></blockquote>
+            ) : (
+              <div class="c said-x"><Quote extract text={item.excerpt.text} highlight={item.excerpt.highlight} cite={item.source.url} credit={[item.creator, item.source.name, item.excerpt.locator, matched]} /></div>
+            )}
           </div>
         ) : null}
         <div class="g tl">

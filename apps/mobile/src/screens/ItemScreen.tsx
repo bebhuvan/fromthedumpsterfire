@@ -7,7 +7,7 @@
 import { memo, useState, type ReactNode } from 'react';
 import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { go } from '@/nav';
-import { curlQuotes, haulSlug, notePlain, quoteLength, sourceAction, type Haul, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, notePlain, quoteLength, sourceAction, speechSetting, type Haul, type Item } from '@fdf/shared/haul';
 import { useEditionInk } from '@/ui/edition';
 import { typeLabel, type ContentType } from '@fdf/shared/tokens';
 import { fonts, GUTTER, typeColor, useEdition, usePalette, useScheme, useTextScale } from '@/theme';
@@ -362,7 +362,17 @@ function Transcript({ item, haul }: { item: Item; haul: Haul }) {
           <View style={styles.tl}>
             <Text style={[styles.who, { color: p.ink }]}>{who}</Text>
             <View style={{ flex: 1 }}>
-              <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.said} />
+              {speechSetting(item.excerpt.text) === 'line' ? (
+                <Highlighted text={item.excerpt.text} highlight={item.excerpt.highlight} color={typeColor(p, item.type)} style={styles.said} />
+              ) : (
+                <Quotation
+                  extract
+                  text={item.excerpt.text}
+                  highlight={item.excerpt.highlight}
+                  mark={typeColor(p, item.type)}
+                  credit={[item.creator, item.source.name, item.excerpt.locator, 'matched word for word against the source']}
+                />
+              )}
               <ShareQuote haul={haul} item={item} />
             </View>
           </View>

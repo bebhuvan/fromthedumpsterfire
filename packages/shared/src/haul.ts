@@ -574,6 +574,15 @@ export function quoteLength(text: string): 'short' | 'medium' | 'long' {
 }
 
 /**
+ * How a transcript sets the speaker's words: a line or two large, in display type past the column;
+ * anything longer as an extract (reading size, opening mark, rule, credit). Five paragraphs of Caro in
+ * 46px display serif read as a wall of the editor's type (Haul 002). Shared with the app.
+ */
+export function speechSetting(text: string): 'line' | 'extract' {
+  return quoteLength(text) === 'short' ? 'line' : 'extract';
+}
+
+/**
  * A long quotation's lead: the words set large before the rest follows in the reading type. The
  * editor's highlight when it opens the quotation, else the opening clauses up to a comma or semicolon
  * once there are eight words or more (never past thirty). `lead + rest` is always the whole text, so
