@@ -1,0 +1,56 @@
+---
+// Subscribe: Hauls by email. The form is Substack's own, in a frame from the one origin the CSP lets
+// in (lib/newsletter.ts); a plain link to Substack sits under it for when the frame is blocked. While
+// the list has no address the page says so and points to the feed. Linked from the footer, About,
+// every Haul's foot and the app's Menu.
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import { paths } from '../lib/site';
+import { newsletter } from '../lib/newsletter';
+
+export const prerender = true;
+---
+<Base title="Hauls by email" description="One email when a new Haul is published, and nothing else." path={paths.subscribe} section="about">
+  <header class="wrap g ab-open">
+    <p class="m meta"><span>Subscribe</span><span>Free</span></p>
+    <Title title={{ text: 'Hauls by', italic: 'email' }} as="h1" class="ab-t display" />
+    <p class="c deck">One email when a new Haul is published, saying what is in it, with links to read it here. Hauls are irregular, so the emails are too. Nothing else is sent.</p>
+  </header>
+
+  <section class="wrap g row nl" aria-labelledby="nl-title">
+    <h2 class="m mh" id="nl-title">Sign up</h2>
+    <div class="c">
+      {newsletter ? (
+        <>
+          <div class="nl-slip">
+            <iframe
+              class="nl-frame"
+              src={newsletter.embed}
+              title="Subscribe by email, a form from Substack"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+            ></iframe>
+          </div>
+          <p class="small ink2 nl-note">The form is Substack's, which keeps the list and sends the emails. If it does not appear, <a href={newsletter.subscribe} rel="noopener noreferrer">subscribe on Substack</a>.</p>
+        </>
+      ) : (
+        <p class="nl-soon">The email list opens soon. Until then, new Hauls arrive in the <a href={paths.feed}>RSS feed</a> as soon as they are published.</p>
+      )}
+    </div>
+  </section>
+
+  <section class="wrap g row" aria-labelledby="other-title">
+    <h2 class="m mh" id="other-title">Other ways to hear</h2>
+    <div class="c ab-note-body">
+      <p>The <a href={paths.feed}>RSS feed</a> carries every Haul in full. The reader app can send one notification per Haul, if you turn it on.</p>
+    </div>
+  </section>
+
+  <section class="wrap g row" aria-labelledby="addr-title">
+    <h2 class="m mh" id="addr-title">Your address</h2>
+    <div class="c ab-note-body">
+      <p>Substack holds the list and sends the emails under its own privacy policy; we use the list only to tell you about new Hauls. Every email has a link to unsubscribe. The rest is on the <a href={paths.privacy}>privacy page</a>.</p>
+    </div>
+  </section>
+</Base>

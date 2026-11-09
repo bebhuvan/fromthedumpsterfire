@@ -1,6 +1,6 @@
 // The menu, set as a magazine's contents page: the struck masthead and its strap, then the reading
 // (the latest Haul in its edition ink, every Haul, threads, the shelf (always listed; empty until the first books are published), search, saved) and the house (how it's
-// made, settings, a note to the editor), each a line in the display serif with what it holds in the
+// made, settings, Hauls by email, a note to the editor), each a line in the display serif with what it holds in the
 // text serif and a quiet figure on the right. One loud thing: the masthead.
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,11 +11,14 @@ import { editionInk, editionOf } from '@fdf/shared/tokens';
 import { fonts, GUTTER, usePalette, useScheme } from '@/theme';
 import { useAllHauls, useIndex, useShelf } from '@/lib/data';
 import { useReader } from '@/lib/store';
+import { openSource } from '@/lib/open';
 import { go } from '@/nav';
 import { Flame, Masthead } from '@/ui/parts';
 import { Meta } from '@/ui/type';
 import { Screen } from '@/ui/screen';
 import { EDITOR, mailEditor } from './Settings';
+
+const SUBSCRIBE = 'https://fromthedumpsterfire.com/subscribe';
 
 const titleText = (t: { text: string; italic?: string }) => t.text + (t.italic ? ' ' + t.italic : '');
 
@@ -62,6 +65,7 @@ export function Menu() {
       <Part label="The house">
         <Line first title="How it's made" detail="Two voices, the forms, and what we promise" onPress={go.about} />
         <Line title="Settings" detail="Appearance, text size, notifications, offline" onPress={go.settings} />
+        <Line title="Hauls by email" detail="One email when a Haul is published" onPress={() => openSource(SUBSCRIBE, p)} external />
         <Line title="Send a find or a note" detail={EDITOR} onPress={mailEditor} external />
       </Part>
 

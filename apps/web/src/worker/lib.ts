@@ -1,6 +1,8 @@
 // Pure pieces of the fdf-web Worker, kept apart so they can be tested (a Worker module may only
 // export handlers).
 
+import { newsletter } from '../lib/newsletter';
+
 export interface Env {
   ASSETS: { fetch(input: Request | string): Promise<Response> };
   /** "production" serves the canonical site; anything else is marked noindex. */
@@ -21,8 +23,11 @@ export const CSP = [
   "media-src 'self' https:",
   "font-src 'self'",
   "connect-src 'self' https://cloudflareinsights.com",
-  // Only the players the bundle can name (embedSrc in @fdf/shared/haul).
-  'frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://embed.podcasts.apple.com',
+  // Only the players the bundle can name (embedSrc in @fdf/shared/haul), and the newsletter's own
+  // sign-up form on /subscribe once its address is set (lib/newsletter.ts).
+  ['frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://embed.podcasts.apple.com', newsletter?.origin]
+    .filter(Boolean)
+    .join(' '),
   "manifest-src 'self'",
   "base-uri 'none'",
   "form-action 'self'",
