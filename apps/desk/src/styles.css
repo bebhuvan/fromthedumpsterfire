@@ -378,6 +378,10 @@ blockquote.excerpt p + p, .cand-text p + p { margin-top: 0.7em; }
   /* Capture starts as one paste box. */
   .capture.closed .capture-why { display: none; }
   .capture.closed .area:not(.editor) { min-height: 72px; }
+  /* Until there is something to capture, only the paste box and the voice note show, so the tray is in view. */
+  .capture.closed .capture-more, .capture.closed .capture-go { display: none; }
+  .capture.closed { padding: 16px; }
+  .tray-tabs button { min-height: 44px; padding: 0 16px; font-size: 14px; }
   .desk-grid h1.display { font-size: 28px !important; }
 }
 /* Long secret names and URLs wrap instead of widening the page. */

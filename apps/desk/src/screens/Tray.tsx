@@ -251,12 +251,12 @@ export function Capture({ onCaptured }: { onCaptured: () => void }) {
       <div className="row between">
         <div className="row">
           <VoiceNote target="capture" onNote={setNote} />
-          <button type="button" className="btn quiet small" onClick={() => fileRef.current?.click()}>
+          <button type="button" className="btn quiet small capture-more" onClick={() => fileRef.current?.click()}>
             Add PDF or page photo
           </button>
           <input ref={fileRef} type="file" hidden multiple accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,image/heic" onChange={(e) => e.target.files && void uploadFiles(e.target.files)} />
         </div>
-        <button type="button" className="btn primary" onClick={submit} disabled={!pending.length || busy}>
+        <button type="button" className="btn primary capture-go" onClick={submit} disabled={!pending.length || busy}>
           {busy ? 'Capturing…' : pending.length > 1 ? `Capture ${pending.length}` : 'Capture'} <kbd>⌘↵</kbd>
         </button>
       </div>
