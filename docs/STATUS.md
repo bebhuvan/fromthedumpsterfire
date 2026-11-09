@@ -1154,3 +1154,6 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
 - **Fixed, pipeline:** Wikipedia card summaries no longer stop at a middle initial ("Lyndon B.").
   Haul 002's published cards keep the cut text until they are edited and republished.
 - Not deployed: the website, an app update and the pipeline all need the editor's go-ahead.
+- **The proof sheet, built** (the editor's pick): 18px reading on phones, 19px on desktop; checked
+  extracts as torn salvage slips with "Matched word for word" in the machine's blue; quotations in the
+  editor's notes as book quotations; a salvage tag on item heads. Web and app. Not deployed.

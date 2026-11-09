@@ -432,3 +432,19 @@ Dated, newest last. Don't reopen these without a new reason.
   drops a title Wikipedia lists as ambiguous (`exactOutcome`). Rejected: picking the first article
   on a disambiguation page (often the wrong sense) and a second model call to judge each card (cost
   for something the editor ticks anyway).
+
+## 2026-11-09 (design: the proof sheet)
+
+- **The editor chose "Proof sheet + slips" from `docs/DESIGN-REVIEW.md`** (three directions: proof
+  sheet, scrapbook by source, auction catalogue). Salvage is tightened, not replaced. Built: reading
+  size 18px on phones and 19px on desktop (was the reverse; 19px on a phone gave about 39 characters a
+  line); checked extracts as **salvage slips** (plate grey, torn top edge, credit and the machine's
+  check on a stub); quotations inside the editor's writing as **book quotations** (indented, hanging
+  mark, no rule); a **salvage tag** (number, kind, where from, length) on the item heads.
+- **"Matched word for word" is set in the machine's blue sans.** It is the machine's claim about the
+  words, not the source's words or the editor's, so by the house rule it is blue.
+- Rejected for now: the scrapbook (a form per source: tear sheets, letters, printouts), kept as a later
+  step for the commonest kinds once the Desk records the kind of source; the auction catalogue (pulls
+  the forms toward one template). Not yet built from the proof sheet: one modular type scale, and the
+  date the editor picked an item up in the tag (needs the capture date in the bundle, a shared schema
+  change for the Desk session).

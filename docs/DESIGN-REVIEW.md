@@ -1,5 +1,9 @@
 # Design review, 2026-11-09
 
+**Decided:** the editor chose direction 1, Proof sheet with the slips (DECISIONS 2026-11-09). Built on
+this branch: the reading size, salvage slips, book quotations and the salvage tag. Still to do from it:
+one modular type scale, and the pick-up date in the tag.
+
 A reading of the website and the reader app after Haul 002, against `docs/DESIGN.md` (Salvage), with
 the small faults fixed and three directions for a stronger visual grammar for the editor to choose
 from. Pictures are in `docs/design-comps/2026-11-09-review/` (`shots/`, and the two comp pages

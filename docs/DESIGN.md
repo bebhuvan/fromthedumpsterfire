@@ -45,8 +45,8 @@ Older reference canvas (pre-Salvage, lilac palette): https://claude.ai/artifact/
 | Type | Form | On the page |
 |---|---|---|
 | essay, post | magazine opening | huge title across margin and column; the why as an italic standfirst; the excerpt as a pull-in with the editor's highlight in the type colour; machine notes beside it in the margin |
-| paper | journal offprint | a running citation line; centred title and authors; numbered sections (Why it's here, From the paper, Notes, then References after the figures, as a printed paper closes) with the numbers hanging in the margin. The editor's note comes first; the passage is set as a quotation (extract, rule, credit), never in the body type where it could read as the editor's. Its cover specimen heads the passage with its locator or "From the paper", never "Abstract" |
-| talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps with the dateline under it, **B.** in ember italic for the editor, MACHINE in blue once for all the machine's notes (one turn); a line or two of the speaker's words runs past the column at 30–46px; a longer passage is set as an extract (reading size, opening mark, rule, credit), never as a wall of display type in the editor's serif |
+| paper | journal offprint | a running citation line; centred title and authors; numbered sections (Why it's here, From the paper, Notes, then References after the figures, as a printed paper closes) with the numbers hanging in the margin. The editor's note comes first; the passage is set as a salvage slip, never in the body type where it could read as the editor's. Its cover specimen heads the passage with its locator or "From the paper", never "Abstract" |
+| talk, video, podcast | transcript | speakers in the margin: the speaker's surname in caps with the dateline under it, **B.** in ember italic for the editor, MACHINE in blue once for all the machine's notes (one turn); a line or two of the speaker's words runs past the column at 30–46px; a longer passage is set as a salvage slip, never as a wall of display type in the editor's serif |
 | poem | broadside | one sheet in the poem colour, the poem alone in Newsreader Text italic (28–44px, leading 1.38), poet and source at the foot |
 | rhymes | facing pages | then (year in ink2) on the left, now on the right, the machine's bridge in blue sans in the gutter; stacked on phones with the bridge between rules |
 | rabbit hole | catalogue card | a sheet in the type colour with a call number (`FDF 001.6`), the headword with its article moved to the end, the entry, the machine's note, a punch hole; the plate beside it |
@@ -215,10 +215,27 @@ text, never machine text, never a fill.
 
 React Native cannot drive the optical-size axis, so the app ships static cuts (text and display).
 
-A quotation inside the editor's words (a `> ` line in an item note or the field note) is upright, on a
-2px rule in the Haul's ink, and a step smaller than his words (0.9375em; `QUOTE_STEP` in the app), as a
-book sets a block quotation: in a long note, which is upright too, the rule alone left the quotation
-reading as more of the note.
+**Reading size** (2026-11-09, the proof sheet): body and long notes at 19px on wide screens and 18px on
+phones (the app 18pt); 19px on a phone left about 35–39 characters to a line.
+
+**Two quotation settings, one meaning each** (2026-11-09, the proof sheet):
+
+- **The salvage slip** is a passage the machine matched word for word against the stored source (an
+  item's excerpt as an extract, a transcript's long passage, a tool's own words when long): a slip of
+  plate grey with a torn top edge (a CSS mask on the web; a row of small triangles drawn with views in
+  the app), one opening mark in the Haul's ink, the words a step smaller than the editor's (17px app),
+  and a stub below a dashed tear with the credit on the left and **Matched word for word** on the
+  right in the machine's blue sans, because that line is the machine's claim. Shorter checked quotations
+  (pull quotes, epigraphs) keep their display setting and carry the same blue check under the credit.
+- **The book quotation** is a quotation inside the editor's own writing (a `> ` line in an item note
+  or the field note), which he quotes and the machine has not checked: indented on both sides, a step
+  smaller (0.9375em; `QUOTE_STEP` in the app), no rule, one opening mark in the Haul's ink hanging in
+  the indent.
+
+**The salvage tag** (2026-11-09): on the opening, offprint, transcript, facing pages, broadside and
+epigraph, the meta line becomes a tag: the item's number in the Haul's ink (display, two digits) over an
+ink rule, then the kind, "Salvaged from" the source and date (the opening), and the length. In the
+margin from 1000px, over the title on phones.
 
 Headlines wrap plainly (`text-wrap: wrap`): each line fills the measure, and a single word on the last
 line is accepted. `balance` (even line lengths) and `pretty` (which pulls a word down to avoid a lone
