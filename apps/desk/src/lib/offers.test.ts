@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Draft, MarginalBody, WikiCard } from '../api';
-import { haulMark, moveTo, offersFor } from './offers';
+import { haulMark, moveTo, nextOffer, offersFor } from './offers';
 
 const draft = (id: string, kind: 'idea' | 'marginal', status: Draft['status'], body: Partial<MarginalBody>): Draft<MarginalBody> =>
   ({ id, item_id: 'it', kind, status, model: null, position: 0, body: { text: `${id} text`, ...body } as MarginalBody }) as Draft<MarginalBody>;
@@ -29,6 +29,18 @@ describe('the offers queue', () => {
   it('survives a draft whose stored body did not parse', () => {
     const broken = { ...draft('b', 'marginal', 'proposed', {}), body: {} as MarginalBody };
     expect(offersFor({ id: 'it', title: 't' }, [broken], [])).toEqual([]);
+  });
+});
+
+describe('going through the offers', () => {
+  it('shows the first unanswered offer, so a refused answer comes back without repeating later ones', () => {
+    const offers = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+    expect(nextOffer(offers, new Set())).toBe(0);
+    expect(nextOffer(offers, new Set(['a', 'b']))).toBe(2);
+    // A's save failed after B was answered: A is next, then C; B is not shown again.
+    expect(nextOffer(offers, new Set(['b']))).toBe(0);
+    expect(nextOffer(offers, new Set(['a', 'b']))).toBe(2);
+    expect(nextOffer(offers, new Set(['a', 'b', 'c']))).toBe(3);
   });
 });
 

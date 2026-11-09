@@ -26,7 +26,7 @@ export function ItemReview({ id }: { id: string }) {
   const { data } = useLoad(() => api.get<ItemDetail>(`/api/items/${id}`), [id]);
   if (data?.item.kind === 'rhyme') return <RhymeEditor id={id} />;
   if (data?.item.kind === 'life') return <LifeEditor id={id} />;
-  return <ItemReviewInner id={id} />;
+  return <ItemReviewInner key={id} id={id} />;
 }
 
 type Act = <T>(label: string, fn: () => Promise<T>, done?: string) => Promise<T | undefined>;
@@ -69,12 +69,7 @@ function ItemReviewInner({ id }: { id: string }) {
     const target = location.hash.slice(1);
     if (!loaded || !target) return;
     if (target === 'step-source') setPane('piece');
-    requestAnimationFrame(() => {
-      const el = document.getElementById(target);
-      const more = el?.closest('details');
-      if (more) more.open = true;
-      el?.scrollIntoView({ block: 'start' });
-    });
+    requestAnimationFrame(() => openStep(target, 'auto'));
   }, [loaded, id]);
 
   const act: Act = async (label, fn, done) => {
@@ -1153,10 +1148,7 @@ function StillToDo({ detail, chosen, ideasIn }: { detail: ItemDetail; chosen: Ex
             href={`#${t.step}`}
             onClick={(e) => {
               e.preventDefault();
-              const el = document.getElementById(t.step);
-              const more = el?.closest('details');
-              if (more) more.open = true;
-              el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+              openStep(t.step, 'smooth');
             }}
           >
             {t.short}
@@ -1219,7 +1211,7 @@ function DetailsSection({ detail, onPatch }: { detail: ItemDetail; onPatch: (b: 
     </label>
   );
   return (
-    <div className="stack" id="step-details" style={{ gap: 10 }}>
+    <div className="stack" style={{ gap: 10 }}>
       <h3 className="h3">Details</h3>
       <label className="field">
         <span className="label">What kind of thing it is</span>
@@ -1295,9 +1287,30 @@ function ConnectionsSection({ detail, act }: { detail: ItemDetail; act: Act }) {
 
 // ---------------------------------------------------------------- folds and the machine's offer
 
+/**
+ * Bring a step into view and open whatever hides it: a fold, the More section around it, or the
+ * every-line list inside the machine's offer (where the lines to edit are).
+ */
+function openStep(id: string, behavior: ScrollBehavior) {
+  window.dispatchEvent(new CustomEvent('desk:open-step', { detail: id }));
+  requestAnimationFrame(() => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const around = el.closest('details');
+    if (around) around.open = true;
+    el.querySelectorAll<HTMLDetailsElement>('details.every-line').forEach((d) => (d.open = true));
+    el.scrollIntoView({ block: 'start', behavior });
+  });
+}
+
 /** A settled step as one line; "change" opens it. Opens by itself when the page is sent to it (#id). */
 function Fold({ id, k, summary, open: startOpen = false, children }: { id: string; k: string; summary: ReactNode; open?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(startOpen || location.hash === `#${id}`);
+  useEffect(() => {
+    const h = (e: Event) => (e as CustomEvent<string>).detail === id && setOpen(true);
+    window.addEventListener('desk:open-step', h);
+    return () => window.removeEventListener('desk:open-step', h);
+  }, [id]);
   if (!open)
     return (
       <div className="fold" id={id}>

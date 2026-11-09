@@ -78,6 +78,8 @@ export function HaulList({ haulId, items, review, onOrder }: { haulId: string; i
             className={moving ? 'moving' : undefined}
             onPointerDown={(e) => {
               if ((e.target as HTMLElement).closest('a,button') || e.button !== 0) return;
+              // Moves and the release keep coming to the list even if the pointer leaves it.
+              listRef.current?.setPointerCapture(e.pointerId);
               const { clientX: x, clientY: y } = e;
               hold.current = {
                 x,

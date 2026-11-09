@@ -47,6 +47,15 @@ function wikiLead(wiki: WikiCard[], cardId: string): string | undefined {
 
 export const kindLabel: Record<Offer['kind'], string> = { idea: 'Big idea', marginal: 'Margin note', card: 'Further reading' };
 
+/**
+ * The offer to show: the first, in order, without an answer. An answer the Desk refused is taken back,
+ * so that offer comes up again before the later ones, and nothing answered is shown twice.
+ */
+export function nextOffer(offers: readonly Pick<Offer, 'id'>[], answered: ReadonlySet<string>): number {
+  const i = offers.findIndex((o) => !answered.has(o.id));
+  return i < 0 ? offers.length : i;
+}
+
 /** An item's mark on the Haul page: ready, something to look at, or something to fix. */
 export function haulMark(issues: Pick<Issue, 'severity'>[]): 'ok' | 'look' | 'fix' {
   if (issues.some((i) => i.severity === 'wrong')) return 'fix';

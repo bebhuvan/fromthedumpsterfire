@@ -44,6 +44,8 @@ export function Composer({ id }: { id: string }) {
     setData({ ...data, items: next.map((x) => known.get(x)).filter((x): x is HaulDetail['items'][number] => Boolean(x)) });
     try {
       setData(await api.put<HaulDetail>(`/api/hauls/${id}/items`, { itemIds: next }));
+      // Marks and the publish bar count from the new order and the new set of items.
+      void review.reload();
     } catch (e) {
       setData(before);
       toast(`Not saved: ${e instanceof Error ? e.message : String(e)}`, true);
@@ -74,7 +76,7 @@ export function Composer({ id }: { id: string }) {
           </a>
           {h.deck ? <p className="haul-deck">{h.deck}</p> : <a href="#cover" className="haul-deck empty">Add a deck</a>}
         </header>
-        <Readiness haulId={id} count={data.items.length} review={review.data?.items ?? null} />
+        <Readiness haulId={id} count={data.items.length} review={review.data?.items ?? null} error={review.error} onRetry={() => void review.reload()} />
         <HaulList haulId={id} items={data.items} review={review.data?.items ?? null} onOrder={(next) => void setItems(next)} />
         <p className="small muted hl-hint">Hold an item to move it. A Haul is 6 to 20 objects.</p>
         <details className="add-from-tray">
@@ -126,8 +128,17 @@ export function Composer({ id }: { id: string }) {
 // ---------------------------------------------------------------- how ready the Haul is
 
 /** One line: how many items are ready, to look at, to fix; and the one step that helps most. */
-function Readiness({ haulId, count, review }: { haulId: string; count: number; review: HaulReviewItem[] | null }) {
+function Readiness({ haulId, count, review, error, onRetry }: { haulId: string; count: number; review: HaulReviewItem[] | null; error: string | null; onRetry: () => void }) {
   if (!count) return <p className="haul-ready muted">No items yet. Add them from an item's page, or from the tray below.</p>;
+  if (error && !review)
+    return (
+      <p className="haul-ready bad">
+        Could not check the items: {error}{' '}
+        <button type="button" className="link-btn" onClick={onRetry}>
+          Try again
+        </button>
+      </p>
+    );
   if (!review) return <p className="haul-ready muted">Checking every item…</p>;
   const marks = review.map((r) => haulMark(r.issues));
   const n = (m: string) => marks.filter((x) => x === m).length;

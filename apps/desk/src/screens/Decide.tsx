@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, displayTitle, type HaulSuggestionItem, type ItemDetail, type MarginalBody, type Draft } from '../api';
 import { Link, navigate, safeHref, useKeys, useLoad } from '../lib/core';
-import { kindLabel, offersFor, type Offer } from '../lib/offers';
+import { kindLabel, nextOffer, offersFor, type Offer } from '../lib/offers';
 import { Spinner } from '../ui/parts';
 
 type Answer = { offer: Offer; status: 'kept' | 'cut' };
@@ -28,27 +28,33 @@ export function DecideHaul({ id }: { id: string }) {
 }
 
 function Deck({ title, back, offers, acrossItems = false, listHref }: { title: string; back: string; offers: Offer[]; acrossItems?: boolean; listHref?: string }) {
-  const [at, setAt] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [failed, setFailed] = useState<string | null>(null);
   const [dx, setDx] = useState(0);
   const start = useRef<{ x: number; y: number } | null>(null);
+  const at = nextOffer(offers, new Set(answers.map((a) => a.offer.id)));
   const offer = offers[at];
   const kept = answers.filter((a) => a.status === 'kept').length;
 
-  const save = (o: Offer, status: 'kept' | 'cut' | 'proposed') => api.patch(o.what === 'draft' ? `/api/drafts/${o.id}` : `/api/wiki/${o.id}`, { status });
+  // Saves for one offer go out in order, so an answer and its undo cannot cross on the way.
+  const chains = useRef(new Map<string, Promise<unknown>>());
+  const save = (o: Offer, status: 'kept' | 'cut' | 'proposed') => {
+    const run = (chains.current.get(o.id) ?? Promise.resolve())
+      .catch(() => undefined)
+      .then(() => api.patch(o.what === 'draft' ? `/api/drafts/${o.id}` : `/api/wiki/${o.id}`, { status }));
+    chains.current.set(o.id, run);
+    return run;
+  };
 
   function answer(status: 'kept' | 'cut') {
     if (!offer) return;
     const o = offer;
     setFailed(null);
     setAnswers((a) => [...a, { offer: o, status }]);
-    setAt((n) => n + 1);
     setDx(0);
     save(o, status).catch((e) => {
-      // Put it back in front of the editor with the reason.
+      // Take the answer back: the offer is shown again before the later ones, with the reason.
       setAnswers((a) => a.filter((x) => x.offer.id !== o.id));
-      setAt(offers.indexOf(o));
       setFailed(`Not saved, so it is back: ${e instanceof Error ? e.message : String(e)}`);
     });
   }
@@ -57,9 +63,11 @@ function Deck({ title, back, offers, acrossItems = false, listHref }: { title: s
     const last = answers.at(-1);
     if (!last) return;
     setFailed(null);
-    setAnswers((a) => a.slice(0, -1));
-    setAt(offers.indexOf(last.offer));
-    save(last.offer, 'proposed').catch((e) => setFailed(`Could not undo: ${e instanceof Error ? e.message : String(e)}`));
+    setAnswers((a) => a.filter((x) => x !== last));
+    save(last.offer, 'proposed').catch((e) => {
+      setAnswers((a) => [...a, last]);
+      setFailed(`Could not undo: ${e instanceof Error ? e.message : String(e)}`);
+    });
   }
 
   useKeys({ ArrowRight: () => answer('kept'), ArrowLeft: () => answer('cut'), Backspace: undo, Escape: () => navigate(back) }, [offer, answers]);
@@ -72,7 +80,7 @@ function Deck({ title, back, offers, acrossItems = false, listHref }: { title: s
       <Link to={back} className="deck-close" aria-label="Close">
         ✕ <span>{title}</span>
       </Link>
-      <span className="muted">{offers.length ? `${Math.min(at + 1, offers.length)} of ${offers.length}` : ''}</span>
+      <span className="muted">{offers.length ? `${Math.min(answers.length + 1, offers.length)} of ${offers.length}` : ''}</span>
     </div>
   );
 
@@ -105,7 +113,7 @@ function Deck({ title, back, offers, acrossItems = false, listHref }: { title: s
   return (
     <div className="deck">
       {head}
-      <div className="deck-progress"><i style={{ width: `${(at / offers.length) * 100}%` }} /></div>
+      <div className="deck-progress"><i style={{ width: `${(answers.length / offers.length) * 100}%` }} /></div>
       <div className="deck-of">
         <span>{kindLabel[offer.kind]}{acrossItems ? <> · <Link to={`/item/${offer.itemId}`}>{offer.itemTitle}</Link></> : null}</span>
         <span>{kept} kept · {answers.length - kept} skipped</span>
@@ -116,6 +124,7 @@ function Deck({ title, back, offers, acrossItems = false, listHref }: { title: s
         onPointerDown={(e) => {
           if ((e.target as HTMLElement).closest('a,button')) return;
           start.current = { x: e.clientX, y: e.clientY };
+          e.currentTarget.setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
           if (!start.current) return;
