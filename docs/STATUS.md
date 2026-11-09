@@ -1140,3 +1140,17 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
   "no data", and its key runs past the data (to −0.6 for fertility); crowded line-end labels drift a
   row from their lines. Worked around by using `sequential` and `multiples`; the editor will start a
   session for the fix.
+
+## 2026-11-09: design review and small fixes (branch claude/heuristic-visvesvaraya-55cce2, not deployed)
+
+- **`docs/DESIGN-REVIEW.md`**: what works, what was off (ranked, with screenshots), a house style for
+  quotations (three comps) and three directions for the visual grammar, with a recommendation. Comps
+  and pictures in `docs/design-comps/2026-11-09-review/`. Waiting on the editor's pick.
+- **Fixed, web and app:** a tool's "In its own words" is a credited quotation set by length (was 190
+  words of display serif on Censusnama); quotations in the editor's notes and the field note are a
+  step smaller than his words; clippings step down with length; a paper's References follow its
+  figures; the cover specimen and About key no longer call a paper's passage its "Abstract"; web
+  excerpts set quote marks curly as the app does.
+- **Fixed, pipeline:** Wikipedia card summaries no longer stop at a middle initial ("Lyndon B.").
+  Haul 002's published cards keep the cut text until they are edited and republished.
+- Not deployed: the website, an app update and the pipeline all need the editor's go-ahead.

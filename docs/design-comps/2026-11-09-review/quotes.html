@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quotations: three house styles</title>
+<style>
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2') format('woff2'); font-weight: 500; }
+:root { --bg: #FFFFFF; --ink: #141416; --ink2: #55555C; --rule: #E6E6EA; --plate: #F4F4F6; --machine: #4651D2; --ember: #FF4F1F; --ed: #0E6461; --apricot: #FFE0C2;
+  --serif: 'Newsreader Text', Georgia, serif; --display: 'Newsreader Display', Georgia, serif; --sans: 'Schibsted Grotesk', system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0F0F12; --ink: #F3F3F1; --ink2: #A2A2AA; --rule: #2A2A31; --plate: #1B1B20; --machine: #A3ACFF; --ember: #FF6A3D; --ed: #6FD0CB; --apricot: #4D2E14; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font: 19px/1.65 var(--serif); padding: 32px 24px 64px; }
+h1 { font: 500 2.6rem/1 var(--display); letter-spacing: -0.02em; }
+.intro { max-width: 46rem; margin: 14px 0 34px; font-size: 1.05rem; color: var(--ink2); }
+.row { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+.phone { width: 375px; padding: 22px 16px 28px; border: 1px solid var(--rule); }
+.tag { font: 500 0.78rem/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); margin-bottom: 4px; }
+.name { font: 500 1.45rem/1.15 var(--display); margin-bottom: 16px; }
+.why { font: 500 0.82rem var(--sans); color: var(--ink2); margin-bottom: 10px; }
+.ed p { font-size: 19px; line-height: 1.65; }
+.ed p + * , .ed * + p { margin-top: 0.95em; }
+.sign { font: italic 400 1em var(--display); color: var(--ember); }
+mark { background: none; color: inherit; }
+/* Now: live today, after the step-down fix. */
+.now blockquote { padding-left: 1.1em; border-left: 2px solid var(--ed); font-size: 0.9375em; line-height: 1.6; }
+.now .cap { margin-top: 8px; font: 400 0.8rem/1.5 var(--sans); color: var(--ink2); }
+/* A: the book's block quotation. */
+.a figure { margin: 1.3em 0 1.3em; padding: 0 0.6em 0 1.6em; position: relative; }
+.a figure::before { content: '\201C'; position: absolute; left: -0.06em; top: -0.18em; font: 400 3.1em/1 var(--display); color: var(--ed); }
+.a blockquote { font-size: 17.5px; line-height: 1.62; }
+.a figcaption { margin-top: 10px; font: 400 0.8rem/1.45 var(--sans); color: var(--ink2); }
+.a figcaption b { font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink); font-size: 0.74rem; }
+.a .chk { color: var(--machine); }
+/* B: the salvage slip, a cutting pasted onto the page. */
+.b figure { margin: 1.5em -4px 1.4em; padding: 22px 18px 16px; background: var(--plate); position: relative;
+  mask: linear-gradient(#000, #000) 0 6px / 100% calc(100% - 6px) no-repeat, conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 0 / 12px 6px repeat-x; }
+.b .mk { position: absolute; left: 14px; top: 6px; font: 400 2.4rem/1 var(--display); color: var(--ed); }
+.b blockquote { margin-top: 14px; font-size: 17.5px; line-height: 1.62; }
+.b figcaption { margin-top: 12px; padding-top: 9px; border-top: 1px dashed color-mix(in srgb, var(--ink2) 50%, transparent); display: flex; justify-content: space-between; gap: 10px; font: 400 0.76rem/1.4 var(--sans); color: var(--ink2); }
+.b .chk { color: var(--machine); text-align: right; }
+.b .from { font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink); }
+/* C: the speaker's line, the transcript's grammar: who speaks first, the words on a rule, the check after. */
+.c figure { margin: 1.4em 0; }
+.c .who { font: 500 0.74rem/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ed); padding-bottom: 7px; border-bottom: 1px solid var(--ed); display: flex; justify-content: space-between; }
+.c .who span { letter-spacing: 0; text-transform: none; color: var(--ink2); font-weight: 400; }
+.c blockquote { padding: 12px 0 0; font-size: 17.5px; line-height: 1.62; }
+.c blockquote p:first-child::before { content: '\201C'; font: 400 1.6em/0 var(--display); color: var(--ed); margin-right: 2px; vertical-align: -0.28em; }
+.c .chk { margin-top: 10px; padding-top: 7px; border-top: 1px solid var(--rule); font: 400 0.76rem var(--sans); color: var(--machine); }
+.label { margin-top: 14px; font: 400 0.86rem/1.45 var(--sans); color: var(--ink2); max-width: 375px; }
+.label b { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Quotations, three ways</h1>
+<p class="intro">The same note from Haul 002 (Robert Caro on the Dwarkesh Podcast, phone width). Whose words are whose should be plain at a glance, and the quotation should be a pleasure in its own right. In all three, the line saying the words were matched is the machine's check, so it is set in the blue sans.</p>
+<div class="row">
+
+<div>
+<div class="phone now">
+<p class="tag">Now</p><p class="name">Robert Caro on the Dwarkesh Podcast</p>
+<p class="why">Why it's here</p>
+<div class="ed">
+<p>If one line stands out, it's a maxim Lyndon Johnson lived by:</p>
+<blockquote><p>When people say to me everything was bad that he did, what I say is, “You didn’t read the book.”</p><p>Because certainly the first parts of the book, hundreds of pages, are about a young idealist who sees this great need for recreation, for beaches on Long Island for the city people.</p></blockquote>
+<p class="cap">Dwarkesh Patel and Robert Caro, Dwarkesh Podcast, at 12:53, matched word for word against the source</p>
+<p>The same drive shows up in how Caro describes Robert Moses, who started out as a young idealist. <span class="sign">B.</span></p>
+</div>
+</div>
+<p class="label"><b>Now.</b> A rule in the Haul's ink, a step smaller since today. Correct, but plain: the quotation is the editor's prose with a line beside it.</p>
+</div>
+
+<div>
+<div class="phone a">
+<p class="tag">A · The book's block quotation</p><p class="name">Robert Caro on the Dwarkesh Podcast</p>
+<p class="why">Why it's here</p>
+<div class="ed">
+<p>If one line stands out, it's a maxim Lyndon Johnson lived by:</p>
+<figure><blockquote><p>When people say to me everything was bad that he did, what I say is, “You didn’t read the book.”</p><p>Because certainly the first parts of the book, hundreds of pages, are about a young idealist who sees this great need for recreation, for beaches on Long Island for the city people.</p></blockquote>
+<figcaption><b>Robert Caro</b>, Dwarkesh Podcast, 12:53<br><span class="chk">Matched word for word against the source</span></figcaption></figure>
+<p>The same drive shows up in how Caro describes Robert Moses, who started out as a young idealist. <span class="sign">B.</span></p>
+</div>
+</div>
+<p class="label"><b>A.</b> Indented on both sides and a size down, as a well-set book does it; no rule; one large opening mark in the Haul's ink hangs in the indent. Quiet and classical.</p>
+</div>
+
+<div>
+<div class="phone b">
+<p class="tag">B · The salvage slip</p><p class="name">Robert Caro on the Dwarkesh Podcast</p>
+<p class="why">Why it's here</p>
+<div class="ed">
+<p>If one line stands out, it's a maxim Lyndon Johnson lived by:</p>
+<figure><span class="mk" aria-hidden="true">“</span><blockquote><p>When people say to me everything was bad that he did, what I say is, “You didn’t read the book.”</p><p>Because certainly the first parts of the book, hundreds of pages, are about a young idealist who sees this great need for recreation, for beaches on Long Island for the city people.</p></blockquote>
+<figcaption><span><span class="from">Robert Caro</span><br>Dwarkesh Podcast, 12:53</span><span class="chk">Matched word<br>for word</span></figcaption></figure>
+<p>The same drive shows up in how Caro describes Robert Moses, who started out as a young idealist. <span class="sign">B.</span></p>
+</div>
+</div>
+<p class="label"><b>B.</b> The words as a cutting salvaged from the source: a slip of plate grey with a torn top edge, pasted into the note, its provenance on the stub. The most ours; used everywhere a source is quoted, it becomes the magazine's signature.</p>
+</div>
+
+<div>
+<div class="phone c">
+<p class="tag">C · The speaker's line</p><p class="name">Robert Caro on the Dwarkesh Podcast</p>
+<p class="why">Why it's here</p>
+<div class="ed">
+<p>If one line stands out, it's a maxim Lyndon Johnson lived by:</p>
+<figure><p class="who">Robert Caro <span>Dwarkesh Podcast, 12:53</span></p><blockquote><p>When people say to me everything was bad that he did, what I say is, “You didn’t read the book.”</p><p>Because certainly the first parts of the book, hundreds of pages, are about a young idealist who sees this great need for recreation, for beaches on Long Island for the city people.</p></blockquote>
+<p class="chk">Matched word for word against the source</p></figure>
+<p>The same drive shows up in how Caro describes Robert Moses, who started out as a young idealist. <span class="sign">B.</span></p>
+</div>
+</div>
+<p class="label"><b>C.</b> The transcript's grammar everywhere: whose words come first, in spaced capitals in the Haul's ink over a rule, then the words, then the machine's check. Reads like a script; the speaker is never in doubt.</p>
+</div>
+
+</div>
+</body>
+</html>

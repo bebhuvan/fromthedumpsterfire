@@ -187,7 +187,7 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   words from `@fdf/shared/charts/glosses`, not `@fdf/shared/charts` (that pulls in the renderer).
 - Fonts are embedded static cuts; use the names in `src/theme.ts` and never set fontWeight/fontStyle.
 - Build a release APK: `cd apps/mobile && npm run prebuild:android && npm run build:android`
-  (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS
+  (ANDROID_HOME=~/Android/Sdk, JAVA_HOME the mise temurin-21 install; `ARCH=x86_64` for the emulator). `build:android` forces the JS
   bundle to rebuild: Gradle's up-to-date check only watches apps/mobile, so edits in
   packages/shared would otherwise ship a stale bundle.
 - JS-only changes ship over the air: `npm run app:update` (signed with the key in
