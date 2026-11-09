@@ -81,6 +81,8 @@ export interface Assembled {
   card?: { key: string; bytes: Uint8Array };
   /** The app's chart pictures to write next to the bundle: [FILES key, PNG bytes]. */
   pictures: Array<[string, Uint8Array]>;
+  /** The Desk items the bundle carries (recorded with the version, so each item knows it is published). */
+  itemIds: string[];
 }
 
 /** The share card's size (Open Graph's 1.91:1). */
@@ -437,7 +439,9 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
 
   for (const m of chartNotes) warnings.push({ path: 'items', rule: 'chart-pictures', message: m });
   const report = validateHaul(haul, index, { filesBase });
-  return { haul, index, problems, bundleErrors: report.errors, warnings: [...warnings, ...report.warnings], copies, pictures, ...(card ? { card } : {}) };
+  const carried = new Set(bundleItems.map((b) => b.id));
+  const itemIds = items.filter((it) => carried.has(idFor.get(it.id)!)).map((it) => it.id);
+  return { haul, index, problems, bundleErrors: report.errors, warnings: [...warnings, ...report.warnings], copies, pictures, itemIds, ...(card ? { card } : {}) };
 }
 
 export interface PublishResult {
@@ -480,13 +484,14 @@ export async function publishHaul(env: Env, haulId: string, opts: { correction?:
 
   const now = nowIso();
   await env.DB.batch([
-    env.DB.prepare('INSERT INTO haul_versions (haul_id, version, path, correction, sha256, published_at) VALUES (?, ?, ?, ?, ?, ?)').bind(
+    env.DB.prepare('INSERT INTO haul_versions (haul_id, version, path, correction, sha256, published_at, item_ids) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(
       haulId,
       a.haul.version,
       path,
       a.haul.version > 1 ? opts.correction!.trim() : null,
       await sha256Hex(body),
       now,
+      JSON.stringify(a.itemIds),
     ),
     env.DB.prepare(`UPDATE hauls SET status = 'published', version = ?, published_at = COALESCE(published_at, ?), updated_at = ? WHERE id = ?`).bind(a.haul.version, now, now, haulId),
   ]);
