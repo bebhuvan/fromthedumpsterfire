@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
 import { haulSlug, type Haul } from '@fdf/shared/haul';
 import { editionOf } from '@fdf/shared/tokens';
+import { noteLead } from '@fdf/shared/fieldnote';
 import { fonts, GUTTER, useEdition, usePalette } from '@/theme';
 import { longDate, stampDate } from '@/lib/format';
 import { useReader } from '@/lib/store';
@@ -29,6 +30,7 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
   const resume = place && place.n === haul.number && place.item ? haul.items.find((i) => i.id === place.item) : undefined;
   const isLatestRead = resume ? haul.items.indexOf(resume) === haul.items.length - 1 : false;
   const note = haul.fieldNote;
+  const lead = noteLead(note.body ?? note.paragraphs.map((t) => ({ kind: 'paragraph' as const, runs: [{ text: t }] })));
   const thread = haul.threads[0];
   const numberOf = new Map(haul.items.map((i, k) => [i.id, k + 1]));
   const len = haul.title.text.length + (haul.title.italic?.length ?? 0);
@@ -87,9 +89,24 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
           </View>
         ) : null}
         <View style={{ marginTop: 16 }}>
-          <NoteBody note={note} edition={editionOf(haul.number, haul.edition)} para={styles.para} gap={14} />
+          <NoteBody note={{ ...note, body: lead.blocks }} edition={editionOf(haul.number, haul.edition)} para={styles.para} gap={14} />
         </View>
-        <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
+        {lead.cut ? (
+          // A long note continues on its own page, as the website sets it, so the contents are not
+          // twenty-five screens down (noteLead).
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={`Continued: the whole note, ${lead.minutes} minutes`}
+            onPress={() => go.note(haul.number)}
+            style={({ pressed }) => [styles.more, { borderColor: p.ink }, pressed && { opacity: 0.6 }]}
+          >
+            <Text style={[styles.moreK, { color: ed }]}>CONTINUED</Text>
+            <Text style={[styles.moreT, { color: p.ink }]}>The whole note, {lead.minutes} minutes</Text>
+            <Text style={[styles.moreT, { color: p.ink }]}>→</Text>
+          </Pressable>
+        ) : (
+          <Sign size={24} style={{ alignSelf: 'flex-end', marginTop: 6 }} />
+        )}
       </View>
 
       {note.route.length ? (
@@ -181,6 +198,9 @@ function Stamp({ ink, top, date, foot, turn, double }: { ink: string; top: strin
 const styles = StyleSheet.create({
   topRow: { paddingHorizontal: GUTTER, minHeight: 36, justifyContent: 'center' },
   head: { paddingHorizontal: GUTTER, marginTop: 26 },
+  more: { flexDirection: 'row', alignItems: 'baseline', gap: 12, marginTop: 22, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1 },
+  moreK: { fontFamily: fonts.sansMedium, fontSize: 11, letterSpacing: 1.5 },
+  moreT: { fontFamily: fonts.displayItalic, fontSize: 19, lineHeight: 24, flexShrink: 1 },
   stamps: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12, marginLeft: 3 },
   stamp: { borderWidth: 2, paddingHorizontal: 9, paddingTop: 4, paddingBottom: 3, alignItems: 'center', opacity: 0.85 },
   stampOuter: { borderWidth: 1, padding: 2, opacity: 0.85 },

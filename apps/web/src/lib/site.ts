@@ -27,7 +27,7 @@ export const paths = {
   home: '/',
   haul: (n: number) => `/haul/${n}`,
   haulMd: (n: number) => `/haul/${n}.md`,
-  note: (n: number) => `/haul/${n}#field-note`,
+  note: (n: number) => `/haul/${n}/note`,
   item: (n: number, id: string) => `/haul/${n}/${id}`,
   itemMd: (n: number, id: string) => `/haul/${n}/${id}.md`,
   thread: (n: number, id: string) => `/haul/${n}/thread/${id}`,

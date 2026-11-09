@@ -3,10 +3,10 @@
 // column with the route in the margin; the contents show each item as a small specimen of its own
 // printed form (Specimen.astro). Mirrors the app's Cover screen.
 import { haulSlug, type Haul } from '@fdf/shared/haul';
+import { noteLead } from '@fdf/shared/fieldnote';
 import { editionOf } from '@fdf/shared/tokens';
 import Base from '../layouts/Base.astro';
 import Title from './Title.astro';
-import Highlighted from './Highlighted.astro';
 import NoteBody from './NoteBody.astro';
 import Voice from './Voice.astro';
 import Specimen from './Specimen.astro';
@@ -38,7 +38,9 @@ const note = haul.fieldNote;
 const typeOf = new Map(haul.items.map((i) => [i.id, i.type]));
 // The route cites the contents by number, the way a page cites a figure.
 const numOf = new Map(haul.items.map((i, n) => [i.id, String(n + 1).padStart(2, '0')]));
-const last = note.paragraphs.length - 1;
+// A long note sets its opening here and continues on its own page (noteLead), so the contents are
+// not twenty-five phone screens down.
+const lead = noteLead(note.body ?? note.paragraphs.map((p) => ({ kind: 'paragraph' as const, runs: [{ text: p }] })));
 const slug = haulSlug(haul.number);
 const issueTitle = `Haul ${haul.number}: ${titleText(haul.title)}`;
 // The front page is the publication, so a link to it is previewed by the site's card; the Haul's own
@@ -99,7 +101,7 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
         <span class="stamp">Salvaged<b>{stampDate(haul.publishedAt)}</b>Haul {slug}</span>
         {haul.corrections?.length ? <span class="stamp stamp-c">Corrected<b>{stampDate(haul.corrections.at(-1)!.date)}</b>Version {haul.version}</span> : null}
       </p>
-      <p class="m cv-no"><span class="cv-h">Haul</span><span class="cv-n" aria-hidden="true">{slug}</span><span><time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time></span><span>{objects(haul.items.length)}</span></p>
+      <p class="m cv-no"><span class="cv-h">Haul</span><span class="cv-n" aria-hidden="true">{slug}</span><span><time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time></span><a class="cv-jump" href="#contents-title">{objects(haul.items.length)} in this Haul <span aria-hidden="true">↓</span></a></p>
       <div class="cv-c">
         <h1 class="cv-t display" id="haul-title" itemprop="name headline"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>
         <p class="cv-deck" itemprop="description">{haul.deck}</p>
@@ -138,9 +140,10 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
     <div class="c fn-c">
       <Title title={note.title} as="h2" class="h-sec" id="fn-title" />
       {note.audio ? <Voice audio={note.audio} label="Hear it as I said it" /> : null}
-      {note.body ? <NoteBody note={note} /> : note.paragraphs.map((para, i) => (
-        <Highlighted text={para} highlight={note.highlight} curl class={i === 0 ? 'fn-first' : undefined}>{i === last ? <> <span class="sign-in endmark" aria-label="Bhuvanesh, the editor">B.</span></> : null}</Highlighted>
-      ))}
+      <NoteBody note={{ ...note, body: lead.blocks }} signed={!lead.cut} />
+      {lead.cut ? (
+        <p class="fn-more"><a href={paths.note(haul.number)}><span class="fn-more-k">Continued</span><span class="fn-more-t">The whole note, {lead.minutes} minutes</span><span aria-hidden="true">→</span></a></p>
+      ) : null}
     </div>
   </section>
 

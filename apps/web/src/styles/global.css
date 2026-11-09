@@ -1276,7 +1276,19 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .e-slate { --orn: url('/marks/orn-slate.svg'); }
 .e-olive { --orn: url('/marks/orn-olive.svg'); }
 
-.has-ed .fn-c .fn-h:not(:first-child)::before { content: ''; display: block; width: 22px; height: 22px; margin: 0 auto 1.4em; background: var(--ed);
+.has-ed .fn-c :is(p, blockquote) ~ .fn-h::before { content: ''; display: block; width: 22px; height: 22px; margin: 0 auto 1.4em; background: var(--ed);
   -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
 .orn-mark { display: inline-block; width: 14px; height: 14px; margin-left: 10px; vertical-align: -2px; background: var(--ed);
   -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
+
+/* ---------- The field note continued (2026-11-09): a long note sets its opening on the cover and
+   continues on its own page; a ruled line says so, as a magazine says "continued on page 4". ---------- */
+.fn-more { margin-top: 1.6em; }
+.fn-more a { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 12px 0; border-block: 1px solid var(--ink); text-decoration: none; color: var(--ink); }
+.fn-more-k { font: 500 0.75rem/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ed, var(--ink2)); }
+.fn-more-t { flex: 1; font: italic 400 1.1875rem/1.3 var(--display); }
+.fn-more a:hover .fn-more-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+.cv-jump { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.cv-jump:hover { text-decoration-color: currentColor; }
+.fn-page { padding-top: 28px; }
+#contents-title { scroll-margin-top: 16px; }

@@ -60,7 +60,7 @@ packages/shared   schema types, design tokens, style check, voice profile, verba
                   validator, quoting (excerpt length guide, when to draw out big ideas), life (a Life's
                   rules: checkLifeDraft, assembleLife, lifeByline, figures traced to quotes), highlight
                   (code tokens at publish), fingerprint, fieldnote (the field note's marks: headings,
-                  quotations, links, italics, embed links; noteParts, noteBody; an item note's quotations, links and italics: itemNote), ledger (whose words are on an item's page, counted), shelf (the books the editor is reading:
+                  quotations, links, italics, embed links; noteParts, noteBody; noteLead, where the cover's opening of a long note stops; an item note's quotations, links and italics: itemNote), ledger (whose words are on an item's page, counted), shelf (the books the editor is reading:
                   Shelf, validateShelf, shelfOrder), charts (src/charts: spec, validateChart,
                   renderer with one file per form in forms/, labels, glosses, CSV, bandSummary, maps in
                   geo/, app pictures and share pictures)

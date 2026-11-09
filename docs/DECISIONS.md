@@ -461,3 +461,14 @@ Dated, newest last. Don't reopen these without a new reason.
   website and the app count the same words. Code blocks are not counted (neither prose nor quotation).
 - **Ornaments are drawn marks, not font glyphs**: the Newsreader subsets lack fleurons, and a fallback
   font drew the hedera as a red emoji in a test.
+
+## 2026-11-09 (the field note continued)
+
+- **A long field note sets its opening on the cover and continues on its own page.** The editor: his
+  notes run long (Haul 002's past 4,000 words) and readers "might miss the other items that I've
+  actually worked hard to curate". Measured: the contents began about 31 phone screens down. The cover
+  now stops at a paragraph after about 450 words (`noteLead`) with a "Continued" line to
+  `/haul/<n>/note`, a new website page at the address the app's deep link already used (the old
+  redirect to `#field-note` is gone). Rejected: a "Read more" fold in place (a 5,000-word note unfolding
+  on the cover buries the contents again, and folded text is easy to miss); contents before the note
+  (the editor's letter is the front page of each issue); asking the editor to write shorter.

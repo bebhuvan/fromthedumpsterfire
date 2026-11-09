@@ -44,8 +44,6 @@ export function aliasFor(raw: string): string | null {
   // "//host" would resolve to another origin; collapse any run of leading slashes first.
   const pathname = '/' + raw.replace(/^[\/\\]+/, '');
   if (pathname !== raw) return pathname;
-  const note = /^\/haul\/(\d+)\/note\/?$/.exec(pathname);
-  if (note) return `/haul/${note[1]}#field-note`;
   const padded = /^\/haul\/0+(\d+)(\/.*|\.md)?$/.exec(pathname);
   if (padded) return `/haul/${padded[1]}${padded[2] ?? ''}`;
   if (pathname === '/hauls' || pathname === '/hauls/') return '/archive';

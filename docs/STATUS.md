@@ -1160,3 +1160,6 @@ From the editor's phone review of Haul 001. Website and app; shared code in `@fd
 - **Seven signatures, built** (the editor's pick): the ledger, the cover's date stamp, the 404 that
   burned, taped plates, an ornament per edition, the archive as a card drawer, the footer's slug and
   neighbours. Web and app (the 404 is web only). Not deployed.
+- **The field note continued**: past 700 words the cover sets the note's opening and a "Continued" line
+  to the note's own page (`/haul/<n>/note`, new on the website); a jump to the contents under the date.
+  Web and app. Not deployed.
