@@ -7,8 +7,6 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as C from './charts';
-import * as Atlas from './atlas';
-type AtlasData = Atlas.Data;
 import { esc, roman } from './kit';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -176,7 +174,7 @@ const figure = (b: (typeof beats)[number], wide: number, g: C.Grammar, phone = 3
   `<figure class="fig"><div class="wide">${b.fig(wide, g)}</div><div class="phone">${b.fig(phone, g)}</div>
   <figcaption class="cap">${esc(b.cap)}<span class="src">${esc(src)}</span></figcaption></figure>`;
 
-const nav = (on: string) => `<div class="combar"><b>Data stories, comps</b>${[['atlas', 'Atlas (recommended)'], ['plates', '1 Plates'], ['desk', '2 Desk'], ['specimen', '3 Specimen']].map(([k, l]) => `<a href="${k}.html" class="${k === on ? 'on' : ''}">${l}</a>`).join('')}<span>Haul 002 · Geruso and Spears · real UN data · machine draft words</span></div>`;
+const nav = (on: string) => `<div class="combar"><b>Data stories, comps</b>${[['atlas', 'Atlas (the story)'], ['plates', '1 Plates'], ['desk', '2 Desk'], ['specimen', '3 Specimen']].map(([k, l]) => `<a href="${k}.html" class="${k === on ? 'on' : ''}">${l}</a>`).join('')}<span>Haul 002 · Geruso and Spears · real UN data · machine draft words</span></div>`;
 
 const editorTitle = 'Fewer children, almost everywhere';
 // The editor's own words, from his note on the paper in Haul 002, unchanged.
@@ -337,172 +335,4 @@ ${beats.filter((b) => ['crossing', 'floor', 'spike'].includes(b.key)).map((b) =>
 }
 
 
-// ---- 4. Atlas: the hybrid the review asked for -------------------------------------------------
-{
-  const A = D as unknown as AtlasData;
-  // The editor's note on the paper (Haul 002), unchanged; every margin line must be found in it.
-  const noteText = readFileSync(join(here, 'data/editor-note.txt'), 'utf8');
-  const his = (s: string) => {
-    if (!noteText.includes(s)) throw new Error(`Not the editor's words: ${s}`);
-    return `<aside class="his"><span class="caret" aria-hidden="true"></span><p>${esc(s)}</p><span class="who">B., on the paper</span></aside>`;
-  };
-  const ib = A.intervals.births['World']!;
-  const lo95 = Math.round(at(ib.lo95, 2100) / 1e6), hi95 = Math.round(at(ib.hi95, 2100) / 1e6);
-  const it = A.intervals.tfr['World']!;
-  // The middle half of the UN's 2100 projections across countries, read from the rows.
-  const ends = Object.values(D.fieldProj).map((v) => v[v.length - 1]!).sort((a, b) => a - b);
-  const q = (f: number) => ends[Math.floor(f * (ends.length - 1))]!;
-  const twelve = ['South Korea', 'China', 'Japan', 'Italy', 'Thailand', 'Brazil', 'United States', 'France', 'Iran', 'Bangladesh', 'India', 'Nigeria'];
-  const t2100 = twelve.map((c) => at(D.named[c]!.tfr, 2100));
-  const up = twelve.filter((c) => at(D.named[c]!.tfr, 2100) > at(D.named[c]!.tfr, 2023)).length;
-  const pyr23 = A.pyramid.India['2023']!, pyr61 = A.pyramid.India['2061']!;
-  const tot = (r: [string, number, number, number]) => r[2] + r[3];
-  const under5 = tot(pyr23[0]!), teens = tot(pyr23[3]!);
-  const big61 = pyr61.reduce((a, b) => (tot(b) > tot(a) ? b : a));
-  const fell = Object.values(D.field).filter((v) => v[v.length - 1]! < v[0]!).length, nField = Object.keys(D.field).length;
-  const plates: { n: number; key: string; name: string; head: string; body: string; fig: (p: boolean) => string; cap: string; fold?: boolean; margin?: string; after?: string; before?: string }[] = [
-    { n: 1, key: 'fall', name: 'The fall', margin: his('Today, most of the world outside sub-Saharan Africa has fallen below that line.'),
-      head: `The world went from ${f2(peak[1])} children per woman to ${f2(now)} in sixty years`,
-      body: `In ${peak[0]} the average woman could expect ${f2(peak[1])} children; by 2023, ${f2(now)}, just above the 2.1 at which each generation replaces the last. ${fell} of ${nField} countries ended lower than they began. In the UN's projection for 2100, half the countries end between ${q(0.25).toFixed(2)} and ${q(0.75).toFixed(2)}, and the world goes below 2.1 in ${worldCross}; its 95 per cent range for the world in 2100 runs from ${f2(at(it.lo95, 2100))} to ${f2(at(it.hi95, 2100))}.`,
-      fig: (p) => Atlas.fall(A, p), cap: 'Total fertility rate: every country of a million people or more, to 2023, and the UN medium projection for each to 2100; the world in ink, with the UN 80 and 95 per cent ranges hatched.' },
-    { n: 2, key: 'crossing', name: 'The crossing', fold: true,
-      head: 'Two in three people now live where fertility is below replacement',
-      body: `Japan crossed 2.1 in ${cy('Japan')}, the United States in ${cy('United States')}, China in ${cy('China')}, India in ${cy('India')}. Each circle is a country, sized by its people: ${crossed} had crossed by 2023, home to ${share23} per cent of the world. The hollow ones cross in the UN's projection; ${never} do not before 2100.`,
-      fig: (p) => Atlas.crossing(A, p), cap: 'Each country of a million people or more at the first year its total fertility rate is below 2.1, filled where the UN has estimated it, hollow where it projects it; area is the population in 2023. Above, the share of the world’s people in such countries, year by year.' },
-    { n: 3, key: 'twelve', name: 'Twelve countries',
-      head: 'Twelve countries, one scale',
-      body: `Each panel is one country against the world in grey, on one scale. The UN projects ${up} of these ${twelve.length} to drift up from where they are now and the rest to keep falling; by 2100 all ${twelve.length} are between ${Math.min(...t2100).toFixed(2)} and ${Math.max(...t2100).toFixed(2)}.`,
-      fig: (p) => Atlas.multiples(A, p, ['South Korea', 'China', 'Japan', 'Italy', 'Thailand', 'Brazil', 'United States', 'France', 'Iran', 'Bangladesh', 'India', 'Nigeria']), cap: 'Total fertility rate, 1950 to 2023, and the UN medium projection to 2100.' },
-    { n: 4, key: 'floor', name: 'The floor', margin: his('There have been spikes, the Baby Boom being the famous one, but they were blips around a long-term decline.'),
-      before: slip,
-      head: `Of ${floorN} countries that fell below 1.5, none has come back`,
-      body: `${floorN} countries of a million people or more have gone below 1.5 children per woman. None has returned to replacement; the highest any has climbed back to is ${f2(back.max_after)}, in ${back.country}. South Korea, at ${f2(ko)} in 2023, is the lowest of them.`,
-      fig: (p) => Atlas.floor(A, p), cap: 'Total fertility rate of each country of a million people or more that fell below 1.5, from the year it first did, to 2023. The scale starts at 0.5, not zero.',
-      after: `<div class="coda"><p class="coda-k">At South Korea’s rate</p><div class="coda-n"><span><b>100</b> adults</span><span><b>${kids}</b> children</span><span><b>${grand}</b> grandchildren</span></div><p class="mbody">Arithmetic on one number, not a forecast: each generation is the last multiplied by ${f2(ko)} over 2.1.</p></div>${his('In places like Japan and South Korea, the fall is dramatic. South Korea is at about 0.7, which has led to all sorts of apocalyptic proclamations about the future of the world.')}` },
-    { n: 5, key: 'peak', name: 'The peak',
-      head: `The world’s births peaked in ${bPk[0]}, in the UN’s central projection`,
-      body: `${Math.round(bPk[1] / 1e6)} million babies were born in ${bPk[0]}. Deaths rise as the world ages, and in ${dCross} they overtake births, the year the world’s population peaks at ${(pPk[1] / 1e9).toFixed(1)} billion. The range is wide: by 2100 the UN puts births between ${lo95} and ${hi95} million a year.`,
-      fig: (p) => Atlas.peak(A, p), cap: 'Births and deaths in the world each year: UN estimates to 2023, medium projection to 2100, with the UN 80 and 95 per cent ranges for births.' },
-    { n: 6, key: 'regions', name: 'Where babies are born',
-      head: 'By 2100, almost one baby in two is born in Africa',
-      body: `In 1950, ${af(1950)} of every 100 babies were born in Africa and ${as(1950)} in Asia. In 2023, ${af(2023)} and ${as(2023)}. In the UN's projection for 2100, ${af(2100)} and ${as(2100)}.`,
-      fig: (p) => Atlas.regions(A, p), cap: 'Share of the world’s births by region: UN estimates to 2023, medium projection to 2100 (hatched).' },
-    { n: 7, key: 'india', name: 'India', margin: his('And yes, India as a whole is now below replacement, though, like any country, with vast regional variation.'),
-      head: `India went below replacement in ${inCross}; its people keep growing until ${inPk[0]}`,
-      body: `India's fertility fell from ${f2(at(D.named['India']!.tfr, 1950))} in 1950 to ${f2(at(D.named['India']!.tfr, 2023))} in 2023, crossing 2.1 ${inCross - cy('China')!} years after China. The population goes on rising because so many Indians are young: in the UN's central projection it peaks in ${inPk[0]} at ${(inPk[1] / 1e9).toFixed(2)} billion.`,
-      fig: (p) => Atlas.india(A, p), cap: "India's total fertility rate against the world's, and its population: UN estimates to 2023, medium projection to 2100 with the UN 80 and 95 per cent ranges." },
-    { n: 8, key: 'pyramid', name: 'Why India keeps growing',
-      head: 'Fewer babies, but more parents',
-      body: `In 2023 India had ${Math.round(under5 / 1e6)} million children under five and ${Math.round(teens / 1e6)} million aged 15 to 19: the base of its pyramid has already narrowed. The bulge of young adults carries the population up for another ${inPk[0] - 2023} years. By ${inPk[0]} the largest age group is ${big61[0].replace('-', ' to ')}.`,
-      fig: (p) => Atlas.pyramid(A, p), cap: "India's population by five-year age group and sex: 2023, and 2061 in the UN medium projection." },
-  ];
-  const movements: [string, string, number[]][] = [['I', 'It happened everywhere', [1, 2, 3]], ['II', 'It does not come back', [4]], ['III', 'What it adds up to', [5, 6, 7, 8]]];
-  const plate = (p: (typeof plates)[number]) => `<section class="beat${p.fold ? ' fold' : ''}" id="${p.key}">
-<div class="mg"><div class="pno">${roman(p.n)}</div><div class="pname">${esc(p.name)}</div>${p.margin ?? ''}</div>
-<div class="tx"><h2 class="mhead">${esc(p.head)}</h2><p class="mbody">${esc(p.body)}</p>${p.before ?? ''}</div>
-<figure class="plate fig"><div class="plate-in"><div class="plate-head"><span class="no">Plate ${roman(p.n)}</span><span>${esc(p.name)}</span></div>
-<div class="wide">${p.fig(false)}</div><div class="phone">${p.fig(true)}</div>
-<figcaption class="cap">${esc(p.cap)} <span class="src">UN World Population Prospects 2024.</span></figcaption></div></figure>
-${p.after ? `<div class="tx after">${p.after}</div>` : ''}</section>`;
-  const css = `
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-@media(min-width:640px){.wrap{padding:0 28px}}
-@media(min-width:1000px){.wrap{padding:0 48px}}
-.g{display:block}
-@media(min-width:1000px){.g{display:grid;grid-template-columns:17rem 38rem minmax(0,1fr);column-gap:56px}}
-.open{padding:44px 0 8px}
-.open .mg{grid-column:1;grid-row:1/5}.open>.c{grid-column:2}
-.kicker{color:var(--ed)}
-.open .ed-title{font-size:clamp(44px,7.4vw,86px);margin-top:14px}
-.ed-stand{font-size:1.05em;line-height:1.5}
-.contents{font:13px/1.45 'Schibsted Grotesk';color:var(--ink2);margin-top:6px}
-.contents b{display:block;font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:14px 0 4px}
-.contents a{display:flex;gap:10px;text-decoration:none;padding:3px 0;border-top:1px solid var(--rule)}
-.contents a span{width:2.2em;color:var(--ed);font-family:'Newsreader Display',serif;font-size:14px}
-@media(max-width:999px){.open .mg{display:none}}
-.ledger{border-top:2px solid var(--ink);margin-top:30px}
-.ledger .row{display:grid;grid-template-columns:6em 1fr;gap:16px;align-items:baseline;border-bottom:1px solid var(--rule);padding:12px 0}
-.ledger .n{font-family:'Newsreader Display',serif;font-size:clamp(34px,5vw,46px);white-space:nowrap;line-height:.95;font-variant-numeric:lining-nums;text-align:right;letter-spacing:-.01em}
-.ledger .n.ed{color:var(--ed)}
-.ledger .w{font:15px/1.4 'Schibsted Grotesk';color:var(--ink2)}
-.ledger-h{font:600 11px/1 'Schibsted Grotesk';letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin-top:30px}
-.movement{margin:70px 0 0;border-top:1px solid var(--ink);padding-top:14px}
-.movement h2{margin:0;font:400 clamp(28px,3.4vw,40px)/1.1 'Newsreader Display',serif;letter-spacing:-.01em}
-.movement h2 span{color:var(--ed);margin-right:.4em}
-@media(min-width:1000px){.movement{display:grid;grid-template-columns:17rem 1fr;column-gap:56px}.movement h2{grid-column:2}}
-.beat{padding:44px 0 6px}
-@media(min-width:1000px){.beat{display:grid;grid-template-columns:17rem 38rem minmax(0,1fr);column-gap:56px}.beat .mg{grid-column:1;grid-row:1/3}.beat .tx{grid-column:2}.beat .plate{grid-column:1/3}.beat.fold .plate{grid-column:1/4}.beat .after{grid-column:2}}
-.pno{font:400 34px/1 'Newsreader Display',serif;color:var(--ed);letter-spacing:.02em}
-.pname{font:600 11px/1.3 'Schibsted Grotesk';letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin-top:8px}
-@media(max-width:999px){.beat .mg{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.pno{font-size:26px}.beat .mg .his{flex-basis:100%;order:3}}
-.mhead{font-size:clamp(21px,2.4vw,26px);font-weight:500;margin-top:0}
-@media(max-width:999px){.mhead{margin-top:8px}}
-.mbody{font-size:17px;line-height:1.6}
-.his{margin-top:22px;position:relative;padding-left:16px;border-left:1px solid var(--rule)}
-.his p{margin:0;font:italic 17px/1.45 'Newsreader Text',serif;color:var(--ink)}
-.his .who{display:block;margin-top:6px;font:13px/1.3 'Schibsted Grotesk';color:var(--ink2)}
-.his .caret{position:absolute;left:-6px;top:-2px;width:11px;height:9px;background:var(--ember);clip-path:polygon(50% 0,100% 100%,82% 100%,50% 36%,18% 100%,0 100%)}
-@media(max-width:999px){.his{margin:14px 0 4px}}
-.plate{margin:28px 0 0;border:1px solid var(--ink2);padding:5px}
-.plate-in{border:.5px solid var(--q3);padding:18px 22px 14px}
-.plate-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.5px solid var(--q3);padding-bottom:8px;margin-bottom:16px;font:500 11px/1 'Schibsted Grotesk';letter-spacing:.16em;text-transform:uppercase;color:var(--ink2)}
-.plate-head .no{color:var(--ed);font-family:'Newsreader Display',serif;font-size:15px;letter-spacing:.08em}
-@media(max-width:600px){.plate{border:0;border-top:1px solid var(--ink2);border-bottom:1px solid var(--ink2);padding:0;margin-left:-16px;margin-right:-16px}.plate-in{border:0;padding:12px 16px 10px}}
-.plate .cap{margin-top:12px}.plate .cap .src{display:inline}
-.fig .phone{display:none}
-@media(max-width:600px){.fig .wide{display:none}.fig .phone{display:block}}
-.fig .wide svg,.fig .phone svg{width:100%;height:auto}
-.coda{margin-top:34px;border-top:1px solid var(--rule);padding-top:14px}
-.coda-k{margin:0;font:600 11px/1 'Schibsted Grotesk';letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
-.coda-n{display:flex;gap:28px;flex-wrap:wrap;margin-top:12px;font:15px/1.3 'Schibsted Grotesk';color:var(--ink2)}
-.coda-n b{display:block;font:400 48px/1 'Newsreader Display',serif;color:var(--ink);font-variant-numeric:lining-nums}
-.coda-n span:nth-child(n+2) b{color:var(--ed)}
-.colophon{margin:80px 0 60px;border-top:2px solid var(--ink);padding-top:16px;font:14px/1.6 'Schibsted Grotesk';color:var(--ink2)}
-@media(min-width:1000px){.colophon{display:grid;grid-template-columns:17rem 38rem;column-gap:56px}.colophon>*{grid-column:2}.colophon h2{grid-column:1;grid-row:1/9}}
-.colophon h2{margin:0;font:600 11px/1.4 'Schibsted Grotesk';letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
-.colophon p{margin:0 0 10px}.colophon .m{color:var(--machine)}
-/* Chart roles specific to the atlas. */
-.g-atlas .tk{font-size:11px}.g-atlas .lab,.g-atlas .ann,.g-atlas .lab-in{font-size:13px}.g-atlas .lab-in-sub{font-size:11px}
-.phone .g-atlas .tk,.phone .g-atlas .lab-in-sub{font-size:10.5px}.phone .g-atlas .lab,.phone .g-atlas .ann,.phone .g-atlas .lab-in{font-size:12px}
-.hatch-ink{stroke:var(--bg);opacity:.55}
-.band95,.band80,.hatched,.bar-proj{stroke:none}
-.bar-proj{stroke:var(--ink2);stroke-width:.8}.outline-proj{fill:none;stroke:var(--ink);stroke-width:1.3;stroke-dasharray:4 2.5}
-.bar-focus{fill:var(--ed);opacity:.8}
-.area-focus{fill:var(--ed)}.area-q3{fill:var(--q3)}.area-q{fill:var(--q2)}
-.gap{fill:none;stroke:var(--bg);stroke-width:2}
-.in-dark{fill:var(--bg);font-size:13px;font-weight:500}.in-light{fill:var(--ink);font-size:13px;font-weight:500}.lab-n{font-weight:400;font-size:11px}
-.phone .in-dark,.phone .in-light{font-size:12px}
-.void-lab{fill:var(--ink2);font-size:11px;font-style:normal}
-.g-atlas .void{fill:none}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ctx{opacity:.38}:root:not([data-theme=light]) .ctx-proj{opacity:.6}:root:not([data-theme=light]) .hatch-ed{opacity:.8}:root:not([data-theme=light]) .hatch-q{opacity:.9}:root:not([data-theme=light]) .wash{opacity:.2}}
-`;
-  const contents = movements.map(([r, t, ns]) => `<b>${r}. ${esc(t)}</b>${ns.map((n) => { const p = plates[n - 1]!; return `<a href="#${p.key}"><span>${roman(n)}</span>${esc(p.name)}</a>`; }).join('')}`).join('');
-  const body = `<div class="wrap">
-<header class="open g"><div class="mg"><div class="contents">${contents}</div></div>
-<div class="c"><div class="kicker">Data story · Haul 002 · Eight plates</div>
-<h1 class="ed-title">${esc(editorTitle)}</h1><p class="ed-stand">${esc(editorStand)}</p>
-<p class="by">Chosen and annotated by Bhuvanesh · <span class="m">words and plates by the machine from UN data; every figure checked against the rows</span></p>
-<div class="ledger-h">The principal figures</div>
-<div class="ledger">
-<div class="row"><div class="n">${f2(peak[1])}</div><div class="w">children per woman in the world in ${peak[0]}, the peak</div></div>
-<div class="row"><div class="n ed">${f2(now)}</div><div class="w">in 2023, just above replacement at 2.1</div></div>
-<div class="row"><div class="n">${share23}%</div><div class="w">of the world’s people live where fertility is below 2.1</div></div>
-<div class="row"><div class="n">${bPk[0]}</div><div class="w">the year the world’s births peaked, at ${Math.round(bPk[1] / 1e6)} million, in the UN’s central projection</div></div>
-<div class="row"><div class="n">0</div><div class="w">of ${floorN} countries that fell below 1.5 have come back to replacement</div></div>
-</div></div></header>
-${movements.map(([r, t, ns]) => `<div class="movement"><h2><span>${r}</span>${esc(t)}</h2></div>${ns.map((n) => plate(plates[n - 1]!)).join('')}`).join('')}
-<footer class="colophon"><h2>How this was made</h2>
-<p>Data: United Nations, Department of Economic and Social Affairs, Population Division, World Population Prospects 2024 (CC BY 3.0 IGO): estimates to 2023, the medium projection to 2100, and the probabilistic projections’ 80 and 95 per cent ranges; fertility, births, deaths and population via Our World in Data (CC BY 4.0), the ranges and ages from the UN’s own files. Retrieved 9 November 2026.</p>
-<p class="m">The machine wrote the words and drew the plates. Every number in the words is read from the stored rows by code; the plates are drawn from the same rows. The crossing is the first year a country’s rate is below 2.1; the share of people weights each country by its population.</p>
-<p>The editor’s notes in the margin are his own, from his note on the paper in Haul 002. The paper’s words are matched against its stored text.</p></footer>
-</div>`;
-  writeFileSync(join(here, 'atlas.html'), page('atlas' as C.Grammar, 'Atlas', [
-    'Plates, as in a statistical atlas: numbered, framed, eight of them in three movements (it happened everywhere; it does not come back; what it adds up to). One fold-out plate, the crossing, runs the full width.',
-    'Hatching means "not yet": the UN\'s projections, with its 80 per cent range in close hatching and its 95 per cent range in open hatching, the central path dashed through them.',
-    'The editor\'s margin: the plate\'s number and name, and his own words from his note, in the serif with his ember caret. The machine\'s words in the column, quieter: a deep-blue headline, the body in the blue sans.',
-    'It opens on the principal figures, a ledger; it closes on a colophon with the sources and how every number was checked.',
-    'No motion. Every label is placed against the marks already drawn; a browser check fails the build on any overlap.',
-  ], css, body));
-}
-
-console.log('built atlas, plates, desk, specimen');
+console.log('built plates, desk, specimen');

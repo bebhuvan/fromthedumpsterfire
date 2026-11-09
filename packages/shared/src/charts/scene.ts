@@ -85,6 +85,10 @@ interface Mark {
   sw?: number;
   /** Opacity of the fill (washes, bands). */
   fo?: number;
+  /** Opacity of the stroke (a story's context lines, its hatching). */
+  so?: number;
+  /** A dashed stroke, as SVG's stroke-dasharray ("6 3"): projections, references, seams. */
+  dash?: string;
   /** A tooltip (SVG <title>): the row behind the mark, in words. */
   tip?: string;
 }
@@ -153,7 +157,7 @@ const luminance = (hex: string) => {
   const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
   return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
 };
-const contrast = (a: string, b: string) => {
+export const contrast = (a: string, b: string) => {
   const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p) as [number, number];
   return (x + 0.05) / (y + 0.05);
 };
@@ -201,6 +205,8 @@ export function nodeAttrs(n: Exclude<SceneNode, { t: 'g' }>): Record<string, str
   if (n.stroke) cls.push(`s-${n.stroke}`);
   if (n.sw !== undefined) a['stroke-width'] = n.sw;
   if (n.fo !== undefined) a['fill-opacity'] = n.fo;
+  if (n.so !== undefined) a['stroke-opacity'] = n.so;
+  if (n.dash !== undefined) a['stroke-dasharray'] = n.dash;
   switch (n.t) {
     case 'rect':
       Object.assign(a, { x: r2(n.x), y: r2(n.y), width: r2(Math.max(0, n.w)), height: r2(Math.max(0, n.h)) });

@@ -1,0 +1,92 @@
+// The data-story grammar (docs/DATA-STORIES.md): every edition's ink passes, the validator refuses
+// what it must, and every plate of the fertility story draws at both widths with no label on
+// another or off its figure.
+
+import { readFileSync } from 'node:fs';
+import { describe, expect, test } from 'vitest';
+import { ALL_INKS } from './ink';
+import { drawFigure, drawKey, keyOf } from './plate';
+import { untraced, validateStory, type Story } from './spec';
+import { expectClean, texts } from './testkit';
+
+const story: Story = JSON.parse(readFileSync(new URL('../../fixtures/stories/fertility.json', import.meta.url), 'utf8'));
+const note = readFileSync(new URL('../../fixtures/stories/fertility-editor-note.txt', import.meta.url), 'utf8');
+const copy = (): Story => JSON.parse(JSON.stringify(story));
+
+describe('inks', () => {
+  test.each(ALL_INKS.map((i) => [`${i.edition} ${i.scheme}`, i] as const))('%s', (_, i) => {
+    expect(i.line).toBeGreaterThanOrEqual(4.5);
+    expect(i.onInk).toBeGreaterThanOrEqual(4.5);
+    expect(i.hatch).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('validateStory', () => {
+  test('the fertility story passes', () => expect(validateStory(story, note)).toEqual([]));
+  test('a figure the rows do not hold is refused', () => {
+    const s = copy();
+    s.plates[0]!.body += ' Fertility was 9.47 in one place.';
+    expect(validateStory(s, note).join(' ')).toMatch(/9\.47 is not in the rows/);
+  });
+  test('a reworded margin note is refused', () => {
+    const s = copy();
+    s.plates[0]!.editorNote = 'Most of the world outside Africa is below that line.';
+    expect(validateStory(s, note).join(' ')).toMatch(/margin note is not the editor/);
+  });
+  test('a reworded standfirst is refused', () => {
+    const s = copy();
+    s.standfirst = s.standfirst.replace('interesting', 'fascinating');
+    expect(validateStory(s, note).join(' ')).toMatch(/standfirst/);
+  });
+  test('ranges out of order are refused', () => {
+    const s = copy();
+    const f = s.plates.find((p) => p.key === 'peak')!.figure;
+    if (f.form !== 'lines') throw new Error('peak is a lines plate');
+    const r = f.panels[0]!.series.find((x) => x.range)!.range!;
+    r.lo95[3]![1] = r.hi95[3]![1] + 1;
+    expect(validateStory(s, note).join(' ')).toMatch(/out of order/);
+  });
+  test('shares that do not add to 100 are refused', () => {
+    const s = copy();
+    const f = s.plates.find((p) => p.key === 'regions')!.figure;
+    if (f.form !== 'stack') throw new Error('regions is a stack');
+    f.layers[0]!.points[5]![1] += 7;
+    expect(validateStory(s, note).join(' ')).toMatch(/add to 100/);
+  });
+  test('a scale that leaves out zero must say so', () => {
+    const s = copy();
+    s.plates.find((p) => p.key === 'floor')!.caption = 'Total fertility rate after falling below 1.5.';
+    expect(validateStory(s, note).join(' ')).toMatch(/does not start at zero/);
+  });
+  test('a projected member before the seam is refused', () => {
+    const s = copy();
+    const f = s.plates.find((p) => p.key === 'crossing')!.figure;
+    if (f.form !== 'swarm') throw new Error('crossing is a swarm');
+    const it = f.items.find((i) => typeof i.at === 'number' && i.state === 'estimated')!;
+    it.state = 'projected';
+    expect(validateStory(s, note).join(' ')).toMatch(/projected members sit after the seam/);
+  });
+  test('figures with scale words trace to full values', () => {
+    expect(untraced('146 million babies', [146_054_880])).toEqual([]);
+    expect(untraced('147 million babies', [146_054_880])).toEqual(['147 million']);
+    expect(untraced('67 per cent', [0.672])).toEqual([]);
+  });
+});
+
+describe('plates draw cleanly', () => {
+  const cases = story.plates.flatMap((p) => (['wide', 'phone'] as const).map((d) => [`${p.name}, ${d}`, p, d] as const));
+  test.each(cases)('%s', (_, p, dev) => {
+    const s = drawFigure(p.figure, dev, p.fold);
+    expect(texts(s.nodes).length).toBeGreaterThan(3);
+    expectClean(s);
+  });
+  test('every plate has a key that names only what it draws', () => {
+    for (const p of story.plates) {
+      const k = keyOf(p.figure);
+      if (p.figure.form !== 'pyramid') expect(k.length, p.name).toBeGreaterThan(0);
+      if (k.length) expect(drawKey(p.figure, 'phone', 340)).not.toBeNull();
+    }
+    const peak = keyOf(story.plates.find((p) => p.key === 'peak')!.figure).map((k) => k.mark);
+    expect(peak).toEqual(['estimated', 'projected', 'range80', 'range95']);
+  });
+});

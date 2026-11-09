@@ -28,7 +28,7 @@ const send = (method, params = {}) => new Promise((r) => { const i = ++id; pendi
 // Runs in the page: every visible figure's text, as drawn.
 const probe = `(() => {
   const out = [];
-  document.querySelectorAll('svg.ds').forEach((svg, k) => {
+  document.querySelectorAll('svg.ds, svg.ch').forEach((svg, k) => {
     const sr = svg.getBoundingClientRect();
     if (!sr.width) return;
     const label = svg.getAttribute('aria-label').slice(0, 50);
