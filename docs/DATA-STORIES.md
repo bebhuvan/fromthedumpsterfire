@@ -149,8 +149,30 @@ warm above it, binned by `stories/ramp.ts`, tested for contrast against the grou
 - The editor's margin notes and standfirst are his words, unchanged: they must be found in his stored
   text.
 
+## Publishing
+
+A story is published apart from the Hauls, like the shelf. `npm run editorial -- story-check` (a dry
+run) and `story-publish --confirm-publish` send it to the Desk (`/api/stories/check`, `/api/stories/publish`),
+where `publishStory` (`packages/server/src/publish.ts`) runs every check again against the database's own
+copies, never trusting what the request sends: the standfirst and every margin note must be found unchanged
+in the linked item's stored note (`why_text`), every quotation word for word in its stored source text.
+Then it writes `data/<slug>/v<N>/story.json` (a new version for every correction, never overwritten;
+the story keeps its number in the series) and `data/index.json`. Nothing else is written; the Haul is not
+republished.
+
+The website reads only those two files, each validated before use (`apps/web/src/lib/store.ts`): the
+Atlas at `/data`, the story at `/data/<slug>` (a title page framed as a proof, with its frontispiece, the
+plates' contents with dotted leaders and a seal saying how many facts were checked; then the principal
+figures, the plates, the colophon), a card "In the Atlas" after the Haul's contents, and "The data story"
+on the item it answers. A story whose file fails validation falls back to its newest earlier version
+that passes, else its page is a 404; a failing index is ignored and the last good one kept. Pages are
+cached at the edge on the data index's `updatedAt`, so a publish shows without a deploy.
+
 ## Not yet
 
-The grammar is codified and drawn; it is not yet published. Still to build: a `story` item (or a
-Haul's data story) in the bundle and `validateHaul`; the website's pages for it; the app's pictures of
-each phone plate drawn at publish; authoring on the Desk and from the terminal.
+- The reader app: pictures of each phone plate drawn at publish (as charts are), and a story screen.
+- Authoring on the Desk (stories are written as data and published from the terminal for now), and a
+  record of versions in D1 (versions are read from `data/index.json`).
+- A table of each plate's numbers under it, as charts have.
+- Page weight: the story page is about 250 KB compressed, most of it the fall plate's 161 country
+  lines drawn twice (wide and phone); simplifying those paths would roughly halve it.

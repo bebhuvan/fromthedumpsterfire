@@ -91,10 +91,17 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   adapters in `models/providers/`; retries in `models/http.ts`; ledger and ceiling in `spend.ts`).
   Prompts and schemas in `prompts.ts`. Provider facts, dated, in `docs/MODELS.md`: re-check the
   provider's docs before changing a model id, price or parameter. Never send a provider key in a URL.
-- Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/` and
-  `shelf/`. Only `publish.ts` writes to FILES (a Haul publish only under `hauls/`, the shelf publish
-  only under `shelf/`); published plates, covers and voice notes are copied there (never hotlinked),
-  and `validateHaul(…, { filesBase })` and `validateShelf(…, { filesBase })` enforce it.
+- Two R2 buckets: MEDIA is private Desk material; FILES is public and holds only `hauls/`, `shelf/`
+  and `data/`. Only `publish.ts` writes to FILES (a Haul publish only under `hauls/`, the shelf publish
+  only under `shelf/`, a data story only under `data/`); published plates, covers and voice notes are
+  copied there (never hotlinked), and `validateHaul(…, { filesBase })` and `validateShelf(…, { filesBase })`
+  enforce it.
+- Data stories (docs/DATA-STORIES.md) are published apart from the Hauls by `publishStory` as
+  `data/<slug>/v<N>/story.json` (never overwritten) and `data/index.json`, from the terminal
+  (`story-check`, `story-publish`) through `/api/stories/*`. Publish re-runs `validateStory` against
+  D1's own copies: the editor's standfirst and margin notes must be in the linked item's `why_text`,
+  quotations in its stored source text. The website (`/data`, `/data/<slug>`, a card on the Haul, a link
+  on the item) reads only those files, each validated before it renders.
 - The shelf (books being read, read or put down) is published apart from the Hauls as
   `shelf/shelf.json` by "Publish the shelf" (`publishShelf`). Book notes are the editor's words, typed
   or dictated through the voice-note path (deletion-only cleanup), never reworded; a cover follows the

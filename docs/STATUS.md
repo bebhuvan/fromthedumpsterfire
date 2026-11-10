@@ -1249,3 +1249,18 @@ On the editor's "Push it": `claude/heuristic-visvesvaraya-55cce2` merged into `l
   design changes ship in the first Play Store build, which must be built from this branch or later.
 - Pushed `launch-2026-10-24` to GitHub (gitleaks: no leaks in the 57 new commits).
 - Substack artwork for the list is in `docs/brand/substack/`.
+
+## 2026-11-10: data stories, the Atlas (branch claude/data-stories-c74411, not deployed)
+
+- **The grammar** (`docs/DATA-STORIES.md`, `packages/shared/src/stories`): fourteen forms drawn as chart
+  scenes, every edition ink tested, `validateStory` (prose cites facts; labels cite rows; the editor's
+  words unchanged). Comps, the gallery and the identity mock-ups in `docs/design-comps/data-stories/`.
+- **The first story**, "Fewer children, almost everywhere" (eight plates from UN WPP 2024), its words
+  approved by the editor ("Looks good"); identity chosen: the Atlas ("I like Atlas"), with the blue book's
+  seal and dotted contents and the number's key figure on the card.
+- **Publishing**: `publishStory` writes `data/<slug>/v<N>/story.json` and `data/index.json`; Desk routes
+  `/api/stories`, `/api/stories/check`, `/api/stories/publish`; terminal `story-check`, `story-publish`.
+- **Website**: `/data` (the Atlas), `/data/<slug>`, "In the Atlas" on the Haul, "The data story" on the
+  item, Atlas in the menu, the sitemap. Checked on a local Worker with the live Haul bundles and the story.
+- **Not done**: deploys (the Desk Worker and the website, each on the editor's OK), publishing the story,
+  the app (pictures and a screen), Desk authoring.
