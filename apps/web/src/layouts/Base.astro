@@ -143,11 +143,20 @@ const nav = [
         <details class="nav-contents">
           <summary>Contents</summary>
           <div class="cts">
-            <ul>
-              {nav.map((n) => (
-                <li><a href={n.href} aria-current={section === n.key ? 'page' : undefined}><span class="cts-t">{n.title}</span><span class="cts-d">{n.detail}</span></a></li>
-              ))}
-            </ul>
+            {[
+              { label: 'Reading', keys: ['latest', 'archive', 'atlas', 'threads', 'shelf', 'search'] },
+              { label: 'The house', keys: ['about', 'subscribe'] },
+            ].map((g) => (
+              <section class="cts-g" aria-label={g.label}>
+                <p class="cts-h" aria-hidden="true">{g.label}</p>
+                <ul>
+                  {nav.filter((n) => (g.keys as readonly string[]).includes(n.key)).sort((a, b) => g.keys.indexOf(a.key) - g.keys.indexOf(b.key)).map((n) => (
+                    <li><a href={n.href} aria-current={section === n.key ? 'page' : undefined}><span class="cts-t">{n.title}</span><span class="cts-d">{n.detail}</span></a></li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+            <p class="cts-foot"><span class="flame" aria-hidden="true"></span>Irregular hauls of things worth salvaging from the internet and the archive</p>
           </div>
         </details>
       </nav>

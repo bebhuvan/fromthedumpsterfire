@@ -354,3 +354,14 @@ Sketches: `docs/design-comps/2026-11-09-review/signatures.html`.
 **Subscribe**, the last word in the website's top menu (on phones the menu steps down a size, and on
 the home page a little more, so the theme switch stays on the row), from *New Hauls by email →* on the
 home page's nameplate strap, and quietly from the footer, About, each Haul's foot and the app's Menu.
+
+## The phone menu: Contents (2026-11-10)
+
+Up to 760px the top menu keeps three words, *Archive · Atlas · Search*, and **Contents ↓**, which opens
+every section under the header as the magazine's contents page, as the app's Menu is: **Reading**
+(the latest Haul, Every Haul, the Atlas, Threads, the shelf, Search) and **The house** (How it's made,
+Hauls by email) under small sans labels and ink rules, each section in the display serif with a serif
+line of what it holds, the current one underlined in ember, closing on the flame and the strap line. A
+`<details>`, so no script; it closes when Contents is tapped again or a section is chosen. Wide screens
+keep the full row. Rejected: a hamburger icon (the menu is words, never icons) and ever-smaller type as
+sections are added.
