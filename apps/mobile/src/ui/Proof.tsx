@@ -102,10 +102,12 @@ export const StoryCard = memo(function StoryCard({ entry, as }: { entry: DataInd
         <Caps color={ink}>{`${kind} · ${atlasNo(entry.number)}`}</Caps>
         <Text style={[st.cardTitle, { color: p.ink, fontSize: as === 'link' ? 23 : 27, lineHeight: as === 'link' ? 26 : 30 }]}>{entry.title}</Text>
         {entry.figure ? (
-          <Text>
+          // The number and its line side by side on one baseline, each with its own line height, so the
+          // large figure is never clipped by the small text's leading.
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
             <Text style={[st.cardValue, { color: ink }]}>{entry.figure.value}</Text>
-            <Text style={[st.cardFigure, { color: p.machineText }]}>{'  '}{entry.figure.text}</Text>
-          </Text>
+            <Text style={[st.cardFigure, { color: p.machineText, flex: 1 }]}>{entry.figure.text}</Text>
+          </View>
         ) : null}
         <Text style={[st.cardMeta, { color: p.ink2 }]}>{`${entry.plates} plates${as === 'link' ? ', from the numbers behind this piece' : ''}`}</Text>
       </View>
@@ -161,7 +163,7 @@ const st = StyleSheet.create({
   pn: { fontFamily: fonts.displayRegular, fontSize: 17, letterSpacing: 0.8, includeFontPadding: false },
   card: { flexDirection: 'row', gap: 14, alignItems: 'flex-start', borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 15, paddingBottom: 14 },
   cardTitle: { fontFamily: fonts.display, letterSpacing: -0.3, includeFontPadding: false },
-  cardValue: { fontFamily: fonts.displayRegular, fontSize: 26, fontVariant: ['lining-nums'] },
+  cardValue: { fontFamily: fonts.displayRegular, fontSize: 26, lineHeight: 32, includeFontPadding: false, fontVariant: ['lining-nums'] },
   cardFigure: { fontFamily: fonts.sans, fontSize: 14, lineHeight: 20 },
   cardMeta: { fontFamily: fonts.sans, fontSize: 13, lineHeight: 18 },
   thumb: { width: 92, borderWidth: StyleSheet.hairlineWidth, padding: 4 },
