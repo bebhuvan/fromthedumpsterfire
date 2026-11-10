@@ -7,6 +7,7 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import { publishStory, readCapped, readDataIndex, TooLargeError, type Env } from '@fdf/server';
+import { chartDrawer } from './draw';
 import type { Story } from '@fdf/shared/stories';
 
 type App = { Bindings: Env; Variables: { owner: string } };
@@ -69,6 +70,6 @@ storiesApi.post('/api/stories/check', async (c) => {
 
 storiesApi.post('/api/stories/publish', async (c) => {
   const b = await body(c, publishBody);
-  const r = await publishStory(c.env, { slug: b.slug, itemId: b.itemId, story: b.story as unknown as Story });
+  const r = await publishStory(c.env, { slug: b.slug, itemId: b.itemId, story: b.story as unknown as Story }, { drawer: await chartDrawer(c.env) });
   return c.json(r, r.ok ? 200 : 422);
 });

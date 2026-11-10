@@ -66,7 +66,11 @@ describe('data story routes', () => {
     expect(env.FILES.writes).toEqual([]);
     const pub = await call(env, '/api/stories/publish', post({ ...payload, confirm: true }));
     expect(pub).toMatchObject({ status: 200, body: { ok: true, version: 1, number: 1, path: 'data/fertility/v1/story.json' } });
-    expect(env.FILES.writes).toEqual(['data/fertility/v1/story.json', DATA_INDEX_PATH]);
+    // The Desk draws each plate's pictures for the app (light and dark), then the story and the index.
+    const plates = env.FILES.writes.filter((k) => k.includes('/plates/'));
+    expect(plates.length).toBeGreaterThan(0);
+    expect(plates.every((k) => /^data\/fertility\/v1\/plates\/[a-z0-9-]+-(light|dark)\.png$/.test(k))).toBe(true);
+    expect(env.FILES.writes.slice(plates.length)).toEqual(['data/fertility/v1/story.json', DATA_INDEX_PATH]);
     const index = await call(env, '/api/stories');
     expect((index.body.stories as Array<{ slug: string }>).map((s) => s.slug)).toEqual(['fertility']);
   });

@@ -255,6 +255,8 @@ export function validateStory(story: Story, editorText: string | null): string[]
   if (editorText !== null && !wholeSentences(story.standfirst, editorText)) errs.push('The standfirst is not the editor’s words unchanged, as whole sentences of his note.');
   if (story.plates.length < 3 || story.plates.length > 9) errs.push('A story has three to nine plates.');
   if (keys.size !== story.plates.length) errs.push('Plate keys must be unique.');
+  // A plate's key names its anchor on the page and its pictures' files.
+  if (story.plates.some((p) => !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.key))) errs.push('Plate keys are lowercase words joined by hyphens.');
   if (story.plates.filter((p) => p.fold).length > 1) errs.push('At most one plate folds out.');
   const inMovements = story.movements.flatMap((m) => m.plates);
   if (story.plates.length >= 5 && story.movements.length === 0) errs.push('A story of five plates or more is told in movements.');

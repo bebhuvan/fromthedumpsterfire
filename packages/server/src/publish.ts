@@ -39,8 +39,11 @@ import {
   type DataIndex,
   type PublishedStory,
   type StoryHaul,
+  picturePath,
+  type StoryPicture,
 } from '@fdf/shared/stories/published';
-import { validateStory, type Story } from '@fdf/shared/stories';
+import { phonePicture, PICTURE_ZOOM, validateStory, type Story } from '@fdf/shared/stories';
+import { sceneToSvg } from '@fdf/shared/charts';
 import { SHELF_PATH, SHELF_VERSION, shelfOrder, validateShelf, type BookNote, type Shelf, type ShelfBook } from '@fdf/shared/shelf';
 import { bookTitle, bookTitleText, linesFor, notesFor, shelfChanges, type BookRow } from './shelf';
 import { lifeForBundle } from './lives';
@@ -825,7 +828,7 @@ async function storyHaul(env: Env, item: ItemRow, warnings: string[]): Promise<S
  * source, the grammar's rules (validateStory), then data/<slug>/v<N>/story.json (never overwritten)
  * and data/index.json. Any problem stops it; a dry run returns what it would write and writes nothing.
  */
-export async function publishStory(env: Env, input: { story: Story; slug: string; itemId: string }, opts: { dryRun?: boolean } = {}): Promise<StoryPublishResult> {
+export async function publishStory(env: Env, input: { story: Story; slug: string; itemId: string }, opts: { dryRun?: boolean; drawer?: ChartDrawer } = {}): Promise<StoryPublishResult> {
   const { story, slug, itemId } = input;
   const problems: string[] = [];
   const warnings: string[] = [];
@@ -866,7 +869,29 @@ export async function publishStory(env: Env, input: { story: Story; slug: string
     ...(haul ? { haul } : {}),
     story,
   };
-  if (!problems.length) problems.push(...validatePublishedStory(published));
+  // The app's pictures: each plate's phone figure with its key, light and dark (drawn only for a real
+  // publish, by the Desk's resvg drawer, as chart pictures are). Without a drawer the app shows none.
+  const pictureFiles: Array<[string, Uint8Array]> = [];
+  if (!problems.length && !opts.dryRun && opts.drawer) {
+    const filesBase = env.FILES_BASE.replace(/\/$/, '');
+    const pictures: Record<string, { light: StoryPicture; dark: StoryPicture }> = {};
+    for (const p of story.plates) {
+      try {
+        const scene = phonePicture(p);
+        const size = { width: Math.round(scene.width * PICTURE_ZOOM), height: Math.ceil(scene.height * PICTURE_ZOOM) };
+        const pic = (scheme: 'light' | 'dark'): StoryPicture => {
+          const key = picturePath(slug, version, p.key, scheme);
+          pictureFiles.push([key, opts.drawer!.png(sceneToSvg(scene, { scheme, edition: story.edition }), PICTURE_ZOOM)]);
+          return { url: `${filesBase}/${key}`, ...size };
+        };
+        pictures[p.key] = { light: pic('light'), dark: pic('dark') };
+      } catch (e) {
+        problems.push(`Plate "${p.name}": its picture could not be drawn (${e instanceof Error ? e.message : String(e)}).`);
+      }
+    }
+    published.pictures = pictures;
+  } else if (!opts.drawer) warnings.push('No drawer: the app will show this story without its plates\' pictures.');
+  if (!problems.length) problems.push(...validatePublishedStory(published, { filesBase: env.FILES_BASE }));
   const index: DataIndex = {
     bundleVersion: STORY_BUNDLE_VERSION,
     updatedAt: now,
@@ -882,6 +907,11 @@ export async function publishStory(env: Env, input: { story: Story; slug: string
   ];
   const base = { problems, warnings, version, number, path, changes };
   if (problems.length || opts.dryRun) return { ok: !problems.length, ...base };
+  for (const [key, png] of pictureFiles) {
+    if (!isStoryPath(key)) throw new Error(`Refusing to publish outside data/: ${key}`);
+    if (await env.FILES.head(key)) continue;
+    await env.FILES.put(key, png, { httpMetadata: { contentType: 'image/png', cacheControl: IMMUTABLE } });
+  }
   await env.FILES.put(path, JSON.stringify(published, null, 2), { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: IMMUTABLE } });
   await env.FILES.put(DATA_INDEX_PATH, JSON.stringify(index, null, 2), { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=60' } });
   return { ok: true, ...base, url: `${env.FILES_BASE.replace(/\/$/, '')}/${path}` };

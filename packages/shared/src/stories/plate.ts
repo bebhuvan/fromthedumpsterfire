@@ -120,3 +120,18 @@ export function drawKey(f: Figure, dev: Device, width: number): Scene | null {
 }
 
 export const plateWidth = (p: Plate, dev: Device) => (dev === 'phone' ? 340 : p.fold ? 1030 : 880);
+
+/**
+ * A plate's phone figure with its key above it, as one scene: the app's picture of the plate (drawn
+ * light and dark at publish, as chart pictures are), since the app has no SVG runtime.
+ */
+export function phonePicture(p: Plate): Scene {
+  const fig = drawFigure(p.figure, 'phone');
+  const key = drawKey(p.figure, 'phone', fig.width);
+  if (!key) return fig;
+  const gap = 14;
+  return { width: fig.width, height: key.height + gap + fig.height, nodes: [{ t: 'g', children: key.nodes }, { t: 'g', dy: key.height + gap, children: fig.nodes }] };
+}
+
+/** The app's pictures are the phone scene drawn at three times its size. */
+export const PICTURE_ZOOM = 3;

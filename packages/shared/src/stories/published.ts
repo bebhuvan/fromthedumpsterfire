@@ -10,9 +10,13 @@ export const DATA_INDEX_PATH = 'data/index.json';
 export const STORY_BUNDLE_VERSION = 1;
 export const STORY_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const storyPath = (slug: string, version: number) => `data/${slug}/v${version}/story.json`;
+export const picturePath = (slug: string, version: number, plate: string, scheme: 'light' | 'dark') => `data/${slug}/v${version}/plates/${plate}-${scheme}.png`;
 
 /** The Haul item a story answers, as the reader reaches it: /haul/<number>/<itemSlug>. */
 export interface StoryHaul { number: number; itemId: string; itemSlug: string; itemTitle: string }
+
+/** A plate's picture for the app, drawn at publish: in data/<slug>/v<N>/plates/. */
+export interface StoryPicture { url: string; width: number; height: number }
 
 export interface PublishedStory {
   bundleVersion: typeof STORY_BUNDLE_VERSION;
@@ -25,6 +29,8 @@ export interface PublishedStory {
   updatedAt: string;
   haul?: StoryHaul;
   story: Story;
+  /** Each plate's phone figure with its key, light and dark, by plate key (the app's pictures). */
+  pictures?: Record<string, { light: StoryPicture; dark: StoryPicture }>;
 }
 
 export interface DataIndexEntry {
@@ -55,7 +61,7 @@ function checkHaul(h: unknown, at: string, errs: string[]): void {
 }
 
 /** The published file, checked as a reader receives it: its frame and the whole story (all but the editor's words, checked at publish). */
-export function validatePublishedStory(p: unknown): string[] {
+export function validatePublishedStory(p: unknown, opts: { filesBase?: string } = {}): string[] {
   const errs: string[] = [];
   const o = p as Partial<PublishedStory>;
   if (!o || typeof o !== 'object') return ['not a story'];
@@ -67,6 +73,18 @@ export function validatePublishedStory(p: unknown): string[] {
   checkHaul(o.haul, 'story', errs);
   if (!o.story || typeof o.story !== 'object' || !Array.isArray(o.story.plates)) return [...errs, 'story: missing'];
   errs.push(...validateStory(o.story, null));
+  if (o.pictures !== undefined) {
+    const keys = new Set(o.story.plates.map((p) => p.key));
+    const base = opts.filesBase?.replace(/\/$/, '');
+    for (const [k, v] of Object.entries(o.pictures ?? {})) {
+      if (!keys.has(k)) errs.push(`pictures.${k}: no such plate`);
+      for (const sch of ['light', 'dark'] as const) {
+        const pic = v?.[sch];
+        if (!pic || typeof pic.url !== 'string' || !/^https:\/\//.test(pic.url) || !posInt(pic.width) || !posInt(pic.height)) errs.push(`pictures.${k}.${sch}: an https url, a width and a height`);
+        else if (base && !pic.url.startsWith(`${base}/data/`)) errs.push(`pictures.${k}.${sch}: must be published under ${base}/data/`);
+      }
+    }
+  }
   return errs;
 }
 

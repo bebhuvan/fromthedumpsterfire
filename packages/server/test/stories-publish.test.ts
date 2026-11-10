@@ -121,7 +121,7 @@ describe('publishing a data story', () => {
     const env = await storyEnv();
     await publishInHaul(env);
     const r = await publishStory(env, input());
-    expect(r).toMatchObject({ ok: true, problems: [], warnings: [], version: 1, number: 1, path: 'data/fertility/v1/story.json', url: 'https://files.example.org/data/fertility/v1/story.json' });
+    expect(r).toMatchObject({ ok: true, problems: [], warnings: ['No drawer: the app will show this story without its plates\' pictures.'], version: 1, number: 1, path: 'data/fertility/v1/story.json', url: 'https://files.example.org/data/fertility/v1/story.json' });
     expect(env.FILES.writes).toEqual(['data/fertility/v1/story.json', DATA_INDEX_PATH]);
     expect(env.FILES.objects.get('data/fertility/v1/story.json')!.httpMetadata!.cacheControl).toBe('public, max-age=31536000, immutable');
     expect(env.FILES.objects.get(DATA_INDEX_PATH)!.httpMetadata!.cacheControl).toBe('public, max-age=60');
@@ -156,6 +156,24 @@ describe('publishing a data story', () => {
     expect(other).toMatchObject({ ok: true, version: 1, number: 2 });
     const index = await read<DataIndex>(env, DATA_INDEX_PATH);
     expect(index.stories.map((s) => [s.slug, s.number, s.version])).toEqual([['fertility-again', 2, 1], ['fertility', 1, 2]]);
+  });
+
+  it('draws each plate\'s pictures for the app, light and dark, and lists them in the story', async () => {
+    const env = await storyEnv();
+    const drawn: string[] = [];
+    const drawer = { png: (svg: string) => (drawn.push(svg), new Uint8Array([137, 80, 78, 71])) };
+    const r = await publishStory(env, input(), { drawer });
+    expect(r.ok).toBe(true);
+    const pub = await read<PublishedStory>(env, 'data/fertility/v1/story.json');
+    expect(Object.keys(pub.pictures!).sort()).toEqual(STORY.plates.map((p) => p.key).sort());
+    expect(drawn).toHaveLength(STORY.plates.length * 2);
+    const fall = pub.pictures!.fall!;
+    expect(fall.light.url).toMatch(/\/data\/fertility\/v1\/plates\/fall-light\.png$/);
+    expect(fall.dark.width).toBe(1020);
+    expect(env.FILES.writes).toContain('data/fertility/v1/plates/fall-dark.png');
+    expect(env.FILES.writes.every(isStoryPath)).toBe(true);
+    // The pictures are written before the story that points at them.
+    expect(env.FILES.writes.indexOf('data/fertility/v1/plates/fall-light.png')).toBeLessThan(env.FILES.writes.indexOf('data/fertility/v1/story.json'));
   });
 
   it('never overwrites a published version, and never writes outside data/', async () => {
