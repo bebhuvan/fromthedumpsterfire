@@ -1264,7 +1264,7 @@ On the editor's "Push it": `claude/heuristic-visvesvaraya-55cce2` merged into `l
   item, Atlas in the menu, the sitemap. Checked on a local Worker with the live Haul bundles and the story.
 - **Live (2026-11-10, the editor: "go ahead", "make sure this is on the app and web")**: the Desk
   Worker (fdf-desk 681d701e) with the story routes and picture drawing; the story published (Atlas No. 1,
-  version 2 with the app's pictures); the website (fdf-web bf12d6ca): /data, /data/fertility, the card on
+  version 2 with the app's pictures); the website (fdf-web f1357d2d): /data, /data/fertility, the card on
   Haul 002, the link on the paper.
 - **The app**: the Atlas, the story screen, the Haul card and item link (JS only; runtime unchanged
   at 908c7f06, the Play build's). Ships as an over-the-air update for that runtime.
