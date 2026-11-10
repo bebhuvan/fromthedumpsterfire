@@ -1,0 +1,53 @@
+---
+// Privacy: what the website and the reader app collect, in plain words. Linked from the footer and
+// given to Google Play as the app's privacy policy. Keep it true to the code: the device route in
+// workers/api/src/index.ts, the app's Settings, and the web's theme script and analytics.
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import { paths } from '../lib/site';
+import { EDITOR_EMAIL } from '@fdf/shared/about';
+
+export const prerender = true;
+
+const UPDATED = '9 November 2026';
+---
+<Base title="Privacy" description="No accounts, no advertising and no tracking. What the website and the app collect, which is very little." path={paths.privacy} section="about">
+  <header class="wrap g ab-open">
+    <p class="m meta"><span>Privacy</span><span>Updated {UPDATED}</span></p>
+    <Title title={{ text: 'Privacy' }} as="h1" class="ab-t display" />
+    <p class="c deck">No accounts, no advertising and no tracking. This page says what the website and the app collect, which is very little, and what happens to it.</p>
+  </header>
+
+  <section class="wrap g row ab-note" aria-labelledby="web-title">
+    <h2 class="m mh" id="web-title">The website</h2>
+    <div class="c ab-note-body">
+      <p>The site sets no cookies and has no login. If you choose light or dark, that choice is kept in your own browser and never sent to us.</p>
+      <p>We count visits with Cloudflare Web Analytics, which uses no cookies and does not follow you across sites. Cloudflare, which hosts the site, sees your IP address in order to deliver each page, as any web host does. We do not store it.</p>
+    </div>
+  </section>
+
+  <section class="wrap g row ab-note" aria-labelledby="app-title">
+    <h2 class="m mh" id="app-title">The app</h2>
+    <div class="c ab-note-body">
+      <p>The app has no accounts. What you save, what you have read, where you are in a Haul and your settings stay on your phone. Uninstalling the app removes them.</p>
+      <p>The app downloads Hauls, pictures and app updates from our servers on Cloudflare. Those requests carry your IP address like any web request, and we do not store it.</p>
+      <p>Notifications are off until you turn them on. When you do, your phone gives the app a push token from Google's Firebase Cloud Messaging (or Apple's service on an iPhone), and the app sends it to us. We keep that token, whether the phone is Android or iPhone, and the dates it was registered and last notified. We use it for one thing: one notification when a new Haul is published. Turning notifications off in Settings deletes the token from our records.</p>
+    </div>
+  </section>
+
+  <section class="wrap g row ab-note" aria-labelledby="mail-title">
+    <h2 class="m mh" id="mail-title">Email</h2>
+    <div class="c ab-note-body">
+      <p>If you <a href={paths.subscribe}>subscribe by email</a>, Substack keeps your address and sends the emails, under its own privacy policy. Substack may record when an email is opened; we do not use that. We use the list only to tell you about new Hauls, and every email has a link to unsubscribe.</p>
+      <p>If you write to <a href={`mailto:${EDITOR_EMAIL}`}>{EDITOR_EMAIL}</a>, your message and address stay in the editor's mailbox and are used only to read and reply.</p>
+    </div>
+  </section>
+
+  <section class="wrap g row ab-note" aria-labelledby="rest-title">
+    <h2 class="m mh" id="rest-title">Everything else</h2>
+    <div class="c ab-note-body">
+      <p>Nothing is sold or shared for advertising. There are no third-party trackers in the site or the app; the one outside piece is Substack's sign-up form on the subscribe page. Neither is meant for children, and neither asks anyone's age.</p>
+      <p>To ask what we hold about you, or to have it deleted, write to the address above. If this page changes, the date at the top changes with it.</p>
+    </div>
+  </section>
+</Base>

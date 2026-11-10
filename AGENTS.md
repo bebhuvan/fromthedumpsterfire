@@ -141,7 +141,8 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   links go through `safeHref` (http/https only). No inline scripts or styles: the CSP in
   `src/worker/lib.ts` is `script-src 'self'; style-src 'self'` (plus Cloudflare Web Analytics' beacon, which
   the edge injects: `static.cloudflareinsights.com` for the script, `cloudflareinsights.com` to report), and `frame-src` names only the players
-  `embedSrc` in `@fdf/shared/haul` can build (youtube-nocookie, Vimeo, Spotify, Apple Podcasts).
+  `embedSrc` in `@fdf/shared/haul` can build (youtube-nocookie, Vimeo, Spotify, Apple Podcasts), plus the
+  newsletter's Substack origin for its sign-up form on `/subscribe` once `NEWSLETTER` is set (`src/lib/newsletter.ts`).
   Positions (the fingerprint) are classes on a 100-column grid, never inline styles.
 - Colours come only from `/tokens.css`, generated from `packages/shared/src/tokens.ts`. `.machine` (blue
   sans) is for machine text only. Fonts are woff2 subsets built by `scripts/fonts.sh`.
@@ -179,9 +180,12 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
   words from `@fdf/shared/charts/glosses`, not `@fdf/shared/charts` (that pulls in the renderer).
 - Fonts are embedded static cuts; use the names in `src/theme.ts` and never set fontWeight/fontStyle.
 - Build a release APK: `cd apps/mobile && npm run prebuild:android && npm run build:android`
-  (ANDROID_HOME=~/android-sdk; `ARCH=x86_64` for the emulator). `build:android` forces the JS
+  (ANDROID_HOME=~/Android/Sdk, JAVA_HOME=~/.local/share/mise/installs/java/temurin-21; `ARCH=x86_64` for the emulator). `build:android` forces the JS
   bundle to rebuild: Gradle's up-to-date check only watches apps/mobile, so edits in
   packages/shared would otherwise ship a stale bundle.
+- Google Play: `npm run build:android:play` (after `prebuild:android`) makes the signed `.aab` with the
+  sample Hauls off; the upload key is read from `~/.config/fdf/play/keystore.properties`
+  (`plugins/release-signing.js`). Raise `android.versionCode` in `app.json` for each upload.
 - JS-only changes ship over the air: `npm run app:update` (signed with the key in
   `~/.config/fdf/app-updates/`, served by `/v1/updates` on the Desk Worker; `-- --rollback` undoes).
   Native changes (new modules, `app.json` plugins, Firebase, even `apps/mobile/.gitignore`) change the

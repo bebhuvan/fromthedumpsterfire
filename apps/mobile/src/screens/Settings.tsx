@@ -120,7 +120,7 @@ export function Settings() {
 
       <Group label="Privacy">
         <Body style={{ marginTop: 14, fontSize: 16.5, lineHeight: 25 }}>
-          No accounts and no tracking. What you save and read stays on this phone. If you turn on notifications, we keep only a device token so we can tell you when a Haul arrives.
+          No accounts and no tracking. What you save and read stays on this phone. If you turn on notifications, we keep only a device token so we can tell you when a Haul arrives, and turning them off deletes it.
         </Body>
       </Group>
 

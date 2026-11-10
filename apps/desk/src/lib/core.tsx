@@ -87,7 +87,7 @@ export function ToastHost({ children }: { children: ReactNode }) {
 
 // ---------------------------------------------------------------- data
 
-export function useLoad<T>(load: () => Promise<T>, deps: unknown[]): { data: T | null; error: string | null; reload: () => Promise<void>; setData: (d: T) => void } {
+export function useLoad<T>(load: () => Promise<T>, deps: unknown[]): { data: T | null; error: string | null; reload: () => Promise<void>; setData: React.Dispatch<React.SetStateAction<T | null>> } {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const seq = useRef(0);

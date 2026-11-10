@@ -1,6 +1,8 @@
 // Pure pieces of the fdf-web Worker, kept apart so they can be tested (a Worker module may only
 // export handlers).
 
+import { newsletter } from '../lib/newsletter';
+
 export interface Env {
   ASSETS: { fetch(input: Request | string): Promise<Response> };
   /** "production" serves the canonical site; anything else is marked noindex. */
@@ -21,8 +23,11 @@ export const CSP = [
   "media-src 'self' https:",
   "font-src 'self'",
   "connect-src 'self' https://cloudflareinsights.com",
-  // Only the players the bundle can name (embedSrc in @fdf/shared/haul).
-  'frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://embed.podcasts.apple.com',
+  // Only the players the bundle can name (embedSrc in @fdf/shared/haul), and the newsletter's own
+  // sign-up form on /subscribe once its address is set (lib/newsletter.ts).
+  ['frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://embed.podcasts.apple.com', newsletter?.origin]
+    .filter(Boolean)
+    .join(' '),
   "manifest-src 'self'",
   "base-uri 'none'",
   "form-action 'self'",
@@ -44,8 +49,6 @@ export function aliasFor(raw: string): string | null {
   // "//host" would resolve to another origin; collapse any run of leading slashes first.
   const pathname = '/' + raw.replace(/^[\/\\]+/, '');
   if (pathname !== raw) return pathname;
-  const note = /^\/haul\/(\d+)\/note\/?$/.exec(pathname);
-  if (note) return `/haul/${note[1]}#field-note`;
   const padded = /^\/haul\/0+(\d+)(\/.*|\.md)?$/.exec(pathname);
   if (padded) return `/haul/${padded[1]}${padded[2] ?? ''}`;
   if (pathname === '/hauls' || pathname === '/hauls/') return '/archive';

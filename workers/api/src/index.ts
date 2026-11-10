@@ -33,6 +33,8 @@ import {
   fromLibrary,
   sniffAudioFormat,
   spendStatus,
+  standingFor,
+  standings,
   storeSource,
   parseTranscript,
   type CheckRow,
@@ -53,6 +55,7 @@ import { m6, platesFor } from './milestone6';
 import { blocksApi } from './blocks';
 import { shelfApi } from './shelf';
 import { livesApi } from './lives';
+import { reviewApi } from './review';
 import { assetResponse, manifestResponse } from './updates';
 
 type App = { Bindings: Env; Variables: { owner: string; canPublish: boolean; ownerLogin: boolean } };
@@ -139,12 +142,17 @@ app.post('/v1/devices', async (c) => {
   }
   const p = deviceSchema.safeParse(body);
   if (!p.success) return c.json({ error: 'Expected { token, platform: "android" | "ios", enabled }' }, 400);
+  // Turning notifications off forgets the phone entirely: nothing is kept for a reader who said no.
+  if (!p.data.enabled) {
+    await c.env.DB.prepare('DELETE FROM devices WHERE token = ?').bind(p.data.token).run();
+    return c.json({ ok: true });
+  }
   const now = nowIso();
   await c.env.DB.prepare(
     `INSERT INTO devices (token, platform, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?)
      ON CONFLICT (token) DO UPDATE SET platform = excluded.platform, enabled = excluded.enabled, updated_at = excluded.updated_at, failures = 0`,
   )
-    .bind(p.data.token, p.data.platform, p.data.enabled ? 1 : 0, now, now)
+    .bind(p.data.token, p.data.platform, 1, now, now)
     .run();
   return c.json({ ok: true });
 });
@@ -283,14 +291,16 @@ app.get('/api/items', async (c) => {
     await c.env.DB.prepare(
       `SELECT i.id, i.kind, i.type, i.status, i.status_detail, i.url, i.title, i.title_choice, i.creator, i.source_name, i.source_date, i.minutes,
               i.why_text IS NOT NULL AND i.why_text != '' AS has_why, i.captured_at, i.updated_at, i.archived, i.capture_text,
-              (SELECT h.number FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = i.id LIMIT 1) AS haul_number,
+              hl.id AS haul_id, hl.number AS haul_number, hl.status AS haul_status, hl.version AS haul_version,
               (SELECT COUNT(*) FROM excerpts e WHERE e.item_id = i.id AND e.chosen = 1) AS has_excerpt,
               (SELECT COUNT(*) FROM drafts d WHERE d.item_id = i.id AND d.kind = 'idea' AND d.status IN ('kept', 'edited')) AS kept_ideas,
               (SELECT group_concat(name || ':' || status) FROM checks k WHERE k.item_id = i.id) AS checks
-       FROM items i WHERE ${where} ORDER BY i.captured_at DESC LIMIT 300`,
-    ).all()
+       FROM items i LEFT JOIN haul_items hx ON hx.item_id = i.id LEFT JOIN hauls hl ON hl.id = hx.haul_id
+       WHERE ${where} ORDER BY i.captured_at DESC LIMIT 300`,
+    ).all<{ id: string; archived: number; haul_id: string | null; haul_number: number | null; haul_status: string | null; haul_version: number | null }>()
   ).results;
-  return c.json({ items: rows });
+  const placed = await standings(c.env, rows);
+  return c.json({ items: rows.map((r) => ({ ...r, standing: placed.get(r.id) })) });
 });
 
 app.get('/api/items/:id', async (c) => {
@@ -304,7 +314,7 @@ app.get('/api/items/:id', async (c) => {
     c.env.DB.prepare('SELECT * FROM checks WHERE item_id = ?').bind(id).all<CheckRow>(),
     c.env.DB.prepare('SELECT * FROM notes WHERE item_id = ? ORDER BY created_at DESC').bind(id).all<NoteRow>(),
     c.env.DB.prepare('SELECT * FROM runs WHERE item_id = ? ORDER BY started_at DESC LIMIT 1').bind(id).first(),
-    c.env.DB.prepare('SELECT h.id, h.number, h.status FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ?').bind(id).first(),
+    c.env.DB.prepare('SELECT h.id, h.number, h.status, h.version FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ?').bind(id).first(),
     c.env.DB.prepare('SELECT c.*, i.title AS to_title FROM connections c JOIN items i ON i.id = c.to_item_id WHERE c.item_id = ?').bind(id).all(),
     platesFor(c.env, { itemId: id }),
     c.env.DB.prepare(
@@ -313,7 +323,10 @@ app.get('/api/items/:id', async (c) => {
     ).bind(id, id).all(),
     blocksFor(c.env, id),
   ]);
+  const { standing, draft } = await standingFor(c.env, item);
   return c.json({
+    standing,
+    draftHaul: draft,
     item,
     source: source ? { ...source, meta: parseJson(source.meta, {}) } : null,
     excerpts: excerpts.results,
@@ -933,6 +946,7 @@ app.route('/', m6);
 app.route('/', blocksApi);
 app.route('/', shelfApi);
 app.route('/', livesApi);
+app.route('/', reviewApi);
 
 // Stored files, behind the lock. Published paths (hauls/..., shelf/...) come from the public FILES bucket, so a
 // preview deployment can check its bundles (production readers get them from R2 directly); private

@@ -176,6 +176,8 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 .np-name s { font-weight: 400; color: var(--ink2); text-decoration-thickness: 0.07em; text-decoration-color: var(--ember); text-decoration-skip-ink: none; }
 .np-strap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 24px; margin-top: clamp(12px, 2vw, 20px); padding-top: 8px; border-top: 1px solid var(--ink); font: 400 0.8125rem/1.45 var(--sans); color: var(--ink2); }
 @media (max-width: 639px) { .np-strap span + span { display: none; } }
+.np-sub { color: var(--ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 50%, transparent); text-underline-offset: 3px; white-space: nowrap; }
+.np-sub:hover { text-decoration-color: var(--ed, var(--ink)); }
 @media (min-width: 640px) { .np-name { font-size: min(6.1vw, 5rem); } .np-name .mast-line > span[aria-hidden] { white-space: nowrap; } }
 .ghost { position: relative; overflow: hidden; }
 .ghost-in { position: relative; padding-block: 0 40px; }
@@ -267,7 +269,10 @@ mark { background: var(--tint); color: inherit; padding: 0.04em 0.12em; margin: 
 
 .sp-transcript .sp-obj { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px 12px; padding-block: 14px; border-block: 1px solid var(--rule); }
 .sp-who { font: 600 0.6875rem/2 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; overflow-wrap: anywhere; }
-.sp-said { font: 400 1.375rem/1.28 var(--display); }
+.sp-said { position: relative; font: 400 1.25rem/1.3 var(--display); }
+/* The speaker's words are a quotation: one opening mark in the Haul's ink, hanging (2026-11-10), as
+   the cover's quotation previews have it. */
+.sp-said::before { content: '\201C' / ''; position: absolute; left: -0.45em; color: var(--ed, var(--ink2)); }
 .sp-when { grid-column: 2; font: 400 0.75rem var(--sans); color: var(--ink2); }
 
 .sp-offprint .sp-obj { border: 1px solid var(--rule); padding: 0 18px 18px; text-align: center; gap: 6px; }
@@ -941,8 +946,10 @@ blockquote > p + p { margin-top: 0.65em; }
 .bk-ht { font-family: var(--display); }
 .jk-shelf { margin-top: 18px; font: 500 0.875rem/1.4 var(--sans); }
 /* Narrow phones: the masthead (or the nameplate) is the way home, so Latest steps out of the row and
-   the five other sections and the theme switch keep to one line. */
-@media (max-width: 430px) { .top-nav .nav-latest { display: none; } .top-nav { gap: 6px 16px; } .top-nav:first-child { width: auto; } .top-home + .top-nav { width: 100%; } }
+   the six other sections and the theme switch keep to one line (a size and a gap smaller since
+   Subscribe joined them). */
+@media (max-width: 430px) { .top-nav .nav-latest { display: none; } .top-nav { gap: 6px 13px; font-size: 0.78rem; } .top-nav:first-child { width: auto; } .top-home + .top-nav { width: 100%; } .top { column-gap: 10px; } .top-nav:first-child { gap: 6px 10px; font-size: 0.75rem; } }
+@media (max-width: 370px) { .top-nav:first-child { gap: 6px 7px; font-size: 0.7375rem; } .top { column-gap: 6px; } }
 /* A quotation of several paragraphs opens on the first and closes on the last. */
 .epi-q p:not(:first-child)::before { content: none; }
 .epi-q p:not(:last-child)::after { content: none; }
@@ -1223,6 +1230,11 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .epi-lead[class*='ll-'] { font-size: min(4.5rem, calc((100vw - 2 * var(--gut)) / var(--chars))); }
 .sp-eql[class*='ll-'] { font-size: min(2.5rem, calc((100vw - 2 * var(--gut)) / var(--chars))); }
 
+/* Subscribe: Substack's form in a ruled frame. Its colours are its own; check them in both themes once the address is set. */
+.nl-slip { max-width: 34rem; border: 1px solid var(--rule); }
+.nl-frame { display: block; width: 100%; height: 320px; border: 0; }
+.nl-note { margin-top: 12px; max-width: 34rem; }
+.nl-soon { font: 400 clamp(1.1875rem, 1.8vw, 1.3125rem)/1.6 var(--serif); max-width: 38rem; }
 /* ---------- The ledger (Ledger.astro): whose words are on the page, counted. ---------- */
 .ledger { padding-block: 26px 4px; }
 .lg { max-width: 30rem; }
@@ -1276,7 +1288,19 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .e-slate { --orn: url('/marks/orn-slate.svg'); }
 .e-olive { --orn: url('/marks/orn-olive.svg'); }
 
-.has-ed .fn-c .fn-h:not(:first-child)::before { content: ''; display: block; width: 22px; height: 22px; margin: 0 auto 1.4em; background: var(--ed);
+.has-ed .fn-c :is(p, blockquote) ~ .fn-h::before { content: ''; display: block; width: 22px; height: 22px; margin: 0 auto 1.4em; background: var(--ed);
   -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
 .orn-mark { display: inline-block; width: 14px; height: 14px; margin-left: 10px; vertical-align: -2px; background: var(--ed);
   -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
+
+/* ---------- The field note continued (2026-11-09): a long note sets its opening on the cover and
+   continues on its own page; a ruled line says so, as a magazine says "continued on page 4". ---------- */
+.fn-more { display: grid; justify-items: center; gap: 2px; margin-top: 2.2em; text-align: center; }
+.fn-more-orn { width: 22px; height: 22px; margin-bottom: 12px; background: var(--ed, var(--ink2)); -webkit-mask: var(--orn) center / contain no-repeat; mask: var(--orn) center / contain no-repeat; }
+.fn-more a { font: italic 400 1.25rem/1.35 var(--display); color: var(--ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 45%, transparent); text-decoration-thickness: 1px; text-underline-offset: 0.28em; }
+.fn-more a:hover { text-decoration-color: var(--ed, var(--ink)); }
+.fn-more-t { font: 400 0.8125rem/1.5 var(--sans); color: var(--ink2); }
+.cv-jump { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.cv-jump:hover { text-decoration-color: currentColor; }
+.fn-page { padding-top: 28px; }
+#contents-title { scroll-margin-top: 16px; }

@@ -312,7 +312,8 @@ writer to FILES: it copies the assets from MEDIA into `hauls/NNN/audio/`, `hauls
 `hauls/NNN/media/` (video posters and block pictures, `<item>-<n>[-poster].<ext>`), writes the share
 card the Desk drew in the editor's browser (`hauls/NNN/vN/card.png`, kept only if it is a 1200 x 630
 PNG; `Haul.card`), then writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never overwritten) and
-`hauls/index.json`, records `haul_versions`, and for v1 only queues one push. A correction is a new
+`hauls/index.json`, records `haul_versions` (with the Desk item ids the bundle carries, `item_ids`, 0011),
+and for v1 only queues one push. A correction is a new
 version with a `corrections` entry. Blocks are written in order with code `tokens` from
 `highlightCode` (the readers only print them); year, handle, recipient and place go on the item, and
 the edition (the editor's, else `editionOf(number)`) on the bundle and its index entry. Push uses FCM HTTP v1 with an OAuth assertion signed by
@@ -320,6 +321,17 @@ WebCrypto from the `FCM_SERVICE_ACCOUNT` secret; data carries
 `url: https://fromthedumpsterfire.com/haul/<n>`; unregistered tokens are disabled.
 A Book item linked to the shelf (`items.shelf_id`) is written with `Item.shelf`; the publish warns
 (never refuses) when the published shelf does not have that book yet.
+
+**Where an item stands, and the check before publishing** (2026-11-09, `packages/server/src/standing.ts`,
+`workers/api/src/review.ts`, `@fdf/shared/prepublish`). Every item says, in words, whether it is on the
+Desk, in a Haul not yet published, or published in version N (from `haul_versions.item_ids`; a version
+published before 0011 is matched once from its bundle by bundle id or source link and the answer stored).
+`GET /api/items` and `GET /api/items/:id` carry `standing`; `POST`/`DELETE /api/hauls/:id/items/:itemId`
+add one item to the end of a Haul or take it out of a draft. `GET /api/hauls/:id/review` runs `itemIssues`
+over each item (missing or platform maker, missing date, paywall teaser, a quotation from the piece set
+as the editor's words, ambiguous or off-topic Wikipedia cards, unticked suggestions), and the Desk's
+check page (`/haul/:id/check`) joins it with publish's dry run. `GET /api/hauls/:id/suggestions` feeds the
+tick page (`/haul/:id/suggestions`). None of these checks blocks a publish; publish's own rules do.
 
 **The shelf** (2026-10-24; `packages/server/src/shelf.ts`, publish in `publish.ts`, routes in
 `workers/api/src/shelf.ts`, screens `apps/desk/src/screens/Shelf.tsx` and `Book.tsx`, migration

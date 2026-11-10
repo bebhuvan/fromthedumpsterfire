@@ -93,7 +93,7 @@ years ago (recent things spread apart, old ones still sit where they belong; the
 scale). On the website (2026-10-25 facelift) each mark is a small dot in its type's colour, ringed in ink,
 on a hairline stem, numbered in small grey figures that turn ember on hover; marks whose labels would
 touch rise into higher lanes. The axis is a hairline with a tick under each year, the last year in the
-edition ink. On a phone the numbers drop and the lanes sit lower. (The app still draws squares.) On the cover it is full size;
+edition ink. On a phone the numbers drop and the lanes sit lower. The app draws the same dots (2026-11-09; they were squares there). On the cover it is full size;
 in every item's running head it is a row of ticks with the current item tall; in the archive each back
 issue carries its own. No two Hauls draw the same one.
 
@@ -132,6 +132,16 @@ carries the flame and the struck masthead, the editor's words, the credit and th
 
 ## The cover
 
+**A long field note continues on its own page** (2026-11-09, `noteLead` in `@fdf/shared/fieldnote`).
+Past 700 words the cover sets the note's opening (about 450 words, ending on a whole paragraph, never
+after a heading or inside a quotation, and never leaving a rest under 200 words), then a printer's
+break in the Haul's own ornament and, centred under it, *Read the rest of the note* in the display
+italic (underlined in the edition ink) with the reading time small in sans, linking to `/haul/<n>/note`
+(the editor's pick of four sketches, `continued.html`; a ruled "Continued" bar looked like a button) (the app's FieldNote screen at the same
+address). The words are not changed, only where the cover stops; the opening is not signed, the note's
+page is. Under the date, "Sixteen objects in this Haul ↓" jumps to the contents. Haul 002's contents
+moved from about 31 phone screens down to under 5 (desktop: 17 to under 4).
+
 The edition number and title over the fingerprint; the field note in the reading column, ending on the ember **B.** as its end mark, with the route in the margin (days in sans, the machine's step in blue, and each step citing the item it led to by its number in small raised ember, as a page cites a figure); **In this Haul** as *specimens*: each item shown as a small
 specimen of its own form (a cropped opening, a two-page spread, a transcript strip, an offprint with
 its abstract, a coral broadside, a 3×5 card with its punch hole, a book page), with the number in
@@ -154,7 +164,8 @@ The archive lists back issues as a run of editions, each with its number in its 
 ## The app's navigation
 
 The bar at the thumb is the website's navigation, same words and order, with Menu in About's place:
-Latest, Threads, Archive, Search, Menu, in small sans, the current word in ink with a short ember
+Latest, Threads, Archive, Search, Menu (the website's Subscribe, added 2026-11-09, is "Hauls by email" in
+the app's Menu: a sixth word would crowd the bar), in small sans, the current word in ink with a short ember
 rule under it. No icons. Reading pages (cover from the archive, item, field note, thread, saved,
 settings, about, shelf, book) open full screen above it with a back bar that names where back goes (an item's
 bar names its Haul). Top-level pages carry the small struck masthead, as the website's header does.
@@ -250,6 +261,18 @@ title and its cover specimen) and on large pull quotes.
   column (38rem), air (the rest), with a 40–72px gap. `.m`, `.c`, `.mc` place things.
 - Phone: one column; margin content moves under the thing it annotates.
 
+## The Desk (2026-11-09)
+
+The Desk is a working tool for one editor on a phone, set in the same language. Comps:
+`docs/design-comps/2026-11-09-desk/` (approved). Hairline rules and space, never tinted rounded boxes
+or pills; square buttons, and only the next step on a screen is one (the rest are quiet underlined
+links); the current tab is underlined. The editor's part is headed *B.* in ember display italic and
+set in the serif; the machine's part is headed MACHINE in blue spaced caps and set in the blue sans.
+A settled step folds to one line (what was chosen, then "change"). The machine's offers are answered
+one at a time on a keep-or-skip screen with Keep and Skip at the thumb. The Haul page reads as the
+Haul: its cover, then each item in printed order with a mark (✓, Look, Fix). Colours are the site's
+tokens (`packages/shared/src/tokens.ts`, via `apps/desk/src/theme.ts`).
+
 ## Tokens
 
 Defined in `packages/shared/src/tokens.ts`.
@@ -324,3 +347,10 @@ Sketches: `docs/design-comps/2026-11-09-review/signatures.html`.
 7. **The slug and the neighbours** (`SLUG`, `NEIGHBOURS` in `@fdf/shared/about`): the footer (the app's
    Menu) says what the page is set in and who chose it, as a printer's slug, and lists the editor's
    other places, the old web's blogroll. The list is the editor's to edit.
+
+## Hauls by email (2026-11-09)
+
+`/subscribe` shows the Substack list's own form (fromthedumpsterfire.substack.com). It is reached from
+**Subscribe**, the last word in the website's top menu (on phones the menu steps down a size, and on
+the home page a little more, so the theme switch stays on the row), from *New Hauls by email →* on the
+home page's nameplate strap, and quietly from the footer, About, each Haul's foot and the app's Menu.

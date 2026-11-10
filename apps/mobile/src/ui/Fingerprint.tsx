@@ -1,7 +1,7 @@
 // The Haul's fingerprint (@fdf/shared/fingerprint), drawn with views as the website draws it.
-// Full, on the cover: every object on one line by the year it was made, a numbered square in its
-// type's colour on a stem (taller stems lift labels that would touch), years under the line in the
-// edition ink. Mini, in the running head: ticks only, the item being read drawn tall.
+// Full, on the cover: every object on one line by the year it was made, a numbered dot in its type's
+// colour ringed in ink on a hairline stem, as the website draws it (2026-11-09; it was a square here)
+// (taller stems lift labels that would touch), years under the line in the edition ink. Mini, in the running head: ticks only, the item being read drawn tall.
 import { memo, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { fingerprint, spanLine } from '@fdf/shared/fingerprint';
@@ -11,7 +11,8 @@ import { go } from '@/nav';
 import { fonts, typeColor, useEdition, usePalette } from '@/theme';
 import { colX, FP, fpGeometry } from '@/lib/fpGeometry';
 
-const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+// As the website spells them (apps/web/src/lib/site.ts), so a Haul of sixteen reads the same on both.
+const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
 export const objects = (n: number) => `${WORDS[n] ?? n} ${n === 1 ? 'object' : 'objects'}`;
 const titleOf = (t: { text: string; italic?: string }) => t.text + (t.italic ? ' ' + t.italic : '');
 
@@ -38,9 +39,9 @@ export const Fingerprint = memo(function Fingerprint({ haul }: { haul: Haul }) {
               hitSlop={{ top: 4, bottom: 4, left: 6, right: 6 }}
               style={[st.mark, { left: m.x - 10, height: m.height }]}
             >
-              <Text style={[st.n, { color: p.ember, left: 10 - m.labelWidth * 0.35 }]}>{String(m.n).padStart(2, '0')}</Text>
-              <View style={[st.sq, { top: FP.label + FP.labelGap, backgroundColor: typeColor(p, item.type), borderColor: p.ink2 }]} />
-              <View style={[st.stem, { height: m.stem, backgroundColor: p.ink }]} />
+              <Text style={[st.n, { color: p.ink2, left: 10 - m.labelWidth * 0.35 }]}>{String(m.n).padStart(2, '0')}</Text>
+              <View style={[st.stem, { height: m.stem, backgroundColor: p.ink + '59' }]} />
+              <View style={[st.dot, { top: FP.label + FP.labelGap + FP.square - DOT, backgroundColor: typeColor(p, item.type), borderColor: p.ink }]} />
             </Pressable>
           );
         })}
@@ -84,10 +85,13 @@ export const MiniFingerprint = memo(function MiniFingerprint({ haul, current, wi
   );
 });
 
+/** The mark's dot, as the website's 7px dot with its 1px ring. */
+const DOT = 8;
+
 const st = StyleSheet.create({
   mark: { position: 'absolute', bottom: 0, width: 20 },
   n: { position: 'absolute', top: 0, fontFamily: fonts.sansMedium, fontSize: FP.label, lineHeight: FP.label, includeFontPadding: false, fontVariant: ['tabular-nums'] },
-  sq: { position: 'absolute', left: 10 - 6.5, width: FP.square, height: FP.square, borderWidth: StyleSheet.hairlineWidth },
+  dot: { position: 'absolute', left: 10 - DOT / 2 + 0.5, width: DOT, height: DOT, borderRadius: DOT / 2, borderWidth: 1 },
   stem: { position: 'absolute', bottom: 0, left: 10, width: 1 },
   axis: { borderTopWidth: FP.axis, height: 26 },
   tick: { position: 'absolute', top: 8, width: FP.tickW, fontSize: 12.5, lineHeight: 14, includeFontPadding: false, fontVariant: ['tabular-nums', 'lining-nums'] },

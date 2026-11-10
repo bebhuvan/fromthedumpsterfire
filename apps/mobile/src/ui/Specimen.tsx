@@ -4,7 +4,7 @@
 import { memo, useState, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { go } from '@/nav';
-import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, quoteLength, type Item } from '@fdf/shared/haul';
+import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, quoteLength, quoteSample, type Item } from '@fdf/shared/haul';
 import { useEditionInk } from './edition';
 import { typeLabel } from '@fdf/shared/tokens';
 import { fonts, GUTTER, typeColor, usePalette, useScheme } from '@/theme';
@@ -20,6 +20,12 @@ const yearOf = (d: string) => /\b(1[0-9]{3}|20[0-9]{2})\b/.exec(d)?.[1] ?? d;
 
 /** Forms whose specimen does not show the title; the head names it. */
 const TITLED_CAPTION = new Set<Form>(['transcript', 'facing', 'page', 'epigraph', 'letter', 'clipping', 'print', 'jacket']);
+
+/** A preview's sample of a passage (quoteSample), with an ellipsis when it goes on. */
+const sampleOf = (text: string) => {
+  const s = quoteSample(text);
+  return s.ellipsis ? `${s.text}…` : s.text;
+};
 
 export const Specimen = memo(function Specimen({ haul, item, n }: { haul: number; item: Item; n: number }) {
   const p = usePalette();
@@ -130,7 +136,15 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
         <View style={[st.strip, { borderColor: p.rule }]}>
           <Text style={[st.who, { color: p.ink }]}>{speaker(item.creator)}</Text>
           <View style={{ flex: 1 }}>
-            {ex ? <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.said} /> : <Title title={item.title} size={22} />}
+            {/* A line or two of the speaker's words, as the website's cover sets it (2026-11-10). */}
+            {ex ? (
+              <Text style={[st.said, { color: p.ink }]}>
+                <Text style={{ color: ink }}>“</Text>
+                {curlQuotes(sampleOf(ex.text))}
+              </Text>
+            ) : (
+              <Title title={item.title} size={22} />
+            )}
             <Text style={[st.small, { color: p.ink2, marginTop: 6 }]}>{item.source.name}{item.source.date ? `, ${item.source.date}` : ''}</Text>
           </View>
         </View>
@@ -277,7 +291,7 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
             <Text style={[st.lbKey, { color: p.ink2 }]}>WHAT IT IS</Text>
             <Text style={[st.lbVal, { color: p.ink }]}>{item.source.name}</Text>
           </View>
-          {ex ? <Text style={[st.lbQ, { color: p.ink }]}>{curlQuotes(ex.text)}</Text> : null}
+          {ex ? <Text style={[st.lbQ, { color: p.ink }]}>{curlQuotes(sampleOf(ex.text))}</Text> : null}
         </View>
       );
   }
@@ -321,7 +335,7 @@ const st = StyleSheet.create({
 
   strip: { flexDirection: 'row', gap: 12, paddingVertical: 14, borderTopWidth: hair, borderBottomWidth: hair },
   who: { width: 64, fontFamily: fonts.sansBold, fontSize: 10.5, letterSpacing: 1, lineHeight: 22 },
-  said: { fontFamily: fonts.displayRegular, fontSize: 20, lineHeight: 26 },
+  said: { fontFamily: fonts.displayRegular, fontSize: 19, lineHeight: 25 },
 
   runcite: { alignSelf: 'stretch', paddingVertical: 7, borderBottomWidth: hair, marginHorizontal: -18, paddingHorizontal: 18 },
   abHead: { fontFamily: fonts.sansMedium, fontSize: 11, marginTop: 12, marginBottom: 4 },

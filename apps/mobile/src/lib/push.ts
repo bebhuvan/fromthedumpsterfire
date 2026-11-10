@@ -7,6 +7,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { getReader, reader } from './store';
+import { pendingRegistration } from './pushState';
 
 const API = process.env.EXPO_PUBLIC_API_BASE ?? 'https://api.fromthedumpsterfire.com';
 const CHANNEL = 'hauls';
@@ -46,27 +47,24 @@ export async function enablePush(): Promise<PushResult> {
   } catch {
     return 'unavailable'; // no Firebase config in this build
   }
-  const tokenData = String(token.data);
-  reader.setPush({ on: true, token: tokenData, platform: token.type, registered: false });
-  register(tokenData, token.type, true).then(
-    () => reader.setPush({ ...getReader().push, registered: true }),
-    () => {},
-  );
+  reader.setPush({ on: true, token: String(token.data), platform: token.type, registered: false });
+  retryPushRegistration();
   return 'on';
 }
 
 export function disablePush() {
-  const { token, platform } = getReader().push;
-  reader.setPush({ on: false, registered: false });
-  if (token && platform) register(token, platform, false).catch(() => {});
+  reader.setPush({ ...getReader().push, on: false, registered: false });
+  retryPushRegistration();
 }
 
-/** Called once at launch: finish a registration the server missed. */
+/** Tell the server the current choice if it has not heard it; called at launch and after turning off. */
 export function retryPushRegistration() {
-  const { on, token, platform, registered } = getReader().push;
-  if (on && token && platform && !registered) {
-    register(token, platform, true).then(() => reader.setPush({ ...getReader().push, registered: true }), () => {});
-  }
+  const pending = pendingRegistration(getReader().push);
+  if (!pending) return;
+  register(pending.token, pending.platform, pending.enabled).then(() => {
+    const now = getReader().push;
+    if (now.on === pending.enabled) reader.setPush({ ...now, registered: true });
+  }, () => {});
 }
 
 /** The deep link carried by a tapped notification, e.g. https://fromthedumpsterfire.com/haul/2 */

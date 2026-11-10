@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Continued</title>
+<style>
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2') format('woff2'); font-weight: 500; }
+:root { --bg: #FFFFFF; --ink: #141416; --ink2: #55555C; --rule: #E6E6EA; --ember: #FF4F1F; --ed: #0E6461;
+  --serif: 'Newsreader Text', Georgia, serif; --display: 'Newsreader Display', Georgia, serif; --sans: 'Schibsted Grotesk', system-ui, sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0F0F12; --ink: #F3F3F1; --ink2: #A2A2AA; --rule: #2A2A31; --ember: #FF6A3D; --ed: #6FD0CB; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font: 18px/1.62 var(--serif); padding: 28px 22px 60px; }
+h1 { font: 400 2.2rem/1 var(--display); }
+.intro { max-width: 46rem; margin: 10px 0 26px; color: var(--ink2); font-size: 1rem; }
+.row { display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start; }
+.phone { width: 375px; padding: 18px 16px 26px; border: 1px solid var(--rule); }
+.tag { font: 500 0.78rem var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); margin-bottom: 12px; }
+p + p { margin-top: 0.8em; }
+.label { margin-top: 12px; max-width: 375px; font: 400 0.86rem/1.45 var(--sans); color: var(--ink2); }
+.label b { color: var(--ink); font-weight: 500; }
+.next { margin-top: 34px; text-align: center; color: var(--ember); }
+.contents { margin-top: 26px; border-top: 1px solid var(--ink); padding-top: 8px; font: 400 0.86rem var(--sans); color: var(--ink2); }
+a { color: inherit; }
+/* A: the jump line at the end of the column */
+.a .jump { display: block; margin-top: 0.7em; text-align: right; font: italic 400 1.0625rem/1.4 var(--display); color: var(--ed); text-decoration: none; }
+.a .jump span { font-style: normal; }
+/* B: inline, as the paragraph's last words */
+.b .inl { font: italic 400 1em var(--serif); color: var(--ed); text-decoration: none; white-space: nowrap; }
+/* C: a fleuron break, then a quiet line */
+.c .brk { margin-top: 1.4em; text-align: center; }
+.c .brk i { display: block; font: normal 400 1.25rem/1 var(--display); color: var(--ed); letter-spacing: 0.6em; margin-left: 0.6em; }
+.c .brk a { display: inline-block; margin-top: 10px; font: italic 400 1.0625rem/1.4 var(--display); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 4px; }
+.c .brk small { display: block; margin-top: 2px; font: 400 0.78rem var(--sans); color: var(--ink2); }
+/* Now */
+.now .bar { display: flex; gap: 12px; align-items: baseline; margin-top: 1.4em; padding: 12px 0; border-block: 1px solid var(--ink); }
+.now .bar b { font: 500 0.72rem var(--sans); letter-spacing: 0.12em; color: var(--ed); }
+.now .bar span { flex: 1; font: italic 400 1.1875rem/1.3 var(--display); }
+</style>
+</head>
+<body>
+<h1>Continued, four ways</h1>
+<p class="intro">The end of the cover's opening of Haul 002's field note, at phone width. Each leads to the whole note; the contents follow.</p>
+<div class="row">
+
+<div><div class="phone now"><p class="tag">Now</p>
+<p>The reason I'm writing this is the historian Margaret Macmillan. I don't remember exactly when, but more than a year ago, on one of those morning commutes with a friend, I listened to a lecture of hers on what history can teach us. I've listened to it several times since, and what she said only feels more urgent, because we live in truly treacherous times.</p>
+<div class="bar"><b>CONTINUED</b><span>The whole note, 21 minutes</span>→</div>
+<p class="contents">In this Haul</p></div>
+<p class="label"><b>Now.</b> Two heavy rules and a label: reads as a button, and shouts.</p></div>
+
+<div><div class="phone a"><p class="tag">A · The jump line</p>
+<p>The reason I'm writing this is the historian Margaret Macmillan. I don't remember exactly when, but more than a year ago, on one of those morning commutes with a friend, I listened to a lecture of hers on what history can teach us. I've listened to it several times since, and what she said only feels more urgent, because we live in truly treacherous times.</p>
+<a class="jump" href="#">Continued on the next page <span>→</span></a>
+<p class="contents">In this Haul</p></div>
+<p class="label"><b>A.</b> What a magazine prints at the foot of a column: one italic line, ranged right, in the issue's ink. No rules, no label.</p></div>
+
+<div><div class="phone b"><p class="tag">B · Inline</p>
+<p>The reason I'm writing this is the historian Margaret Macmillan. I don't remember exactly when, but more than a year ago, on one of those morning commutes with a friend, I listened to a lecture of hers on what history can teach us. I've listened to it several times since, and what she said only feels more urgent, because we live in truly treacherous times. <a class="inl" href="#">(continued →)</a></p>
+<p class="contents">In this Haul</p></div>
+<p class="label"><b>B.</b> The jump as the paragraph's last words, as newspapers do. The lightest; easy to miss on a phone.</p></div>
+
+<div><div class="phone c"><p class="tag">C · The break</p>
+<p>The reason I'm writing this is the historian Margaret Macmillan. I don't remember exactly when, but more than a year ago, on one of those morning commutes with a friend, I listened to a lecture of hers on what history can teach us. I've listened to it several times since, and what she said only feels more urgent, because we live in truly treacherous times.</p>
+<p class="brk"><i>· · ·</i><a href="#">Read the rest of the note</a><small>21 minutes</small></p>
+<p class="contents">In this Haul</p></div>
+<p class="label"><b>C.</b> A printer's break (three spaced points in the issue's ink), then a quiet underlined line and the reading time. Centred, calm.</p></div>
+
+</div>
+</body>
+</html>
