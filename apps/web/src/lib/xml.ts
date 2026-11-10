@@ -1,5 +1,6 @@
 // RSS and sitemap generation. Every value is escaped; nothing from a bundle is emitted raw.
 
+import type { DataIndex } from '@fdf/shared/stories/published';
 import { haulSlug, noteBlocks, videoHref, type Haul, type NoteRun } from '@fdf/shared/haul';
 import { linkGroups } from '@fdf/shared/fieldnote';
 import { typeLabel } from '@fdf/shared/tokens';
@@ -171,7 +172,7 @@ ${items}
 `;
 }
 
-export function sitemap(hauls: Haul[], shelf?: Shelf | null): string {
+export function sitemap(hauls: Haul[], shelf?: Shelf | null, data?: DataIndex | null): string {
   const latestMod = hauls.length
     ? hauls.map(haulLastmod).sort().at(-1)
     : undefined;
@@ -189,6 +190,10 @@ export function sitemap(hauls: Haul[], shelf?: Shelf | null): string {
   if (shelf?.books.length) {
     urls.push({ loc: absolute(paths.shelf), lastmod: shelf.updatedAt.slice(0, 10) });
     for (const b of shelf.books) urls.push({ loc: absolute(paths.book(b.id)), lastmod: (bookUpdated(b) || shelf.updatedAt).slice(0, 10) });
+  }
+  if (data?.stories.length) {
+    urls.push({ loc: absolute(paths.atlas), lastmod: data.updatedAt.slice(0, 10) });
+    for (const st of data.stories) urls.push({ loc: absolute(paths.story(st.slug)), lastmod: st.updatedAt.slice(0, 10) });
   }
   for (const h of hauls) {
     const lastmod = haulLastmod(h);

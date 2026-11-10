@@ -1,0 +1,36 @@
+---
+// The Atlas: every published data story, newest first, from data/index.json (validated before use).
+import Base from '../layouts/Base.astro';
+import Title from '../components/Title.astro';
+import StoryFigure from '../components/StoryFigure.astro';
+import { dataIndex, story as loadStory } from '../lib/runtime';
+import { platesOf } from '../lib/stories';
+import { fullDate, paths } from '../lib/site';
+import { haulSlug } from '@fdf/shared/haul';
+
+const ix = await dataIndex();
+const entries = [...(ix?.stories ?? [])].sort((a, b) => b.number - a.number);
+const rows = await Promise.all(entries.map(async (e) => {
+  const s = await loadStory(e.slug);
+  const first = s ? s.story.movements[0]?.plates[0] ?? s.story.plates[0]?.key : undefined;
+  return { e, s, thumb: s && first ? platesOf(s).get(first)?.phone ?? null : null };
+}));
+---
+<Base title="Atlas" description="A data story most weeks, told in numbered plates. Every number on them is checked against the rows it came from." path={paths.atlas} section="atlas" edition={entries[0]?.edition}>
+  <section class="wrap g page-head">
+    <p class="m meta"><span>The atlas</span><span>{entries.length === 1 ? 'One story' : `${entries.length} stories`}</span></p>
+    <div class="c">
+      <Title title={{ text: 'Atlas' }} as="h1" class="h-title" />
+      <p class="deck">A data story most weeks, told in numbered plates. Every number on them is checked against the rows it came from.</p>
+    </div>
+  </section>
+  <section class="wrap st-index" aria-label="The stories">
+    {rows.length ? rows.map(({ e, thumb }) => (
+      <a class="st-entry" href={paths.story(e.slug)}>
+        <span class="st-entry-m"><span class="st-entry-no">No. {e.number}</span><time datetime={e.publishedAt.slice(0, 10)}>{fullDate(e.publishedAt)}</time>{e.haul ? <span>From Haul {haulSlug(e.haul.number)}</span> : null}<span>{e.plates} plates</span></span>
+        <span class="st-entry-b"><span class="st-entry-t">{e.title}</span><span class="st-entry-s">{e.standfirst}</span></span>
+        {thumb ? <span class="st-entry-thumb ch" aria-hidden="true"><StoryFigure scene={thumb} label="" /></span> : null}
+      </a>
+    )) : <p class="c">No stories yet.</p>}
+  </section>
+</Base>

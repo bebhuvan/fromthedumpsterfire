@@ -18,6 +18,8 @@ import Ledger from './Ledger.astro';
 import Credit from './Credit.astro';
 import StartHere from './StartHere.astro';
 import SeeAlso from './SeeAlso.astro';
+import StoryCard from './StoryCard.astro';
+import { dataIndex, story as loadStory } from '../lib/runtime';
 import Life from './Life.astro';
 import { formName, formOf, headword, quoteLength, speaker } from '../lib/forms';
 import {
@@ -39,6 +41,8 @@ interface Props {
   allHauls?: Haul[];
 }
 const { haul, item, allHauls } = Astro.props;
+// The data stories that answer this item, linked after the note (data/index.json).
+const itemStories = await Promise.all(((await dataIndex())?.stories ?? []).filter((e) => e.haul?.number === haul.number && e.haul.itemSlug === item.id).map(async (entry) => ({ entry, story: await loadStory(entry.slug) })));
 const at = haul.items.indexOf(item);
 const n = at + 1;
 const next: Item | undefined = haul.items[at + 1];
@@ -482,6 +486,13 @@ const ogImage =
         </a>
       </div>
     ) : null}
+
+    {itemStories.map(({ entry, story }) => (
+      <div class="wrap g row st-initem">
+        <p class="m mh">The data story</p>
+        <div class="c"><StoryCard entry={entry} story={story} as="link" /></div>
+      </div>
+    ))}
 
     <div class="wrap"><SeeAlso haul={haul} item={item} allHauls={allHauls} noWiki={form === 'offprint'} /></div>
 

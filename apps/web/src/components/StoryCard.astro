@@ -1,0 +1,29 @@
+---
+// A data story's card where the Haul carries it: in the contents, and as the link from the item it
+// answers. A small framed plate (the story's first plate, drawn for the phone) beside the series
+// number, the editor's title, the key figure and the count of plates.
+import type { DataIndexEntry, PublishedStory } from '@fdf/shared/stories';
+import { atlasNo, platesOf } from '../lib/stories';
+import { paths } from '../lib/site';
+import StoryFigure from './StoryFigure.astro';
+
+interface Props {
+  entry: DataIndexEntry;
+  story: PublishedStory | null;
+  /** "card" in the Haul's contents; "link" on the item page it answers. */
+  as: 'card' | 'link';
+}
+const { entry, story, as } = Astro.props;
+const first = story?.story.plates.find((p) => p.key === story.story.movements[0]?.plates[0]) ?? story?.story.plates[0];
+const thumb = story && first ? platesOf(story).get(first.key)?.phone ?? null : null;
+---
+<a class:list={['st-card', `st-card-${as}`]} href={paths.story(entry.slug)}>
+  <span class="st-crop st-tl" aria-hidden="true"></span><span class="st-crop st-tr" aria-hidden="true"></span><span class="st-crop st-bl" aria-hidden="true"></span><span class="st-crop st-br" aria-hidden="true"></span>
+  <span class="st-card-text">
+    <span class="st-caps st-card-k">{as === 'link' ? 'The data story' : 'Data story'} · {atlasNo(entry.number)}</span>
+    <span class="st-card-t">{entry.title}</span>
+    {entry.figure ? <span class="st-card-f"><span class="st-card-v">{entry.figure.value}</span> <span class="machine-text">{entry.figure.text}</span></span> : null}
+    <span class="st-card-m">{entry.plates} plates{as === 'link' ? ', from the numbers behind this piece' : ''}</span>
+  </span>
+  {thumb ? <span class="st-card-thumb ch" aria-hidden="true"><StoryFigure scene={thumb} label="" /></span> : null}
+</a>

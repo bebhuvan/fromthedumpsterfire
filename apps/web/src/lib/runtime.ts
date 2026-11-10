@@ -50,3 +50,6 @@ export function getStore(): Store {
 export const archive = () => getStore().archive();
 
 export const shelf = () => getStore().getShelf();
+
+export const dataIndex = () => getStore().getDataIndex();
+export const story = (slug: string) => getStore().getStory(slug);

@@ -1,0 +1,16 @@
+---
+// One drawn scene as an inline SVG: colours are classes (chartCss in tokens.css) on a .ch figure, so
+// it follows the reader's theme and the story's edition ink. No inline styles.
+import type { Scene } from '@fdf/shared/charts';
+import ChartSvg from './ChartSvg.astro';
+
+interface Props {
+  scene: Scene;
+  label: string;
+  class?: string;
+}
+const { scene, label, class: cls } = Astro.props;
+---
+<svg class:list={['st-svg', cls]} viewBox={`0 0 ${scene.width} ${Math.ceil(scene.height)}`} width={scene.width} height={Math.ceil(scene.height)} role="img" aria-label={label} preserveAspectRatio="xMinYMin meet">
+  <ChartSvg nodes={scene.nodes} />
+</svg>

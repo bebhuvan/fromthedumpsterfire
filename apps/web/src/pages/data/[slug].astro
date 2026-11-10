@@ -1,0 +1,71 @@
+---
+// A data story (docs/DATA-STORIES.md): an Atlas title page framed as a proof (the series number, the
+// editor's title and standfirst, a frontispiece plate, the plates' contents and a seal saying what was
+// checked), the principal figures, the plates in their movements, and the colophon. Read from
+// data/<slug>/v<N>/story.json, validated before it renders; an unknown or failing story is a 404.
+import Base from '../../layouts/Base.astro';
+import StoryPlate from '../../components/StoryPlate.astro';
+import StoryFigure from '../../components/StoryFigure.astro';
+import { story as loadStory } from '../../lib/runtime';
+import { atlasNo, platesOf, ROMAN } from '../../lib/stories';
+import { fullDate, paths } from '../../lib/site';
+import { haulSlug } from '@fdf/shared/haul';
+
+const slug = Astro.params.slug ?? '';
+const s = await loadStory(slug);
+if (!s) return new Response(null, { status: 404 });
+const st = s.story;
+const drawn = platesOf(s);
+const order = st.movements.length ? st.movements.flatMap((m) => m.plates) : st.plates.map((p) => p.key);
+const byKey = new Map(st.plates.map((p) => [p.key, p]));
+const num = (k: string) => order.indexOf(k) + 1;
+const front = drawn.get(order[0]!)?.phone ?? null;
+const sources = [...new Map(st.plates.flatMap((p) => p.sources).map((x) => [`${x.maker}|${x.dataset}|${x.via?.name ?? ''}`, x])).values()];
+const H = s.haul ? `Haul ${haulSlug(s.haul.number)}` : null;
+---
+<Base title={st.title} description={st.standfirst} path={paths.story(s.slug)} type="article" section="atlas" edition={st.edition} publishedAt={s.publishedAt} modifiedAt={s.updatedAt} articleSection="Atlas">
+  <article class="st">
+    <header class="wrap st-open">
+      <div class="st-proof">
+        <span class="st-crop st-tl" aria-hidden="true"></span><span class="st-crop st-tr" aria-hidden="true"></span><span class="st-crop st-bl" aria-hidden="true"></span><span class="st-crop st-br" aria-hidden="true"></span>
+        <div class="st-series"><span class="st-pn"><span>Atlas</span>No. {s.number}</span><span class="st-caps">{H ? <a href={paths.item(s.haul!.number, s.haul!.itemSlug)}>{H}</a> : null}{H ? ' · ' : ''}<time datetime={s.publishedAt.slice(0, 10)}>{fullDate(s.publishedAt)}</time></span></div>
+        <div class="st-title-page">
+          <div>
+            <h1 class="st-title">{st.title}</h1>
+            <p class="st-stand">{st.standfirst}</p>
+            <p class="st-by">Chosen and annotated by Bhuvanesh · <span class="machine">words and plates by the machine, from the sources named; every figure checked against the rows</span></p>
+          </div>
+          <div class="st-front">
+            {front ? <figure class="st-frontis ch"><StoryFigure scene={front} label={byKey.get(order[0]!)!.caption} /><figcaption class="st-caps">Frontispiece · Plate I</figcaption></figure> : null}
+            <ol class="st-toc">
+              {order.map((k) => <li><a href={`#${k}`}><span class="st-toc-n">{ROMAN[num(k) - 1]}</span><span class="st-toc-t">{byKey.get(k)!.name}</span><span class="st-toc-p">Plate {ROMAN[num(k) - 1]}</span></a></li>)}
+            </ol>
+            <p class="st-seal" aria-label={`Checked: ${st.facts.length} facts, each with its method; every figure traced`}><span>Checked</span><span class="st-seal-n">{st.facts.length}</span><span>facts</span><span>0 untraced</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="st-ledger-w">
+        <p class="st-caps">The principal figures</p>
+        <dl class="st-ledger">{st.ledger.map((l) => <div><dt class:list={{ 'st-loud': l.loud }}>{l.value}</dt><dd class="machine-text">{l.text}</dd></div>)}</dl>
+      </div>
+    </header>
+
+    {st.movements.length ? st.movements.map((m) => (
+      <>
+        <div class="wrap st-mv"><p class="st-caps">Movement {m.numeral}</p><h2><span>{m.numeral}</span>{m.name}</h2></div>
+        {m.plates.map((k) => <StoryPlate plate={byKey.get(k)!} n={num(k)} drawn={drawn.get(k)!} />)}
+      </>
+    )) : st.plates.map((p) => <StoryPlate plate={p} n={num(p.key)} drawn={drawn.get(p.key)!} />)}
+
+    <footer class="wrap st-colophon">
+      <p class="st-caps">How this was made</p>
+      <div>
+        <p>Sources:</p>
+        <ul>{sources.map((x) => <li>{x.maker}, <i>{x.dataset}</i> ({x.licence}){x.via ? `, via ${x.via.name} (${x.via.licence})` : ''}; retrieved {x.retrieved}.</li>)}</ul>
+        <p class="machine">The machine wrote the words and drew the plates. Every number in the words is one of the story’s {st.facts.length} facts, each worked out from the stored rows with its method, or a year the plates show; the story is refused at publish if one is not.</p>
+        <p>The editor’s notes in the margin and the standfirst are his own words, checked unchanged against his note{s.haul ? <> on <a href={paths.item(s.haul.number, s.haul.itemSlug)}>{s.haul.itemTitle}</a></> : null}. Quotations are matched word for word against the stored source.</p>
+        <p>{atlasNo(s.number)}{s.version > 1 ? `, version ${s.version}, corrected ${fullDate(s.updatedAt)}` : ''}. <a href={paths.atlas}>Every story in the Atlas</a>.</p>
+      </div>
+    </footer>
+  </article>
+</Base>

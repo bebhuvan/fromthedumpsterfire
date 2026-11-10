@@ -82,6 +82,8 @@ export default {
       updatedAt = (await getStore().getIndex()).updatedAt;
       // Shelf pages also change when the shelf is published.
       if (url.pathname === '/shelf' || url.pathname.startsWith('/shelf/') || url.pathname === '/sitemap.xml') updatedAt += `|${(await getStore().getShelf())?.updatedAt ?? 'none'}`;
+      // Data stories change their pages, and the Haul pages and items that carry their cards and links.
+      if (url.pathname === '/' || url.pathname === '/data' || url.pathname.startsWith('/data/') || url.pathname.startsWith('/haul/') || url.pathname === '/sitemap.xml') updatedAt += `|${(await getStore().getDataIndex())?.updatedAt ?? 'none'}`;
     } catch (err) {
       if (err instanceof IndexUnavailable) return unavailable(url, env, head);
       console.error('[fdf] index read failed', err);

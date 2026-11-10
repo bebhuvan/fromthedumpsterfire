@@ -34,6 +34,8 @@ export const paths = {
   threadMd: (n: number, id: string) => `/haul/${n}/thread/${id}.md`,
   threads: '/threads',
   shelf: '/shelf',
+  atlas: '/data',
+  story: (slug: string) => `/data/${slug}`,
   book: (id: string) => `/shelf/${id}`,
   archive: '/archive',
   about: '/about',

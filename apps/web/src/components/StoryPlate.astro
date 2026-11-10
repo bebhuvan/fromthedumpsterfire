@@ -1,0 +1,52 @@
+---
+// A plate of a data story (docs/DATA-STORIES.md): its number and name in the margin with the editor's
+// note, the machine's headline and paragraph, the source's quotation as a salvage slip, then the plate
+// itself, framed as a proof with crop marks, its key drawn with its own marks, the figure for the wide
+// column and the phone, and its caption. Words are always shown, even if a figure could not be drawn.
+import type { Plate } from '@fdf/shared/stories';
+import type { DrawnPlate } from '../lib/stories';
+import { ROMAN } from '../lib/stories';
+import StoryFigure from './StoryFigure.astro';
+
+interface Props {
+  plate: Plate;
+  n: number;
+  drawn: DrawnPlate;
+}
+const { plate: p, n, drawn: d } = Astro.props;
+const makers = [...new Set(p.sources.map((s) => s.maker))];
+const vias = [...new Set(p.sources.flatMap((s) => (s.via ? [s.via.name] : [])))];
+const src = makers.join('; ') + (vias.length ? `, ${p.sources.every((s) => s.via) ? '' : 'partly '}via ${vias.join(' and ')}` : '');
+---
+<section class:list={['wrap', 'st-beat', { 'st-fold': p.fold }]} id={p.key} aria-labelledby={`${p.key}-h`}>
+  <div class="st-m">
+    <p class="st-no" aria-hidden="true">{ROMAN[n - 1]}</p>
+    <p class="st-caps">Plate {ROMAN[n - 1]} · {p.name}</p>
+    {p.editorNote ? <aside class="st-his"><p>{p.editorNote}</p><p class="st-his-by"><span class="st-b">B.</span> on the paper</p></aside> : null}
+  </div>
+  <div class="st-c">
+    <h3 class="machine-text st-head" id={`${p.key}-h`}>{p.headline}</h3>
+    <p class="machine-text st-body">{p.body}</p>
+    {p.quote ? (
+      <blockquote class="st-slip"><p>{p.quote.text}</p><footer><span>{p.quote.credit}</span><span class="machine">Matched word for word</span></footer></blockquote>
+    ) : null}
+  </div>
+  <figure class="st-plate ch">
+    <span class="st-crop st-tl" aria-hidden="true"></span><span class="st-crop st-tr" aria-hidden="true"></span><span class="st-crop st-bl" aria-hidden="true"></span><span class="st-crop st-br" aria-hidden="true"></span>
+    <div class="st-plate-head"><span class="st-pn"><span>Plate</span>{ROMAN[n - 1]}</span><span class="st-caps">{p.name}</span></div>
+    {d.keyWide && d.keyPhone ? (
+      <div class="st-key" aria-hidden="true"><StoryFigure scene={d.keyWide} label="Key" class="st-wide" /><StoryFigure scene={d.keyPhone} label="Key" class="st-phone" /></div>
+    ) : <div class="st-key"></div>}
+    {d.wide && d.phone ? (
+      <div class="st-fig"><StoryFigure scene={d.wide} label={p.caption} class="st-wide" /><StoryFigure scene={d.phone} label={p.caption} class="st-phone" /></div>
+    ) : <p class="st-undrawn">This plate could not be drawn here; its words stand above.</p>}
+    <figcaption class="st-cap"><span class="machine">{p.caption}</span> {src}.</figcaption>
+  </figure>
+  {p.coda ? (
+    <div class="st-c st-coda">
+      <p class="st-caps">{p.coda.label}</p>
+      <div class="st-coda-row">{p.coda.figures.map((f) => <p><span class="st-coda-n">{f.value}</span>{f.text}</p>)}</div>
+      <p class="machine-text st-body">{p.coda.text}</p>
+    </div>
+  ) : null}
+</section>

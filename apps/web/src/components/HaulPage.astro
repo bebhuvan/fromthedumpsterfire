@@ -12,6 +12,8 @@ import Voice from './Voice.astro';
 import Specimen from './Specimen.astro';
 import Masthead from './Masthead.astro';
 import Fingerprint from './Fingerprint.astro';
+import StoryCard from './StoryCard.astro';
+import { dataIndex, story as loadStory } from '../lib/runtime';
 import {
   absolute,
   EDITOR_NAME,
@@ -53,6 +55,8 @@ const spans = coverSpans(haul.items.map(formOf));
 // The second object in a row sits a little lower.
 const lower = spans.map((_, i) => spans.slice(0, i).reduce((a, b) => a + b, 0) % 12 !== 0);
 const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))];
+// The data stories that answer this Haul's items (data/index.json), as cards after the contents.
+const haulStories = await Promise.all(((await dataIndex())?.stories ?? []).filter((e) => e.haul?.number === haul.number).sort((a, b) => a.number - b.number).map(async (entry) => ({ entry, story: await loadStory(entry.slug) })));
 ---
 <Base
   title={home ? `Haul ${slug}: ${titleText(haul.title)}` : issueTitle}
@@ -155,6 +159,13 @@ const tags = [...new Set(haul.items.flatMap((i) => i.wiki.map((w) => w.title)))]
       {haul.items.map((item, i) => <Specimen haul={haul} item={item} span={spans[i]} lower={lower[i]} />)}
     </ol>
   </section>
+
+  {haulStories.length ? (
+    <section class="wrap g row st-inhaul" aria-labelledby="atlas-title">
+      <h2 class="m mh" id="atlas-title">In the Atlas <span>{haulStories.length === 1 ? 'a data story' : `${haulStories.length} data stories`} from this Haul</span></h2>
+      <div class="c st-inhaul-list">{haulStories.map(({ entry, story }) => <StoryCard entry={entry} story={story} as="card" />)}</div>
+    </section>
+  ) : null}
 
   {haul.threads.map((thread, ti) => (
     <section class="wrap g row" aria-labelledby={`thread-title-${ti}`}>

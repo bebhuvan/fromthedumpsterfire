@@ -9,6 +9,7 @@
 import { BUNDLE_VERSION, tidyDates, type Haul, type HaulIndex, type Thread } from '@fdf/shared/haul';
 import { validateHaul } from '@fdf/shared/validate';
 import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
+import { DATA_INDEX_PATH, STORY_SLUG, validateDataIndex, validatePublishedStory, type DataIndex, type PublishedStory } from '@fdf/shared/stories/published';
 
 /** The subset of an R2 bucket this module uses, so tests can pass a fake. */
 export interface Bucket {
@@ -189,7 +190,70 @@ export function createStore(bucket: Bucket, opts: { now?: () => number; log?: Lo
     return inflightShelf;
   }
 
-  return { getIndex, archive, getShelf };
+  // Data stories (data/index.json and data/<slug>/v<N>/story.json). The index is re-read at most every
+  // INDEX_TTL_MS; a story file is validated once per path and etag. An index or story that fails
+  // validation is logged and never rendered: the last good index is kept, and a story falls back to its
+  // newest earlier version that validates, else its page answers 404.
+  let dataIx: { value: DataIndex | null; at: number; etag?: string } | null = null;
+  let inflightData: Promise<DataIndex | null> | null = null;
+  async function readDataIndex(): Promise<DataIndex | null> {
+    try {
+      const obj = await bucket.get(DATA_INDEX_PATH);
+      if (!obj) return null;
+      if (dataIx?.etag === obj.etag) return dataIx.value;
+      const parsed = JSON.parse(await obj.text()) as DataIndex;
+      const errs = validateDataIndex(parsed);
+      if (errs.length) throw new Error(`data index rejected: ${errs.slice(0, 5).join('; ')}`);
+      dataIx = { value: parsed, at: now(), etag: obj.etag };
+      return parsed;
+    } catch (err) {
+      log(`${DATA_INDEX_PATH}: ${err instanceof Error ? err.message : String(err)}; keeping the last good data index`);
+      return dataIx?.value ?? null;
+    }
+  }
+  async function getDataIndex(): Promise<DataIndex | null> {
+    if (dataIx && now() - dataIx.at < INDEX_TTL_MS) return dataIx.value;
+    inflightData ??= readDataIndex()
+      .then((value) => {
+        dataIx = { value, at: now(), etag: dataIx?.etag };
+        return value;
+      })
+      .finally(() => {
+        inflightData = null;
+      });
+    return inflightData;
+  }
+  const stories = new Map<string, { etag: string; story: PublishedStory | null; error?: string }>();
+  async function loadStoryFile(path: string): Promise<PublishedStory | null> {
+    const obj = await bucket.get(path);
+    if (!obj) return null;
+    const hit = stories.get(path);
+    if (hit && hit.etag === obj.etag) return hit.story;
+    let story: PublishedStory | null = null;
+    try {
+      const parsed = JSON.parse(await obj.text()) as PublishedStory;
+      const errs = validatePublishedStory(parsed);
+      if (errs.length) throw new Error(errs.slice(0, 5).join('; '));
+      story = parsed;
+    } catch (err) {
+      log(`${path}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    stories.set(path, { etag: obj.etag, story });
+    return story;
+  }
+  /** A published story by slug: its current version, else the newest earlier one that validates. */
+  async function getStory(slug: string): Promise<PublishedStory | null> {
+    if (!STORY_SLUG.test(slug)) return null;
+    const entry = (await getDataIndex())?.stories.find((s) => s.slug === slug);
+    if (!entry) return null;
+    for (let v = entry.version; v >= Math.max(1, entry.version - MAX_FALLBACK); v--) {
+      const story = await loadStoryFile(`data/${slug}/v${v}/story.json`);
+      if (story && story.slug === slug) return story;
+    }
+    return null;
+  }
+
+  return { getIndex, archive, getShelf, getDataIndex, getStory };
 }
 
 export type Store = ReturnType<typeof createStore>;
