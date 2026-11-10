@@ -29,8 +29,11 @@ privacy page (`apps/web/src/pages/privacy.astro`) is the source for the data ans
 
 - **App icon:** 512 × 512 PNG: `docs/brand/play/app-icon-512.png` (from `apps/mobile/assets/icon.png`, scaled, no transparency).
 - **Feature graphic:** 1024 × 500 PNG: `docs/brand/play/feature-graphic-1024x500.png` (the ember mark and the struck masthead with the strap line, on ink; 2026-11-09).
-- **Phone screenshots:** 2 to 8, portrait, from a real phone or the emulator with a published Haul:
-  the cover, an item with an excerpt, the field note, Threads, Settings.
+  A light alternative on paper is `docs/design-comps/2026-11-09-play/feature-graphic.png` (from `feature.html`).
+- **Phone screenshots:** eight, 1080 × 1920, in upload order, in `docs/design-comps/2026-11-09-play/screens/`:
+  the cover, a verified excerpt, an item, the contents, the archive, the shelf, the field note in dark,
+  the cover in dark. Taken 2026-11-09 on the emulator (`wm size 1080x1920`, System UI demo mode for a
+  clean status bar) from a release build reading the live Hauls 001 and 002.
 - **Category:** Books & Reference (suggested). News & Magazines also fits a magazine, but Play then
   asks the app to meet its news-app rules, which are written for current-events publishers.
 - **Contact email:** bhuvan@bebhuvan.com (shown publicly on the listing). **Website:**
