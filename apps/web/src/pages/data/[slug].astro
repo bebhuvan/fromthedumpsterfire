@@ -33,14 +33,14 @@ const H = s.haul ? `Haul ${haulSlug(s.haul.number)}` : null;
           <div>
             <h1 class="st-title">{st.title}</h1>
             <p class="st-stand">{st.standfirst}</p>
-            <p class="st-by">Chosen and annotated by Bhuvanesh · <span class="machine">words and plates by the machine, from the sources named; every figure checked against the rows</span></p>
+            <p class="st-by">Chosen and annotated by Bhuvanesh · <span class="machine">words and plates by the machine, from the sources named; every figure in the words is one of the story’s facts, each listed with its method</span></p>
           </div>
           <div class="st-front">
             {front ? <figure class="st-frontis ch"><StoryFigure scene={front} label={byKey.get(order[0]!)!.caption} /><figcaption class="st-caps">Frontispiece · Plate I</figcaption></figure> : null}
             <ol class="st-toc">
               {order.map((k) => <li><a href={`#${k}`}><span class="st-toc-n">{ROMAN[num(k) - 1]}</span><span class="st-toc-t">{byKey.get(k)!.name}</span><span class="st-toc-p">Plate {ROMAN[num(k) - 1]}</span></a></li>)}
             </ol>
-            <p class="st-seal" aria-label={`Checked: ${st.facts.length} facts, each with its method; every figure traced`}><span>Checked</span><span class="st-seal-n">{st.facts.length}</span><span>facts</span><span>0 untraced</span></p>
+            <p class="st-seal" aria-label={`${st.facts.length} facts, each with its method, listed at the end`}><span>Checked</span><span class="st-seal-n">{st.facts.length}</span><span>facts</span><span>each with its method</span></p>
           </div>
         </div>
       </div>
@@ -62,7 +62,11 @@ const H = s.haul ? `Haul ${haulSlug(s.haul.number)}` : null;
       <div>
         <p>Sources:</p>
         <ul>{sources.map((x) => <li>{x.maker}, <i>{x.dataset}</i> ({x.licence}){x.via ? `, via ${x.via.name} (${x.via.licence})` : ''}; retrieved {x.retrieved}.</li>)}</ul>
-        <p class="machine">The machine wrote the words and drew the plates. Every number in the words is one of the story’s {st.facts.length} facts, each worked out from the stored rows with its method, or a year the plates show; the story is refused at publish if one is not.</p>
+        <p class="machine">The machine wrote the words and drew the plates from the rows published with the story, prepared by code from the sources above. Every number in the words is one of the facts below, worked out from those rows by the method given, or a year the plates show; the story is refused at publish if one is not.</p>
+        <details class="st-facts">
+          <summary>The {st.facts.length} facts and how each was worked out</summary>
+          <dl>{st.facts.map((f) => <div><dt>{Math.abs(f.value) >= 1000 ? Math.round(f.value).toLocaleString('en-IN') : String(+f.value.toFixed(3))}</dt><dd>{f.method}</dd></div>)}</dl>
+        </details>
         <p>The editor’s notes in the margin and the standfirst are his own words, checked unchanged against his note{s.haul ? <> on <a href={paths.item(s.haul.number, s.haul.itemSlug)}>{s.haul.itemTitle}</a></> : null}. Quotations are matched word for word against the stored source.</p>
         <p>{atlasNo(s.number)}{s.version > 1 ? `, version ${s.version}, corrected ${fullDate(s.updatedAt)}` : ''}. <a href={paths.atlas}>Every story in the Atlas</a>.</p>
       </div>

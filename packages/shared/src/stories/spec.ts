@@ -222,6 +222,21 @@ export function untraced(text: string, nums: number[]): string[] {
     .map((f) => f.text);
 }
 
+/**
+ * The editor's words as whole sentences of his note: the passage starts where a sentence starts (the
+ * note's start, a new line, or after a full stop) and ends a sentence, so a cut can never turn his
+ * meaning ("I doubt fertility will recover" never yields "fertility will recover").
+ */
+export function wholeSentences(passage: string, text: string): boolean {
+  const p = passage.trim();
+  if (!p || !/[.!?…]["”’)]*$/.test(p)) return false;
+  for (let at = text.indexOf(p); at >= 0; at = text.indexOf(p, at + 1)) {
+    const before = text.slice(0, at).replace(/[\s"“‘(]+$/, '');
+    if (before === '' || /[.!?…:]["”’)]*$/.test(before) || /\n\s*$/.test(text.slice(0, at))) return true;
+  }
+  return false;
+}
+
 const sorted = (p: Pt[]) => p.every((q, i) => i === 0 || q[0] > p[i - 1]![0]);
 const finite = (p: Pt[]) => p.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
 const yOf = (p: Pt[], x: number) => p.find((q) => q[0] === x)?.[1];
@@ -237,13 +252,13 @@ export function validateStory(story: Story, editorText: string | null): string[]
   if (!EDITIONS.includes(story.edition)) errs.push(`Unknown edition "${story.edition}".`);
   // The editor's words are checked where his stored text is (the Desk, at publish); a reader's copy
   // (editorText null) is checked for everything else.
-  if (editorText !== null && !editorText.includes(story.standfirst)) errs.push('The standfirst is not the editor’s words unchanged.');
+  if (editorText !== null && !wholeSentences(story.standfirst, editorText)) errs.push('The standfirst is not the editor’s words unchanged, as whole sentences of his note.');
   if (story.plates.length < 3 || story.plates.length > 9) errs.push('A story has three to nine plates.');
   if (keys.size !== story.plates.length) errs.push('Plate keys must be unique.');
   if (story.plates.filter((p) => p.fold).length > 1) errs.push('At most one plate folds out.');
   const inMovements = story.movements.flatMap((m) => m.plates);
   if (story.plates.length >= 5 && story.movements.length === 0) errs.push('A story of five plates or more is told in movements.');
-  if (story.movements.length && (inMovements.length !== story.plates.length || inMovements.some((k) => !keys.has(k)))) errs.push('Every plate belongs to exactly one movement.');
+  if (story.movements.length && (inMovements.length !== story.plates.length || new Set(inMovements).size !== inMovements.length || inMovements.some((k) => !keys.has(k)))) errs.push('Every plate belongs to exactly one movement.');
   for (const f of story.facts) if (!f.method.trim()) errs.push(`The fact "${f.key}" has no method.`);
 
   const nums = citable(story), prose = citableInProse(story);
@@ -254,7 +269,7 @@ export function validateStory(story: Story, editorText: string | null): string[]
     const at = `Plate "${p.name}"`;
     machine.push([`${at} headline`, p.headline], [`${at} paragraph`, p.body], [`${at} caption`, p.caption]);
     if (p.coda) machine.push([`${at} coda`, [p.coda.text, ...p.coda.figures.map((f) => `${f.value} ${f.text}`)].join(' ')]);
-    if (editorText !== null && p.editorNote !== undefined && !editorText.includes(p.editorNote)) errs.push(`${at}: the margin note is not the editor’s words unchanged.`);
+    if (editorText !== null && p.editorNote !== undefined && !wholeSentences(p.editorNote, editorText)) errs.push(`${at}: the margin note is not the editor’s words unchanged.`);
     if (!p.sources.length) errs.push(`${at}: no source.`);
     for (const s of p.sources) {
       if (!/^https:\/\//.test(s.url) || !s.licence.trim() || /^unknown$/i.test(s.licence) || !/^\d{4}-\d{2}-\d{2}$/.test(s.retrieved)) errs.push(`${at}: the source "${s.dataset}" needs an https link, a licence and the day it was retrieved.`);

@@ -3,7 +3,7 @@
 // answers. A small framed plate (the story's first plate, drawn for the phone) beside the series
 // number, the editor's title, the key figure and the count of plates.
 import type { DataIndexEntry, PublishedStory } from '@fdf/shared/stories';
-import { atlasNo, platesOf } from '../lib/stories';
+import { atlasNo, thumbOf } from '../lib/stories';
 import { paths } from '../lib/site';
 import StoryFigure from './StoryFigure.astro';
 
@@ -14,8 +14,7 @@ interface Props {
   as: 'card' | 'link';
 }
 const { entry, story, as } = Astro.props;
-const first = story?.story.plates.find((p) => p.key === story.story.movements[0]?.plates[0]) ?? story?.story.plates[0];
-const thumb = story && first ? platesOf(story).get(first.key)?.phone ?? null : null;
+const thumb = story ? thumbOf(story) : null;
 ---
 <a class:list={['st-card', `st-card-${as}`]} href={paths.story(entry.slug)}>
   <span class="st-crop st-tl" aria-hidden="true"></span><span class="st-crop st-tr" aria-hidden="true"></span><span class="st-crop st-bl" aria-hidden="true"></span><span class="st-crop st-br" aria-hidden="true"></span>

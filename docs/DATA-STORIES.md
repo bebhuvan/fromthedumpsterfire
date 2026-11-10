@@ -155,7 +155,12 @@ A story is published apart from the Hauls, like the shelf. `npm run editorial --
 run) and `story-publish --confirm-publish` send it to the Desk (`/api/stories/check`, `/api/stories/publish`),
 where `publishStory` (`packages/server/src/publish.ts`) runs every check again against the database's own
 copies, never trusting what the request sends: the standfirst and every margin note must be found unchanged
-in the linked item's stored note (`why_text`), every quotation word for word in its stored source text.
+in the linked item's stored note (`why_text`) as whole sentences, every quotation word for word in its
+stored source text as one unbroken passage. The rows and facts travel with the story as it was prepared
+(by `docs/design-comps/data-stories/prep*.py` and `story.ts` from the sources named): every figure in the
+words is checked against them, and every fact is printed with its method in the colophon so a reader can
+check it, but the Desk does not yet recompute the facts from the original sources itself. A damaged or
+missing index (with stories in the bucket) stops a publish rather than starting a new one.
 Then it writes `data/<slug>/v<N>/story.json` (a new version for every correction, never overwritten;
 the story keeps its number in the series) and `data/index.json`. Nothing else is written; the Haul is not
 republished.
@@ -172,7 +177,10 @@ cached at the edge on the data index's `updatedAt`, so a publish shows without a
 
 - The reader app: pictures of each phone plate drawn at publish (as charts are), and a story screen.
 - Authoring on the Desk (stories are written as data and published from the terminal for now), and a
-  record of versions in D1 (versions are read from `data/index.json`).
+  record of versions in D1 (versions are read from `data/index.json`; two publishes at the same moment
+  could race).
+- The Desk recomputing each fact from the sources (through `packages/server/src/charts.ts`) rather than
+  checking the words against the facts as sent.
 - A table of each plate's numbers under it, as charts have.
 - Page weight: the story page is about 250 KB compressed, most of it the fall plate's 161 country
   lines drawn twice (wide and phone); simplifying those paths would roughly halve it.

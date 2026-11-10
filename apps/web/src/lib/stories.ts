@@ -6,8 +6,8 @@ import type { Scene } from '@fdf/shared/charts';
 
 export interface DrawnPlate { wide: Scene | null; phone: Scene | null; keyWide: Scene | null; keyPhone: Scene | null }
 
-const drawn = new Map<string, Map<string, DrawnPlate>>();
-function draw(p: Plate): DrawnPlate {
+const drawnFull = new Map<string, Map<string, DrawnPlate>>();
+function draw(p: Plate, phoneOnly = false): DrawnPlate {
   const safe = (f: () => Scene | null) => {
     try {
       return f();
@@ -16,6 +16,7 @@ function draw(p: Plate): DrawnPlate {
       return null;
     }
   };
+  if (phoneOnly) return { wide: null, phone: safe(() => drawFigure(p.figure, 'phone')), keyWide: null, keyPhone: null };
   return {
     wide: safe(() => drawFigure(p.figure, 'wide', p.fold)),
     phone: safe(() => drawFigure(p.figure, 'phone')),
@@ -27,12 +28,24 @@ function draw(p: Plate): DrawnPlate {
 /** Every plate of a story, drawn (or null where a plate cannot be drawn: its words still show). */
 export function platesOf(s: PublishedStory): Map<string, DrawnPlate> {
   const k = `${s.slug}@${s.version}`;
-  let m = drawn.get(k);
+  let m = drawnFull.get(k);
   if (!m) {
     m = new Map(s.story.plates.map((p) => [p.key, draw(p)]));
-    drawn.set(k, m);
+    drawnFull.set(k, m);
   }
   return m;
+}
+
+/** One plate's phone figure, for a thumbnail: drawn alone, so a listing never draws whole stories. */
+const thumbs = new Map<string, Scene | null>();
+export function thumbOf(s: PublishedStory): Scene | null {
+  const key = s.story.movements[0]?.plates[0] ?? s.story.plates[0]?.key;
+  const k = `${s.slug}@${s.version}#${key}`;
+  if (!thumbs.has(k)) {
+    const p = s.story.plates.find((x) => x.key === key);
+    thumbs.set(k, p ? (drawnFull.get(`${s.slug}@${s.version}`)?.get(p.key)?.phone ?? draw(p, true).phone) : null);
+  }
+  return thumbs.get(k)!;
 }
 
 export const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];

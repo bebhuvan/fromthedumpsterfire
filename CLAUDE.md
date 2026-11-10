@@ -99,8 +99,9 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - Data stories (docs/DATA-STORIES.md) are published apart from the Hauls by `publishStory` as
   `data/<slug>/v<N>/story.json` (never overwritten) and `data/index.json`, from the terminal
   (`story-check`, `story-publish`) through `/api/stories/*`. Publish re-runs `validateStory` against
-  D1's own copies: the editor's standfirst and margin notes must be in the linked item's `why_text`,
-  quotations in its stored source text. The website (`/data`, `/data/<slug>`, a card on the Haul, a link
+  D1's own copies: the editor's standfirst and margin notes must be whole sentences of the linked item's
+  `why_text`, quotations one unbroken passage of its stored source text. The rows and facts travel with
+  the story as prepared (each fact printed with its method); the Desk does not yet recompute them. The website (`/data`, `/data/<slug>`, a card on the Haul, a link
   on the item) reads only those files, each validated before it renders.
 - The shelf (books being read, read or put down) is published apart from the Hauls as
   `shelf/shelf.json` by "Publish the shelf" (`publishShelf`). Book notes are the editor's words, typed

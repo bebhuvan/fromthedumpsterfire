@@ -760,12 +760,30 @@ export async function publishShelf(env: Env, opts: { dryRun?: boolean } = {}): P
 
 /** The published index of data stories, or an empty one before the first publish (or if it cannot be read). */
 export async function readDataIndex(env: Env): Promise<DataIndex> {
-  const empty: DataIndex = { bundleVersion: STORY_BUNDLE_VERSION, updatedAt: nowIso(), stories: [] };
-  const obj = await env.FILES.get(DATA_INDEX_PATH);
-  if (!obj) return empty;
-  const index = (await obj.json().catch(() => null)) as DataIndex | null;
-  return index && !validateDataIndex(index).length ? index : empty;
+  const r = await dataIndexState(env);
+  return r.index ?? { bundleVersion: STORY_BUNDLE_VERSION, updatedAt: nowIso(), stories: [] };
 }
+
+/**
+ * The published data index, or why it cannot be trusted. Only a bucket with no data/ at all starts a
+ * fresh index: an index that cannot be read or fails validation, or story files with no index, stop a
+ * publish, so a damaged index never replaces the Atlas with one story and reused numbers.
+ */
+async function dataIndexState(env: Env): Promise<{ index: DataIndex | null; problem?: string }> {
+  const obj = await env.FILES.get(DATA_INDEX_PATH);
+  if (!obj) {
+    const any = await env.FILES.list({ prefix: 'data/', limit: 1 });
+    if (any.objects.length) return { index: null, problem: `${DATA_INDEX_PATH} is missing but data/ holds published stories; restore the index before publishing.` };
+    return { index: { bundleVersion: STORY_BUNDLE_VERSION, updatedAt: nowIso(), stories: [] } };
+  }
+  const index = (await obj.json().catch(() => null)) as DataIndex | null;
+  const errs = index ? validateDataIndex(index) : ['not JSON'];
+  if (errs.length) return { index: null, problem: `${DATA_INDEX_PATH} cannot be trusted (${errs.slice(0, 3).join('; ')}); fix it before publishing.` };
+  return { index };
+}
+
+/** A quotation as the reader sees it: whitespace and quotation marks made plain, for an exact match. */
+const plainQuote = (t: string) => t.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, ' ').trim();
 
 export interface StoryPublishResult {
   ok: boolean;
@@ -825,11 +843,15 @@ export async function publishStory(env: Env, input: { story: Story; slug: string
   const src = await env.DB.prepare('SELECT text FROM sources WHERE item_id = ?').bind(item.id).first<{ text: string }>();
   for (const p of story.plates) {
     if (!p.quote) continue;
-    if (!src?.text || !findQuotation(src.text, p.quote.text)) problems.push(`Plate "${p.name}": the quotation is not in the item's source word for word ("${p.quote.text.slice(0, 60)}${p.quote.text.length > 60 ? '…' : ''}").`);
+    // One unbroken run of the source's words: no ellipses stitching passages together.
+    if (/…|\.\.\./.test(p.quote.text)) problems.push(`Plate "${p.name}": a story's quotation is one unbroken passage, with no ellipsis.`);
+    else if (!src?.text || !plainQuote(src.text).includes(plainQuote(p.quote.text))) problems.push(`Plate "${p.name}": the quotation is not in the item's source word for word ("${p.quote.text.slice(0, 60)}${p.quote.text.length > 60 ? '…' : ''}").`);
   }
   const haul = await storyHaul(env, item, warnings);
 
-  const current = await readDataIndex(env);
+  const state = await dataIndexState(env);
+  if (!state.index) return { ok: false, problems: [...problems, state.problem!], warnings };
+  const current = state.index;
   const existing = current.stories.find((s) => s.slug === slug);
   const now = nowIso();
   const number = existing?.number ?? Math.max(0, ...current.stories.map((s) => s.number)) + 1;

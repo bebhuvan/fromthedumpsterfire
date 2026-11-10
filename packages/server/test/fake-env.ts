@@ -97,6 +97,10 @@ export class FakeR2 {
       json: async () => JSON.parse(new TextDecoder().decode(o.bytes)),
     };
   }
+  async list(opts: { prefix?: string; limit?: number } = {}) {
+    const keys = [...this.objects.keys()].filter((k) => k.startsWith(opts.prefix ?? '')).sort().slice(0, opts.limit ?? 1000);
+    return { objects: keys.map((key) => ({ key })), truncated: false };
+  }
   async head(key: string) {
     return this.objects.has(key) ? { key } : null;
   }

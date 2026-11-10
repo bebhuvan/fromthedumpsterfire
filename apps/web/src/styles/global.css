@@ -1401,6 +1401,12 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .st-colophon p { margin: 0 0 12px; }
 .st-colophon ul { margin: 0 0 12px; padding-left: 18px; }
 .st-colophon .machine { font-size: inherit; }
+.st-facts { margin: 0 0 14px; }
+.st-facts summary { cursor: pointer; color: var(--ink); }
+.st-facts dl { margin: 10px 0 0; }
+.st-facts dl > div { display: grid; grid-template-columns: 7.5em 1fr; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--rule); }
+.st-facts dt { font-variant-numeric: tabular-nums; text-align: right; color: var(--ink); }
+.st-facts dd { margin: 0; }
 
 /* The Atlas index */
 .st-index { padding-bottom: 72px; }

@@ -44,7 +44,7 @@ describe('publishing a data story', () => {
     s.standfirst = s.standfirst.replace('An interesting paper', 'A fascinating paper');
     const r = await publishStory(env, input(s));
     expect(r.ok).toBe(false);
-    expect(r.problems).toContain('The standfirst is not the editor’s words unchanged.');
+    expect(r.problems).toContain('The standfirst is not the editor’s words unchanged, as whole sentences of his note.');
     expect(env.FILES.writes).toEqual([]);
   });
 
@@ -66,6 +66,47 @@ describe('publishing a data story', () => {
     const r = await publishStory(env, input(s));
     expect(r.problems.some((m) => m.startsWith(`Plate "${p.name}": the quotation is not in the item's source word for word`))).toBe(true);
     expect(env.FILES.writes).toEqual([]);
+  });
+
+  it('refuses a fragment of the editor\'s words that changes their meaning', async () => {
+    const env = await storyEnv();
+    const s = story();
+    // A clause cut from inside a sentence of his note: present in the text, but not a whole sentence.
+    s.standfirst = 'falling fertility rates around the world.';
+    const r = await publishStory(env, input(s));
+    expect(r.problems.some((m) => m.startsWith('The standfirst is not the editor’s words unchanged'))).toBe(true);
+  });
+
+  it('refuses a quotation stitched together with an ellipsis', async () => {
+    const env = await storyEnv();
+    const s = story();
+    const p = s.plates.find((x) => x.quote)!;
+    p.quote!.text = 'To put it bluntly, history offers no examples … of societies recognizing very low birth rates.';
+    const r = await publishStory(env, input(s));
+    expect(r.problems).toContain(`Plate "${p.name}": a story's quotation is one unbroken passage, with no ellipsis.`);
+  });
+
+  it('refuses a plate listed twice in the movements (so another never shows)', async () => {
+    const env = await storyEnv();
+    const s = story();
+    s.movements[0]!.plates[1] = s.movements[0]!.plates[0]!;
+    const r = await publishStory(env, input(s));
+    expect(r.problems).toContain('Every plate belongs to exactly one movement.');
+  });
+
+  it('stops when the index is damaged, or missing while stories exist, instead of starting over', async () => {
+    const env = await storyEnv();
+    await env.FILES.put(DATA_INDEX_PATH, '{ not json');
+    const r1 = await publishStory(env, input());
+    expect(r1.ok).toBe(false);
+    expect(r1.problems.join(' ')).toMatch(/cannot be trusted/);
+    const env2 = await storyEnv();
+    await env2.FILES.put('data/other/v1/story.json', '{}');
+    env2.FILES.writes.length = 0;
+    const r2 = await publishStory(env2, input());
+    expect(r2.ok).toBe(false);
+    expect(r2.problems.join(' ')).toMatch(/is missing but data\/ holds published stories/);
+    expect(env2.FILES.writes).toEqual([]);
   });
 
   it('refuses a bad slug, a missing item and a story of the wrong shape', async () => {
@@ -118,11 +159,13 @@ describe('publishing a data story', () => {
   });
 
   it('never overwrites a published version, and never writes outside data/', async () => {
+    // An index that says version 1 is next, while version 1 is already in the bucket: refused.
     const env = await storyEnv();
+    await env.FILES.put(DATA_INDEX_PATH, JSON.stringify({ bundleVersion: 1, updatedAt: NOW, stories: [] }));
     await env.FILES.put('data/fertility/v1/story.json', '{"stale":true}');
     const r = await publishStory(env, input());
     expect(r.ok).toBe(false);
-    expect(r.problems[0]).toMatch(/never overwritten/);
+    expect(r.problems.join(' ')).toMatch(/never overwritten/);
     expect(await read(env, 'data/fertility/v1/story.json')).toEqual({ stale: true });
     const env2 = await storyEnv();
     await publishStory(env2, input());

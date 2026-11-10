@@ -307,8 +307,8 @@ out, never a blocker), and refuses on any failing item check, any kept note or i
 its source, a kept idea whose passage no longer matches, a Rhyme whose quotes no longer match, a missing chosen plate, or any
 `validateHaul` error; `validateHaul(haul, index, { filesBase })` also refuses any plate or audio URL
 not under `FILES_BASE`, so nothing hotlinks an archive (Wikimedia refuses app image loaders).
-There are two buckets: MEDIA (private) and FILES (public, only `hauls/` and `shelf/`). `publishHaul` is the only
-writer to FILES: it copies the assets from MEDIA into `hauls/NNN/audio/`, `hauls/NNN/plates/` and
+There are two buckets: MEDIA (private) and FILES (public, only `hauls/`, `shelf/` and `data/`; data stories, published by
+`publishStory`, are described in `docs/DATA-STORIES.md`). `publishHaul` is the only Haul writer to FILES: it copies the assets from MEDIA into `hauls/NNN/audio/`, `hauls/NNN/plates/` and
 `hauls/NNN/media/` (video posters and block pictures, `<item>-<n>[-poster].<ext>`), writes the share
 card the Desk drew in the editor's browser (`hauls/NNN/vN/card.png`, kept only if it is a 1200 x 630
 PNG; `Haul.card`), then writes `hauls/NNN/vN/haul.json` (immutable; an existing version is never overwritten) and

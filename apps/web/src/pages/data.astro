@@ -4,7 +4,7 @@ import Base from '../layouts/Base.astro';
 import Title from '../components/Title.astro';
 import StoryFigure from '../components/StoryFigure.astro';
 import { dataIndex, story as loadStory } from '../lib/runtime';
-import { platesOf } from '../lib/stories';
+import { thumbOf } from '../lib/stories';
 import { fullDate, paths } from '../lib/site';
 import { haulSlug } from '@fdf/shared/haul';
 
@@ -12,8 +12,7 @@ const ix = await dataIndex();
 const entries = [...(ix?.stories ?? [])].sort((a, b) => b.number - a.number);
 const rows = await Promise.all(entries.map(async (e) => {
   const s = await loadStory(e.slug);
-  const first = s ? s.story.movements[0]?.plates[0] ?? s.story.plates[0]?.key : undefined;
-  return { e, s, thumb: s && first ? platesOf(s).get(first)?.phone ?? null : null };
+  return { e, s, thumb: s ? thumbOf(s) : null };
 }));
 ---
 <Base title="Atlas" description="A data story most weeks, told in numbered plates. Every number on them is checked against the rows it came from." path={paths.atlas} section="atlas" edition={entries[0]?.edition}>
