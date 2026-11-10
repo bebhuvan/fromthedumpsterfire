@@ -35,6 +35,15 @@ Native API, read the major version of `expo` in `package.json` and fetch the mat
   reads `shelf/shelf.json` offline-first: the copy on disk at once, a check every 20 minutes at most
   with `If-None-Match`, and nothing kept that fails `validateShelf`. The Menu always lists the shelf;
   before the first publish it opens on "The shelf is being stocked".
+- The Atlas (data stories): `screens/Atlas.tsx` (Menu, `/data`) and `screens/Story.tsx` (`/data/<slug>`);
+  the proof pieces, the Haul's "In the Atlas" card and the item's "The data story" link in `ui/Proof.tsx`;
+  pure rules (fallback, matching to a Haul or item, picture file names) in `lib/atlas.ts` (tested).
+  `useDataIndex()` / `useStory()` in `lib/data.ts`: the index checked once per launch, each story version
+  kept on disk once fetched, nothing kept or shown that fails `validateDataIndex` / `validatePublishedStory`
+  (a bad version falls back to the newest earlier one that passes). Plates are the pictures drawn at
+  publish, downloaded with the story (`keepStoryPictures`); without them a line links to the website.
+  Import only `@fdf/shared/stories/published`, never `@fdf/shared/stories` (the renderer). Website paths
+  as screens are in `lib/links.ts` (tested); `/data` App Links on Android need `app.json` intent filters.
 - `ui/Fingerprint.tsx` (full and mini) from `@fdf/shared/fingerprint`, points in `lib/fpGeometry.ts`.
 - `ui/screen.tsx` `Screen` (pass `edition` for the band on a Haul's pages), `Waiting`.
 - `lib/data.ts` offline-first bundles; `lib/seed.ts` + `lib/seedData.ts` the development samples

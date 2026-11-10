@@ -1,5 +1,5 @@
 // The menu, set as a magazine's contents page: the struck masthead and its strap, then the reading
-// (the latest Haul in its edition ink, every Haul, threads, the shelf (always listed; empty until the first books are published), search, saved) and the house (how it's
+// (the latest Haul in its edition ink, every Haul, threads, the Atlas of data stories, the shelf (always listed; empty until the first books are published), search, saved) and the house (how it's
 // made, settings, Hauls by email, a note to the editor), each a line in the display serif with what it holds in the
 // text serif and a quiet figure on the right. One loud thing: the masthead.
 import type { ReactNode } from 'react';
@@ -9,7 +9,7 @@ import Constants from 'expo-constants';
 import { haulSlug } from '@fdf/shared/haul';
 import { editionInk, editionOf } from '@fdf/shared/tokens';
 import { fonts, GUTTER, usePalette, useScheme } from '@/theme';
-import { useAllHauls, useIndex, useShelf } from '@/lib/data';
+import { useAllHauls, useDataIndex, useIndex, useShelf } from '@/lib/data';
 import { useReader } from '@/lib/store';
 import { openSource } from '@/lib/open';
 import { go } from '@/nav';
@@ -31,6 +31,7 @@ export function Menu() {
   const hauls = useAllHauls();
   const saved = useReader((s) => s.saved.length);
   const shelf = useShelf().data;
+  const stories = useDataIndex().data?.stories.length ?? 0;
   const latest = index?.hauls[0];
   const threads = new Set(hauls.flatMap((h) => h.threads.map((t) => t.id))).size;
   const count = index?.hauls.length ?? 0;
@@ -53,6 +54,12 @@ export function Menu() {
         />
         <Line title="Every Haul" detail="Back issues, newest first, each in its own ink" figure={count ? String(count) : undefined} onPress={go.archive} />
         <Line title="Threads" detail="Lines that run across years and Hauls" figure={threads ? String(threads) : undefined} onPress={go.threads} />
+        <Line
+          title="The Atlas"
+          detail={stories ? 'Data stories told in numbered plates, every number checked' : 'Data stories told in numbered plates. The first is being drawn'}
+          figure={stories ? String(stories) : undefined}
+          onPress={go.atlas}
+        />
         <Line
           title="The shelf"
           detail={shelf?.books.length ? 'The books on the editor’s desk, with a few dated lines on each' : 'The books on the editor’s desk. The first go up soon'}

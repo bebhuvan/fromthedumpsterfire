@@ -89,6 +89,23 @@ export function Waiting({ status }: { status: 'loading' | 'offline' | 'ready' | 
   );
 }
 
+/** A data story that is not on this phone: not in the Atlas (`missing`), or not downloaded yet. */
+export function NotInAtlas({ missing, onBack }: { missing: boolean; onBack: () => void }) {
+  const p = usePalette();
+  return (
+    <View style={[styles.waiting, { backgroundColor: p.bg }]}>
+      <PageHead />
+      <View style={{ marginTop: 56, paddingHorizontal: GUTTER }}>
+        <Title title={{ text: missing ? 'Not in the' : 'Nothing here', italic: missing ? 'Atlas' : 'yet' }} size={38} />
+        <Body style={{ marginTop: 14, color: p.ink2 }}>
+          {missing ? 'There is no data story by that name in the Atlas on your phone.' : "This story hasn't reached your phone. Connect to the internet once and it will stay here for offline reading."}
+        </Body>
+        <Action label="To the Atlas" onPress={onBack} style={{ marginTop: 28 }} />
+      </View>
+    </View>
+  );
+}
+
 /** A shelf link to a book that is not on this phone's shelf (taken down, or not here yet). */
 export function NotOnShelf({ onBack }: { onBack: () => void }) {
   const p = usePalette();

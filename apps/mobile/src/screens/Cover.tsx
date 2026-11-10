@@ -18,6 +18,7 @@ import { useScrollToBody, Screen } from '@/ui/screen';
 import { Specimen } from '@/ui/Specimen';
 import { NoteBody } from '@/ui/NoteBody';
 import { Fingerprint, objects } from '@/ui/Fingerprint';
+import { InTheAtlas } from '@/ui/Proof';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const weekday = (iso: string) => WEEKDAYS[new Date(`${iso.slice(0, 10)}T12:00:00Z`).getUTCDay()] ?? '';
@@ -151,6 +152,8 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
           ))}
         </View>
       </View>
+
+      <InTheAtlas haul={haul.number} style={{ marginTop: 48 }} />
 
       {thread ? (
         <Action label={`Follow the thread: ${thread.title.text}${thread.title.italic ? ' ' + thread.title.italic : ''}`} onPress={() => go.thread(haul.number, thread.id)} style={{ marginTop: 40 }} />

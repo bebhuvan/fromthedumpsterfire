@@ -37,7 +37,7 @@ export function Settings() {
   };
 
   const clear = () =>
-    Alert.alert('Remove downloaded Hauls?', 'Your saved finds and reading history stay. Hauls download again when you open them.', [
+    Alert.alert('Remove downloaded Hauls?', 'Your saved finds and reading history stay. Hauls and data stories download again when you open them.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
@@ -108,8 +108,8 @@ export function Settings() {
         />
         <Setting
           title="Downloaded Hauls"
-          detail={storage.count ? `${storage.count} ${storage.count === 1 ? 'Haul' : 'Hauls'}, ${kb(storage.bytes)}` : 'Nothing beyond what came with the app.'}
-          right={storage.count ? <TextButton label="Remove" onPress={clear} /> : undefined}
+          detail={storage.count || storage.stories ? `${storage.count} ${storage.count === 1 ? 'Haul' : 'Hauls'}${storage.stories ? ` and ${storage.stories} ${storage.stories === 1 ? 'data story' : 'data stories'}` : ''}, ${kb(storage.bytes)}` : 'Nothing beyond what came with the app.'}
+          right={storage.count || storage.stories ? <TextButton label="Remove" onPress={clear} /> : undefined}
         />
       </Group>
 

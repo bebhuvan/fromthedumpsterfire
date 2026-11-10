@@ -21,6 +21,8 @@ import {
   SearchRoute,
   SettingsRoute,
   ShelfRoute,
+  AtlasRoute,
+  StoryRoute,
   BookRoute,
   ThreadRoute,
   ThreadsRoute,
@@ -68,6 +70,8 @@ export default function App() {
           <Stack.Screen name="Settings" component={SettingsRoute} />
           <Stack.Screen name="Shelf" component={ShelfRoute} />
           <Stack.Screen name="Book" component={BookRoute} />
+          <Stack.Screen name="Atlas" component={AtlasRoute} />
+          <Stack.Screen name="Story" component={StoryRoute} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

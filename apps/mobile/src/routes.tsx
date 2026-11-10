@@ -6,7 +6,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { Routes, Tabs } from './nav';
 import { StackActions } from '@react-navigation/native';
 import { haulSlug } from '@fdf/shared/haul';
-import { prefetchHaul, useHaul, useIndex, useShelf } from './lib/data';
+import { prefetchHaul, useHaul, useIndex, useShelf, useStory } from './lib/data';
 import { reader } from './lib/store';
 import { Cover } from './screens/Cover';
 import { FieldNote } from './screens/FieldNote';
@@ -21,7 +21,9 @@ import { Settings } from './screens/Settings';
 import { Menu } from './screens/Menu';
 import { Shelf } from './screens/Shelf';
 import { Book } from './screens/Book';
-import { NotOnShelf, Waiting } from './ui/screen';
+import { Atlas } from './screens/Atlas';
+import { Story } from './screens/Story';
+import { NotInAtlas, NotOnShelf, Waiting } from './ui/screen';
 
 type P<K extends keyof Routes> = NativeStackScreenProps<Routes, K>;
 
@@ -81,6 +83,7 @@ export const AboutRoute = About;
 export const SettingsRoute = Settings;
 export const MenuRoute = Menu;
 export const ShelfRoute = Shelf;
+export const AtlasRoute = Atlas;
 
 /** A book on the shelf. Back names where it goes: the find it was opened from, else the shelf (also for a link opened cold). */
 export function BookRoute({ route, navigation }: P<'Book'>) {
@@ -93,4 +96,17 @@ export function BookRoute({ route, navigation }: P<'Book'>) {
   const book = data?.books.find((b) => b.id === route.params.id);
   if (book) return <Book book={book} back={back} onBack={onBack} />;
   return status === 'loading' ? <Waiting status="loading" /> : <NotOnShelf onBack={onBack} />;
+}
+
+/** A data story. Back names where it goes: the Haul or find it was opened from, else the Atlas (also for a link opened cold). */
+export function StoryRoute({ route, navigation }: P<'Story'>) {
+  const { data, status } = useStory(route.params.slug);
+  const state = navigation.getState();
+  const prev = state.routes[state.routes.findIndex((r) => r.key === route.key) - 1];
+  const fromHaul = prev?.name === 'Item' || prev?.name === 'Haul' ? (prev.params as Routes['Haul']) : undefined;
+  const back = fromHaul ? `Haul ${haulSlug(fromHaul.n)}` : !prev || prev.name === 'Atlas' ? 'The Atlas' : 'Back';
+  const onBack = () => (prev ? navigation.goBack() : navigation.dispatch(StackActions.replace('Atlas')));
+  if (data) return <Story story={data} back={back} onBack={onBack} />;
+  if (status === 'loading') return <Waiting status="loading" />;
+  return <NotInAtlas missing={status === 'empty'} onBack={() => navigation.dispatch(StackActions.replace('Atlas'))} />;
 }

@@ -10,7 +10,9 @@ import { BUNDLE_VERSION, tidyDates, type Haul, type HaulIndex, type HaulSummary 
 import { SHELF_PATH, validateShelf, type Shelf } from '@fdf/shared/shelf';
 import { useReader } from './store';
 import { INDEX_PATH, seedTable } from './seed';
-import { keepPictures } from './pictures';
+import { DATA_INDEX_PATH, type DataIndex, type DataIndexEntry, type PublishedStory } from '@fdf/shared/stories/published';
+import { keepPictures, keepStoryPictures } from './pictures';
+import { goodIndex, goodStory, newestKept, storyPaths } from './atlas';
 
 const BASE = process.env.EXPO_PUBLIC_FILES_BASE ?? 'https://files.fromthedumpsterfire.com';
 
@@ -161,33 +163,45 @@ export function useAllHauls(): Haul[] {
   return summaries.map((s) => peek<Haul>(s.path)).filter((h): h is Haul => Boolean(h));
 }
 
-/** Downloaded Haul files (bundles and their chart pictures) and their total size. */
+/** A downloaded file of a Haul or a data story (bundles and their pictures), never an index. */
+const downloaded = (name: string) => (name.startsWith('hauls__') && name !== 'hauls__index.json') || (name.startsWith('data__') && name !== 'data__index.json');
+
+/** Downloaded Hauls and data stories (with their pictures) and their total size. */
 export function storageUsed() {
   let bytes = 0;
   let count = 0;
+  let stories = 0;
   try {
     for (const entry of Paths.document.list()) {
-      if (entry instanceof File && entry.name.startsWith('hauls__') && entry.name !== 'hauls__index.json') {
+      if (entry instanceof File && downloaded(entry.name)) {
         bytes += entry.size ?? 0;
-        if (entry.name.endsWith('.json')) count += 1; // Hauls, not their pictures
+        // Hauls and stories, not their pictures
+        if (entry.name.endsWith('.json')) {
+          if (entry.name.startsWith('data__')) stories += 1;
+          else count += 1;
+        }
       }
     }
   } catch {
     // Unreadable directory: report nothing rather than fail.
   }
-  return { bytes, count };
+  return { bytes, count, stories };
 }
 
-/** Remove downloaded Hauls and their chart pictures (the index and the reader's own data stay). */
+/** Remove downloaded Hauls and data stories with their pictures (the indexes and the reader's own data stay). */
 export function clearDownloads() {
   try {
     for (const entry of Paths.document.list()) {
-      if (entry instanceof File && entry.name.startsWith('hauls__') && entry.name !== 'hauls__index.json') entry.delete();
+      if (entry instanceof File && downloaded(entry.name)) entry.delete();
     }
   } catch {
     // Best effort.
   }
   for (const key of [...memory.keys()]) if (key !== INDEX_PATH) memory.delete(key);
+  storyKept.clear();
+  storyTried.clear();
+  storyFailed.clear();
+  storiesChanged();
 }
 
 // ---------- the shelf ----------
@@ -301,3 +315,163 @@ export function useShelf(): Load<Shelf> {
 }
 
 export const shelfUrl = (id?: string) => `https://fromthedumpsterfire.com/shelf${id ? `/${id}` : ''}`;
+
+// ---------- data stories (the Atlas) ----------
+//
+// data/index.json is small and mutable (a story can be published any day): it is read from disk at
+// once and checked once per launch. Each story is an immutable file per version
+// (data/<slug>/v<N>/story.json), kept on disk once fetched, like a Haul. Nothing that fails
+// validatePublishedStory / validateDataIndex is stored or shown: a bad index leaves the last good one,
+// and a bad or missing version falls back to the newest earlier version that passes (on the phone, or
+// fetched). The plates' pictures are downloaded next to the story (pictures.ts).
+
+/** A story file is large (its rows travel with it), so it gets longer than a Haul to arrive. */
+const STORY_TIMEOUT = 45_000;
+
+const storyListeners = new Set<() => void>();
+let storyTick = 0;
+function storiesChanged() {
+  storyTick += 1;
+  storyListeners.forEach((l) => l());
+}
+function subscribeStories(l: () => void) {
+  storyListeners.add(l);
+  return () => storyListeners.delete(l);
+}
+const useStoryTick = () => useSyncExternalStore(subscribeStories, () => storyTick);
+
+let dataIndexNow: DataIndex | null | undefined; // undefined until first read from disk
+let dataIndexRemote = 'unknown' as Remote;
+let dataIndexChecked = false;
+
+function dataIndexLocal(): DataIndex | null {
+  if (dataIndexNow === undefined) {
+    const disk = readDisk(DATA_INDEX_PATH);
+    dataIndexNow = goodIndex(disk) ? disk : null;
+  }
+  return dataIndexNow;
+}
+
+/** The text of a published file, 'missing' for a 404, null when offline or refused. */
+async function getText(path: string, timeout: number): Promise<string | 'missing' | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(`${BASE}/${path}`, { signal: ctrl.signal });
+    if (res.status === 404) return 'missing';
+    return res.ok ? await res.text() : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function refreshDataIndex() {
+  if (dataIndexChecked) return;
+  dataIndexChecked = true;
+  void (async () => {
+    const text = await getText(DATA_INDEX_PATH, 10_000);
+    if (text === 'missing') dataIndexRemote = 'none';
+    else if (text === null) dataIndexRemote = 'offline';
+    else {
+      let json: unknown = null;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // A damaged file: keep what we have.
+      }
+      // A newer app, or a bad file: keep the last good index.
+      if (goodIndex(json)) {
+        writeDisk(DATA_INDEX_PATH, text);
+        dataIndexNow = json;
+        dataIndexRemote = 'ok';
+      } else dataIndexRemote = dataIndexLocal() ? 'ok' : 'offline';
+    }
+    storiesChanged();
+  })();
+}
+
+/** The Atlas's index, offline-first. 'empty' means no story is published yet. */
+export function useDataIndex(): Load<DataIndex> {
+  useStoryTick();
+  const data = dataIndexLocal();
+  useEffect(refreshDataIndex, []);
+  if (data?.stories.length) return { data, status: 'ready' };
+  if (data || dataIndexRemote === 'none') return { data, status: 'empty' };
+  return { data: null, status: dataIndexRemote === 'offline' ? 'offline' : 'loading' };
+}
+
+/** Checked copies on the phone by path (null: none, or one that fails), so each is parsed and checked once. */
+const storyKept = new Map<string, PublishedStory | null>();
+/** Paths fetched this launch that gave nothing usable, so a bad file is not fetched again and again. */
+const storyTried = new Set<string>();
+/** Slugs whose fetch settled with nothing to show. */
+const storyFailed = new Set<string>();
+const storyInflight = new Map<string, Promise<void>>();
+
+function keptStory(path: string, slug: string): PublishedStory | null {
+  if (!storyKept.has(path)) {
+    const disk = readDisk(path);
+    storyKept.set(path, disk && goodStory(disk, slug, BASE) ? disk : null);
+  }
+  return storyKept.get(path) ?? null;
+}
+
+const storyOnPhone = (e: DataIndexEntry) => newestKept(e, (path) => keptStory(path, e.slug));
+
+/** Fetch a story's current version; if it is missing or fails, the newest earlier one that passes. */
+function fetchStory(e: DataIndexEntry): Promise<void> {
+  const key = `${e.slug}@${e.version}`;
+  const running = storyInflight.get(key);
+  if (running) return running;
+  const run = (async () => {
+    for (const path of storyPaths(e)) {
+      if (keptStory(path, e.slug)) break;
+      if (storyTried.has(path)) continue;
+      const text = await getText(path, STORY_TIMEOUT);
+      if (text === null) break; // offline: what is on the phone stands
+      storyTried.add(path);
+      if (text === 'missing') continue;
+      let json: unknown = null;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // A damaged file: try the version before it.
+      }
+      if (goodStory(json, e.slug, BASE)) {
+        writeDisk(path, text);
+        storyKept.set(path, json);
+        keepStoryPictures(json);
+        break;
+      }
+    }
+    if (!storyOnPhone(e)) storyFailed.add(e.slug);
+    else storyFailed.delete(e.slug);
+    storyInflight.delete(key);
+    storiesChanged();
+  })();
+  storyInflight.set(key, run);
+  return run;
+}
+
+/**
+ * A published story by slug, offline-first: the newest good copy on the phone renders at once, and the
+ * current version is fetched when it is not on the phone. `fetch: false` only looks (a card that should
+ * not download a whole story to show itself). 'empty' means the Atlas has no story by that name.
+ */
+export function useStory(slug: string, { fetch = true }: { fetch?: boolean } = {}): Load<PublishedStory> & { entry?: DataIndexEntry } {
+  const index = useDataIndex();
+  useStoryTick();
+  const entry = index.data?.stories.find((s) => s.slug === slug);
+  const story = entry ? storyOnPhone(entry) : null;
+  const current = Boolean(entry && story && story.version === entry.version);
+  useEffect(() => {
+    if (entry && fetch && !current) void fetchStory(entry);
+  }, [entry, fetch, current]);
+  // A story kept before its pictures finished downloading gets them on the next open.
+  useEffect(() => keepStoryPictures(story), [story]);
+  if (story) return { data: story, status: 'ready', entry };
+  if (!entry) return { data: null, status: index.status === 'loading' ? 'loading' : index.status === 'ready' || index.status === 'empty' ? 'empty' : 'offline' };
+  return { data: null, status: !fetch || storyFailed.has(slug) ? 'offline' : 'loading', entry };
+}

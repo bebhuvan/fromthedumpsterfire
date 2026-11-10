@@ -8,6 +8,7 @@ import {
   type NavigatorScreenParams,
 } from '@react-navigation/native';
 import { urlFrom } from './lib/push';
+import { screens } from './lib/links';
 
 /** The bar: the website's navigation words, in its order, with Menu in place of About. */
 export type Tabs = {
@@ -30,29 +31,16 @@ export type Routes = {
   Settings: undefined;
   Shelf: undefined;
   Book: { id: string };
+  Atlas: undefined;
+  Story: { slug: string };
 };
 
 export const navRef = createNavigationContainerRef<Routes>();
 
-const n = (v: string) => Number(v);
-
-/** fromthedumpsterfire.com/haul/1/as-we-may-think opens the same screen as the website. */
+/** fromthedumpsterfire.com/haul/1/as-we-may-think opens the same screen as the website (paths in lib/links.ts). */
 export const linking: LinkingOptions<Routes> = {
   prefixes: ['dumpsterfire://', 'https://fromthedumpsterfire.com'],
-  config: {
-    screens: {
-      Tabs: { screens: { Latest: '', Threads: 'threads', Archive: 'hauls', Search: 'search', Menu: 'menu' } },
-      Saved: 'saved',
-      About: 'about',
-      Settings: 'settings',
-      Shelf: 'shelf',
-      Book: 'shelf/:id',
-      Haul: { path: 'haul/:n', parse: { n } },
-      Note: { path: 'haul/:n/note', parse: { n } },
-      Thread: { path: 'haul/:n/thread/:id', parse: { n } },
-      Item: { path: 'haul/:n/:item', parse: { n } },
-    },
-  },
+  config: { screens },
   // A tapped "new Haul" notification opens that Haul, cold start or not.
   async getInitialURL() {
     const url = await Linking.getInitialURL();
@@ -89,6 +77,8 @@ export const go = {
   settings: () => push('Settings'),
   shelf: () => push('Shelf'),
   book: (id: string) => push('Book', { id }),
+  atlas: () => push('Atlas'),
+  story: (slug: string) => push('Story', { slug }),
   search: (q?: string) => navRef.isReady() && navRef.navigate('Tabs', { screen: 'Search', params: { q } }),
   /** Swap the current item for the next, so Back returns to the cover, not through every item. */
   nextItem: (n: number, item: string) => navRef.isReady() && navRef.dispatch(StackActions.replace('Item', { n, item })),

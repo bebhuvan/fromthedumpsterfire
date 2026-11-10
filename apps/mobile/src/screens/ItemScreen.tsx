@@ -29,6 +29,7 @@ import { Chart } from '@/ui/Chart';
 import { firstChart } from '@/lib/chart';
 import { LifeForm } from '@/ui/Life';
 import { ledger } from '@fdf/shared/ledger';
+import { TheDataStory } from '@/ui/Proof';
 
 /** Index form of a two-word name: "Joseph Bazalgette" becomes "Bazalgette, Joseph". */
 const inverted = (n: string) => {
@@ -87,6 +88,7 @@ export function ItemScreen({ haul, item }: { haul: Haul; item: Item }) {
       <Ideas item={item} />
       {form === 'offprint' ? <PaperReferences item={item} haul={haul} /> : <SeeAlso haul={haul} item={item} />}
       <Source item={item} />
+      <TheDataStory haul={haul.number} item={item.id} style={{ marginTop: 36 }} />
       <Actions haul={haul} item={item} />
       <LedgerRows item={item} />
       {next ? <NextItem n={haul.number} at={at + 2} item={next} /> : <Finished haul={haul} />}
