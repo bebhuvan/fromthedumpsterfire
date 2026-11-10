@@ -137,7 +137,14 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
           <Text style={[st.who, { color: p.ink }]}>{speaker(item.creator)}</Text>
           <View style={{ flex: 1 }}>
             {/* A line or two of the speaker's words, as the website's cover sets it (2026-11-10). */}
-            {ex ? <Text style={[st.said, { color: p.ink }]}>{curlQuotes(sampleOf(ex.text))}</Text> : <Title title={item.title} size={22} />}
+            {ex ? (
+              <Text style={[st.said, { color: p.ink }]}>
+                <Text style={{ color: ink }}>“</Text>
+                {curlQuotes(sampleOf(ex.text))}
+              </Text>
+            ) : (
+              <Title title={item.title} size={22} />
+            )}
             <Text style={[st.small, { color: p.ink2, marginTop: 6 }]}>{item.source.name}{item.source.date ? `, ${item.source.date}` : ''}</Text>
           </View>
         </View>
@@ -328,7 +335,7 @@ const st = StyleSheet.create({
 
   strip: { flexDirection: 'row', gap: 12, paddingVertical: 14, borderTopWidth: hair, borderBottomWidth: hair },
   who: { width: 64, fontFamily: fonts.sansBold, fontSize: 10.5, letterSpacing: 1, lineHeight: 22 },
-  said: { fontFamily: fonts.displayRegular, fontSize: 20, lineHeight: 26 },
+  said: { fontFamily: fonts.displayRegular, fontSize: 19, lineHeight: 25 },
 
   runcite: { alignSelf: 'stretch', paddingVertical: 7, borderBottomWidth: hair, marginHorizontal: -18, paddingHorizontal: 18 },
   abHead: { fontFamily: fonts.sansMedium, fontSize: 11, marginTop: 12, marginBottom: 4 },
