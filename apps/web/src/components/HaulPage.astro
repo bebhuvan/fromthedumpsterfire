@@ -105,7 +105,7 @@ const haulStories = await Promise.all(((await dataIndex())?.stories ?? []).filte
         <span class="stamp">Salvaged<b>{stampDate(haul.publishedAt)}</b>Haul {slug}</span>
         {haul.corrections?.length ? <span class="stamp stamp-c">Corrected<b>{stampDate(haul.corrections.at(-1)!.date)}</b>Version {haul.version}</span> : null}
       </p>
-      <p class="m cv-no"><span class="cv-h">Haul</span><span class="cv-n" aria-hidden="true">{slug}</span><span><time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time></span><a class="cv-jump" href="#contents-title">{objects(haul.items.length)} in this Haul <span aria-hidden="true">↓</span></a></p>
+      <p class="m cv-no"><span class="cv-h">Haul</span><span class="cv-n" aria-hidden="true">{slug}</span><span><time datetime={haul.publishedAt.slice(0, 10)}>{fullDate(haul.publishedAt)}</time></span><a class="cv-jump" href="#contents-title" aria-label={`${objects(haul.items.length)} in this Haul: go to the contents`}>{objects(haul.items.length)} <span aria-hidden="true">↓</span></a></p>
       <div class="cv-c">
         <h1 class="cv-t display" id="haul-title" itemprop="name headline"><span class="sr">Haul {haul.number}: </span>{haul.title.text}{haul.title.italic ? ' ' : ''}{haul.title.italic ? <em>{haul.title.italic}</em> : null}</h1>
         <p class="cv-deck" itemprop="description">{haul.deck}</p>

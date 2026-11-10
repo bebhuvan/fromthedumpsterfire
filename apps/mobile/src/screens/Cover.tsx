@@ -3,6 +3,7 @@
 // the year it was made. Then the field note and its route, and the contents as specimens of each
 // find's own form.
 import { useRef } from 'react';
+import { useEditionInk } from '@/ui/edition';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { go } from '@/nav';
@@ -59,7 +60,7 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
           </Text>
         </View>
         {/* Straight to the contents, as the website's cover does, past a long field note. */}
-        <JumpToContents label={`${objects(haul.items.length)} in this Haul`} at={contentsY} />
+        <JumpToContents label={`${objects(haul.items.length)} in this Haul`} short={objects(haul.items.length)} at={contentsY} />
         {/* The date stamp (2026-11-09, a signature), as the website sets it. Decorative: the date and
             corrections are given in words on the cover. */}
         <View style={styles.stamps} accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none">
@@ -187,8 +188,9 @@ export function Cover({ haul, back }: { haul: Haul; back?: boolean }) {
 
 /** "Sixteen objects in this Haul ↓": straight to the contents. Rendered inside the Screen, whose
  * scroller it asks to move (the cover itself sits outside it). */
-function JumpToContents({ label, at }: { label: string; at: { current: number } }) {
+function JumpToContents({ label, short, at }: { label: string; short: string; at: { current: number } }) {
   const p = usePalette();
+  const ink = useEditionInk() ?? p.ink;
   const scrollToBody = useScrollToBody();
   return (
     <Pressable
@@ -198,7 +200,7 @@ function JumpToContents({ label, at }: { label: string; at: { current: number } 
       hitSlop={8}
       style={({ pressed }) => [{ alignSelf: 'flex-start' }, pressed && { opacity: 0.6 }]}
     >
-      <Text style={[styles.noMeta, styles.jump, { color: p.ink2, textDecorationColor: p.rule }]}>{label} ↓</Text>
+      <Text style={[styles.jump, { color: ink }]}>{short.toUpperCase()} ↓</Text>
     </Pressable>
   );
 }
@@ -230,7 +232,8 @@ const styles = StyleSheet.create({
   // narrow at larger text sizes and clipped its last word ("Read the rest of the").
   moreT: { alignSelf: 'stretch', textAlign: 'center', fontFamily: fonts.displayItalic, fontSize: 21, lineHeight: 28, marginTop: 10, textDecorationLine: 'underline' },
   moreK: { alignSelf: 'stretch', textAlign: 'center', fontFamily: fonts.sans, fontSize: 12.5, lineHeight: 17 },
-  jump: { textDecorationLine: 'underline' },
+  // A label in the HAUL label's voice (the editor's pick B, 2026-11-10); it read like a form link.
+  jump: { fontFamily: fonts.sansMedium, fontSize: 12, letterSpacing: 1.5, marginTop: 4, includeFontPadding: false },
   stamps: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12, marginLeft: 3 },
   stamp: { borderWidth: 2, paddingHorizontal: 9, paddingTop: 4, paddingBottom: 3, alignItems: 'center', opacity: 0.85 },
   stampOuter: { borderWidth: 1, padding: 2, opacity: 0.85 },

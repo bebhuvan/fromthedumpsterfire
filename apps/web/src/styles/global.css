@@ -1297,8 +1297,10 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .fn-more a { font: italic 400 1.25rem/1.35 var(--display); color: var(--ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ed, var(--ink)) 45%, transparent); text-decoration-thickness: 1px; text-underline-offset: 0.28em; }
 .fn-more a:hover { text-decoration-color: var(--ed, var(--ink)); }
 .fn-more-t { font: 400 0.8125rem/1.5 var(--sans); color: var(--ink2); }
-.cv-jump { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
-.cv-jump:hover { text-decoration-color: currentColor; }
+/* The jump to the contents as a label in the HAUL label's voice (2026-11-10, the editor's pick B): spaced
+   capitals in the Haul's ink, no underline until it is pointed at; it read like a form link. */
+.cv-jump { justify-self: start; font: 500 0.75rem/1.6 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ed, var(--ink)); text-decoration: none; }
+.cv-jump:hover { text-decoration: underline; text-underline-offset: 4px; }
 .fn-page { padding-top: 28px; }
 #contents-title { scroll-margin-top: 16px; }
 
