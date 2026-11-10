@@ -67,17 +67,19 @@ const socialTitle = title ?? SITE_NAME;
 const canonical = absolute(path);
 const ogImageUrl = image ? image.url : absolute('/og.png');
 const ogImageAlt = image ? image.alt : `${SITE_NAME}: the ember flame and the masthead`;
+// The sections. On a wide screen every word stands in the row; on a phone (2026-11-10) only `phone`
+// words do, and "Contents" opens the rest as the magazine's contents page (each section in the display
+// serif with a line of what it holds), as the app's Menu is. No icon, no script: a <details>.
 const nav = [
-  { key: 'latest', href: paths.home, label: 'Latest' },
-  { key: 'threads', href: paths.threads, label: 'Threads' },
-  { key: 'archive', href: paths.archive, label: 'Archive' },
-  { key: 'atlas', href: paths.atlas, label: 'Atlas' },
-  { key: 'shelf', href: paths.shelf, label: 'Shelf' },
-  { key: 'search', href: paths.search, label: 'Search' },
-  { key: 'about', href: paths.about, label: 'About' },
-  // Hauls by email, last and always there (2026-11-09: footer-only links went unseen). The app keeps its
-  // five-word bar and has "Hauls by email" in its Menu.
-  { key: 'subscribe', href: paths.subscribe, label: 'Subscribe' },
+  { key: 'latest', href: paths.home, label: 'Latest', title: 'The latest Haul', detail: 'The newest issue: its field note and its finds', phone: false },
+  { key: 'threads', href: paths.threads, label: 'Threads', title: 'Threads', detail: 'Lines that run through the archive', phone: false },
+  { key: 'archive', href: paths.archive, label: 'Archive', title: 'Every Haul', detail: 'The whole run, newest first', phone: true },
+  { key: 'atlas', href: paths.atlas, label: 'Atlas', title: 'The Atlas', detail: 'Data stories, drawn from the numbers', phone: true },
+  { key: 'shelf', href: paths.shelf, label: 'Shelf', title: 'The shelf', detail: 'Books I am reading, and what I made of them', phone: false },
+  { key: 'search', href: paths.search, label: 'Search', title: 'Search', detail: 'Every Haul, every find, every note', phone: true },
+  { key: 'about', href: paths.about, label: 'About', title: 'How it’s made', detail: 'Two voices, the forms, and what we promise', phone: false },
+  // Hauls by email, last and always there (2026-11-09: footer-only links went unseen).
+  { key: 'subscribe', href: paths.subscribe, label: 'Subscribe', title: 'Hauls by email', detail: 'One email when a Haul is published', phone: false },
 ] as const;
 ---
 <!doctype html>
@@ -137,7 +139,17 @@ const nav = [
         </a>
       )}
       <nav class="top-nav" aria-label="Sections">
-        {nav.map((n) => <a href={n.href} class={`nav-${n.key}`} aria-current={section === n.key ? 'page' : undefined}>{n.label}</a>)}
+        {nav.map((n) => <a href={n.href} class:list={[`nav-${n.key}`, { 'nav-wide': !n.phone }]} aria-current={section === n.key ? 'page' : undefined}>{n.label}</a>)}
+        <details class="nav-contents">
+          <summary>Contents</summary>
+          <div class="cts">
+            <ul>
+              {nav.map((n) => (
+                <li><a href={n.href} aria-current={section === n.key ? 'page' : undefined}><span class="cts-t">{n.title}</span><span class="cts-d">{n.detail}</span></a></li>
+              ))}
+            </ul>
+          </div>
+        </details>
       </nav>
       <button class="tog" type="button" hidden aria-label="Switch to dark theme" data-theme-toggle><span aria-hidden="true"></span></button>
     </header>

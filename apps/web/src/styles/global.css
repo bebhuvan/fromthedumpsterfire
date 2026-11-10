@@ -945,11 +945,8 @@ blockquote > p + p { margin-top: 0.65em; }
 .bk-links { display: grid; gap: 10px; font-size: 1.125rem; }
 .bk-ht { font-family: var(--display); }
 .jk-shelf { margin-top: 18px; font: 500 0.875rem/1.4 var(--sans); }
-/* Narrow phones: the masthead (or the nameplate) is the way home, so Latest steps out of the row and
-   the six other sections and the theme switch keep to one line (a size and a gap smaller since
-   Subscribe joined them). */
-@media (max-width: 430px) { .top-nav .nav-latest { display: none; } .top-nav { gap: 6px 13px; font-size: 0.78rem; } .top-nav:first-child { width: auto; } .top-home + .top-nav { width: 100%; } .top { column-gap: 10px; } .top-nav:first-child { gap: 6px 10px; font-size: 0.75rem; } }
-@media (max-width: 370px) { .top-nav:first-child { gap: 6px 7px; font-size: 0.7375rem; } .top { column-gap: 6px; } }
+/* Narrow phones: the row is the phone words and Contents (below). */
+@media (max-width: 430px) { .top-nav:first-child { width: auto; } .top-home + .top-nav { width: 100%; } }
 /* A quotation of several paragraphs opens on the first and closes on the last. */
 .epi-q p:not(:first-child)::before { content: none; }
 .epi-q p:not(:last-child)::after { content: none; }
@@ -1435,3 +1432,25 @@ mark, .sp mark, .card mark, .epi-q mark, .letter mark, .clip mark, .qt mark {
 .st-card-v { font: 400 1.75rem/1 var(--display); color: var(--ed, var(--ink)); margin-right: 4px; }
 .st-card-m { font: 400 0.8125rem/1.4 var(--sans); color: var(--ink2); }
 .st-card-thumb { padding: 6px; align-self: start; }
+
+/* ---------- Contents (Base.astro, 2026-11-10): on a phone the row keeps three words and "Contents",
+   which opens the rest as the magazine's contents page under the header, set as the app's Menu is.
+   A <details>, so it needs no script; wide screens keep every word in the row. ---------- */
+.top { position: relative; }
+.nav-contents { display: none; }
+.nav-contents summary { list-style: none; cursor: pointer; color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 0.45em; }
+.nav-contents summary::-webkit-details-marker { display: none; }
+.nav-contents summary::after { content: ' ↓' / ''; color: var(--ink2); }
+.nav-contents[open] summary::after { content: ' ↑' / ''; }
+.cts { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; padding: 4px var(--gut) 18px; background: var(--bg); border-top: 1px solid var(--ink); border-bottom: 2px solid var(--ink); }
+.cts li { border-bottom: 1px solid var(--rule); }
+.cts li:last-child { border-bottom: 0; }
+.cts a { display: grid; gap: 3px; padding-block: 13px; color: var(--ink); }
+.cts-t { font: 500 1.5rem/1.1 var(--display); letter-spacing: -0.01em; }
+.cts-d { font: 400 0.9375rem/1.4 var(--serif); color: var(--ink2); }
+.top-nav .cts a[aria-current] { text-decoration: none; }
+.cts a[aria-current] .cts-t { text-decoration: underline; text-decoration-color: var(--ember); text-decoration-thickness: 1.5px; text-underline-offset: 0.18em; }
+@media (max-width: 760px) {
+  .top-nav .nav-wide { display: none; }
+  .nav-contents { display: block; }
+}
