@@ -68,7 +68,7 @@ const H = s.haul ? `Haul ${haulSlug(s.haul.number)}` : null;
           <dl>{st.facts.map((f) => <div><dt>{Math.abs(f.value) >= 1000 ? Math.round(f.value).toLocaleString('en-IN') : String(+f.value.toFixed(3))}</dt><dd>{f.method}</dd></div>)}</dl>
         </details>
         <p>The editor’s notes in the margin and the standfirst are his own words, checked unchanged against his note{s.haul ? <> on <a href={paths.item(s.haul.number, s.haul.itemSlug)}>{s.haul.itemTitle}</a></> : null}. Quotations are matched word for word against the stored source.</p>
-        <p>{atlasNo(s.number)}{s.version > 1 ? `, version ${s.version}, corrected ${fullDate(s.updatedAt)}` : ''}. <a href={paths.atlas}>Every story in the Atlas</a>.</p>
+        <p>{atlasNo(s.number)}{s.version > 1 ? `, version ${s.version}, updated ${fullDate(s.updatedAt)}` : ''}. <a href={paths.atlas}>Every story in the Atlas</a>.</p>
       </div>
     </footer>
   </article>
