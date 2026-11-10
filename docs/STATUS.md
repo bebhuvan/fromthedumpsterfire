@@ -1271,3 +1271,14 @@ On the editor's "Push it": `claude/heuristic-visvesvaraya-55cce2` merged into `l
   verified live); checked on the Android emulator from a release build, light and dark.
 - **Not done**: the app's https link filters for /data (next APK), Desk authoring, facts recomputed on the
   Desk from the sources.
+
+## Shipped 2026-11-10: cover previews and the phone menu
+
+- Website `fdf-web` `cc32d769` (rollback `70304676`): the phone menu's Contents page; cover previews show a
+  sample of a passage (`quoteSample`, never a lone "Q."), Caro's line with a large hanging mark, the
+  editor's line under each preview signed B., papers under "From the paper · p. n".
+- App over the air: update `ea6571e9` for runtime `908c7f06` (the Play build), verified live. Carries the
+  same cover fixes plus: no clipped "Read the rest of the note", the book-page preview capped at seven
+  lines, fingerprint figures that keep their size at large system text. Not checked on the emulator at
+  large text beyond the fingerprint (the emulator froze); the editor's phone is the test.
+- Open: the style of the cover's "Sixteen objects" line (sketches in `objects-line.html`).
