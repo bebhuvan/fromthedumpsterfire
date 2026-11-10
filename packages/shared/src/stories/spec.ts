@@ -230,12 +230,14 @@ const yOf = (p: Pt[], x: number) => p.find((q) => q[0] === x)?.[1];
  * Every rule the grammar holds a story to. `editorText` is the editor's stored text: his standfirst
  * and margin notes must be found in it unchanged. Returns problems; empty means it may be drawn.
  */
-export function validateStory(story: Story, editorText: string): string[] {
+export function validateStory(story: Story, editorText: string | null): string[] {
   const errs: string[] = [];
   const keys = new Set(story.plates.map((p) => p.key));
   if (!story.title.trim()) errs.push('The story needs the editor’s title.');
   if (!EDITIONS.includes(story.edition)) errs.push(`Unknown edition "${story.edition}".`);
-  if (!editorText.includes(story.standfirst)) errs.push('The standfirst is not the editor’s words unchanged.');
+  // The editor's words are checked where his stored text is (the Desk, at publish); a reader's copy
+  // (editorText null) is checked for everything else.
+  if (editorText !== null && !editorText.includes(story.standfirst)) errs.push('The standfirst is not the editor’s words unchanged.');
   if (story.plates.length < 3 || story.plates.length > 9) errs.push('A story has three to nine plates.');
   if (keys.size !== story.plates.length) errs.push('Plate keys must be unique.');
   if (story.plates.filter((p) => p.fold).length > 1) errs.push('At most one plate folds out.');
@@ -252,7 +254,7 @@ export function validateStory(story: Story, editorText: string): string[] {
     const at = `Plate "${p.name}"`;
     machine.push([`${at} headline`, p.headline], [`${at} paragraph`, p.body], [`${at} caption`, p.caption]);
     if (p.coda) machine.push([`${at} coda`, [p.coda.text, ...p.coda.figures.map((f) => `${f.value} ${f.text}`)].join(' ')]);
-    if (p.editorNote !== undefined && !editorText.includes(p.editorNote)) errs.push(`${at}: the margin note is not the editor’s words unchanged.`);
+    if (editorText !== null && p.editorNote !== undefined && !editorText.includes(p.editorNote)) errs.push(`${at}: the margin note is not the editor’s words unchanged.`);
     if (!p.sources.length) errs.push(`${at}: no source.`);
     for (const s of p.sources) {
       if (!/^https:\/\//.test(s.url) || !s.licence.trim() || /^unknown$/i.test(s.licence) || !/^\d{4}-\d{2}-\d{2}$/.test(s.retrieved)) errs.push(`${at}: the source "${s.dataset}" needs an https link, a licence and the day it was retrieved.`);

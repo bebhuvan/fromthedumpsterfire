@@ -25,7 +25,9 @@
     "./charts/glosses": "./src/charts/glosses.ts",
     "./fixtures/haul-001.json": "./fixtures/haul-001.json",
     "./fixtures/index.json": "./fixtures/index.json",
-    "./fixtures/dev/*": "./fixtures/dev/*"
+    "./fixtures/dev/*": "./fixtures/dev/*",
+    "./stories": "./src/stories/index.ts",
+    "./stories/published": "./src/stories/published.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

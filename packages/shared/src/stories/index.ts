@@ -3,6 +3,7 @@
 // app's pictures draw them the same way).
 
 export * from './spec';
+export * from './published';
 export * from './grammar';
 export * from './plate';
 export * from './ink';

@@ -3,11 +3,11 @@
 // R2. A correction is a new version with a corrections entry; versions are never overwritten.
 //
 // Two buckets: MEDIA is private (uploads, voice notes, snapshots, chosen plates, book covers); FILES is
-// public and holds only published bundles under hauls/ and the shelf under shelf/. This module is the
+// public and holds only published bundles under hauls/, the shelf under shelf/ and data stories under data/. This module is the
 // only writer to FILES: it copies the voice notes, plates, video posters, pictures and covers a bundle
 // needs from MEDIA into FILES next to it, writes the share card and the charts' app pictures the Desk
-// (or the terminal) drew, then writes the bundle and the index (or shelf/shelf.json).
-// It never writes hauls/ or shelf/ to MEDIA.
+// (or the terminal) drew, then writes the bundle and the index (or shelf/shelf.json, or a data
+// story and data/index.json). It never writes hauls/, shelf/ or data/ to MEDIA.
 
 import type { Audio, AudioFormat, Haul, HaulIndex, HaulSummary, Item, Plate, Rhyme, RouteStep, Thread, Title } from '@fdf/shared/haul';
 import { AUDIO_FORMATS, PLAYS_ON_IOS, sourceDate } from '@fdf/shared/haul';
@@ -28,6 +28,19 @@ import { fieldNoteForBundle, type FieldNoteEmbeds } from './fieldnote';
 import { drawChartPictures, type ChartDrawer } from './chartdraw';
 import { chartKey, validateChart, type Chart } from '@fdf/shared/charts';
 import { isPunctuated, startSeconds } from '@fdf/shared/quoting';
+import {
+  DATA_INDEX_PATH,
+  indexEntry,
+  STORY_BUNDLE_VERSION,
+  STORY_SLUG,
+  storyPath,
+  validateDataIndex,
+  validatePublishedStory,
+  type DataIndex,
+  type PublishedStory,
+  type StoryHaul,
+} from '@fdf/shared/stories/published';
+import { validateStory, type Story } from '@fdf/shared/stories';
 import { SHELF_PATH, SHELF_VERSION, shelfOrder, validateShelf, type BookNote, type Shelf, type ShelfBook } from '@fdf/shared/shelf';
 import { bookTitle, bookTitleText, linesFor, notesFor, shelfChanges, type BookRow } from './shelf';
 import { lifeForBundle } from './lives';
@@ -100,8 +113,10 @@ const IMAGE_EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'p
 export const isHaulPath = (key: string) => key.startsWith('hauls/') && !key.includes('..');
 /** A path a shelf publish may write in the public bucket: only under shelf/. */
 export const isShelfPath = (key: string) => key.startsWith('shelf/') && !key.includes('..');
-/** A path in the public bucket. Only hauls/ and shelf/ are ever written there. */
-export const isPublicPath = (key: string) => isHaulPath(key) || isShelfPath(key);
+/** A path a data story publish may write in the public bucket: only under data/. */
+export const isStoryPath = (key: string) => key.startsWith('data/') && !key.includes('..');
+/** A path in the public bucket. Only hauls/, shelf/ and data/ are ever written there. */
+export const isPublicPath = (key: string) => isHaulPath(key) || isShelfPath(key) || isStoryPath(key);
 
 function citeLabel(b: MarginalBody, item: ItemRow): string {
   if (b.cite.kind === 'wiki') return `Wikipedia: ${b.cite.title}`;
@@ -739,4 +754,113 @@ export async function publishShelf(env: Env, opts: { dryRun?: boolean } = {}): P
   const version = (last?.v ?? 0) + 1;
   await env.DB.prepare('INSERT INTO shelf_versions (version, sha256, books, published_at) VALUES (?, ?, ?, ?)').bind(version, await sha256Hex(body), a.shelf.books.length, nowIso()).run();
   return { ok: true, version, path: SHELF_PATH, url: `${env.FILES_BASE.replace(/\/$/, '')}/${SHELF_PATH}`, ...base };
+}
+
+// ---------------------------------------------------------------- data stories
+
+/** The published index of data stories, or an empty one before the first publish (or if it cannot be read). */
+export async function readDataIndex(env: Env): Promise<DataIndex> {
+  const empty: DataIndex = { bundleVersion: STORY_BUNDLE_VERSION, updatedAt: nowIso(), stories: [] };
+  const obj = await env.FILES.get(DATA_INDEX_PATH);
+  if (!obj) return empty;
+  const index = (await obj.json().catch(() => null)) as DataIndex | null;
+  return index && !validateDataIndex(index).length ? index : empty;
+}
+
+export interface StoryPublishResult {
+  ok: boolean;
+  problems: string[];
+  warnings: string[];
+  version?: number;
+  number?: number;
+  path?: string;
+  url?: string;
+  /** What this publish writes and changes, in plain words. */
+  changes?: string[];
+}
+
+/**
+ * The published Haul an item is in, as the reader reaches it: its number and the item's id, slug and
+ * title in that Haul's latest bundle. Null (with a warning) when no published bundle shows the item.
+ */
+async function storyHaul(env: Env, item: ItemRow, warnings: string[]): Promise<StoryHaul | undefined> {
+  const h = await env.DB.prepare(`SELECT h.id, h.number FROM haul_items hi JOIN hauls h ON h.id = hi.haul_id WHERE hi.item_id = ? AND h.status = 'published'`).bind(item.id).first<{ id: string; number: number }>();
+  if (!h) {
+    warnings.push('The item is in no published Haul, so the story publishes without a link to it. Publish it again after its Haul goes out.');
+    return undefined;
+  }
+  const v = await env.DB.prepare('SELECT path FROM haul_versions WHERE haul_id = ? ORDER BY version DESC LIMIT 1').bind(h.id).first<{ path: string }>();
+  const obj = v ? await env.FILES.get(v.path) : null;
+  const bundle = obj ? ((await obj.json().catch(() => null)) as Haul | null) : null;
+  const slug = bundleItemIds(await haulItemRows(env, h.id)).get(item.id);
+  const found = bundle?.items?.find((i) => i.id === slug);
+  if (!found) {
+    warnings.push(`Haul ${h.number}'s published bundle does not show this item, so the story publishes without a link to it. Publish a correction of Haul ${h.number}, then the story again.`);
+    return undefined;
+  }
+  return { number: h.number, itemId: item.id, itemSlug: found.id, itemTitle: [found.title.text, found.title.italic].filter(Boolean).join(' ') };
+}
+
+/**
+ * Publish a data story (docs/DATA-STORIES.md, "Publishing"): the editor's standfirst and margin notes
+ * found unchanged in the item's stored note, every quotation found word for word in the item's stored
+ * source, the grammar's rules (validateStory), then data/<slug>/v<N>/story.json (never overwritten)
+ * and data/index.json. Any problem stops it; a dry run returns what it would write and writes nothing.
+ */
+export async function publishStory(env: Env, input: { story: Story; slug: string; itemId: string }, opts: { dryRun?: boolean } = {}): Promise<StoryPublishResult> {
+  const { story, slug, itemId } = input;
+  const problems: string[] = [];
+  const warnings: string[] = [];
+  if (!STORY_SLUG.test(slug)) return { ok: false, problems: [`The slug "${slug}" must be lowercase words joined by hyphens.`], warnings };
+  const item = await env.DB.prepare('SELECT * FROM items WHERE id = ?').bind(itemId).first<ItemRow>();
+  if (!item) return { ok: false, problems: [`No item ${itemId}.`], warnings };
+  // The editor's words are his stored note on the item, as he wrote or dictated it.
+  const editorText = item.why_text ?? '';
+  if (!editorText.trim()) problems.push('The item has no note of yours; the standfirst and margin notes must be found in it.');
+  try {
+    problems.push(...validateStory(story, editorText));
+  } catch {
+    return { ok: false, problems: [...problems, 'The story is not in the expected shape (docs/DATA-STORIES.md).'], warnings };
+  }
+  const src = await env.DB.prepare('SELECT text FROM sources WHERE item_id = ?').bind(item.id).first<{ text: string }>();
+  for (const p of story.plates) {
+    if (!p.quote) continue;
+    if (!src?.text || !findQuotation(src.text, p.quote.text)) problems.push(`Plate "${p.name}": the quotation is not in the item's source word for word ("${p.quote.text.slice(0, 60)}${p.quote.text.length > 60 ? '…' : ''}").`);
+  }
+  const haul = await storyHaul(env, item, warnings);
+
+  const current = await readDataIndex(env);
+  const existing = current.stories.find((s) => s.slug === slug);
+  const now = nowIso();
+  const number = existing?.number ?? Math.max(0, ...current.stories.map((s) => s.number)) + 1;
+  const version = (existing?.version ?? 0) + 1;
+  const published: PublishedStory = {
+    bundleVersion: STORY_BUNDLE_VERSION,
+    slug,
+    number,
+    version,
+    publishedAt: existing?.publishedAt ?? now,
+    updatedAt: now,
+    ...(haul ? { haul } : {}),
+    story,
+  };
+  if (!problems.length) problems.push(...validatePublishedStory(published));
+  const index: DataIndex = {
+    bundleVersion: STORY_BUNDLE_VERSION,
+    updatedAt: now,
+    stories: [...current.stories.filter((s) => s.slug !== slug), indexEntry(published)].sort((a, b) => b.number - a.number),
+  };
+  if (!problems.length) problems.push(...validateDataIndex(index).map((e) => `The index: ${e}`));
+  const path = storyPath(slug, version);
+  if (!isStoryPath(path) || !isStoryPath(DATA_INDEX_PATH)) throw new Error(`Refusing to publish outside data/: ${path}`);
+  if (await env.FILES.head(path)) problems.push(`${path} is already published and is never overwritten; the index is out of step with the bucket.`);
+  const changes = [
+    existing ? `Version ${version} of Atlas No. ${number}, "${story.title}" (was version ${existing.version}).` : `The first publish of "${story.title}", Atlas No. ${number}.`,
+    `Writes ${path} and ${DATA_INDEX_PATH}.`,
+  ];
+  const base = { problems, warnings, version, number, path, changes };
+  if (problems.length || opts.dryRun) return { ok: !problems.length, ...base };
+  await env.FILES.put(path, JSON.stringify(published, null, 2), { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: IMMUTABLE } });
+  await env.FILES.put(DATA_INDEX_PATH, JSON.stringify(index, null, 2), { httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: 'public, max-age=60' } });
+  return { ok: true, ...base, url: `${env.FILES_BASE.replace(/\/$/, '')}/${path}` };
 }

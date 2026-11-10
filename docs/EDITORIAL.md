@@ -328,6 +328,31 @@ need no fact. The draft is refused whole if any quote is not in its source, a fi
 quotes, or a line fails the style check, with every problem listed. Lines the judge does not confirm
 are set aside. The editor's note follows the dictation rules above; the profile is never theirs.
 
+## Data stories
+
+A data story (`docs/DATA-STORIES.md`) answers one item: its standfirst and margin notes are the
+editor's words from that item's note, and its quotation comes from that item's source. Write the
+story as JSON (`packages/shared/fixtures/stories/fertility.json` is a full example), then:
+
+```sh
+npm run editorial -- story-check --data .editorial/story.json --slug fertility --item it_ID
+npm run editorial -- story-publish --data .editorial/story.json --slug fertility --item it_ID --confirm-publish
+npm run editorial -- stories                                      # what is published
+```
+
+`story-check` writes nothing. It says whether the story would publish, with every problem, and what
+it would write. The Desk checks that the standfirst and every margin note are found unchanged in the
+item's stored note (`why_text`), that every plate's quotation is in the item's stored source word for
+word, that the slug is lowercase words joined by hyphens, and every rule of the grammar
+(`validateStory`: sources, scales, figures traced to the rows and facts, the style check). Any problem
+stops the publish. A story whose item is in no published Haul still publishes, without the link to
+the item, and says so; publish it again once the Haul is out.
+
+`story-publish` runs the same checks, then writes `data/<slug>/v<N>/story.json` and `data/index.json`
+in the public bucket. A story keeps its number ("Atlas No. 1") and its first publish date for good; a
+second publish of the same slug is version 2, and version 1 is never overwritten. Publish only after
+the editor asks for that story. The request body is capped at 2 MB.
+
 ## Machine notes written in a session
 
 A note of context that the pipeline did not draft (a timeline, a definition the editor asked for)

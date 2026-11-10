@@ -47,6 +47,11 @@ npm run editorial -- <command> [arguments] [options]
                                   every quote is in its source and every figure in its quotes, then
                                   judged line by line (what the judge cannot confirm is set aside)
   life-show ITEM                  a Life's sources (no text), draft, approval and problems
+  stories                         the published data stories (data/index.json)
+  story-check                     check --data story.json --slug SLUG --item ID without writing:
+                                  the standfirst and margin notes unchanged in the item's note,
+                                  each quotation word for word in its source, the story's rules
+  story-publish                   the same checks, then publish with --confirm-publish
   request METHOD /api/PATH         any Desk JSON API route, or --upload file=PATH
   login                           owner login using cloudflared; saves token privately
 
@@ -58,6 +63,8 @@ Options:
   --out FILE                          save JSON instead of printing it
   --view tray|archived                 for items
   --seconds N                         bounded wait
+  --slug SLUG                         a data story's slug (lowercase words joined by hyphens)
+  --item ID                           the item a data story answers
   --confirm-publish                   required for every publishing command/route
   --confirm-delete                    required for DELETE; service clients cannot DELETE
 
@@ -75,7 +82,7 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
   let credentials = {};
   try {
     const { values: v, positionals: p } = parseArgs({ args: argv, allowPositionals: true, options: {
-      help: { type: 'boolean', short: 'h' }, profile: { type: 'string', default: 'production' }, config: { type: 'string' }, data: { type: 'string' }, out: { type: 'string' }, view: { type: 'string', default: 'tray' }, seconds: { type: 'string', default: '180' }, upload: { type: 'string', multiple: true }, 'confirm-publish': { type: 'boolean' }, 'confirm-delete': { type: 'boolean' },
+      help: { type: 'boolean', short: 'h' }, profile: { type: 'string', default: 'production' }, config: { type: 'string' }, data: { type: 'string' }, out: { type: 'string' }, view: { type: 'string', default: 'tray' }, seconds: { type: 'string', default: '180' }, upload: { type: 'string', multiple: true }, slug: { type: 'string' }, item: { type: 'string' }, 'confirm-publish': { type: 'boolean' }, 'confirm-delete': { type: 'boolean' },
     } });
     if (v.help || !p.length) { stdout(HELP); return 0; }
     if (!(v.profile in TARGETS)) throw new Error('Unknown profile; use production, preview or local');
@@ -177,11 +184,21 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
         break;
       }
       case 'life-show': path = `/api/items/${id()}/life`; break;
+      case 'stories': path = '/api/stories'; break;
+      case 'story-check':
+      case 'story-publish': {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Supply the story with --data story.json');
+        if (!v.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v.slug)) throw new Error('Supply --slug: lowercase words joined by hyphens');
+        const publish = command === 'story-publish';
+        path = publish ? '/api/stories/publish' : '/api/stories/check'; method = 'POST';
+        data = { slug: v.slug, itemId: idPath(v.item), story: data, ...(publish ? { confirm: true } : {}) };
+        break;
+      }
       case 'request': method = p[1] ?? ''; path = p[2] ?? ''; break;
       default: throw new Error(`Unknown command. Use --help`);
     }
     // Catch accidental positional arguments rather than silently ignoring supplied content.
-    const expected = ['capture', 'request'].includes(command) ? null : ['status', 'items', 'hauls', 'new-haul', 'chart-fetch', 'life'].includes(command) ? 1 : 2;
+    const expected = ['capture', 'request'].includes(command) ? null : ['status', 'items', 'hauls', 'new-haul', 'chart-fetch', 'life', 'stories', 'story-check', 'story-publish'].includes(command) ? 1 : 2;
     if (expected !== null && p.length !== expected) throw new Error('Unexpected or missing arguments; use --help');
     if (command === 'request' && p.length !== 3) throw new Error('request requires METHOD and /api/PATH');
     if (['edit', 'source', 'edit-haul', 'order', 'chart-fetch', 'life', 'life-draft'].includes(command) && data === undefined) throw new Error('Supply --data FILE or --data -');

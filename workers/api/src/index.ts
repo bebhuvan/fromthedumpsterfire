@@ -54,6 +54,7 @@ import { checkCsrf, escapeHtml, fileHeaders, isPublicRoute, localLimit, SECURITY
 import { m6, platesFor } from './milestone6';
 import { blocksApi } from './blocks';
 import { shelfApi } from './shelf';
+import { storiesApi } from './stories';
 import { livesApi } from './lives';
 import { reviewApi } from './review';
 import { assetResponse, manifestResponse } from './updates';
@@ -945,6 +946,7 @@ app.post('/api/hauls/:id/publish', async (c) => {
 app.route('/', m6);
 app.route('/', blocksApi);
 app.route('/', shelfApi);
+app.route('/', storiesApi);
 app.route('/', livesApi);
 app.route('/', reviewApi);
 

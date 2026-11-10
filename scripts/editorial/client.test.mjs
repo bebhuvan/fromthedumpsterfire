@@ -6,7 +6,7 @@ import { createClient, apiPath, deskOrigin, DeskError, waitForItem } from './cli
 import { run } from '../editorial.mjs';
 import app from '../../workers/api/src/index';
 import { makeEnv, answer } from '../../packages/server/test/fake-env';
-import { seedHaul } from '../../packages/server/test/seed';
+import { seedHaul, seedItem } from '../../packages/server/test/seed';
 
 const dirs = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); vi.unstubAllGlobals(); });
@@ -115,7 +115,7 @@ it('never retries writes, retries reads twice and requires explicit publication/
   expect(fetcher).toHaveBeenCalledTimes(1);
   fetcher.mockClear(); await expect(client.request('GET', '/api/items')).rejects.toThrow(); expect(fetcher).toHaveBeenCalledTimes(3);
   fetcher.mockClear();
-  for (const path of ['/api/hauls/hl_1/publish', '/api/shelf/publish', '/api/hauls/hl_1/publish/']) await expect(client.request('POST', path)).rejects.toThrow(/confirm-publish/);
+  for (const path of ['/api/hauls/hl_1/publish', '/api/shelf/publish', '/api/hauls/hl_1/publish/', '/api/stories/publish']) await expect(client.request('POST', path)).rejects.toThrow(/confirm-publish/);
   await expect(client.request('DELETE', '/api/items/it_x')).rejects.toThrow(/confirm-delete/);
   expect(fetcher).not.toHaveBeenCalled();
 });
@@ -172,4 +172,30 @@ it('makes a Life and submits its profile from the terminal, sources fetched by t
   const shown = await cli(['life-show', itemId], fetcher);
   expect(JSON.parse(shown.stdout).sources[0]).toMatchObject({ key: 'guha', status: 'fetched' });
   expect(shown.stdout).not.toMatch(/gold medal in mathematics\. Born/);
+});
+
+it('checks and publishes a data story from the terminal, publishing only with --confirm-publish', async () => {
+  const story = JSON.parse(readFileSync(new URL('../../packages/shared/fixtures/stories/fertility.json', import.meta.url), 'utf8'));
+  const note = readFileSync(new URL('../../packages/shared/fixtures/stories/fertility-editor-note.txt', import.meta.url), 'utf8');
+  const quote = story.plates.find((p) => p.quote).quote.text;
+  const env = makeEnv(undefined, { DEV_AUTH_BYPASS: '1' });
+  await seedItem(env, 'it_fertility', { title: 'Persistently Low Global Fertility', text: `Before. ${quote} After.`, date: '2026', why: note });
+  const fetcher = (url, init) => app.request(url, init, env);
+  const d = temp();
+  const file = join(d, 'story.json');
+  writeFileSync(file, JSON.stringify(story));
+  const args = ['--data', file, '--slug', 'fertility', '--item', 'it_fertility'];
+  expect((await cli(['story-check', '--data', file, '--slug', 'Bad Slug', '--item', 'it_fertility'], fetcher)).code).toBe(1);
+  expect((await cli(['story-check', '--slug', 'fertility', '--item', 'it_fertility'], fetcher)).code).toBe(1);
+  const checked = await cli(['story-check', ...args], fetcher);
+  expect(checked.code).toBe(0);
+  expect(JSON.parse(checked.stdout)).toMatchObject({ ok: true, version: 1, number: 1 });
+  const refused = await cli(['story-publish', ...args], fetcher);
+  expect(refused.code).toBe(1);
+  expect(refused.stderr).toMatch(/confirm-publish/);
+  expect(env.FILES.writes).toEqual([]);
+  const published = await cli(['story-publish', ...args, '--confirm-publish'], fetcher);
+  expect(published.code).toBe(0);
+  expect(JSON.parse(published.stdout)).toMatchObject({ ok: true, path: 'data/fertility/v1/story.json' });
+  expect(JSON.parse((await cli(['stories'], fetcher)).stdout).stories.map((s) => s.slug)).toEqual(['fertility']);
 });
