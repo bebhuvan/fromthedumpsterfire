@@ -1262,5 +1262,11 @@ On the editor's "Push it": `claude/heuristic-visvesvaraya-55cce2` merged into `l
   `/api/stories`, `/api/stories/check`, `/api/stories/publish`; terminal `story-check`, `story-publish`.
 - **Website**: `/data` (the Atlas), `/data/<slug>`, "In the Atlas" on the Haul, "The data story" on the
   item, Atlas in the menu, the sitemap. Checked on a local Worker with the live Haul bundles and the story.
-- **Not done**: deploys (the Desk Worker and the website, each on the editor's OK), publishing the story,
-  the app (pictures and a screen), Desk authoring.
+- **Live (2026-11-10, the editor: "go ahead", "make sure this is on the app and web")**: the Desk
+  Worker (fdf-desk 681d701e) with the story routes and picture drawing; the story published (Atlas No. 1,
+  version 2 with the app's pictures); the website (fdf-web bf12d6ca): /data, /data/fertility, the card on
+  Haul 002, the link on the paper.
+- **The app**: the Atlas, the story screen, the Haul card and item link (JS only; runtime unchanged
+  at 908c7f06, the Play build's). Ships as an over-the-air update for that runtime.
+- **Not done**: the app's https link filters for /data (next APK), Desk authoring, facts recomputed on the
+  Desk from the sources.

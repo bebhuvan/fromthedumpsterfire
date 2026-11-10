@@ -173,9 +173,16 @@ on the item it answers. A story whose file fails validation falls back to its ne
 that passes, else its page is a 404; a failing index is ignored and the last good one kept. Pages are
 cached at the edge on the data index's `updatedAt`, so a publish shows without a deploy.
 
+The reader app shows the same stories (`apps/mobile/src/lib/atlas.ts`, `screens/Atlas.tsx`,
+`screens/Story.tsx`): the index and each story read from the files host, offline-first, validated with
+the light validators in `@fdf/shared/stories/published`; native text for every word and, for each plate,
+the picture the Desk drew at publish (`PublishedStory.pictures`: the plate's phone figure with its key,
+light and dark, three times its size, in `data/<slug>/v<N>/plates/`).
+
 ## Not yet
 
-- The reader app: pictures of each phone plate drawn at publish (as charts are), and a story screen.
+- The app's Android link filters: `https://fromthedumpsterfire.com/data/…` opens the browser, not the app,
+  until `app.json` adds `/data` to its intent filters (a native change: the next APK).
 - Authoring on the Desk (stories are written as data and published from the terminal for now), and a
   record of versions in D1 (versions are read from `data/index.json`; two publishes at the same moment
   could race).
