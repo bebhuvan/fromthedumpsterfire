@@ -20,4 +20,9 @@ describe("a preview's sample of a passage", () => {
     expect(long.startsWith(s.text)).toBe(true);
     expect(s.text.split(/\s+/).length).toBeLessThanOrEqual(30);
   });
+
+  it(`never takes a lone letter for a sentence (a transcript's "Q.")`, () => {
+    const qa = 'Q. To what extent were the labourers employed after those machines were introduced? A. Considerably.';
+    expect(quoteSample(qa).text).toBe('Q. To what extent were the labourers employed after those machines were introduced?');
+  });
 });

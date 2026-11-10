@@ -130,14 +130,14 @@ export function Meta({ children, style }: Props) {
 }
 
 /** Marks `highlight` inside `text` with a swipe of the given colour. */
-export function Highlighted({ text, highlight, color, style }: { text: string; highlight?: string; color: string; style?: StyleProp<TextStyle> }) {
+export function Highlighted({ text, highlight, color, style, numberOfLines }: { text: string; highlight?: string; color: string; style?: StyleProp<TextStyle>; numberOfLines?: number }) {
   const p = usePalette();
   const scaled = useScaled({ ...s.base, color: p.ink }, style);
   const at = highlight ? text.indexOf(highlight) : -1;
   // Straight quotation marks are set curly for display; the stored words are untouched.
-  if (!highlight || at < 0) return <Text selectable style={scaled}>{curlQuotes(text)}</Text>;
+  if (!highlight || at < 0) return <Text selectable numberOfLines={numberOfLines} style={scaled}>{curlQuotes(text)}</Text>;
   return (
-    <Text selectable style={scaled}>
+    <Text selectable numberOfLines={numberOfLines} style={scaled}>
       {curlQuotes(text.slice(0, at))}
       <Text style={{ backgroundColor: color }}>{curlQuotes(highlight)}</Text>
       {curlQuotes(text.slice(at + highlight.length))}

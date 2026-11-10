@@ -50,7 +50,11 @@ export const Specimen = memo(function Specimen({ haul, item, n }: { haul: number
       >
         <Body item={item} form={form} haul={haul} n={n} />
       </Pressable>
-      <Text style={[st.capWhy, { color: p.ink2 }]}>{curlQuotes(firstSentence(notePlain(item.why)))}</Text>
+      {/* The editor's line, signed with his ember B., as the website sets it. */}
+      <Text style={[st.capWhy, { color: p.ink2 }]}>
+        {curlQuotes(firstSentence(notePlain(item.why)))}
+        <Text accessibilityLabel="Bhuvanesh, the editor" style={{ fontFamily: fonts.displayItalic, color: p.ember }}>{'\u00a0B.'}</Text>
+      </Text>
     </View>
   );
 });
@@ -138,10 +142,12 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
           <View style={{ flex: 1 }}>
             {/* A line or two of the speaker's words, as the website's cover sets it (2026-11-10). */}
             {ex ? (
-              <Text style={[st.said, { color: p.ink }]}>
-                <Text style={{ color: ink }}>“</Text>
-                {curlQuotes(sampleOf(ex.text))}
-              </Text>
+              <View>
+                {/* A large opening mark hanging in the gutter, an ornament, so the speaker's own inner
+                    quotation marks read as his (2026-11-10). */}
+                <Text accessible={false} importantForAccessibility="no" style={[st.saidMark, { color: ink }]}>“</Text>
+                <Text style={[st.said, { color: p.ink }]}>{curlQuotes(sampleOf(ex.text))}</Text>
+              </View>
             ) : (
               <Title title={item.title} size={22} />
             )}
@@ -158,8 +164,10 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
           <Text style={[st.by, { alignSelf: 'stretch', color: p.ink, textAlign: 'center', fontSize: 14 }]}>{item.creator}</Text>
           {ex ? (
             <>
-              <Text style={[st.abHead, { color: p.ink }]}>{ex.locator || 'From the paper'}</Text>
-              <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.abText} />
+              {/* A sample of the passage at a readable size, as the website sets it (2026-11-10): the whole
+                  passage at 13.5pt read like an eye test. */}
+              <Text style={[st.abHead, { color: p.ink2 }]}>{['From the paper', ex.locator].filter(Boolean).join(' · ')}</Text>
+              <Text style={[st.abText, { color: p.ink }]}>{curlQuotes(sampleOf(ex.text))}</Text>
             </>
           ) : null}
         </View>
@@ -204,7 +212,7 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
       return (
         <View style={[st.page, { backgroundColor: p.plate }]}>
           <Text style={[st.pageHead, { color: p.ink2 }]}>{item.source.name.toUpperCase()}</Text>
-          {ex ? <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.pageText} /> : <Title title={item.title} size={22} />}
+          {ex ? <Highlighted text={ex.text} highlight={ex.highlight} color={tint} style={st.pageText} numberOfLines={7} /> : <Title title={item.title} size={22} />}
           {ex ? <Text style={[st.pageFoot, { color: p.ink2 }]}>{ex.locator}</Text> : null}
         </View>
       );
@@ -248,7 +256,7 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
       return (
         <View style={[st.letter, { backgroundColor: tint }]}>
           <Text style={[st.ltDate, { color: p.ink }]}>{item.place ? `${item.place}, ` : ''}{item.source.date}</Text>
-          <Text numberOfLines={6} style={[st.ltText, { color: p.ink }]}>{ex!.text}</Text>
+          <Text numberOfLines={6} style={[st.ltText, { color: p.ink }]}>{curlQuotes(ex!.text)}</Text>
           <Text style={[st.ltSign, { color: p.ink }]}>{item.creator}</Text>
         </View>
       );
@@ -259,7 +267,7 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
             <Text numberOfLines={1} style={[st.clipWho, { color: p.ink }]}>{item.creator}{item.handle ? <Text style={{ color: p.ink2, fontFamily: fonts.sans }}>{` ${item.handle}`}</Text> : null}</Text>
             <Text style={[st.clipWhere, { color: p.ink2 }]}>{item.source.name}</Text>
           </View>
-          <Text numberOfLines={5} style={[st.clipText, { color: p.ink }]}>{ex!.text}</Text>
+          <Text numberOfLines={5} style={[st.clipText, { color: p.ink }]}>{curlQuotes(ex!.text)}</Text>
         </View>
       );
     case 'print': {
@@ -337,10 +345,11 @@ const st = StyleSheet.create({
   strip: { flexDirection: 'row', gap: 12, paddingVertical: 14, borderTopWidth: hair, borderBottomWidth: hair },
   who: { width: 64, fontFamily: fonts.sansBold, fontSize: 10.5, letterSpacing: 1, lineHeight: 22 },
   said: { fontFamily: fonts.displayRegular, fontSize: 19, lineHeight: 25 },
+  saidMark: { position: 'absolute', left: -15, top: -9, fontFamily: fonts.displayRegular, fontSize: 44, lineHeight: 52, includeFontPadding: false },
 
   runcite: { alignSelf: 'stretch', paddingVertical: 7, borderBottomWidth: hair, marginHorizontal: -18, paddingHorizontal: 18 },
   abHead: { fontFamily: fonts.sansMedium, fontSize: 11, marginTop: 12, marginBottom: 4 },
-  abText: { fontFamily: fonts.text, fontSize: 13.5, lineHeight: 19.5, alignSelf: 'stretch' },
+  abText: { fontFamily: fonts.text, fontSize: 16.5, lineHeight: 25, alignSelf: 'stretch', textAlign: 'left' },
 
   poem: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20, gap: 16 },
   poemHead: { paddingBottom: 12, borderBottomWidth: hair, gap: 6 },

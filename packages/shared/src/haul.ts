@@ -614,9 +614,17 @@ export function quoteSample(text: string, maxWords = 40): { text: string; cut: b
 
 function sample(text: string, maxWords: number): { text: string; cut: boolean } {
   const t = text.trim().replace(/\s*\n\s*/g, ' ');
-  const end = /[.!?]["'”’)]*(?=\s+["“‘(]?[A-Z0-9]|\s*$)/.exec(t);
-  const first = end ? t.slice(0, end.index + end[0].length) : t;
   const count = (s: string) => s.split(/\s+/).filter(Boolean).length;
+  // The first real sentence end: not after a lone letter ("Q.", "A.", an initial) and not before four
+  // words (a transcript's "Q." once became the whole sample).
+  const ends = /[.!?]["'”’)]*(?=\s+["“‘(]?[A-Z0-9]|\s*$)/g;
+  let first = t;
+  for (let m = ends.exec(t); m; m = ends.exec(t)) {
+    const upto = t.slice(0, m.index + m[0].length);
+    if (/(?:^|\s)[A-Za-z]\.$/.test(t.slice(0, m.index + 1)) || count(upto) < 4) continue;
+    first = upto;
+    break;
+  }
   if (count(first) <= maxWords) return { text: first, cut: first.length < t.length };
   const lead = quoteLead(t);
   if (lead) return { text: lead.lead, cut: true };

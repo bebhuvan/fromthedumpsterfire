@@ -39,7 +39,9 @@ export const Fingerprint = memo(function Fingerprint({ haul }: { haul: Haul }) {
               hitSlop={{ top: 4, bottom: 4, left: 6, right: 6 }}
               style={[st.mark, { left: m.x - 10, height: m.height }]}
             >
-              <Text style={[st.n, { color: p.ink2, left: 10 - m.labelWidth * 0.35 }]}>{String(m.n).padStart(2, '0')}</Text>
+              {/* The drawing's own figures keep their size at every text setting: their places are measured,
+                  and at 1.3× system text they wrapped into stacked digits. The link's label carries them. */}
+              <Text allowFontScaling={false} style={[st.n, { color: p.ink2, left: 10 - m.labelWidth * 0.35 }]}>{String(m.n).padStart(2, '0')}</Text>
               <View style={[st.stem, { height: m.stem, backgroundColor: p.ink + '59' }]} />
               <View style={[st.dot, { top: FP.label + FP.labelGap + FP.square - DOT, backgroundColor: typeColor(p, item.type), borderColor: p.ink }]} />
             </Pressable>
@@ -48,7 +50,7 @@ export const Fingerprint = memo(function Fingerprint({ haul }: { haul: Haul }) {
       </View>
       <View style={[st.axis, { borderTopColor: ed }]}>
         {g?.ticks.map((t) => (
-          <Text key={t.year} style={[st.tick, { left: t.left, textAlign: t.align, color: t.end ? ed : p.ink2, fontFamily: t.end ? fonts.sansMedium : fonts.sans }]}>
+          <Text key={t.year} allowFontScaling={false} style={[st.tick, { left: t.left, textAlign: t.align, color: t.end ? ed : p.ink2, fontFamily: t.end ? fonts.sansMedium : fonts.sans }]}>
             {t.year}
           </Text>
         ))}
