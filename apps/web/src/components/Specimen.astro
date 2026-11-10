@@ -2,7 +2,7 @@
 // One item on the cover, shown as a small specimen of its own printed form (lib/forms.ts): a cropped
 // opening, a two-page spread, a transcript strip, an offprint, a broadside, a catalogue card or a
 // book page. Under it, the number in ember, the type and the first sentence of the editor's note.
-import { curlQuotes, haulSlug, leadLines, notePlain, quoteLead, type Haul, type Item } from '@fdf/shared/haul';
+import { quoteSample, curlQuotes, haulSlug, leadLines, notePlain, quoteLead, type Haul, type Item } from '@fdf/shared/haul';
 import { typeLabel } from '@fdf/shared/tokens';
 import Highlighted from './Highlighted.astro';
 import { formOf, headword, quoteLength, speaker } from '../lib/forms';
@@ -36,6 +36,8 @@ const poemLines = form === 'broadside' && ex ? (ex.text.split(/\n\s*\n/)[0] ?? '
 const poemMore = form === 'broadside' && ex ? ex.text.trim().split('\n').filter((l) => l.trim()).length > poemLines.length : false;
 // A long quotation shows its lead large and the rest, cut short, in the reading size.
 const epiLen = form === 'epigraph' && ex ? quoteLength(ex.text) : 'short';
+const said = form === 'transcript' && ex ? quoteSample(ex.text) : null;
+const ownWords = form === 'label' && ex ? quoteSample(ex.text) : null;
 const epiLead = form === 'epigraph' && ex && epiLen !== 'short' ? quoteLead(ex.text, ex.highlight) : null;
 const epiLines = epiLead ? leadLines(epiLead.lead) : null;
 const llSize = epiLines ? `ll-${Math.max(8, epiLines.longest)}` : undefined;
@@ -76,8 +78,9 @@ try {
     {form === 'transcript' ? (
       <>
         <span class="sp-who">{speaker(item.creator)}</span>
-        {ex ? <Highlighted as="span" class="sp-said" text={ex.text} highlight={ex.highlight} /> : <span class="sp-said">{curlQuotes(titleText(item.title))}</span>}
-        <span class="sp-when">{item.source.name}, {item.source.date}</span>
+        {/* A line or two of the speaker's words, never the whole passage in display type (2026-11-10). */}
+        {said ? <span class="sp-said">{curlQuotes(said.text)}{said.ellipsis ? '…' : ''}</span> : <span class="sp-said">{curlQuotes(titleText(item.title))}</span>}
+        <span class="sp-when">{[item.source.name, item.source.date].filter(Boolean).join(', ')}</span>
       </>
     ) : null}
 
@@ -103,7 +106,7 @@ try {
         <span class="sp-call"><span>FDF {haulSlug(haul.number)}.{n}</span><span>{typeLabel[item.type]}</span></span>
         <span class="sp-hw">{hw.head}{hw.article ? <>, <i>{hw.article}</i></> : null}</span>
         <span class="sp-d">{item.source.date}</span>
-        {ex ? <span class="sp-ce">{ex.text}</span> : null}
+        {ex ? <span class="sp-ce">{curlQuotes(ex.text)}</span> : null}
         {plate ? <img class="sp-cardprint" src={plate} width={item.plate!.width} height={item.plate!.height} alt="" loading="lazy" decoding="async" /> : null}
         <span class="sp-punch" aria-hidden="true"></span>
       </>
@@ -130,7 +133,7 @@ try {
     {form === 'letter' && ex ? (
       <>
         <span class="sp-ld">{item.place ? `${item.place}, ` : ''}{item.source.date}</span>
-        <span class="sp-lt">{ex.text}</span>
+        <span class="sp-lt">{curlQuotes(ex.text)}</span>
         <span class="sp-ls">{item.creator}</span>
       </>
     ) : null}
@@ -138,7 +141,7 @@ try {
     {form === 'clipping' && ex ? (
       <>
         <span class="sp-cf"><span>{item.creator}{item.handle ? ` ${item.handle}` : ''}</span><span>{item.source.name}</span></span>
-        <span class="sp-ct2">{ex.text}</span>
+        <span class="sp-ct2">{curlQuotes(ex.text)}</span>
       </>
     ) : null}
 
@@ -173,7 +176,7 @@ try {
         <span class="sp-lbt">{curlQuotes(titleText(item.title))}</span>
         {item.creator ? <span class="sp-lbr"><span>Made by</span><span>{item.creator}</span></span> : null}
         <span class="sp-lbr"><span>What it is</span><span>{item.source.name}</span></span>
-        {ex ? <span class="sp-lbq">{curlQuotes(ex.text)}</span> : null}
+        {ownWords ? <span class="sp-lbq">{curlQuotes(ownWords.text)}{ownWords.ellipsis ? '…' : ''}</span> : null}
       </>
     ) : null}
   </a>

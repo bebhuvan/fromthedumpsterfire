@@ -600,6 +600,29 @@ export function quoteLead(text: string, highlight?: string): { lead: string; res
   return null;
 }
 
+/**
+ * A short sample of a passage for a preview (the cover's specimens, 2026-11-10): its first sentence,
+ * whole, when that is 40 words or fewer; else its opening clauses (quoteLead); else its first 30 words.
+ * `cut` says the passage goes on; `ellipsis` says the sample stops mid-sentence, the only time a
+ * preview should end on "…" (a whole sentence ends on its own stop). Words are never changed, only
+ * where the sample stops. Shared by the website and the app so both show the same line.
+ */
+export function quoteSample(text: string, maxWords = 40): { text: string; cut: boolean; ellipsis: boolean } {
+  const s = sample(text, maxWords);
+  return { ...s, ellipsis: s.cut && !/[.!?]["'”’)]*$/.test(s.text) };
+}
+
+function sample(text: string, maxWords: number): { text: string; cut: boolean } {
+  const t = text.trim().replace(/\s*\n\s*/g, ' ');
+  const end = /[.!?]["'”’)]*(?=\s+["“‘(]?[A-Z0-9]|\s*$)/.exec(t);
+  const first = end ? t.slice(0, end.index + end[0].length) : t;
+  const count = (s: string) => s.split(/\s+/).filter(Boolean).length;
+  if (count(first) <= maxWords) return { text: first, cut: first.length < t.length };
+  const lead = quoteLead(t);
+  if (lead) return { text: lead.lead, cut: true };
+  return { text: t.split(/\s+/).slice(0, 30).join(' '), cut: true };
+}
+
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /**
