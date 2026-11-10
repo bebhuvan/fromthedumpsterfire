@@ -153,8 +153,9 @@ function Body({ item, form, haul, n }: { item: Item; form: Form; haul: number; n
       return (
         <View style={[st.frame, { borderColor: p.rule, paddingTop: 0, alignItems: 'center' }]}>
           <Text numberOfLines={1} style={[st.small, st.runcite, { color: p.ink2, borderBottomColor: p.rule }]}>{item.source.name} · {yearOf(item.source.date)}</Text>
-          <Title title={item.title} size={22} style={{ textAlign: 'center', marginTop: 14 }} />
-          <Text style={[st.by, { color: p.ink, textAlign: 'center', fontSize: 14 }]}>{item.creator}</Text>
+          {/* Stretched, not shrink-wrapped, so Android never measures a centred line too narrow and clips it. */}
+          <Title title={item.title} size={22} style={{ alignSelf: 'stretch', textAlign: 'center', marginTop: 14 }} />
+          <Text style={[st.by, { alignSelf: 'stretch', color: p.ink, textAlign: 'center', fontSize: 14 }]}>{item.creator}</Text>
           {ex ? (
             <>
               <Text style={[st.abHead, { color: p.ink }]}>{ex.locator || 'From the paper'}</Text>

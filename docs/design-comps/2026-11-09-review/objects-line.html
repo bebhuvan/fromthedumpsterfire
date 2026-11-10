@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The objects line</title>
+<style>
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Newsreader Text'; src: url('../../../apps/web/public/fonts/NewsreaderText-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Newsreader Display'; src: url('../../../apps/web/public/fonts/NewsreaderDisplay-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Regular.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../../apps/web/public/fonts/Schibsted-Medium.woff2') format('woff2'); font-weight: 500; }
+:root { --bg:#fff; --ink:#141416; --ink2:#55555C; --rule:#E6E6EA; --ed:#0E6461; --serif:'Newsreader Text',Georgia,serif; --display:'Newsreader Display',Georgia,serif; --sans:'Schibsted Grotesk',system-ui,sans-serif; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0F0F12; --ink:#F3F3F1; --ink2:#A2A2AA; --rule:#2A2A31; --ed:#6FD0CB; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); padding: 24px 20px 40px; font-family: var(--serif); }
+.row { display: flex; gap: 22px; flex-wrap: wrap; }
+.ph { width: 375px; padding: 18px 16px 20px; border: 1px solid var(--rule); }
+.k { font: 500 0.72rem var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); margin-bottom: 14px; }
+.no { display: flex; align-items: center; gap: 14px; color: var(--ed); }
+.no b { font: 500 0.78rem var(--sans); letter-spacing: 0.12em; }
+.no span { font: 400 3.25rem/1 var(--display); }
+.date { margin-top: 8px; font: 400 0.9rem/1.5 var(--sans); color: var(--ink2); }
+.stamp { display: inline-block; margin-top: 12px; transform: rotate(-6deg); border: 2px solid var(--ed); color: var(--ed); padding: 4px 9px 3px; text-align: center; font: 500 0.6rem/1.25 var(--sans); letter-spacing: 0.16em; opacity: .85; }
+.stamp i { display: block; font: 400 1.15rem/1 var(--display); letter-spacing: 0; font-style: normal; margin: 2px 0; }
+.t { margin-top: 14px; font: 500 2.3rem/1 var(--display); letter-spacing: -0.02em; }
+.lbl { margin-top: 12px; font: 400 0.8rem/1.45 var(--sans); color: var(--ink2); max-width: 375px; }
+.lbl b { color: var(--ink); font-weight: 500; }
+a { color: inherit; }
+.now a { font: 400 0.9rem/1.5 var(--sans); color: var(--ink2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.a a { font: 400 0.9rem/1.5 var(--sans); color: var(--ink2); text-decoration: none; }
+.a a em { font-style: normal; color: var(--ed); margin-left: 3px; }
+.b a { display: inline-block; margin-top: 2px; font: 500 0.72rem/1.6 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ed); text-decoration: none; }
+.c a { display: inline-block; margin-top: 2px; font: italic 400 1.02rem/1.4 var(--serif); color: var(--ink); text-decoration: none; }
+.c a em { font-style: normal; font-family: var(--sans); color: var(--ed); margin-left: 4px; }
+</style></head><body><div class="row">
+<div><div class="ph now"><p class="k">Now</p><div class="no"><b>HAUL</b><span>002</span></div><p class="date">Sunday 8 November 2026</p><a href="#">Sixteen objects in this Haul ↓</a><br><span class="stamp">SALVAGED<i>8 Nov 2026</i>HAUL 002</span><p class="t">The Uses and Abuses of History</p></div><p class="lbl"><b>Now.</b> Grey and underlined end to end, arrow included: reads as a form link.</p></div>
+<div><div class="ph a"><p class="k">A · Quiet, with the arrow in ink</p><div class="no"><b>HAUL</b><span>002</span></div><p class="date">Sunday 8 November 2026</p><a href="#">Sixteen objects in this Haul<em>↓</em></a><br><span class="stamp">SALVAGED<i>8 Nov 2026</i>HAUL 002</span><p class="t">The Uses and Abuses of History</p></div><p class="lbl"><b>A.</b> The date's own grey sans, no underline; only the arrow takes the Haul's teal. The line reads as one more fact under the date, and the arrow says it moves.</p></div>
+<div><div class="ph b"><p class="k">B · A label, like HAUL</p><div class="no"><b>HAUL</b><span>002</span></div><p class="date">Sunday 8 November 2026</p><a href="#">Sixteen objects ↓</a><br><span class="stamp">SALVAGED<i>8 Nov 2026</i>HAUL 002</span><p class="t">The Uses and Abuses of History</p></div><p class="lbl"><b>B.</b> Spaced capitals in the Haul's teal, the same voice as the HAUL label above it: part of the masthead apparatus.</p></div>
+<div><div class="ph c"><p class="k">C · The editor's aside</p><div class="no"><b>HAUL</b><span>002</span></div><p class="date">Sunday 8 November 2026</p><a href="#">Sixteen objects, below<em>↓</em></a><br><span class="stamp">SALVAGED<i>8 Nov 2026</i>HAUL 002</span><p class="t">The Uses and Abuses of History</p></div><p class="lbl"><b>C.</b> A line in the italic serif, like the strap and the "Read the rest of the note" line, the arrow in teal.</p></div>
+</div></body></html>

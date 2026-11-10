@@ -226,8 +226,10 @@ const styles = StyleSheet.create({
   topRow: { paddingHorizontal: GUTTER, minHeight: 36, justifyContent: 'center' },
   head: { paddingHorizontal: GUTTER, marginTop: 26 },
   more: { alignItems: 'center', marginTop: 30, gap: 4 },
-  moreT: { fontFamily: fonts.displayItalic, fontSize: 21, lineHeight: 28, marginTop: 10, textDecorationLine: 'underline' },
-  moreK: { fontFamily: fonts.sans, fontSize: 12.5, lineHeight: 17 },
+  // Stretched and centred, not shrink-wrapped: Android measured the shrink-wrapped italic line too
+  // narrow at larger text sizes and clipped its last word ("Read the rest of the").
+  moreT: { alignSelf: 'stretch', textAlign: 'center', fontFamily: fonts.displayItalic, fontSize: 21, lineHeight: 28, marginTop: 10, textDecorationLine: 'underline' },
+  moreK: { alignSelf: 'stretch', textAlign: 'center', fontFamily: fonts.sans, fontSize: 12.5, lineHeight: 17 },
   jump: { textDecorationLine: 'underline' },
   stamps: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 12, marginLeft: 3 },
   stamp: { borderWidth: 2, paddingHorizontal: 9, paddingTop: 4, paddingBottom: 3, alignItems: 'center', opacity: 0.85 },
