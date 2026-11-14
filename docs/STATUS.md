@@ -1283,7 +1283,7 @@ On the editor's "Push it": `claude/heuristic-visvesvaraya-55cce2` merged into `l
   large text beyond the fingerprint (the emulator froze); the editor's phone is the test.
 - Open: the style of the cover's "Sixteen objects" line (sketches in `objects-line.html`).
 
-## The research desk and Hauls run from a session (2026-11-14; built and tested locally, not deployed)
+## The research desk and Hauls run from a session (2026-11-14; live, the editor: "take it live")
 
 DECISIONS 2026-11-14. Built on `launch-2026-10-24`:
 
@@ -1304,12 +1304,17 @@ DECISIONS 2026-11-14. Built on `launch-2026-10-24`:
 - Tests: `packages/server/test/research.test.ts`, `workers/api/test/research.test.ts`, a publish case in
   `publish-buckets.test.ts`, a session-routine case in `scripts/editorial/client.test.mjs`.
 
-**To make it live (the editor's OK first):**
+**Live (2026-11-14)**, after two fresh-eyes reviews (findings fixed, tests added):
 
-1. Apply migration `0012_evidence.sql` to production D1 (and preview).
-2. Deploy the Desk Worker (`fdf-desk`) and the pipeline Worker.
-3. Deploy the website, so it accepts a note linking to a page that is not Wikipedia. The app needs no
-   update (it checks only the bundle version and opens any note link).
-4. Run `research` on one real item and read the notes before relying on it for a whole Haul. Not yet
-   measured on real items: quality, how many notes the judge confirms, and cost (estimated $0.08 to
-   $0.12 an item; the month's ceiling is $10, $2.34 spent on 14 November).
+- Migration `0012_evidence.sql` applied to production `fdf-desk` with `cf d1 migrations apply`. Preview D1
+  is still at 0005 (it was before this work); bring it up to date before using `--profile preview`.
+- Desk Worker `fdf-desk` `617c8639`, pipeline `fdf-pipeline` `930c748e`, website `fdf-web` `27ebb11b`
+  (Haul pages checked: 200, machine notes render). No app update: the app checks only the bundle version
+  and opens any note link.
+- First real runs, on Haul 002's "Why Do Cormac McCarthy's Books Exist?": the first gave 1 confirmed
+  note of 8 leads, which led to notes resting on up to three passages and the per-lead report; the
+  second gave 4 notes, 2 confirmed (Harold Bloom on *Blood Meridian*; the Oscars of *No Country for
+  Old Men*), 2 set aside by the judge for small overreach. Both offers wait on that item for the editor;
+  the published Haul is unchanged. Cost: about $0.085 a run with judging ($2.51 spent this month of $10).
+- Not yet seen: a whole Haul through the pipeline with research, and a session note on a non-Wikipedia
+  page published to the live site.
