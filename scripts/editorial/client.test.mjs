@@ -199,3 +199,39 @@ it('checks and publishes a data story from the terminal, publishing only with --
   expect(JSON.parse(published.stdout)).toMatchObject({ ok: true, path: 'data/fertility/v1/story.json' });
   expect(JSON.parse((await cli(['stories'], fetcher)).stdout).stories.map((s) => s.slug)).toEqual(['fertility']);
 });
+
+it('runs a Haul from a session: excerpt by words, keep and cut, a fetched source, a margin note and the todo list', async () => {
+  const env = await seedHaul(makeEnv(() => answer({ verdicts: [{ index: 0, verdict: 'supported', reason: 'ok' }] }), { DEV_AUTH_BYPASS: '1' }));
+  const fetcher = (url, init) => app.request(url, init, env);
+  const d = temp();
+  const payload = (name, data) => { const path = join(d, name); writeFileSync(path, JSON.stringify(data)); return path; };
+  await env.DB.prepare(`INSERT INTO haul_items (haul_id, item_id, position) VALUES ('hl_1', 'it_jevons', 0)`).run();
+  await env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, position, created_at, updated_at) VALUES ('dr_a', 'it_jevons', 'marginal', ?, 'proposed', 0, 'now', 'now')`)
+    .bind(JSON.stringify({ text: 'Jevons wrote in 1865.', cite: { kind: 'source', quote: 'The very contrary is the truth.', start: 0, end: 1 }, verdict: 'supported' })).run();
+
+  const ex = await cli(['excerpt', 'it_jevons', '--data', payload('ex.json', { text: 'The very contrary is the truth.' })], fetcher);
+  expect(ex.code).toBe(0);
+  expect(JSON.parse(ex.stdout).excerpt).toMatchObject({ text: 'The very contrary is the truth.', chosen: 1 });
+  expect((await cli(['excerpt', 'it_jevons', '--data', payload('bad.json', { text: 'Coal is endless.' })], fetcher)).code).toBe(1);
+
+  const todo = JSON.parse((await cli(['todo', 'hl_1'], fetcher)).stdout);
+  expect(todo.items[0].notes).toEqual([{ id: 'dr_a', text: 'Jevons wrote in 1865.' }]);
+  expect((await cli(['keep', 'dr_a'], fetcher)).code).toBe(0);
+  expect(JSON.parse((await cli(['todo', 'hl_1'], fetcher)).stdout).items[0].notes).toEqual([]);
+  expect((await cli(['keep', 'it_jevons'], fetcher)).code).toBe(1);
+
+  vi.stubGlobal('fetch', vi.fn(async (input) => {
+    const u = String(input instanceof Request ? input.url : input);
+    if (u.includes('/page/summary/Great_Stink')) return Response.json({ type: 'standard', title: 'Great Stink', extract: 'The Great Stink was an event in London in 1858.', content_urls: { desktop: { page: 'https://en.wikipedia.org/wiki/Great_Stink' } } });
+    if (u.includes('/w/api.php')) return Response.json({ query: { pages: [{ title: 'Great Stink', extract: 'The Great Stink was an event in London in 1858.\nThe smell of the Thames was overwhelming that summer.', fullurl: 'https://en.wikipedia.org/wiki/Great_Stink' }] } });
+    return new Response('{}', { status: 404 });
+  }));
+  const added = await cli(['evidence-add', 'it_jevons', '--data', payload('ev.json', { wikipedia: 'Great Stink', writer: 'claude-opus-5-5' })], fetcher);
+  expect(added.code).toBe(0);
+  const evId = JSON.parse(added.stdout).evidence.id;
+  expect(JSON.parse((await cli(['evidence', 'it_jevons'], fetcher)).stdout).evidence[0].text).toBeUndefined();
+  expect(JSON.parse((await cli(['evidence', 'it_jevons', '--text'], fetcher)).stdout).evidence[0].text).toContain('overwhelming');
+  const note = await cli(['margin', 'it_jevons', '--data', payload('note.json', { text: 'London smelled its own plenty in 1858, the summer of the Great Stink.', cite: { kind: 'evidence', evidenceId: evId, quote: 'The Great Stink was an event in London in 1858.' }, angle: 'echo', writer: 'claude-opus-5-5' })], fetcher);
+  expect(note.code).toBe(0);
+  expect(JSON.parse(note.stdout).draft).toMatchObject({ status: 'proposed', body: { angle: 'echo', verdict: 'supported' } });
+});

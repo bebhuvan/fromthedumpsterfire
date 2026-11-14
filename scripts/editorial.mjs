@@ -52,6 +52,25 @@ npm run editorial -- <command> [arguments] [options]
                                   the standfirst and margin notes unchanged in the item's note,
                                   each quotation word for word in its source, the story's rules
   story-publish                   the same checks, then publish with --confirm-publish
+
+Running a Haul from a session (docs/PLAYBOOK.md is the routine):
+  todo HAUL                       what is still undecided in a Haul: per item, the review's issues and
+                                  the notes, ideas and cards waiting for keep or cut
+  excerpt ITEM                    choose the excerpt by its words: --data {"text":"exact words"}
+  plates ITEM                     the plate candidates found for an item
+  plate PLATE                     choose that plate for its item
+  plate-search ITEM               search the collections yourself: --data {"query":"Thames 1858"}
+  wiki ITEM                       add a Wikipedia card: --data {"query":"Great Stink"}
+  keep ID | cut ID | reopen ID    a note, idea or title (dr_…) or a Wikipedia card (wk_…)
+  research ITEM                   run the research desk on an item now (notes from what the model
+                                  knows, checked against whole Wikipedia articles, then judged)
+  evidence ITEM                   the texts fetched for an item's notes (--text to include the text)
+  evidence-add ITEM               fetch a text for notes: --data {"url":"https://…"} or
+                                  {"wikipedia":"Exact Title"}, plus "writer"; prints the stored text
+  margin ITEM                     propose a machine note: --data {"text":…,"cite":{…},"angle":…,
+                                  "writer":"claude-opus-5-5"}; checked word for word, then judged
+  connect ITEM                    look for connections to the other items again
+  redraft ITEM                    read, draft and research the item again (kept lines stay)
   request METHOD /api/PATH         any Desk JSON API route, or --upload file=PATH
   login                           owner login using cloudflared; saves token privately
 
@@ -78,11 +97,35 @@ const idPath = (id) => {
   return id;
 };
 
+/**
+ * A Haul's open decisions in one small answer: per item, what the review flags and how many machine
+ * offers still wait for keep or cut, with their ids so a session can act on them.
+ */
+const chosenTitle = (it) => {
+  try {
+    return (it.title_choice && JSON.parse(it.title_choice).text) || it.title;
+  } catch {
+    return it.title;
+  }
+};
+
+export function haulTodo(review, suggestions) {
+  const waiting = new Map((suggestions?.items ?? []).map((it) => [it.id, it]));
+  const items = (review?.items ?? []).map((it) => {
+    const s = waiting.get(it.id) ?? { drafts: [], wiki: [] };
+    const offers = (kind) => (s.drafts ?? []).filter((d) => d.kind === kind && d.status === 'proposed').map((d) => ({ id: d.id, text: d.body?.text ?? '', ...(d.body?.angle ? { angle: d.body.angle } : {}) }));
+    const cards = (s.wiki ?? []).filter((w) => w.status === 'proposed').map((w) => ({ id: w.id, title: w.title }));
+    return { id: it.id, title: chosenTitle(it), issues: (it.issues ?? []).map((i) => `${i.severity}: ${i.message}`), notes: offers('marginal'), ideas: offers('idea'), cards };
+  });
+  const open = items.reduce((n, it) => n + it.issues.length + it.notes.length + it.ideas.length + it.cards.length, 0);
+  return { open, items };
+}
+
 export async function run(argv, { env = process.env, fetcher = fetch, stdout = (s) => process.stdout.write(s), stderr = (s) => process.stderr.write(s) } = {}) {
   let credentials = {};
   try {
     const { values: v, positionals: p } = parseArgs({ args: argv, allowPositionals: true, options: {
-      help: { type: 'boolean', short: 'h' }, profile: { type: 'string', default: 'production' }, config: { type: 'string' }, data: { type: 'string' }, out: { type: 'string' }, view: { type: 'string', default: 'tray' }, seconds: { type: 'string', default: '180' }, upload: { type: 'string', multiple: true }, slug: { type: 'string' }, item: { type: 'string' }, 'confirm-publish': { type: 'boolean' }, 'confirm-delete': { type: 'boolean' },
+      help: { type: 'boolean', short: 'h' }, profile: { type: 'string', default: 'production' }, config: { type: 'string' }, data: { type: 'string' }, out: { type: 'string' }, view: { type: 'string', default: 'tray' }, seconds: { type: 'string', default: '180' }, upload: { type: 'string', multiple: true }, slug: { type: 'string' }, item: { type: 'string' }, 'confirm-publish': { type: 'boolean' }, 'confirm-delete': { type: 'boolean' }, text: { type: 'boolean' },
     } });
     if (v.help || !p.length) { stdout(HELP); return 0; }
     if (!(v.profile in TARGETS)) throw new Error('Unknown profile; use production, preview or local');
@@ -194,6 +237,33 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
         data = { slug: v.slug, itemId: idPath(v.item), story: data, ...(publish ? { confirm: true } : {}) };
         break;
       }
+      case 'todo': {
+        const haulId = id();
+        output(haulTodo(await client.request('GET', `/api/hauls/${haulId}/review`), await client.request('GET', `/api/hauls/${haulId}/suggestions`)));
+        return 0;
+      }
+      case 'excerpt': path = `/api/items/${id()}/excerpts`; method = 'POST'; break;
+      case 'plates': path = `/api/items/${id()}/plates`; break;
+      case 'plate': path = `/api/plates/${id()}/choose`; method = 'POST'; break;
+      case 'plate-search': path = `/api/items/${id()}/plates`; method = 'POST'; break;
+      case 'wiki': path = `/api/items/${id()}/wiki`; method = 'POST'; break;
+      case 'keep':
+      case 'cut':
+      case 'reopen': {
+        const target = id();
+        const status = { keep: 'kept', cut: 'cut', reopen: 'proposed' }[command];
+        if (target.startsWith('dr_')) path = `/api/drafts/${target}`;
+        else if (target.startsWith('wk_')) path = `/api/wiki/${target}`;
+        else throw new Error('keep, cut and reopen take a draft (dr_…) or a Wikipedia card (wk_…)');
+        method = 'PATCH'; data = { status };
+        break;
+      }
+      case 'research': path = `/api/items/${id()}/research`; method = 'POST'; break;
+      case 'evidence': path = `/api/items/${id()}/evidence${v.text ? '?text=1' : ''}`; break;
+      case 'evidence-add': path = `/api/items/${id()}/evidence`; method = 'POST'; break;
+      case 'margin': path = `/api/items/${id()}/marginalia`; method = 'POST'; break;
+      case 'connect': path = `/api/items/${id()}/connect`; method = 'POST'; break;
+      case 'redraft': path = `/api/items/${id()}/redraft`; method = 'POST'; break;
       case 'request': method = p[1] ?? ''; path = p[2] ?? ''; break;
       default: throw new Error(`Unknown command. Use --help`);
     }
@@ -201,7 +271,7 @@ export async function run(argv, { env = process.env, fetcher = fetch, stdout = (
     const expected = ['capture', 'request'].includes(command) ? null : ['status', 'items', 'hauls', 'new-haul', 'chart-fetch', 'life', 'stories', 'story-check', 'story-publish'].includes(command) ? 1 : 2;
     if (expected !== null && p.length !== expected) throw new Error('Unexpected or missing arguments; use --help');
     if (command === 'request' && p.length !== 3) throw new Error('request requires METHOD and /api/PATH');
-    if (['edit', 'source', 'edit-haul', 'order', 'chart-fetch', 'life', 'life-draft'].includes(command) && data === undefined) throw new Error('Supply --data FILE or --data -');
+    if (['edit', 'source', 'edit-haul', 'order', 'chart-fetch', 'life', 'life-draft', 'excerpt', 'plate-search', 'wiki', 'evidence-add', 'margin'].includes(command) && data === undefined) throw new Error('Supply --data FILE or --data -');
     if (['chart', 'chart-edit'].includes(command) && !data?.chart) throw new Error('Supply the chart with --data chart.json');
     let form;
     if (uploads.length) {
