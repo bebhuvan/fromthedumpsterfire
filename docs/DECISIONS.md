@@ -585,9 +585,10 @@ cards, and was told that "an empty list is a good answer".
   canonical link counts only on the same site, its site name only when the host matches (fresh-eyes
   review: a page could otherwise name itself "The Guardian" and point the link anywhere).
 - **A note links to the page it was checked against, any https page** (`isNoteUrl`; was Wikipedia only).
-  The website and app already render `Marginal.url` from the bundle. **Order of deploys**: the website
-  and an app update must carry the widened validator before a Haul with a non-Wikipedia note is published,
-  or the older readers would refuse that bundle (they fall back to the earlier version).
+  The website and app already render `Marginal.url` from the bundle. **Order of deploys**: migration
+  0012 before the Workers (every check run reads `evidence`), and the website with the widened validator
+  before a Haul with a non-Wikipedia note is published, or the site would refuse that bundle and fall back
+  to the earlier version. The app needs nothing: it checks only the bundle version and opens any note link.
 - **Connections are judged by Sonnet first** (was DeepSeek Flash). Two Hauls produced none. The judge
   of notes stays on another family (DeepSeek Flash first), so writer and checker still differ. Cost per
   Haul goes up by about $0.50; the research desk adds about $0.10 an item (see `docs/MODELS.md`).
@@ -602,6 +603,11 @@ cards, and was told that "an empty list is a good answer".
   only on his "approved" for that edition. This widens "only lines the editor ticks are published" to
   "only lines the editor has seen and approved". The editor's own words are still never written or
   reworded by a machine; a connection's printed note is still his.
+- Second fresh-eyes review before going live: a site name is trusted only when it is the label the
+  host registered (`siteLabel`); research on demand waits two minutes between runs on an item, judges
+  only the notes it just wrote, and records a failure on the item; Rhymes are skipped; an item keeps at
+  most 40 fetched sources. Left as they are: a fetched PDF scan is read by paid OCR like any capture; a
+  Wayback copy is stored without saying so.
 - Not done, for later: a labelled slot for a find the machine itself proposes as an item (today a session
   suggests finds in chat and the editor takes them with his own line); printing a note's angle on the
   page; the research desk reading across a whole Haul in one call.

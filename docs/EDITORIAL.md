@@ -388,9 +388,10 @@ The note arrives as `proposed`, recorded as written by `<writer> (session)`. It 
 prints with its source's name and a link to the page it was checked against. Machine notes are always
 set as machine text; never use this route for the editor's words.
 
-**Before publishing a Haul with a note on a page that is not Wikipedia**, the website and the app must
-be running the 2026-11-14 validator (`isNoteUrl`), or they refuse that bundle and keep showing the
-previous version. `docs/STATUS.md` says whether that has been deployed.
+**Before publishing a Haul with a note on a page that is not Wikipedia**, the website must be running
+the 2026-11-14 validator (`isNoteUrl`), or it refuses that bundle and keeps showing the previous
+version. `docs/STATUS.md` says whether that has been deployed. `research` waits two minutes between
+runs on one item.
 
 ## Compose, review, publish
 

@@ -456,12 +456,13 @@ export function locatorFor(item: Pick<ItemRow, 'locator' | 'type'>, src: { meta:
  * rule as prose that fails the house style. A line the editor kept or edited keeps its status and
  * shows the verdict, so the editor can fix their own wording.
  */
-export async function judgeNotes(env: Env, itemId: string, onlyDraftId?: string): Promise<{ checked: number; rejected: number }> {
+export async function judgeNotes(env: Env, itemId: string, only?: string | string[]): Promise<{ checked: number; rejected: number }> {
+  const wanted = only === undefined ? null : new Set(Array.isArray(only) ? only : [only]);
   const src = await getSource(env, itemId);
   if (!src) return { checked: 0, rejected: 0 };
   const rows = (
     await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind IN ('marginal', 'idea') AND status NOT IN ('cut', 'rejected') ORDER BY kind, position`).bind(itemId).all<DraftRow>()
-  ).results.filter((r) => !onlyDraftId || r.id === onlyDraftId);
+  ).results.filter((r) => !wanted || wanted.has(r.id));
   if (!rows.length) return { checked: 0, rejected: 0 };
   const cards = (await env.DB.prepare(`SELECT * FROM wiki_cards WHERE item_id = ?`).bind(itemId).all<WikiRow>()).results;
   const fetched = rows.some((r) => r.body.includes('"evidence"'))

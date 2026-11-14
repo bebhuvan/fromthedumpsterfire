@@ -75,3 +75,25 @@ describe('fetched evidence for session notes', () => {
     expect(note.body.draft.status).toBe('rejected');
   });
 });
+
+describe('research on demand', () => {
+  it('waits two minutes between runs on one item, and judges only the notes it just wrote', async () => {
+    const env = await seedHaul(makeEnv(() => answer({ leads: [] }), { DEV_AUTH_BYPASS: '1' } as never));
+    const kept = JSON.stringify({ text: 'Kept.', cite: { kind: 'source', quote: 'The very contrary is the truth.', start: 0, end: 1 }, verdict: 'supported' });
+    await env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, position, created_at, updated_at) VALUES ('dr_k', 'it_jevons', 'marginal', ?, 'kept', 0, 'now', 'now')`).bind(kept).run();
+    const first = await call(env, 'POST', '/api/items/it_jevons/research');
+    expect(first.status).toBe(200);
+    expect(first.body).toMatchObject({ leads: 0, judged: 0 });
+    expect(JSON.parse((await env.DB.prepare(`SELECT body FROM drafts WHERE id = 'dr_k'`).first<{ body: string }>())!.body).verdict).toBe('supported');
+    expect((await call(env, 'POST', '/api/items/it_jevons/research')).status).toBe(429);
+  });
+
+  it('records a failure on the item', async () => {
+    const env = await seedHaul(makeEnv(() => { throw new Error('model down'); }, { DEV_AUTH_BYPASS: '1' } as never));
+    const r = await call(env, 'POST', '/api/items/it_jevons/research');
+    expect(r.status).toBe(502);
+    const check = await env.DB.prepare(`SELECT status, detail FROM checks WHERE item_id = 'it_jevons' AND name = 'research'`).first<{ status: string; detail: string }>();
+    expect(check!.status).toBe('warn');
+    expect(check!.detail).toContain('research desk failed');
+  });
+});

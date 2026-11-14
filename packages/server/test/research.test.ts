@@ -3,7 +3,7 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { auditResearch, researchItem } from '../src/research';
-import { passagesFor, printedSource, wikiPage } from '../src/evidence';
+import { MAX_EVIDENCE_PER_ITEM, passagesFor, printedSource, siteLabel, wikiPage } from '../src/evidence';
 import { draftItem, judgeNotes, runChecks } from '../src/steps';
 import type { EvidenceRow, MarginalBody } from '../src/db';
 import { isNoteUrl } from '@fdf/shared/validate';
@@ -92,6 +92,14 @@ describe('auditResearch', () => {
     );
     expect(r.ok).toEqual([]);
     expect(r.failures).toHaveLength(4);
+    const twice = auditResearch(
+      [
+        { lead: 0, text: 'Jevons drowned in 1882.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' },
+        { lead: 1, text: 'Jevons died at Hastings.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' },
+      ],
+      new Map([[0, ev()], [1, ev()]]),
+    );
+    expect(twice.ok).toHaveLength(1);
     const again = auditResearch([{ lead: 0, text: 'Jevons drowned in 1882.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' }], byLead, new Set(['Jevons drowned while bathing near Hastings in 1882, at the age of 46.']));
     expect([again.ok, again.failures]).toEqual([[], []]);
   });
@@ -147,10 +155,22 @@ describe('researchItem', () => {
     expect(n!.n).toBe(1);
   });
 
-  it('skips a Life and an item with no text', async () => {
+  it('skips a Life and a Rhyme', async () => {
     const env = await seedHaul(makeEnv(() => { throw new Error('no model call expected'); }));
     await env.DB.prepare(`UPDATE items SET type = 'life' WHERE id = 'it_jevons'`).run();
     expect(await researchItem(env, 'it_jevons')).toEqual({ leads: 0, sources: 0, notes: 0, dropped: 0 });
+    await env.DB.prepare(`UPDATE items SET kind = 'rhyme' WHERE id = 'it_nadella'`).run();
+    expect(await researchItem(env, 'it_nadella')).toEqual({ leads: 0, sources: 0, notes: 0, dropped: 0 });
+  });
+
+  it('keeps at most so many fetched sources an item', async () => {
+    stubWikipedia();
+    const env = await seedHaul(makeEnv());
+    for (let i = 0; i < MAX_EVIDENCE_PER_ITEM; i++) {
+      await env.DB.prepare(`INSERT INTO evidence (id, item_id, kind, title, publisher, url, text, via, fetched_at) VALUES (?, 'it_jevons', 'web', 't', 'p', ?, 'x', 'pipeline', 'now')`).bind(`ev_${i}`, `https://example.org/${i}`).run();
+    }
+    const { addWikiEvidence } = await import('../src/evidence');
+    await expect(addWikiEvidence(env, 'it_jevons', 'William Stanley Jevons')).rejects.toThrow(/already has 40 fetched sources/);
   });
 });
 
@@ -168,6 +188,13 @@ describe('printedSource', () => {
     expect(printedSource('https://evil.example/a', 'https://phish.example/a', 'The Guardian')).toEqual({ url: 'https://evil.example/a', publisher: 'evil.example' });
     expect(printedSource('https://news.example.org/a', 'not a url', undefined)).toEqual({ url: 'https://news.example.org/a', publisher: 'news.example.org' });
     expect(printedSource('https://blog.example.org/a', 'http://blog.example.org/a', '')).toEqual({ url: 'https://blog.example.org/a', publisher: 'blog.example.org' });
+    expect(printedSource('https://guardian-archive.net/a', undefined, 'The Guardian').publisher).toBe('guardian-archive.net');
+    expect(printedSource('https://theguardian.com.evil.example/a', undefined, 'The Guardian').publisher).toBe('theguardian.com.evil.example');
+    expect(printedSource('https://www.thehindu.com/a', undefined, 'The Hindu').publisher).toBe('The Hindu');
+    expect(printedSource('https://news.bbc.co.uk/a', undefined, 'BBC').publisher).toBe('BBC');
+  });
+  it('names the label a site registered', () => {
+    expect([siteLabel('www.theguardian.com'), siteLabel('news.bbc.co.uk'), siteLabel('iitb.ac.in'), siteLabel('example.org')]).toEqual(['theguardian', 'bbc', 'iitb', 'example']);
   });
 });
 

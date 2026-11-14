@@ -1308,9 +1308,8 @@ DECISIONS 2026-11-14. Built on `launch-2026-10-24`:
 
 1. Apply migration `0012_evidence.sql` to production D1 (and preview).
 2. Deploy the Desk Worker (`fdf-desk`) and the pipeline Worker.
-3. Deploy the website and ship an app update over the air (`npm run app:update`; JS only), so readers
-   accept a note linking to a page that is not Wikipedia. Until then, publish only Hauls whose kept
-   notes cite the piece or Wikipedia.
+3. Deploy the website, so it accepts a note linking to a page that is not Wikipedia. The app needs no
+   update (it checks only the bundle version and opens any note link).
 4. Run `research` on one real item and read the notes before relying on it for a whole Haul. Not yet
    measured on real items: quality, how many notes the judge confirms, and cost (estimated $0.08 to
    $0.12 an item; the month's ceiling is $10, $2.34 spent on 14 November).

@@ -55,6 +55,8 @@ export function auditResearch(
   const ok: CheckedNote[] = [];
   const failures: string[] = [];
   const seen = new Set<number>();
+  // Quotations already used, beside the item or by an earlier note in this answer.
+  const taken = new Set(takenQuotes);
   for (const n of notes) {
     const where = `note for lead ${n.lead}`;
     const ev = evidenceByLead.get(n.lead);
@@ -76,7 +78,8 @@ export function auditResearch(
       failures.push(`${where}:\n${problems.join('\n')}`);
       continue;
     }
-    if (takenQuotes.has(found!.text)) continue;
+    if (taken.has(found!.text)) continue;
+    taken.add(found!.text);
     seen.add(n.lead);
     ok.push({ lead: n.lead, text, evidence: ev, span: { quote: found!.text, start: found!.start, end: found!.end } });
   }
@@ -98,8 +101,8 @@ export function leadsPrompt(leads: Lead[], evidenceByLead: Map<number, EvidenceR
 export async function researchItem(env: Env, itemId: string): Promise<{ leads: number; sources: number; notes: number; dropped: number }> {
   const item = await getItem(env, itemId);
   const src = await getSource(env, itemId);
-  // A Life carries its own cited lines; a picture or an item without text has nothing to read.
-  if (!item || !src?.text?.trim() || item.type === 'life') return { leads: 0, sources: 0, notes: 0, dropped: 0 };
+  // A Life and a Rhyme carry their own cited lines; a picture or an item without text has nothing to read.
+  if (!item || !src?.text?.trim() || item.type === 'life' || item.kind === 'rhyme') return { leads: 0, sources: 0, notes: 0, dropped: 0 };
   const cardRow = await env.DB.prepare(`SELECT body FROM drafts WHERE item_id = ? AND kind = 'card'`).bind(itemId).first<{ body: string }>();
   const card = parseJson<Partial<ReadingCard>>(cardRow?.body, {});
   const max = loadRoutes(env).tasks.research.maxInputChars;

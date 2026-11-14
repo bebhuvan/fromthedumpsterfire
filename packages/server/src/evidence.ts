@@ -12,6 +12,10 @@ import { fetchSource } from './ingest';
 import { resolveWikiTopic, wikiKeyFromUrl, wordTokens } from './wiki';
 import { newId, nowIso, wordCount } from './util';
 
+/** Sources kept per item: more than any margin needs, and a bound on what one item can store. */
+export const MAX_EVIDENCE_PER_ITEM = 40;
+export class EvidenceLimitError extends Error {}
+
 /** Enough for any Wikipedia article's prose (the longest run past 100,000 words is rare) and a long essay. */
 export const EVIDENCE_MAX_CHARS = 400_000;
 const WIKI_JSON_MAX_BYTES = 4_000_000;
@@ -60,6 +64,10 @@ export function wikiPage(page: Record<string, any> | undefined): FetchedEvidence
 // The first fetch of a link is kept as it is: notes point into it by offset, so a second fetch of the
 // same page never replaces the text under them.
 async function store(env: Env, itemId: string, e: FetchedEvidence, via: string): Promise<EvidenceRow> {
+  const known = await env.DB.prepare('SELECT * FROM evidence WHERE item_id = ? AND url = ?').bind(itemId, e.url).first<EvidenceRow>();
+  if (known) return known;
+  const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM evidence WHERE item_id = ?').bind(itemId).first<{ n: number }>();
+  if ((count?.n ?? 0) >= MAX_EVIDENCE_PER_ITEM) throw new EvidenceLimitError(`This item already has ${MAX_EVIDENCE_PER_ITEM} fetched sources, the most it keeps`);
   const now = nowIso();
   await env.DB.prepare(
     `INSERT INTO evidence (id, item_id, kind, title, publisher, url, text, word_count, revision, via, fetched_at)
@@ -120,10 +128,18 @@ export function printedSource(fetched: string, canonical: string | undefined, si
     // An unreadable canonical link is ignored; the fetched address stands.
   }
   const name = siteName?.trim() ?? '';
-  const squash = (s: string) => s.toLowerCase().replace(/^the\s+/, '').replace(/[^a-z0-9]/g, '');
-  const site = squash(host.split('.').slice(-3).join(''));
-  const publisher = name && squash(name).length >= 3 && site.includes(squash(name)) ? name : host;
+  const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/^the/, '');
+  const publisher = name && squash(name).length >= 3 && squash(name) === squash(siteLabel(host)) ? name : host;
   return { url, publisher };
+}
+
+/** The name a site registered: "theguardian" in www.theguardian.com, "bbc" in news.bbc.co.uk. */
+export function siteLabel(host: string): string {
+  const parts = host.toLowerCase().split('.');
+  const second = parts.at(-2) ?? '';
+  // A country domain with a category level (co.uk, com.au, ac.in, gov.in) registers one level down.
+  const category = parts.length >= 3 && parts.at(-1)!.length === 2 && ['co', 'com', 'org', 'net', 'ac', 'gov', 'edu', 'nic', 'res'].includes(second);
+  return (category ? parts.at(-3) : second) ?? '';
 }
 
 /** Same site: one host is the other or a subdomain of it (www.x.org and x.org; news.x.org and x.org). */
