@@ -51,6 +51,8 @@ The reader app has no editor mode. All write routes sit behind Access.
 7. **connect**: candidates from Vectorize + shared entities + shared mechanisms; judge model types each
    edge with evidence quotes from both ends; store with confidence.
 8. **draft**: title options, excerpt candidates (offsets into source text), marginalia with citations.
+   **research**: margin notes from the model's own knowledge, each quoting a whole Wikipedia article
+   the Desk fetched (or, from a session, a page the Desk fetched for it), then judged.
 9. **check**: excerpts matched verbatim; links fetched (2xx); marginalia checked against cited
    sources; style check on all model prose. Failures surface on the Desk, never silently drop.
 
@@ -78,7 +80,7 @@ rules the app may also use (style check, verbatim matching, deletion-only cleanu
 detection, bundle validator) are in `packages/shared`.
 
 ```
-browser (Access) ─► fdf-desk ── D1 (items, sources, excerpts, drafts, wiki_cards, checks, notes, plates,
+browser (Access) ─► fdf-desk ── D1 (items, sources, excerpts, drafts, wiki_cards, evidence, checks, notes, plates,
    │                 │           chunks, suggestions, judged_pairs, threads, rhymes, hauls, haul_items,
    │                 │           haul_versions, connections, model_calls, runs, devices)
    │                 ├─ R2 MEDIA, private (uploads/, notes/, snapshots/, plates/, blocks/, books/)
@@ -126,11 +128,15 @@ pairs) → `connect` (judged edges with quotes from both ends, below) → `draft
 videos and papers (`wantsIdeas`) three to twelve big ideas (about one per fifteen minutes,
 `ideaCount`), from every third of the piece, each attributed and tied to a verbatim passage, stored
 in the order the piece makes them; audited for house style, verbatim quotes, length and real citations, regenerated up to
-three times with the failures listed, then anything still failing is dropped) → `judge` (each note
+three times with the failures listed, then anything still failing is dropped) → `research` (the
+research desk, `research.ts`: up to eight leads from the model's own knowledge, each a claim, an angle
+and a Wikipedia title; code resolves each title and keeps the whole article in `evidence`; the model
+writes each note from that article's relevant paragraphs (`passagesFor`) and quotes it; style and
+verbatim checked, one retry with the failures listed) → `judge` (each note
 against its cited evidence, each idea against the stretch around its passage; a proposal that is
 not fully supported is set aside as `rejected` and never shown) → `check` (links, quotes, style, citations, the editor's note) →
-`ready`. Errors set the item `failed`; the spend ceiling sets it `paused`. `plate`, `embed` and
-`connect` are helpers: their failures are logged and never fail the item (the spend ceiling still
+`ready`. Errors set the item `failed`; the spend ceiling sets it `paused`. `plate`, `embed`,
+`connect` and `research` are helpers: their failures are logged and never fail the item (the spend ceiling still
 pauses it).
 
 **Long audio.** `extract/audio.ts` plans chunks before any transcription. MP3 is cut into 3 MB byte
@@ -242,7 +248,7 @@ could differ between the two), which is why the fallback is opt-in.
 hostnames, no private, loopback, link-local, CGNAT or metadata addresses (IPv4, IPv6 and mapped
 forms), DNS-over-HTTPS resolution checked, redirects followed by hand and re-checked (5 hops).
 
-**Models.** `packages/server/src/models/routes.json` maps tasks (`read`, `draft`, `judge`, `clean`,
+**Models.** `packages/server/src/models/routes.json` maps tasks (`read`, `draft`, `research`, `judge`, `clean`,
 `ocr`, `haul`, `plate`, `connect`, `thread`, `bridge`) to a chain of models, plus `transcribe`
 (Whisper) and `embed` (bge-m3); `generateJson`, `transcribeAudio` and `embedTexts` in `router.ts`
 are the only ways to call a model. Each model declares its capabilities (JSON schema or JSON

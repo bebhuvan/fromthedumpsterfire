@@ -1282,3 +1282,35 @@ On the editor's "Push it": `claude/heuristic-visvesvaraya-55cce2` merged into `l
   lines, fingerprint figures that keep their size at large system text. Not checked on the emulator at
   large text beyond the fingerprint (the emulator froze); the editor's phone is the test.
 - Open: the style of the cover's "Sixteen objects" line (sketches in `objects-line.html`).
+
+## The research desk and Hauls run from a session (2026-11-14; built and tested locally, not deployed)
+
+DECISIONS 2026-11-14. Built on `launch-2026-10-24`:
+
+- **Research desk** (`packages/server/src/research.ts`, `evidence.ts`; task `research` in `routes.json`):
+  a pipeline step after drafting, and `POST /api/items/:id/research` on demand. Leads from the model's
+  own knowledge, whole Wikipedia articles fetched into the new `evidence` table, notes quoting them word
+  for word, then the judge. Desk shows each note's angle and source.
+- **Session sources and notes**: `GET`/`POST /api/items/:id/evidence` (the Desk fetches a link or a
+  Wikipedia title itself); `POST /api/items/:id/marginalia` takes cite kind `evidence` and an `angle`;
+  `POST /api/items/:id/excerpts` takes the words alone.
+- **Publish**: a note on fetched text prints as "Publisher: Title" with a link to the page; publish
+  refuses one whose quote is no longer in its text. The bundle validator accepts any https page for a
+  note's link (`isNoteUrl` in `packages/shared/src/validate.ts`; was Wikipedia only).
+- **Connections** judged by Sonnet first (was DeepSeek Flash).
+- **CLI**: `todo`, `excerpt`, `plates`, `plate`, `plate-search`, `wiki`, `keep`/`cut`/`reopen`,
+  `research`, `evidence`, `evidence-add`, `margin`, `connect`, `redraft`.
+- **Routine**: `docs/PLAYBOOK.md`, the project skill `.claude/skills/haul`, `GEMINI.md`.
+- Tests: `packages/server/test/research.test.ts`, `workers/api/test/research.test.ts`, a publish case in
+  `publish-buckets.test.ts`, a session-routine case in `scripts/editorial/client.test.mjs`.
+
+**To make it live (the editor's OK first):**
+
+1. Apply migration `0012_evidence.sql` to production D1 (and preview).
+2. Deploy the Desk Worker (`fdf-desk`) and the pipeline Worker.
+3. Deploy the website and ship an app update over the air (`npm run app:update`; JS only), so readers
+   accept a note linking to a page that is not Wikipedia. Until then, publish only Hauls whose kept
+   notes cite the piece or Wikipedia.
+4. Run `research` on one real item and read the notes before relying on it for a whole Haul. Not yet
+   measured on real items: quality, how many notes the judge confirms, and cost (estimated $0.08 to
+   $0.12 an item; the month's ceiling is $10, $2.34 spent on 14 November).

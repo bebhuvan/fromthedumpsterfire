@@ -17,6 +17,8 @@ Read these before working:
 - `docs/EDITORIAL.md`: agent/terminal editing from Codex or Claude Code, credentials, remote sessions,
   payloads and the shared Desk workflow. Use `npm run editorial -- --help`; never bypass the API
   with ad-hoc database writes or public-bucket uploads.
+- `docs/PLAYBOOK.md`: running a Haul from a session with the editor (Claude Code, Codex, Gemini): the
+  order of work, the bar each item must clear, and how the machine adds its own cited notes.
 - `docs/CHARTS.md`: the chart kit: forms, data spec, the honesty validator's rules, source adapters,
   how a chart is added on the Desk and from the terminal, and how the app gets its pictures.
 - `docs/VOICE.md`: the editor's measured writing voice and the AI patterns to keep out of machine
@@ -32,7 +34,8 @@ Read these before working:
 - **Models never emit URLs.** They emit queries; code resolves them against real sources and fetches
   each link before it can ship.
 - **Every excerpt is matched verbatim** against the fetched source text. No match, no ship.
-- **Every machine margin note cites a source** and passes a check against it.
+- **Every machine margin note cites a source** and passes a check against it: the piece, or a text the
+  Desk fetched itself (a whole Wikipedia article, or a page a session found), quoted word for word.
 - **Human vs machine is always visible:** serif is the editor, the blue sans is the machine.
 - **No AI-generated images.** Plates are public domain, with licence recorded.
 - **Every work names the person who made it.** Pictures carry maker, holder, licence and a link back
@@ -54,7 +57,7 @@ workers/api       the Desk Worker: UI assets, capture, review, publish; public P
 workers/pipeline  ItemWorkflow + ingest queue consumer (fetch, read, wiki, plate, embed, connect, draft,
                   judge, check, push)
 packages/server   Worker-side code shared by both: D1, model router, extraction, plates, connections and
-                  threads (connect.ts), rhymes, blocks, the shelf (shelf.ts), the editor's library
+                  threads (connect.ts), the research desk (research.ts, with the texts it cites in evidence.ts), rhymes, blocks, the shelf (shelf.ts), the editor's library
                   (library.ts), publish, FCM
 packages/shared   schema types, design tokens, style check, voice profile, verbatim, cleanup, detect,
                   validator, quoting (excerpt length guide, when to draw out big ideas), highlight
@@ -116,6 +119,14 @@ scripts/          verify-bundle.ts, local-dev-config.ts, probe-plates.ts, smoke-
 - Machine-suggested connections, rhyme quotes and plate metadata follow the same rules as excerpts:
   quotes verified verbatim against stored source text at both ends, licences as the institution
   states them. A kept connection's published note is the editor's own words.
+- The research desk (`research.ts`, DECISIONS 2026-11-14) is the machine's own knowledge made
+  checkable: the model lists leads (a claim and the Wikipedia title that should state it), code fetches
+  each whole article into `evidence` (`evidence.ts`), the model writes each note quoting the article,
+  code finds the quote word for word, and the judge reads the quoted stretch. A session adds texts with
+  `POST /api/items/:id/evidence` (a URL it found, fetched by the Desk through `fetchSource` with `library: false`,
+  so never the editor's saved copy of a paid piece; never text it supplies; the printed link and
+  publisher come from the fetched address, `printedSource`) and notes citing them with cite kind `evidence`. A fetched text is never re-fetched over
+  (notes point into it by offset); a note links to the page it was checked against (`isNoteUrl`).
 - Machine prose is audited with `checkStyle`; editor text is never sent to a model for rewriting.
 - Machine notes and big ideas the judge cannot fully confirm are set aside (`rejected`) and never
   shown; only lines the editor ticks are published. Excerpt length follows `excerptCap` in

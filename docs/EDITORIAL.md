@@ -14,6 +14,9 @@ pipeline are hosted on Cloudflare and continue processing after the agent discon
 
 ## Start here
 
+To build a Haul with the editor, follow `docs/PLAYBOOK.md` (the order of work and the bar for each
+item); this file is the reference for credentials, payloads and each route's rules.
+
 ```sh
 npm run editorial -- --help
 npm run editorial -- status
@@ -254,9 +257,10 @@ npm run editorial -- request POST /api/items/it_ID/blocks --data .editorial/quot
 ```
 
 `quote.json` is `{"kind":"quote","text":"Exact words found in the source.","locator":"p. 12"}`.
-A quote which is not in the stored source is refused. For the primary excerpt, inspect the item's
-source and submit `{"start":0,"end":123,"text":"exact selection"}` to
-`POST /api/items/it_ID/excerpts`; offsets must index the actual stored source, not a browser copy.
+A quote which is not in the stored source is refused. For the primary excerpt, run
+`npm run editorial -- excerpt it_ID --data .editorial/excerpt.json` with `{"text":"exact words"}`:
+the Desk finds the words in the stored source itself and refuses words it cannot find. (The Desk's
+own selection sends `start` and `end` offsets as well.)
 
 Other block bodies: `{"kind":"video","url":"https://www.youtube.com/watch?v=ID"}`,
 `{"kind":"audio","url":"https://open.spotify.com/episode/ID"}`, or
@@ -355,21 +359,38 @@ the editor asks for that story. The request body is capped at 2 MB.
 
 ## Machine notes written in a session
 
-A note of context that the pipeline did not draft (a timeline, a definition the editor asked for)
-goes in through the same gates as the pipeline's own notes:
+`docs/PLAYBOOK.md` says when and why (three to six notes an item, in at least three angles). The
+pipeline's research desk proposes notes from the model's own knowledge already; run it again on
+demand with `npm run editorial -- research it_ID`. A session's own note goes in through the same
+gates as the pipeline's:
 
 ```sh
-npm run editorial -- request POST /api/items/it_ID/marginalia --data .editorial/note.json
+npm run editorial -- evidence-add it_ID --data .editorial/source.json   # {"url":"https://…"} or {"wikipedia":"Exact Title"}
+npm run editorial -- margin it_ID --data .editorial/note.json
+npm run editorial -- evidence it_ID --text                              # what has been fetched, with its text
 ```
 
-`note.json` is `{"text":"One or two plain sentences.","cite":{"kind":"source","quote":"The exact
-passage that supports it."},"writer":"claude-opus-5-5"}`, or cite a Wikipedia card already on the
-item with `{"kind":"wiki","cardId":"wk_ID"}` (add one first with `POST /api/items/it_ID/wiki`
-`{"query":"Lighthill report"}`). The passage must be in the stored source word for word, the text
-must pass the style check, and the judge then checks the note against its evidence: anything not
-fully supported is set aside and never shown. The note arrives as `proposed`, recorded as written
-by `<writer> (session)`, and ships only if the editor keeps it. Machine notes are always set as
-machine text; never use this route for the editor's words.
+`evidence-add` makes the Desk fetch the page itself (guarded and capped, free text only, a paywall
+refused) or resolve the Wikipedia title and keep the whole article, and answers with the stored text,
+so the quote can be copied exactly. A session never supplies the text. The first fetch of a link is
+kept: fetching it again changes nothing.
+
+`note.json` is `{"text":"One to three plain sentences, at most 70 words.","cite":{"kind":"evidence",
+"evidenceId":"ev_ID","quote":"The exact sentences that support it."},"angle":"aftermath",
+"writer":"claude-opus-5-5"}`. The cite may instead be the piece itself, `{"kind":"source","quote":"…"}`,
+or a Wikipedia card already on the item, `{"kind":"wiki","cardId":"wk_ID"}` (add one with
+`wiki it_ID --data {"query":"Lighthill report"}`; the judge sees only the card's lead). `angle` is one
+of backstory, aftermath, anecdote, number, counterpoint, echo, person, term, and is shown to the editor
+only. The passage must be in its text word for word, the note must pass the style check, and the judge
+then checks it against the quoted stretch: anything not fully supported is set aside and never shown.
+The note arrives as `proposed`, recorded as written by `<writer> (session)`. It prints only once kept
+(`keep dr_ID`) and only after the editor has seen it and approved the Haul (`docs/PLAYBOOK.md`); it
+prints with its source's name and a link to the page it was checked against. Machine notes are always
+set as machine text; never use this route for the editor's words.
+
+**Before publishing a Haul with a note on a page that is not Wikipedia**, the website and the app must
+be running the 2026-11-14 validator (`isNoteUrl`), or they refuse that bundle and keep showing the
+previous version. `docs/STATUS.md` says whether that has been deployed.
 
 ## Compose, review, publish
 

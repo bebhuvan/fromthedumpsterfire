@@ -545,3 +545,63 @@ Dated, newest last. Don't reopen these without a new reason.
   redirect to `#field-note` is gone). Rejected: a "Read more" fold in place (a 5,000-word note unfolding
   on the cover buries the contents again, and folded text is easy to miss); contents before the note
   (the editor's letter is the front page of each issue); asking the editor to write shorter.
+
+## 2026-11-14 (the machine's own knowledge, and Hauls run from a session)
+
+The editor, after two Hauls: the machine's notes "feel a little weak"; the idea of having models was
+"to fully leverage their own knowledge, their personality, their ability to say interesting things"
+with proper citations, and "even the model should do the curating". And: he now builds Hauls by
+dictating into a Claude Code session, not on the Desk, and wants any agent (Claude, Codex, Gemini) to
+run the whole process. Measured on the two published Hauls: 38 notes proposed for 39 items, 23 kept;
+28 items carried no machine note; no connections and no Threads. Notes were biography lines because
+the drafter could cite only the piece and the first 1,500 characters (Wikipedia's lead) of up to four
+cards, and was told that "an empty list is a good answer".
+
+- **A research desk: leads from what the model knows, notes from what it fetched.** A new pipeline step
+  (`research.ts`, task `research`, Sonnet first) after drafting. Call one: the model lists up to eight
+  leads from its own knowledge, each a claim, an angle (backstory, aftermath, anecdote, number,
+  counterpoint, echo, person, term) and the Wikipedia title that should state it. Code resolves each
+  title (never guessing an ambiguous one) and fetches the **whole article**. Call two: the model writes
+  each note (at most 70 words) from that article's relevant paragraphs, quoting the sentences that
+  carry every fact. Code checks style and finds each quote word for word; the judge reads the quoted
+  stretch; only what it fully confirms is offered; only what is kept prints. Every non-negotiable
+  holds: models still emit titles, not URLs; every note cites text the Desk fetched. Rejected: letting
+  notes rest on the model's word with a "machine knowledge" label (unverifiable, and the magazine's
+  promise is that every machine line is checked); giving the drafter whole articles in its one call
+  (it would still only find what the reading card's entities point at, not what the model knows);
+  a paid web-search API in the pipeline (cost and a new provider for something Wikipedia covers well;
+  sessions already have web search).
+- **Evidence is its own table, fetched by the Desk and never re-fetched over** (`evidence`, migration
+  0012). A note cites it with cite kind `evidence` (id, publisher, title, url, quote, offsets). The first
+  fetch of a link is kept as is, because notes point into it by offset. Rejected: widening `wiki_cards`
+  (those are further-reading cards readers see; evidence is what a note was checked against).
+- **A session may hand the Desk a link it found** (`POST /api/items/:id/evidence`), which the Desk
+  fetches itself through `fetchSource` (guarded, capped, free text only), the same as a Life's sources
+  (2026-10-27). This is how a session's web search becomes a checkable note. The model-never-writes-a-URL
+  rule is about what is published: the note's link is the fetched page's, added by code, and a page that
+  cannot be fetched cannot be cited. Rejected: accepting pasted source text (unverifiable). The editor's saved
+  library copy of a paid piece is never used for this (it may stand in only for an item's own piece),
+  and the link and publisher printed beside a note come from the address the Desk fetched: a page's own
+  canonical link counts only on the same site, its site name only when the host matches (fresh-eyes
+  review: a page could otherwise name itself "The Guardian" and point the link anywhere).
+- **A note links to the page it was checked against, any https page** (`isNoteUrl`; was Wikipedia only).
+  The website and app already render `Marginal.url` from the bundle. **Order of deploys**: the website
+  and an app update must carry the widened validator before a Haul with a non-Wikipedia note is published,
+  or the older readers would refuse that bundle (they fall back to the earlier version).
+- **Connections are judged by Sonnet first** (was DeepSeek Flash). Two Hauls produced none. The judge
+  of notes stays on another family (DeepSeek Flash first), so writer and checker still differ. Cost per
+  Haul goes up by about $0.50; the research desk adds about $0.10 an item (see `docs/MODELS.md`).
+- **A session runs a Haul by a written routine, `docs/PLAYBOOK.md`**, with plain CLI commands for each
+  choice (`todo`, `excerpt` by words, `plates`/`plate`, `keep`/`cut`, `wiki`, `research`,
+  `evidence-add`, `margin`, `connect`). A project skill (`.claude/skills/haul`) and `GEMINI.md` point
+  Claude Code and Gemini at it; Codex reads `AGENTS.md`. The Desk stays the visual proof. Rejected: an
+  MCP server or agent SDK (the CLI already works in every agent, with no new dependency).
+- **The session chooses; the editor approves the Haul after seeing the choices.** The editor asked
+  sessions to "make all the selections". A session may keep machine lines, pick excerpts, plates and
+  cards on his behalf, but must show him a reading copy of what it kept before he approves, and publish
+  only on his "approved" for that edition. This widens "only lines the editor ticks are published" to
+  "only lines the editor has seen and approved". The editor's own words are still never written or
+  reworded by a machine; a connection's printed note is still his.
+- Not done, for later: a labelled slot for a find the machine itself proposes as an item (today a session
+  suggests finds in chat and the editor takes them with his own line); printing a note's angle on the
+  page; the research desk reading across a whole Haul in one call.
