@@ -611,3 +611,29 @@ cards, and was told that "an empty list is a good answer".
 - Not done, for later: a labelled slot for a find the machine itself proposes as an item (today a session
   suggests finds in chat and the editor takes them with his own line); printing a note's angle on the
   page; the research desk reading across a whole Haul in one call.
+
+## 2026-11-14 (security alerts: what was fixed and what was left, and why)
+
+GitHub listed 42 Dependabot alerts (15 high). Each was traced to what pulls it in and whether it
+reaches the live Desk, pipeline, website or app (the Workers were built and their bundles searched).
+
+- **Fixed, because it runs live: hono 4.13.13 to 4.13.17** (the Desk's web framework; exact version).
+  Its advisories include middleware skipped for some route sets, which could in principle let a
+  request past the Desk's lock. The Desk does not use hono's `csrf()` or `validator('form')`.
+- **Fixed for hygiene: astro 7.3.8 to 7.4.7 and @astrojs/cloudflare 14.3.4 to 14.4.6** (the advisory is
+  in the Node adapter's image endpoint, which the website does not use). The website build and tests pass.
+- **Pinned to patched versions (build and dev tools)**: node-forge 1.4.3 and fast-uri 3.1.9 as `overrides`;
+  undici resolves to the patched 7.30.1. wrangler is pinned to 4.158.0 and `@cloudflare/vite-plugin` to
+  1.67.0, because the Astro update otherwise pulled in releases under seven days old.
+- **Left, with the reason**:
+  - `@cloudflare/puppeteer`'s browser downloader (extract-zip, basic-ftp, proxy-agent): Node-only code
+    that downloads a browser; it is not in the Desk or pipeline bundles (checked) and never runs in a
+    Worker. The fix is @cloudflare/puppeteer 2.0.0, released 2026-11-10: take it after 2026-11-17, with
+    the Browser Rendering tests.
+  - Expo's command-line tools (glob, minimatch, uuid via xcode, deepmerge, zod 3, node-forge was fixed):
+    they run on the editor's laptop at build time and are not in the app. Their fixes come with a later
+    Expo release, which changes the native fingerprint and so needs a new Play build. Take them with the
+    next native release.
+  - decode-uri-component is not installed on this branch (the alert is from `main`'s older lockfile).
+- Rejected: `npm audit fix --force` (major upgrades of Expo and Puppeteer in one step, untested, and
+  some under seven days old).

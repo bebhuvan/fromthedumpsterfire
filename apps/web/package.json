@@ -15,9 +15,9 @@
     "fonts": "sh scripts/fonts.sh"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "14.3.4",
+    "@astrojs/cloudflare": "14.4.6",
     "@fdf/shared": "*",
-    "astro": "7.3.8"
+    "astro": "7.4.7"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10"

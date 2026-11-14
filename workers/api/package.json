@@ -9,7 +9,7 @@
   "dependencies": {
     "@fdf/server": "*",
     "@fdf/shared": "*",
-    "hono": "^4.13.0",
+    "hono": "4.13.17",
     "jose": "^6.2.10",
     "zod": "^4.4.3"
   },

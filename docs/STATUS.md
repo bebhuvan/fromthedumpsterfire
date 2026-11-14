@@ -1318,3 +1318,12 @@ DECISIONS 2026-11-14. Built on `launch-2026-10-24`:
   the published Haul is unchanged. Cost: about $0.085 a run with judging ($2.51 spent this month of $10).
 - Not yet seen: a whole Haul through the pipeline with research, and a session note on a non-Wikipedia
   page published to the live site.
+
+## Security alerts triaged (2026-11-14)
+
+DECISIONS 2026-11-14 (security alerts). hono 4.13.17 (the Desk), astro 7.4.7 and @astrojs/cloudflare
+14.4.6 (the website), patched node-forge, fast-uri and undici; wrangler 4.158.0. `npm audit` now reports
+only Puppeteer's browser downloader (not in any Worker bundle) and Expo's build tools (laptop only).
+Committed; **not yet deployed** (the hono fix reaches the live Desk only with a Desk deploy).
+Due: @cloudflare/puppeteer 2.0.0 after 2026-11-17; Expo's tools with the next native release. The GitHub
+alerts are on `main`, which is behind this branch: they close when this branch is merged into `main`.
