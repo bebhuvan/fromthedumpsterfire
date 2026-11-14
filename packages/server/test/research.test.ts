@@ -76,17 +76,17 @@ describe('wikiPage', () => {
 describe('auditResearch', () => {
   const byLead = new Map([[0, ev()]]);
   it('passes a note whose quotation is in the article word for word', () => {
-    const r = auditResearch([{ lead: 0, text: 'Jevons drowned while bathing near Hastings in 1882, aged 46.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' }], byLead);
+    const r = auditResearch([{ lead: 0, text: 'Jevons drowned while bathing near Hastings in 1882, aged 46.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] }], byLead);
     expect(r.failures).toEqual([]);
     expect(r.ok[0]!.span.start).toBe(ARTICLE.indexOf('Jevons drowned'));
   });
   it('refuses an invented quotation, the house style, an unknown lead and a long note; drops a repeat', () => {
     const r = auditResearch(
       [
-        { lead: 0, text: 'Jevons died young.', quote: 'Jevons died at sea in 1890.' },
-        { lead: 0, text: 'It is not just a death — it is a tapestry.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' },
-        { lead: 3, text: 'A note.', quote: 'Anything.' },
-        { lead: 0, text: Array(90).fill('word').join(' ') + '.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' },
+        { lead: 0, text: 'Jevons died young.', quotes: ['Jevons died at sea in 1890.'] },
+        { lead: 0, text: 'It is not just a death — it is a tapestry.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] },
+        { lead: 3, text: 'A note.', quotes: ['Anything.'] },
+        { lead: 0, text: Array(90).fill('word').join(' ') + '.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] },
       ],
       byLead,
     );
@@ -94,13 +94,13 @@ describe('auditResearch', () => {
     expect(r.failures).toHaveLength(4);
     const twice = auditResearch(
       [
-        { lead: 0, text: 'Jevons drowned in 1882.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' },
-        { lead: 1, text: 'Jevons died at Hastings.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' },
+        { lead: 0, text: 'Jevons drowned in 1882.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] },
+        { lead: 1, text: 'Jevons died at Hastings.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] },
       ],
       new Map([[0, ev()], [1, ev()]]),
     );
     expect(twice.ok).toHaveLength(1);
-    const again = auditResearch([{ lead: 0, text: 'Jevons drowned in 1882.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' }], byLead, new Set(['Jevons drowned while bathing near Hastings in 1882, at the age of 46.']));
+    const again = auditResearch([{ lead: 0, text: 'Jevons drowned in 1882.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] }], byLead, new Set(['Jevons drowned while bathing near Hastings in 1882, at the age of 46.']));
     expect([again.ok, again.failures]).toEqual([[], []]);
   });
 });
@@ -118,8 +118,8 @@ describe('researchItem', () => {
         if (s.includes('numbered leads')) {
           return answer({
             notes: [
-              { lead: 0, text: 'Jevons drowned while bathing near Hastings in 1882, aged 46, seventeen years after The Coal Question.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' },
-              { lead: 1, text: 'A note for a lead with no article.', quote: 'Nothing.' },
+              { lead: 0, text: 'Jevons drowned while bathing near Hastings in 1882, aged 46, seventeen years after The Coal Question.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] },
+              { lead: 1, text: 'A note for a lead with no article.', quotes: ['Nothing.'] },
             ],
           });
         }
@@ -203,7 +203,7 @@ describe('research run again, redrafts and the citation check', () => {
     makeEnv((_m, input) => {
       const s = system(input);
       if (s.includes('Read the piece and the editor')) return answer({ leads: [{ angle: 'anecdote', claim: 'Jevons drowned near Hastings.', wikipedia: 'William Stanley Jevons' }] });
-      if (s.includes('numbered leads')) return answer({ notes: [{ lead: 0, text: 'Jevons drowned while bathing near Hastings in 1882, aged 46.', quote: 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.' }] });
+      if (s.includes('numbered leads')) return answer({ notes: [{ lead: 0, text: 'Jevons drowned while bathing near Hastings in 1882, aged 46.', quotes: ['Jevons drowned while bathing near Hastings in 1882, at the age of 46.'] }] });
       if (s.includes('fact-checker')) return answer({ verdicts: [0, 1, 2].map((index) => ({ index, verdict: judge, reason: 'ok' })) });
       return answer({ titles: [{ text: 'A title' }], excerpts: [], marginalia: [], ideas: [] });
     });
@@ -239,5 +239,52 @@ describe('research run again, redrafts and the citation check', () => {
     await note('dr_bad', 'Jevons lived to ninety.', 0);
     const c = await runChecks(env, 'it_jevons', { links: false });
     expect(c.citations!.rows.map((r) => r.status).sort()).toEqual(['fail', 'pass']);
+  });
+});
+
+describe('notes resting on several passages, and the leads report', () => {
+  it('keeps every passage, shows the judge each one, and reports what became of every lead', async () => {
+    stubWikipedia();
+    const judgeSaw: string[] = [];
+    const env = await seedHaul(
+      makeEnv((_m, input) => {
+        const s = system(input);
+        if (s.includes('Read the piece and the editor'))
+          return answer({
+            leads: [
+              { angle: 'aftermath', claim: 'Jevons published The Coal Question in 1865 and drowned in 1882.', wikipedia: 'William Stanley Jevons' },
+              { angle: 'echo', claim: 'Nothing the article says.', wikipedia: 'William Stanley Jevons' },
+              { angle: 'person', claim: 'No such page.', wikipedia: 'Nobody At All' },
+            ],
+          });
+        if (s.includes('numbered leads'))
+          return answer({
+            notes: [
+              {
+                lead: 0,
+                text: 'Jevons published The Coal Question in 1865 and drowned near Hastings in 1882, aged 46.',
+                quotes: ['In 1865 he published The Coal Question, which argued that Britain would exhaust its coal and lose its lead in industry.', 'Jevons drowned while bathing near Hastings in 1882, at the age of 46.'],
+              },
+            ],
+          });
+        if (s.includes('fact-checker')) {
+          judgeSaw.push(String((input.messages as Msg[]).at(-1)?.content ?? ''));
+          return answer({ verdicts: [{ index: 0, verdict: 'supported', reason: 'Both passages.' }] });
+        }
+        return answer({});
+      }),
+    );
+    expect((await researchItem(env, 'it_jevons')).notes).toBe(1);
+    const body = JSON.parse((await env.DB.prepare(`SELECT body FROM drafts WHERE item_id = 'it_jevons' AND kind = 'marginal'`).first<{ body: string }>())!.body) as MarginalBody;
+    expect(body.cite.kind === 'evidence' && body.cite.more?.[0]?.quote).toBe('Jevons drowned while bathing near Hastings in 1882, at the age of 46.');
+    await judgeNotes(env, 'it_jevons');
+    expect(judgeSaw.join('')).toContain('[…]');
+    const rows = JSON.parse((await env.DB.prepare(`SELECT detail FROM checks WHERE item_id = 'it_jevons' AND name = 'research'`).first<{ detail: string }>())!.detail).rows;
+    expect(rows.map((r: { status: string }) => r.status)).toEqual(['pass', 'warn', 'warn']);
+    expect(rows[2].detail).toContain('No Wikipedia article found for "Nobody At All"');
+    await env.DB.prepare(`UPDATE drafts SET status = 'kept' WHERE item_id = 'it_jevons' AND kind = 'marginal'`).run();
+    expect((await runChecks(env, 'it_jevons', { links: false })).citations!.status).toBe('pass');
+    await env.DB.prepare(`UPDATE evidence SET text = replace(text, 'at the age of 46', 'aged forty-six') WHERE item_id = 'it_jevons'`).run();
+    expect((await runChecks(env, 'it_jevons', { links: false })).citations!.status).toBe('fail');
   });
 });

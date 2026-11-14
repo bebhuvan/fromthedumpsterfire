@@ -170,7 +170,23 @@ export interface EvidenceRow {
 export type NoteCite =
   | { kind: 'source'; quote: string; start: number; end: number }
   | { kind: 'wiki'; title: string; cardId: string }
-  | { kind: 'evidence'; evidenceId: string; title: string; publisher: string; url: string; quote: string; start: number; end: number };
+  | {
+      kind: 'evidence';
+      evidenceId: string;
+      title: string;
+      publisher: string;
+      url: string;
+      quote: string;
+      start: number;
+      end: number;
+      /** Further passages of the same text the note rests on (2026-11-14), each found word for word. */
+      more?: Array<{ quote: string; start: number; end: number }>;
+    };
+
+/** Every passage an evidence note rests on, the first and any further ones. */
+export function evidenceSpans(c: Extract<NoteCite, { kind: 'evidence' }>): Array<{ quote: string; start: number; end: number }> {
+  return [{ quote: c.quote, start: c.start, end: c.end }, ...(c.more ?? [])];
+}
 
 /** What kind of thing a research note tells the reader (shown to the editor on the Desk). */
 export const NOTE_ANGLES = ['backstory', 'aftermath', 'anecdote', 'number', 'counterpoint', 'echo', 'person', 'term'] as const;

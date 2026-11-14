@@ -9,7 +9,7 @@ import { countWords, EXCERPT_MAX_WORDS, excerptCap, ideaCount, isPunctuated, QUO
 import type { ContentType } from '@fdf/shared/tokens';
 import type { Env } from './env';
 import type { DraftRow, EvidenceRow, ExcerptRow, ItemRow, MarginalBody, SourceRow, WikiRow } from './db';
-import { getItem, getSource, setStatus, upsertCheck } from './db';
+import { evidenceSpans, getItem, getSource, setStatus, upsertCheck } from './db';
 import type { FetchOutcome, SourceMeta } from './ingest';
 import { generateJson } from './models/router';
 import { DRAFT_SYSTEM, draftSchema, JUDGE_SYSTEM, judgeSchema, READ_SYSTEM, readSchema, type DraftOutput, type ReadingCard } from './prompts';
@@ -473,8 +473,10 @@ export async function judgeNotes(env: Env, itemId: string, only?: string | strin
       // The quoted sentences with a paragraph or so either side, from the text the Desk fetched.
       const cite = b.cite;
       const e = fetched.find((x) => x.id === cite.evidenceId);
-      if (!e || !isVerbatimAt(e.text, cite, cite.quote)) return 'No evidence available.';
-      return `From ${e.publisher}, "${e.title}": """${e.text.slice(Math.max(0, cite.start - 800), Math.min(e.text.length, cite.end + 800))}"""`;
+      const spans = evidenceSpans(cite);
+      if (!e || !spans.every((x) => isVerbatimAt(e.text, x, x.quote))) return 'No evidence available.';
+      const windows = spans.map((x) => e.text.slice(Math.max(0, x.start - 800), Math.min(e.text.length, x.end + 800)));
+      return `From ${e.publisher}, "${e.title}": ${windows.map((w) => `"""${w}"""`).join(' […] ')}`;
     }
     if (b.cite.kind === 'source') {
       // The cited line plus context. An idea sums up a stretch of a talk or paper around its quote,
@@ -592,7 +594,7 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
     const evRows = (await env.DB.prepare('SELECT id, text FROM evidence WHERE item_id = ?').bind(itemId).all<Pick<EvidenceRow, 'id' | 'text'>>()).results;
     const inEvidence = (c: Extract<MarginalBody['cite'], { kind: 'evidence' }>) => {
       const e = evRows.find((x) => x.id === c.evidenceId);
-      return Boolean(e && isVerbatimAt(e.text, c, c.quote));
+      return Boolean(e && evidenceSpans(c).every((x) => isVerbatimAt(e.text, x, x.quote)));
     };
     for (const [i, n] of notes.entries()) {
       const b = parseJson<MarginalBody | null>(n.body, null);

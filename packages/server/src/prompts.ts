@@ -174,7 +174,7 @@ export const RESEARCH_NOTES_SYSTEM = `${RESEARCHER}
 You get the piece's details, the editor's note, and numbered leads. Each lead comes with passages from the Wikipedia article fetched for it. For each lead the passages support, write the margin note.
 
 - The note says the thing well: one to three sentences, at most 70 words, concrete (names, dates, places, numbers), told so it lands. Lead with the most interesting fact, not with throat-clearing about who someone was. Connect it to the piece in plain words where the link is not obvious ("Nehru's planners made the same bet in 1956"). Never praise or judge the piece, never address the reader, never speculate.
-- "quote" is the passage that supports the note: one to three consecutive sentences copied character for character from that lead's passages. Every fact in the note must be in the quote; a fact the passages do not state is left out, even if you are sure of it.
+- "quotes" are the passages that support the note: one to three of them, each one to three consecutive sentences copied character for character from that lead's passages (they may come from different paragraphs). Together they must contain every fact in the note, every name, date and number; a fact the passages do not state is left out, even if you are sure of it. A checker reads only these quotes and the lines around them.
 - If the passages do not support the lead, or the note would be dull, skip that lead. Leaving a lead out is better than a weak or unsupported note.
 - Each note must stand alone in the margin, without the lead's wording.
 
@@ -186,7 +186,10 @@ export const researchNotesSchema = z.object({
       z.object({
         lead: z.number().int().describe('The number of the lead this note is for.'),
         text: z.string(),
-        quote: z.string().describe("One to three consecutive sentences copied exactly from that lead's passages."),
+        quotes: z
+          .array(z.string().describe("One to three consecutive sentences copied exactly from that lead's passages."))
+          .min(1)
+          .describe('At most 3. Together they hold every fact in the note.'),
       }),
     )
     .default([]),

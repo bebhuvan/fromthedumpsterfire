@@ -376,7 +376,7 @@ so the quote can be copied exactly. A session never supplies the text. The first
 kept: fetching it again changes nothing.
 
 `note.json` is `{"text":"One to three plain sentences, at most 70 words.","cite":{"kind":"evidence",
-"evidenceId":"ev_ID","quote":"The exact sentences that support it."},"angle":"aftermath",
+"evidenceId":"ev_ID","quote":"The exact sentences that support it.","more":["optional further passages, at most two"]},"angle":"aftermath",
 "writer":"claude-opus-5-5"}`. The cite may instead be the piece itself, `{"kind":"source","quote":"…"}`,
 or a Wikipedia card already on the item, `{"kind":"wiki","cardId":"wk_ID"}` (add one with
 `wiki it_ID --data {"query":"Lighthill report"}`; the judge sees only the card's lead). `angle` is one

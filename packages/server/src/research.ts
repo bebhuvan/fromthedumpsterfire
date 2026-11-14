@@ -21,7 +21,7 @@ import { SpendCeilingError } from './spend';
 export const MAX_LEADS = 8;
 /** Longest note, in words: a margin is narrow, and the prompt asks for at most 70. */
 export const NOTE_MAX_WORDS = 85;
-const PASSAGE_CHARS = 5000;
+const PASSAGE_CHARS = 7000;
 
 export interface Lead {
   angle: NoteAngle;
@@ -32,7 +32,7 @@ export interface Lead {
 export interface WrittenNote {
   lead: number;
   text: string;
-  quote: string;
+  quotes: string[];
 }
 
 export interface CheckedNote {
@@ -40,6 +40,7 @@ export interface CheckedNote {
   text: string;
   evidence: EvidenceRow;
   span: { quote: string; start: number; end: number };
+  more: Array<{ quote: string; start: number; end: number }>;
 }
 
 /**
@@ -71,17 +72,23 @@ export function auditResearch(
     if (!style.ok) problems.push(describeIssues(style.issues));
     const words = countWords(text);
     if (words > NOTE_MAX_WORDS) problems.push(`- It is ${words} words; a margin note is at most 70.`);
-    const found = findVerbatim(ev.text, n.quote);
-    if (!found) problems.push("- Its quote is not in the lead's passages word for word. Copy one to three consecutive sentences exactly.");
-    else if (countWords(found.text) > 110) problems.push('- Its quote is too long. Quote at most three sentences.');
+    const quotes = (n.quotes ?? []).slice(0, 3);
+    if (!quotes.length) problems.push('- It has no quote. Give one to three passages that hold every fact in it.');
+    const spans: Array<{ quote: string; start: number; end: number }> = [];
+    quotes.forEach((q, k) => {
+      const found = findVerbatim(ev.text, q);
+      if (!found) problems.push(`- Its quote ${k + 1} is not in the lead's passages word for word. Copy one to three consecutive sentences exactly.`);
+      else if (countWords(found.text) > 110) problems.push(`- Its quote ${k + 1} is too long. Quote at most three sentences.`);
+      else if (!spans.some((x) => x.start === found.start)) spans.push({ quote: found.text, start: found.start, end: found.end });
+    });
     if (problems.length) {
       failures.push(`${where}:\n${problems.join('\n')}`);
       continue;
     }
-    if (taken.has(found!.text)) continue;
-    taken.add(found!.text);
+    if (taken.has(spans[0]!.quote)) continue;
+    taken.add(spans[0]!.quote);
     seen.add(n.lead);
-    ok.push({ lead: n.lead, text, evidence: ev, span: { quote: found!.text, start: found!.start, end: found!.end } });
+    ok.push({ lead: n.lead, text, evidence: ev, span: spans[0]!, more: spans.slice(1) });
   }
   return { ok, failures };
 }
@@ -96,6 +103,21 @@ export function leadsPrompt(leads: Lead[], evidenceByLead: Map<number, EvidenceR
     })
     .filter(Boolean)
     .join('\n\n');
+}
+
+/**
+ * What became of each lead, for the editor and a session: a lead Wikipedia could not confirm is a
+ * place to look for another source (docs/PLAYBOOK.md), never a fact to print.
+ */
+export function leadRows(leads: Lead[], evidenceByLead: Map<number, EvidenceRow>, written: WrittenNote[], ok: CheckedNote[]): Array<{ label: string; status: 'pass' | 'warn' | 'fail'; detail: string }> {
+  return leads.map((l, i) => {
+    const label = `${l.angle}: ${truncate(l.claim, 160)}`;
+    const ev = evidenceByLead.get(i);
+    if (!ev) return { label, status: 'warn', detail: `No Wikipedia article found for "${l.wikipedia}"; look for another source` };
+    if (ok.some((n) => n.lead === i)) return { label, status: 'pass', detail: `Note written from Wikipedia: ${ev.title}, sent to the checker` };
+    if (written.some((n) => n.lead === i)) return { label, status: 'fail', detail: `The note failed the house checks (quote or style); Wikipedia: ${ev.title}` };
+    return { label, status: 'warn', detail: `Wikipedia: ${ev.title} did not support it, or it made a dull note; look for another source` };
+  });
 }
 
 export async function researchItem(env: Env, itemId: string): Promise<{ leads: number; sources: number; notes: number; dropped: number }> {
@@ -191,7 +213,7 @@ export async function researchItem(env: Env, itemId: string): Promise<{ leads: n
   result.ok.forEach((n, i) => {
     const body: MarginalBody = {
       text: n.text,
-      cite: { kind: 'evidence', evidenceId: n.evidence.id, title: n.evidence.title, publisher: n.evidence.publisher, url: n.evidence.url, ...n.span },
+      cite: { kind: 'evidence', evidenceId: n.evidence.id, title: n.evidence.title, publisher: n.evidence.publisher, url: n.evidence.url, ...n.span, ...(n.more.length ? { more: n.more } : {}) },
       angle: leads[n.lead]!.angle,
       verdict: 'unchecked',
     };
@@ -211,7 +233,7 @@ export async function researchItem(env: Env, itemId: string): Promise<{ leads: n
   const dropped = result.failures.length;
   await upsertCheck(env, itemId, 'research', result.ok.length ? 'pass' : 'warn', {
     summary: `${result.ok.length} research note${result.ok.length === 1 ? '' : 's'} from ${sources} Wikipedia article${sources === 1 ? '' : 's'} (${leads.length} leads)${dropped ? `; ${dropped} failed the house checks and were dropped` : ''}`,
-    rows: [],
+    rows: leadRows(leads, evidenceByLead, written, result.ok),
   });
   return { leads: leads.length, sources, notes: result.ok.length, dropped };
 }

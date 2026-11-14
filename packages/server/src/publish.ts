@@ -19,6 +19,7 @@ import { editionOf, type ContentType, type Swatch } from '@fdf/shared/tokens';
 import { isNoteUrl, validateHaul, type BundleIssue } from '@fdf/shared/validate';
 import type { Env } from './env';
 import type { CheckRow, DraftRow, EvidenceRow, ExcerptRow, HaulRow, ItemRow, MarginalBody, NoteRow, WikiRow } from './db';
+import { evidenceSpans } from './db';
 import { dateIst, nowIso, parseJson, sha256Hex, slugify } from './util';
 import { imageSize, plateForBundle, type PlateRow } from './plates';
 import { formatOfNote } from './voice';
@@ -223,7 +224,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       if (n.cite.kind !== 'evidence') continue;
       const c = n.cite;
       const e = fetched.find((x) => x.id === c.evidenceId);
-      if (!e || !isVerbatimAt(e.text, c, c.quote)) problems.push({ itemId: it.id, itemTitle: label, message: `a kept note's quotation is no longer in ${c.publisher}: ${c.title} ("${n.text.slice(0, 50)}…")` });
+      if (!e || !evidenceSpans(c).every((x) => isVerbatimAt(e.text, x, x.quote))) problems.push({ itemId: it.id, itemTitle: label, message: `a kept note's quotation is no longer in ${c.publisher}: ${c.title} ("${n.text.slice(0, 50)}…")` });
     }
     // Machine notes and ideas publish only when the editor ticked them; the rest are left out.
     const src = await env.DB.prepare('SELECT text, extractor FROM sources WHERE item_id = ?').bind(it.id).first<{ text: string; extractor: string }>();

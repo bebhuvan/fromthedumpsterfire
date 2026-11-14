@@ -52,6 +52,12 @@ describe('fetched evidence for session notes', () => {
     expect(note.status).toBe(200);
     expect(note.body.draft).toMatchObject({ status: 'proposed', model: 'claude-opus-5-5 (session)' });
     expect(note.body.draft.body).toMatchObject({ angle: 'echo', verdict: 'supported', cite: { kind: 'evidence', publisher: 'Wikipedia', title: 'Great Stink', url: URL_ } });
+    const two = await call(env, 'POST', '/api/items/it_jevons/marginalia', {
+      text: 'The Great Stink came in the hot summer of 1858, when the Thames smelled of untreated waste.',
+      cite: { kind: 'evidence', evidenceId: added.body.evidence.id, quote: 'The Great Stink was an event in central London in July and August 1858.', more: ['The hot weather made the smell of untreated human waste on the Thames overwhelming.'] },
+    });
+    expect(two.body.draft.body.cite.more).toHaveLength(1);
+    expect((await call(env, 'POST', '/api/items/it_jevons/marginalia', { text: 'A plain note.', cite: { kind: 'evidence', evidenceId: added.body.evidence.id, quote: 'The Great Stink was an event in central London in July and August 1858.', more: ['Invented words.'] } })).status).toBe(422);
   });
 
   it('refuses a quotation not in the fetched text, a text from another item, a bad link and a bad body', async () => {

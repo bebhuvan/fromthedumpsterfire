@@ -87,10 +87,14 @@ thing happened. Then make it checkable:
    (`docs/VOICE.md`, `packages/shared/src/style.ts`). Lead with the interesting fact.
 4. `margin ITEM --data note.json`:
    `{"text":"…","cite":{"kind":"evidence","evidenceId":"ev_…","quote":"one to three exact sentences from that text"},"angle":"aftermath","writer":"claude-opus-5-5"}`.
-   Every fact in the note must be in the quote. The Desk refuses a quote that is not in the text word
-   for word, then the judge reads it; anything not fully supported is set aside and never shown.
+   Every fact in the note must be in its quotes: when the facts sit in different paragraphs, add up to
+   two more passages of the same text as `"more":["…","…"]` in the cite. The Desk refuses a quote that
+   is not in the text word for word, then the judge reads every passage; anything not fully supported is
+   set aside and never shown.
 5. `research ITEM` runs the pipeline's research desk again on demand (after the editor's take
-   changes, say).
+   changes, say; two minutes apart at least). Its report (`item ITEM`, the `research` check) lists every
+   lead the model had and what became of it. A lead Wikipedia did not confirm is the best place to look
+   for another source and write the note yourself; it is never a fact to print as it stands.
 
 Rules that do not bend: the machine never writes a URL into a note (the link is the fetched page's,
 added by code); never quotes what it has not fetched; never reports an opinion as the editor's; never

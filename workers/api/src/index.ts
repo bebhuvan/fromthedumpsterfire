@@ -633,7 +633,8 @@ app.post('/api/items/:id/marginalia', async (c) => {
         z.object({ kind: z.literal('source'), quote: z.string().min(2).max(1200) }),
         z.object({ kind: z.literal('wiki'), cardId: z.string().min(1).max(64) }),
         // A text the Desk fetched for this item (POST /api/items/:id/evidence), quoted word for word.
-        z.object({ kind: z.literal('evidence'), evidenceId: z.string().min(1).max(64), quote: z.string().min(2).max(1200) }),
+        // `more`: up to two further passages of the same text, when the note's facts sit in several places.
+        z.object({ kind: z.literal('evidence'), evidenceId: z.string().min(1).max(64), quote: z.string().min(2).max(1200), more: z.array(z.string().min(2).max(1200)).max(2).optional() }),
       ]),
       angle: z.enum(NOTE_ANGLES).optional(),
       /** Who wrote it, for the record (e.g. "claude-opus-5-5"); stored as "<writer> (session)". */
@@ -653,9 +654,20 @@ app.post('/api/items/:id/marginalia', async (c) => {
   } else if (b.cite.kind === 'evidence') {
     const e = await c.env.DB.prepare('SELECT * FROM evidence WHERE id = ? AND item_id = ?').bind(b.cite.evidenceId, id).first<EvidenceRow>();
     if (!e) return c.json({ error: 'That fetched text is not on this item; fetch it first with POST /api/items/ID/evidence' }, 422);
-    const f = findVerbatim(e.text, b.cite.quote);
-    if (!f) return c.json({ error: `The cited passage is not in ${e.publisher}: ${e.title} word for word` }, 422);
-    cite = { kind: 'evidence', evidenceId: e.id, title: e.title, publisher: e.publisher, url: e.url, quote: f.text, start: f.start, end: f.end };
+    const found = [b.cite.quote, ...(b.cite.more ?? [])].map((q) => findVerbatim(e.text, q));
+    if (found.some((f) => !f)) return c.json({ error: `A cited passage is not in ${e.publisher}: ${e.title} word for word` }, 422);
+    const [f, ...rest] = found as Array<NonNullable<(typeof found)[number]>>;
+    cite = {
+      kind: 'evidence',
+      evidenceId: e.id,
+      title: e.title,
+      publisher: e.publisher,
+      url: e.url,
+      quote: f!.text,
+      start: f!.start,
+      end: f!.end,
+      ...(rest.length ? { more: rest.map((x) => ({ quote: x.text, start: x.start, end: x.end })) } : {}),
+    };
   } else {
     const card = await c.env.DB.prepare(`SELECT id, title FROM wiki_cards WHERE id = ? AND item_id = ? AND status != 'cut'`).bind(b.cite.cardId, id).first<{ id: string; title: string }>();
     if (!card) return c.json({ error: 'That Wikipedia card is not on this item' }, 422);
