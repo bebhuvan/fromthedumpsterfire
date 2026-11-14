@@ -44,6 +44,8 @@ import {
   type HaulRow,
   type ItemRow,
   type MarginalBody,
+  type EvidenceRow,
+  NOTE_ANGLES,
   type NoteRow,
   type SourceRow,
   type WikiRow,
@@ -57,6 +59,7 @@ import { shelfApi } from './shelf';
 import { storiesApi } from './stories';
 import { livesApi } from './lives';
 import { reviewApi } from './review';
+import { researchApi } from './research';
 import { assetResponse, manifestResponse } from './updates';
 
 type App = { Bindings: Env; Variables: { owner: string; canPublish: boolean; ownerLogin: boolean } };
@@ -551,11 +554,20 @@ app.get('/api/items/:id/file', async (c) => {
 app.post('/api/items/:id/excerpts', async (c) => {
   const id = c.req.param('id');
   const item = await itemOr404(c.env, id);
-  const b = await body(c, z.object({ start: z.number().int().min(0), end: z.number().int().min(1), text: z.string().min(1) }));
+  // Offsets from the Desk's selection, or the words alone (a terminal session), found in the source by code.
+  const b = await body(c, z.object({ start: z.number().int().min(0).optional(), end: z.number().int().min(1).optional(), text: z.string().min(1) }));
   const src = await c.env.DB.prepare('SELECT text, meta FROM sources WHERE item_id = ?').bind(id).first<{ text: string; meta: string | null }>();
   if (!src) return c.json({ error: 'No source text yet' }, 409);
+  if ((b.start === undefined) !== (b.end === undefined)) return c.json({ error: 'Give both start and end, or neither' }, 400);
+  let start: number;
+  let end: number;
+  if (b.start === undefined || b.end === undefined) {
+    const f = findVerbatim(src.text, b.text);
+    if (!f) return c.json({ error: 'Those words are not in the source word for word' }, 409);
+    ({ start, end } = f);
+    b.text = f.text;
+  } else ({ start, end } = b);
   // The excerpt is the source's own characters at those offsets, trimmed of edge whitespace.
-  let { start, end } = b;
   while (start < end && /\s/.test(src.text[start]!)) start++;
   while (end > start && /\s/.test(src.text[end - 1]!)) end--;
   const text = src.text.slice(start, end);
@@ -606,8 +618,9 @@ app.delete('/api/excerpts/:id', async (c) => {
 // ------------------------------------------------------------------ drafts (titles, marginalia)
 
 // A machine note written outside the pipeline (an editorial session in Codex or Claude Code). It
-// passes the same gates as the pipeline's own: evidence found word for word in the stored source
-// (or a Wikipedia card already on the item), the style check, then the judge. Anything the judge
+// passes the same gates as the pipeline's own: evidence found word for word in the stored source or in
+// a text the Desk fetched for the item (research.ts), or a Wikipedia card already on the item; the
+// style check; then the judge. Anything the judge
 // does not fully confirm is set aside unseen; nothing ships until the editor keeps it.
 app.post('/api/items/:id/marginalia', async (c) => {
   const id = c.req.param('id');
@@ -615,11 +628,14 @@ app.post('/api/items/:id/marginalia', async (c) => {
   const b = await body(
     c,
     z.object({
-      text: z.string().min(1).max(600),
+      text: z.string().min(1).max(700),
       cite: z.discriminatedUnion('kind', [
         z.object({ kind: z.literal('source'), quote: z.string().min(2).max(1200) }),
         z.object({ kind: z.literal('wiki'), cardId: z.string().min(1).max(64) }),
+        // A text the Desk fetched for this item (POST /api/items/:id/evidence), quoted word for word.
+        z.object({ kind: z.literal('evidence'), evidenceId: z.string().min(1).max(64), quote: z.string().min(2).max(1200) }),
       ]),
+      angle: z.enum(NOTE_ANGLES).optional(),
       /** Who wrote it, for the record (e.g. "claude-opus-5-5"); stored as "<writer> (session)". */
       writer: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,58}$/).optional(),
     }),
@@ -634,6 +650,12 @@ app.post('/api/items/:id/marginalia', async (c) => {
     const f = findVerbatim(src.text, b.cite.quote);
     if (!f) return c.json({ error: 'The cited passage is not in the source word for word' }, 422);
     cite = { kind: 'source', quote: f.text, start: f.start, end: f.end };
+  } else if (b.cite.kind === 'evidence') {
+    const e = await c.env.DB.prepare('SELECT * FROM evidence WHERE id = ? AND item_id = ?').bind(b.cite.evidenceId, id).first<EvidenceRow>();
+    if (!e) return c.json({ error: 'That fetched text is not on this item; fetch it first with POST /api/items/ID/evidence' }, 422);
+    const f = findVerbatim(e.text, b.cite.quote);
+    if (!f) return c.json({ error: `The cited passage is not in ${e.publisher}: ${e.title} word for word` }, 422);
+    cite = { kind: 'evidence', evidenceId: e.id, title: e.title, publisher: e.publisher, url: e.url, quote: f.text, start: f.start, end: f.end };
   } else {
     const card = await c.env.DB.prepare(`SELECT id, title FROM wiki_cards WHERE id = ? AND item_id = ? AND status != 'cut'`).bind(b.cite.cardId, id).first<{ id: string; title: string }>();
     if (!card) return c.json({ error: 'That Wikipedia card is not on this item' }, 422);
@@ -642,7 +664,7 @@ app.post('/api/items/:id/marginalia', async (c) => {
   const pos = await c.env.DB.prepare(`SELECT COALESCE(MAX(position), -1) + 1 AS n FROM drafts WHERE item_id = ? AND kind = 'marginal'`).bind(id).first<{ n: number }>();
   const draftId = newId('dr_');
   const now = nowIso();
-  const note: MarginalBody = { text, cite, verdict: 'unchecked' };
+  const note: MarginalBody = { text, cite, ...(b.angle ? { angle: b.angle } : {}), verdict: 'unchecked' };
   await c.env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, model, position, created_at, updated_at) VALUES (?, ?, 'marginal', ?, 'proposed', ?, ?, ?, ?)`)
     .bind(draftId, id, JSON.stringify(note), `${b.writer ?? 'editorial'} (session)`, pos?.n ?? 0, now, now)
     .run();
@@ -949,6 +971,7 @@ app.route('/', shelfApi);
 app.route('/', storiesApi);
 app.route('/', livesApi);
 app.route('/', reviewApi);
+app.route('/', researchApi);
 
 // Stored files, behind the lock. Published paths (hauls/..., shelf/...) come from the public FILES bucket, so a
 // preview deployment can check its bundles (production readers get them from R2 directly); private

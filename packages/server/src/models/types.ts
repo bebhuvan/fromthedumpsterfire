@@ -2,7 +2,7 @@
 // model in routes.json; adapters read them, never hard-code them.
 
 export type Provider = 'workers-ai' | 'google-ai-studio' | 'deepseek' | 'anthropic' | 'zai' | 'openai' | 'openrouter';
-export type TaskName = 'read' | 'draft' | 'judge' | 'clean' | 'ocr' | 'haul' | 'plate' | 'connect' | 'thread' | 'bridge';
+export type TaskName = 'read' | 'draft' | 'research' | 'judge' | 'clean' | 'ocr' | 'haul' | 'plate' | 'connect' | 'thread' | 'bridge';
 
 /** How hard a model may think. 'off' asks for no reasoning where the model allows it. */
 export type ThinkingLevel = 'off' | 'low' | 'medium' | 'high';

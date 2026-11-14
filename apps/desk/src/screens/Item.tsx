@@ -9,6 +9,7 @@ import { excerptAdvice, isPunctuated } from '@fdf/shared/quoting';
 import { type ContentType } from '@fdf/shared/tokens';
 import { api, displayTitle, type Check, type Draft, type Excerpt, type ItemDetail, type MarginalBody, type Note, type Title, type TitleBody, type TrayItem, type WikiCard } from '../api';
 import { Link, navigate, safeHref, SaveNote, useAutosave, useKeys, useLoad, usePoll, useToast } from '../lib/core';
+import { angleLabel } from '../lib/offers';
 import { ChecksPanel, deskTypeForm, deskTypeLabel, NoteCompare, Spinner, TextArea, TypeSelect, VoiceNote } from '../ui/parts';
 import { Reader, type Selection } from './Reader';
 import { TrayList } from './Tray';
@@ -862,7 +863,19 @@ function CheckedLines({ kind, drafts, act, tick, saving, autoCaptions = false }:
                   “{b.cite.quote.replace(/\s*\n\s*/g, ' ')}”{b.locator ? <span className="muted"> · {b.locator}</span> : null}
                 </p>
               )}
-              {kind === 'marginal' && <span className="note-cite">{b.cite.kind === 'source' ? <>From the piece: “{b.cite.quote.slice(0, 120)}{b.cite.quote.length > 120 ? '…' : ''}”</> : <>From Wikipedia: {b.cite.title}</>}</span>}
+              {kind === 'marginal' && (
+                <span className="note-cite">
+                  {b.cite.kind === 'source' ? (
+                    <>From the piece: “{b.cite.quote.slice(0, 120)}{b.cite.quote.length > 120 ? '…' : ''}”</>
+                  ) : b.cite.kind === 'evidence' ? (
+                    <>
+                      {angleLabel(b.angle)}From {b.cite.publisher}: {b.cite.title}: “{b.cite.quote.slice(0, 160)}{b.cite.quote.length > 160 ? '…' : ''}”
+                    </>
+                  ) : (
+                    <>From Wikipedia: {b.cite.title}</>
+                  )}
+                </span>
+              )}
               {flagged && <span className="small warn">The checker could not confirm your edit: {b.reason}</span>}
               {kind === 'idea' && <IdeaReaction draft={d} act={act} />}
               {editing !== d.id && (

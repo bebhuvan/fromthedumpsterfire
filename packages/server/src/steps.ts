@@ -8,7 +8,7 @@ import { itemNote } from '@fdf/shared/fieldnote';
 import { countWords, EXCERPT_MAX_WORDS, excerptCap, ideaCount, isPunctuated, QUOTED_WHOLE, wantsIdeas } from '@fdf/shared/quoting';
 import type { ContentType } from '@fdf/shared/tokens';
 import type { Env } from './env';
-import type { DraftRow, ExcerptRow, ItemRow, MarginalBody, SourceRow, WikiRow } from './db';
+import type { DraftRow, EvidenceRow, ExcerptRow, ItemRow, MarginalBody, SourceRow, WikiRow } from './db';
 import { getItem, getSource, setStatus, upsertCheck } from './db';
 import type { FetchOutcome, SourceMeta } from './ingest';
 import { generateJson } from './models/router';
@@ -81,7 +81,7 @@ export async function applyFields(env: Env, itemId: string, f: FetchOutcome['fie
     .run();
 }
 
-function itemHeader(item: ItemRow): string {
+export function itemHeader(item: ItemRow): string {
   return [
     `Type: ${item.type}`,
     item.title && `Title: ${item.title}`,
@@ -334,7 +334,8 @@ export async function draftItem(env: Env, itemId: string): Promise<{ titles: num
   const now = nowIso();
 
   // Kept and edited lines survive a redraft; proposals and the checker's rejections are replaced.
-  await env.DB.prepare(`DELETE FROM drafts WHERE item_id = ? AND kind IN ('title', 'marginal', 'idea') AND status IN ('proposed', 'rejected')`).bind(itemId).run();
+  // A session's notes (and their own sources) are the session's to withdraw, so a redraft leaves them.
+  await env.DB.prepare(`DELETE FROM drafts WHERE item_id = ? AND kind IN ('title', 'marginal', 'idea') AND status IN ('proposed', 'rejected') AND COALESCE(model, '') NOT LIKE '%(session)'`).bind(itemId).run();
   await env.DB.prepare(`DELETE FROM excerpts WHERE item_id = ? AND origin = 'machine' AND chosen = 0`).bind(itemId).run();
 
   const stmts: D1PreparedStatement[] = [];
@@ -463,7 +464,17 @@ export async function judgeNotes(env: Env, itemId: string, onlyDraftId?: string)
   ).results.filter((r) => !onlyDraftId || r.id === onlyDraftId);
   if (!rows.length) return { checked: 0, rejected: 0 };
   const cards = (await env.DB.prepare(`SELECT * FROM wiki_cards WHERE item_id = ?`).bind(itemId).all<WikiRow>()).results;
+  const fetched = rows.some((r) => r.body.includes('"evidence"'))
+    ? (await env.DB.prepare('SELECT * FROM evidence WHERE item_id = ?').bind(itemId).all<EvidenceRow>()).results
+    : [];
   const evidence = (b: MarginalBody, kind: string) => {
+    if (b.cite.kind === 'evidence') {
+      // The quoted sentences with a paragraph or so either side, from the text the Desk fetched.
+      const cite = b.cite;
+      const e = fetched.find((x) => x.id === cite.evidenceId);
+      if (!e || !isVerbatimAt(e.text, cite, cite.quote)) return 'No evidence available.';
+      return `From ${e.publisher}, "${e.title}": """${e.text.slice(Math.max(0, cite.start - 800), Math.min(e.text.length, cite.end + 800))}"""`;
+    }
     if (b.cite.kind === 'source') {
       // The cited line plus context. An idea sums up a stretch of a talk or paper around its quote,
       // so it is judged against that stretch (about two minutes of speech either side).
@@ -576,19 +587,25 @@ export async function runChecks(env: Env, itemId: string, opts: { links?: boolea
     ).results;
     const styleRows: CheckSummary['rows'] = [];
     const citeRows: CheckSummary['rows'] = [];
+    // A kept note on fetched text must still find its quote there, at its place.
+    const evRows = (await env.DB.prepare('SELECT id, text FROM evidence WHERE item_id = ?').bind(itemId).all<Pick<EvidenceRow, 'id' | 'text'>>()).results;
+    const inEvidence = (c: Extract<MarginalBody['cite'], { kind: 'evidence' }>) => {
+      const e = evRows.find((x) => x.id === c.evidenceId);
+      return Boolean(e && isVerbatimAt(e.text, c, c.quote));
+    };
     for (const [i, n] of notes.entries()) {
       const b = parseJson<MarginalBody | null>(n.body, null);
       if (!b) continue;
       const label = `${n.kind === 'idea' ? 'Idea' : 'Note'} ${i + 1}`;
       const s = checkStyle(b.text);
       styleRows.push({ label, status: s.ok ? (s.issues.length ? 'warn' : 'pass') : 'fail', detail: s.issues.map((x) => x.message).join(' ') || 'Clean' });
-      const hasCite = b.cite.kind === 'source' ? Boolean(src && isVerbatimAt(src.text, b.cite, b.cite.quote)) : Boolean(b.cite.cardId);
+      const hasCite = b.cite.kind === 'source' ? Boolean(src && isVerbatimAt(src.text, b.cite, b.cite.quote)) : b.cite.kind === 'evidence' ? inEvidence(b.cite) : Boolean(b.cite.cardId);
       const verdict = b.verdict ?? 'unchecked';
       const status = !hasCite ? 'fail' : verdict === 'supported' ? 'pass' : verdict === 'unchecked' ? 'warn' : 'fail';
       citeRows.push({
         label,
         status,
-        detail: !hasCite ? 'Its citation no longer matches the evidence' : verdict === 'supported' ? (b.cite.kind === 'wiki' ? `Checked against Wikipedia: ${b.cite.title}` : 'Checked against the source') : verdict === 'unchecked' ? 'Not checked yet' : `Checker: ${verdict}. ${b.reason ?? ''}`,
+        detail: !hasCite ? 'Its citation no longer matches the evidence' : verdict === 'supported' ? (b.cite.kind === 'wiki' ? `Checked against Wikipedia: ${b.cite.title}` : b.cite.kind === 'evidence' ? `Checked against ${b.cite.publisher}: ${b.cite.title}` : 'Checked against the source') : verdict === 'unchecked' ? 'Not checked yet' : `Checker: ${verdict}. ${b.reason ?? ''}`,
       });
     }
     const titleRows = (

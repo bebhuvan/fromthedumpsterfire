@@ -215,7 +215,12 @@ export interface Excerpt {
 
 export interface MarginalBody {
   text: string;
-  cite: { kind: 'source'; quote: string; start: number; end: number } | { kind: 'wiki'; title: string; cardId: string };
+  cite:
+    | { kind: 'source'; quote: string; start: number; end: number }
+    | { kind: 'wiki'; title: string; cardId: string }
+    | { kind: 'evidence'; evidenceId: string; title: string; publisher: string; url: string; quote: string; start: number; end: number };
+  /** Research notes: what kind of thing the note tells (backstory, aftermath …). */
+  angle?: string;
   verdict?: 'supported' | 'partly' | 'unsupported' | 'unchecked';
   reason?: string;
   /** Ideas: where the quoted passage sits. */

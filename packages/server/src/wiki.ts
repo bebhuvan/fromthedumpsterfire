@@ -84,6 +84,8 @@ function namesPhrase(query: string, h: Pick<WikiSummary, 'title' | 'extract'>): 
 }
 
 const STOP = new Set(['the', 'a', 'an', 'of', 'and', 'in', 'on', 'for', 'to', 'by', 'at', 'with', 'from', 'de', 'la']);
+/** Significant words, lowercased and without accents (for matching a query, a claim or a lead). */
+export const wordTokens = (s: string) => tokens(s);
 const tokens = (s: string) =>
   s
     .toLowerCase()

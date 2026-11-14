@@ -23,6 +23,8 @@ import {
   notifyAll,
   nowIso,
   readItem,
+  upsertCheck,
+  researchItem,
   resolveWiki,
   runChecks,
   setStatus,
@@ -164,6 +166,20 @@ export class ItemWorkflow extends WorkflowEntrypoint<Env, ItemWorkflowParams> {
         await step.do('connect', RETRY, () => guard(async () => (await mark('connect'), judgeCandidates(env, itemId, found.candidates))));
       }
       await step.do('draft', RETRY, () => guard(async () => (await mark('draft'), draftItem(env, itemId))));
+      // The research desk is a helper too: notes from what the model knows, checked against whole
+      // Wikipedia articles. A failure there never fails the item; the spend ceiling still pauses it.
+      await step.do('research', RETRY, () =>
+        guard(async () => {
+          await mark('research');
+          return researchItem(env, itemId).catch(async (e) => {
+            if (e instanceof SpendCeilingError) throw e;
+            console.warn(JSON.stringify({ event: 'research-failed', itemId, error: errorMessage(e) }));
+            // Shown on the item's checks, so the editor can see the research desk did not run.
+            await upsertCheck(env, itemId, 'research', 'warn', { summary: `The research desk failed: ${errorMessage(e).slice(0, 200)}. Run research again from the item.`, rows: [] });
+            return { leads: 0, sources: 0, notes: 0, dropped: 0, error: errorMessage(e).slice(0, 200) };
+          });
+        }),
+      );
       await step.do('judge', RETRY, () => guard(async () => (await mark('judge'), setStatus(env, itemId, 'checking'), judgeNotes(env, itemId))));
       await step.do('check', RETRY, async () => {
         await mark('check');

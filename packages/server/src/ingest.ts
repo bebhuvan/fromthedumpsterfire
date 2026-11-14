@@ -390,7 +390,11 @@ async function fromPdfBytes(env: Env, bytes: Uint8Array, url: string | null, nam
   };
 }
 
-export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOutcome> {
+/**
+ * `library: false` refuses a paid piece outright instead of reading the editor's saved copy: that copy
+ * may stand in for an item's own piece, never for a source quoted beside another item (evidence.ts).
+ */
+export async function fetchSource(env: Env, item: CapturedItem, opts: { library?: boolean } = {}): Promise<FetchOutcome> {
   const url = item.url ?? '';
   // A PDF the editor uploaded to an item captured by link (a paper behind a download block) is
   // read in place of fetching the link; the link stays as the item's source.
@@ -615,7 +619,7 @@ export async function fetchSource(env: Env, item: CapturedItem): Promise<FetchOu
     default:
       // A paywalled piece is read from the editor's own saved copy when a library is connected.
       return fromArticleUrl(env, url).catch((e) => {
-        if (e instanceof PaywalledError) return paywalledFromLibrary(env, url, e);
+        if (e instanceof PaywalledError && opts.library !== false) return paywalledFromLibrary(env, url, e);
         throw e;
       });
   }

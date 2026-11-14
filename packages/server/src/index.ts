@@ -5,6 +5,8 @@ export * from './spend';
 export * from './models/router';
 export * from './ingest';
 export * from './steps';
+export * from './evidence';
+export * from './research';
 export * from './voice';
 export * from './publish';
 export * from './standing';

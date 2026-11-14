@@ -36,6 +36,20 @@
       "maxInputChars": 300000,
       "thinking": "low"
     },
+    "research": {
+      "chain": [
+        "claude-sonnet",
+        "gemini-flash",
+        "deepseek-flash",
+        "haiku",
+        "wai-kimi",
+        "wai-deepseek-flash"
+      ],
+      "maxTokens": 6000,
+      "temperature": 0.6,
+      "maxInputChars": 120000,
+      "thinking": "low"
+    },
     "judge": {
       "chain": [
         "deepseek-flash",
@@ -106,8 +120,9 @@
     },
     "connect": {
       "chain": [
-        "deepseek-flash",
+        "claude-sonnet",
         "gemini-flash",
+        "deepseek-flash",
         "haiku",
         "wai-kimi",
         "wai-deepseek-flash"

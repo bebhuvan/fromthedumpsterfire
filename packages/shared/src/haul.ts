@@ -109,7 +109,10 @@ export interface Plate {
 export interface Marginal {
   text: string;
   cite: string;
-  /** The Wikipedia article the note was checked against, from its stored card (added 2026-10-31). */
+  /**
+   * The page the note was checked against: a Wikipedia card's article (added 2026-10-31) or, from
+   * 2026-11-14, a whole article or page the Desk fetched for the note (`isNoteUrl`). `cite` names it.
+   */
   url?: string;
 }
 

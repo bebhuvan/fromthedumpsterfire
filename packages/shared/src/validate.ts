@@ -10,6 +10,19 @@ import { validateChart } from './charts/validate';
 import { figuresIn } from './charts/figures';
 import { lifeLines, wordNumbersIn } from './life';
 
+/**
+ * The link a machine note may carry: the page it was checked against (a Wikipedia article, or a page
+ * the Desk fetched for it). Plain https with a host, no credentials; added 2026-11-14 (was Wikipedia only).
+ */
+export function isNoteUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && Boolean(u.hostname) && !u.username && !u.password && u.hostname.includes('.');
+  } catch {
+    return false;
+  }
+}
+
 export interface BundleIssue {
   /** JSON path to the offending value, e.g. "items[2].excerpt.highlight". */
   path: string;
@@ -200,8 +213,8 @@ function checkItem(c: Collector, item: Item, p: string) {
       if (!c.obj(m, mp)) return;
       c.str(m.text, `${mp}.text`);
       if (typeof m.cite !== 'string' || !m.cite.trim()) c.err(`${mp}.cite`, 'citation', 'every machine note cites a source');
-      if (m.url !== undefined && (typeof m.url !== 'string' || !/^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\//.test(m.url))) {
-        c.err(`${mp}.url`, 'wiki-url', 'a note links only to the Wikipedia article it was checked against');
+      if (m.url !== undefined && (typeof m.url !== 'string' || !isNoteUrl(m.url))) {
+        c.err(`${mp}.url`, 'note-url', 'a note links only to the https page it was checked against');
       }
       c.machineProse(m.text, `${mp}.text`);
     });

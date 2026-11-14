@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { haulSlug } from '@fdf/shared/haul';
 import { api, displayTitle, type Draft, type HaulDetail, type HaulSuggestionItem, type MarginalBody, type WikiCard } from '../api';
 import { Link, safeHref, useLoad } from '../lib/core';
+import { angleLabel } from '../lib/offers';
 import { Spinner } from '../ui/parts';
 
 type Status = string;
@@ -107,7 +108,15 @@ export function HaulSuggestions({ id }: { id: string }) {
                 <Line key={d.id} on={isIn(d.status)} state={rowState[d.id]} label="Margin note" onTick={(on) => void set('draft', it.id, d.id, on ? 'kept' : 'proposed')} onCut={() => void set('draft', it.id, d.id, 'cut')}>
                   <p className="note-text">{d.body.text}</p>
                   <span className="note-cite">
-                    {d.body.cite?.kind === 'source' ? <>From the piece: “{clip(d.body.cite.quote, 140)}”</> : d.body.cite?.kind === 'wiki' ? <>From Wikipedia: {d.body.cite.title}</> : null}
+                    {d.body.cite?.kind === 'source' ? (
+                      <>From the piece: “{clip(d.body.cite.quote, 140)}”</>
+                    ) : d.body.cite?.kind === 'wiki' ? (
+                      <>From Wikipedia: {d.body.cite.title}</>
+                    ) : d.body.cite?.kind === 'evidence' ? (
+                      <>
+                        {angleLabel(d.body.angle)}From {d.body.cite.publisher}: {d.body.cite.title}: “{clip(d.body.cite.quote, 140)}”
+                      </>
+                    ) : null}
                   </span>
                 </Line>
               ))}

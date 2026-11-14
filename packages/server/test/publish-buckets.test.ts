@@ -392,6 +392,28 @@ describe("quotations in the editor's note", () => {
 });
 
 describe('a new reading replaces unticked Wikipedia cards', () => {
+  it('publishes a kept note on a fetched page with its publisher, title and link; refuses one whose quote left the page', async () => {
+    const env = await seedHaul(makeEnv());
+    const text = 'The essay first ran in the Atlantic in July 1945. It described a desk called the memex.';
+    const quote = 'It described a desk called the memex.';
+    await env.DB.prepare(`INSERT INTO evidence (id, item_id, kind, title, publisher, url, text, word_count, via, fetched_at) VALUES ('ev_1', 'it_jevons', 'web', 'The memex at 80', 'The Guardian', 'https://www.theguardian.com/memex', ?, 16, 'claude-opus-5-5 (session)', ?)`)
+      .bind(text, NOW)
+      .run();
+    const start = text.indexOf(quote);
+    const body = { text: 'Bush imagined a desk called the memex.', angle: 'backstory', cite: { kind: 'evidence', evidenceId: 'ev_1', title: 'The memex at 80', publisher: 'The Guardian', url: 'https://www.theguardian.com/memex', quote, start, end: start + quote.length }, verdict: 'supported' };
+    await env.DB.prepare(`INSERT INTO drafts (id, item_id, kind, body, status, position, created_at, updated_at) VALUES ('dr_ev', 'it_jevons', 'marginal', ?, 'kept', 0, ?, ?)`).bind(JSON.stringify(body), NOW, NOW).run();
+    await env.DB.prepare('INSERT INTO haul_items (haul_id, item_id, position) VALUES (?, ?, 0)').bind('hl_1', 'it_jevons').run();
+
+    const r = await publishHaul(env, 'hl_1');
+    expect([r.problems, r.bundleErrors]).toEqual([[], []]);
+    const haul = (await (await env.FILES.get('hauls/001/v1/haul.json'))!.json()) as Haul;
+    expect(haul.items[0]!.marginalia).toEqual([{ text: 'Bush imagined a desk called the memex.', cite: 'The Guardian: The memex at 80', url: 'https://www.theguardian.com/memex' }]);
+
+    await env.DB.prepare(`UPDATE evidence SET text = 'Something else entirely, now much longer than the quoted passage was.' WHERE id = 'ev_1'`).run();
+    const again = await publishHaul(env, 'hl_1');
+    expect(again.problems.map((p) => p.message).join(' ')).toContain('no longer in The Guardian: The memex at 80');
+  });
+
   it('keeps ticked cards and cards a kept note cites, and clears the rest', async () => {
     const { resolveWiki } = await import('../src/steps');
     const env = await seedHaul(makeEnv());

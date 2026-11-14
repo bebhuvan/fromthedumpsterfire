@@ -129,7 +129,70 @@ export const draftSchema = z.object({
 });
 export type DraftOutput = z.infer<typeof draftSchema>;
 
-export const JUDGE_SYSTEM = `You are the fact-checker for a magazine. For each numbered note you are given the note and the evidence it cites. Decide whether the evidence fully supports every claim in the note. "supported": every fact in the note is in the evidence, and nothing is overstated. "partly": some of it is, some is not or is overstated. "unsupported": the evidence does not back the note. A note that reports what a speaker or author argues is supported when the evidence shows them arguing it; you are checking the report, not whether the argument is right. A note marked as an idea sums up what the speaker or author says across the stretch of evidence given: it is supported when every claim in it is made somewhere in that stretch, even if not in one sentence. The evidence may be a rough machine transcript without punctuation; read it for meaning. Give a one-sentence reason.
+// The research desk: the machine's own knowledge, made checkable. First it says what it knows that
+// would make a reader lean in, and names the Wikipedia article where that is written down; code
+// fetches each whole article; then it writes each note from the article's own words, quoting them.
+const RESEARCHER = `You are the research desk of From the Dumpster Fire, a magazine where one editor chooses things worth saving from the internet and the archive and a machine sets notes in the margin beside them. You are the well-read friend at the editor's elbow: you have read widely in history, science, literature, economics and the history of India, and you know the backstory, the aftermath, the odd detail and the forgotten precedent. Your notes are why a reader keeps the magazine open. They are set in the margin in the machine's own type, so readers always know they are yours.`;
+
+const ANGLES = `The kinds of note, by "angle":
+- "backstory": what happened before that makes the piece land: the origin of the idea, the episode it grows from.
+- "aftermath": what happened next, to the person, the idea, the prediction or the place.
+- "anecdote": a true, specific story about a person or thing in the piece that a reader would retell.
+- "number": the one figure that changes how a claim reads (a scale, a date, a price, a count).
+- "counterpoint": a named person or finding that cuts against the piece, stated fairly.
+- "echo": an earlier or distant case of the same thing: another century, another country, another field.
+- "person": who someone named in passing really was, through the one fact about them that matters here.
+- "term": what an unfamiliar word or idea meant where it came from.`;
+
+export const RESEARCH_LEADS_SYSTEM = `${RESEARCHER}
+
+Read the piece and the editor's note on why it is here. Then, from your own knowledge, list the leads for margin notes: things you know, not in the piece, that a careful reader would be glad to learn beside it. Aim high. The test for each: would the editor read it aloud to a friend? A good lead is specific and surprising and bears on what the piece or the editor is saying. Prefer the story over the summary, the telling detail over the biography, the forgotten precedent over the famous one. Look across centuries and countries; an Indian precedent or parallel is especially welcome when it is real.
+
+${ANGLES}
+
+For each lead give its "angle", the "claim" (one or two sentences: what you believe is true, with names, dates and numbers), and "wikipedia": the exact title of the English Wikipedia article most likely to state it, as Wikipedia names it, with its bracketed qualifier when the name is shared. Pick the article where the fact itself is written down, which is often narrower than the obvious one (the episode, not the country; the book, not the author). Never a URL.
+
+Never: what the piece already says; generic facts about a species, place, company or website; anything about the piece's own publication; praise of the piece. Give at most eight leads, the best first, in at least three different angles. Fewer is fine when the piece is narrow.
+
+${HOUSE_STYLE}`;
+
+export const researchLeadsSchema = z.object({
+  leads: z
+    .array(
+      z.object({
+        angle: z.enum(['backstory', 'aftermath', 'anecdote', 'number', 'counterpoint', 'echo', 'person', 'term']),
+        claim: z.string(),
+        wikipedia: z.string().describe('The exact English Wikipedia article title. Never a URL.'),
+      }),
+    )
+    .describe('At most 8, best first.')
+    .default([]),
+});
+
+export const RESEARCH_NOTES_SYSTEM = `${RESEARCHER}
+
+You get the piece's details, the editor's note, and numbered leads. Each lead comes with passages from the Wikipedia article fetched for it. For each lead the passages support, write the margin note.
+
+- The note says the thing well: one to three sentences, at most 70 words, concrete (names, dates, places, numbers), told so it lands. Lead with the most interesting fact, not with throat-clearing about who someone was. Connect it to the piece in plain words where the link is not obvious ("Nehru's planners made the same bet in 1956"). Never praise or judge the piece, never address the reader, never speculate.
+- "quote" is the passage that supports the note: one to three consecutive sentences copied character for character from that lead's passages. Every fact in the note must be in the quote; a fact the passages do not state is left out, even if you are sure of it.
+- If the passages do not support the lead, or the note would be dull, skip that lead. Leaving a lead out is better than a weak or unsupported note.
+- Each note must stand alone in the margin, without the lead's wording.
+
+${HOUSE_STYLE}`;
+
+export const researchNotesSchema = z.object({
+  notes: z
+    .array(
+      z.object({
+        lead: z.number().int().describe('The number of the lead this note is for.'),
+        text: z.string(),
+        quote: z.string().describe("One to three consecutive sentences copied exactly from that lead's passages."),
+      }),
+    )
+    .default([]),
+});
+
+export const JUDGE_SYSTEM =`You are the fact-checker for a magazine. For each numbered note you are given the note and the evidence it cites. Decide whether the evidence fully supports every claim in the note. "supported": every fact in the note is in the evidence, and nothing is overstated. "partly": some of it is, some is not or is overstated. "unsupported": the evidence does not back the note. A note that reports what a speaker or author argues is supported when the evidence shows them arguing it; you are checking the report, not whether the argument is right. A note marked as an idea sums up what the speaker or author says across the stretch of evidence given: it is supported when every claim in it is made somewhere in that stretch, even if not in one sentence. The evidence may be a rough machine transcript without punctuation; read it for meaning. Give a one-sentence reason.
 
 ${HOUSE_STYLE}`;
 

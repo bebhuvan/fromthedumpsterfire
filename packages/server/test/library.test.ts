@@ -98,6 +98,13 @@ describe('the reading library', () => {
     expect(calls.at(-1)!.url).toMatch(/updatedAfter=/);
   });
 
+  it('never uses the saved copy for a source quoted beside another item (library: false)', async () => {
+    const env = makeEnv(undefined, { READWISE_TOKEN: RW });
+    serve((u) => readwise(u) ?? (u.pathname.startsWith('/api/v1/posts/') ? json(JSON.parse(fixture('substack-paid.json'))) : new Response('nope', { status: 404, headers: { 'content-type': 'text/html' } })));
+    await expect(fetchSource(env, item(PAID), { library: false })).rejects.toThrow(/paid subscribers/);
+    expect(calls.some((c) => /readwise|instapaper/.test(c.url))).toBe(false);
+  });
+
   it('leaves a paywalled piece failed, as before, when no library is connected', async () => {
     serve((u) => (u.pathname.startsWith('/api/v1/posts/') ? json(JSON.parse(fixture('substack-paid.json'))) : new Response('nope', { status: 404, headers: { 'content-type': 'text/html' } })));
     await expect(fetchSource(makeEnv(), item(PAID))).rejects.toThrow(/paid subscribers/);

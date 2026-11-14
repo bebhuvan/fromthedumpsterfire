@@ -151,10 +151,37 @@ export interface NoteRow {
   created_at: string;
 }
 
+/** A text the Desk fetched for the machine to cite beside an item (migration 0012). */
+export interface EvidenceRow {
+  id: string;
+  item_id: string;
+  kind: 'wiki' | 'web';
+  title: string;
+  publisher: string;
+  url: string;
+  text: string;
+  word_count: number;
+  revision: string | null;
+  via: string;
+  fetched_at: string;
+}
+
+/** Where a machine note found what it says: the piece, a Wikipedia card's lead, or a fetched text. */
+export type NoteCite =
+  | { kind: 'source'; quote: string; start: number; end: number }
+  | { kind: 'wiki'; title: string; cardId: string }
+  | { kind: 'evidence'; evidenceId: string; title: string; publisher: string; url: string; quote: string; start: number; end: number };
+
+/** What kind of thing a research note tells the reader (shown to the editor on the Desk). */
+export const NOTE_ANGLES = ['backstory', 'aftermath', 'anecdote', 'number', 'counterpoint', 'echo', 'person', 'term'] as const;
+export type NoteAngle = (typeof NOTE_ANGLES)[number];
+
 /** The body of a marginal-note draft. */
 export interface MarginalBody {
   text: string;
-  cite: { kind: 'source'; quote: string; start: number; end: number } | { kind: 'wiki'; title: string; cardId: string };
+  cite: NoteCite;
+  /** Research notes: what kind of thing the note tells (backstory, aftermath …). */
+  angle?: NoteAngle;
   /** The checker's verdict against the cited evidence. */
   verdict?: 'supported' | 'partly' | 'unsupported' | 'unchecked';
   reason?: string;

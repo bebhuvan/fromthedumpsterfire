@@ -19,6 +19,9 @@ export interface Offer {
 
 const KIND_ORDER = { idea: 0, marginal: 1, card: 2 } as const;
 
+/** "Aftermath · " before a research note's source, so the editor sees what kind of note it is. */
+export const angleLabel = (angle?: string) => (angle ? `${angle[0]!.toUpperCase()}${angle.slice(1)} · ` : '');
+
 /** What is still waiting on the editor for one item: big ideas in the piece's order, then notes, then cards. */
 export function offersFor(item: { id: string; title: string }, drafts: Draft<MarginalBody>[], wiki: WikiCard[]): Offer[] {
   const at = (d: Draft<MarginalBody>) => (d.body?.cite?.kind === 'source' ? d.body.cite.start : 0);
@@ -32,7 +35,9 @@ export function offersFor(item: { id: string; title: string }, drafts: Draft<Mar
           ? { label: 'From the piece', words: cite.quote.replace(/\s*\n\s*/g, ' '), ...(d.body.locator ? { locator: d.body.locator } : {}) }
           : cite?.kind === 'wiki'
             ? { label: `From Wikipedia: ${cite.title}`, ...(wikiLead(wiki, cite.cardId) ? { words: wikiLead(wiki, cite.cardId) } : {}) }
-            : { label: 'Source not recorded' };
+            : cite?.kind === 'evidence'
+              ? { label: `${angleLabel(d.body.angle)}From ${cite.publisher}: ${cite.title}`, url: cite.url, words: cite.quote.replace(/\s*\n\s*/g, ' ') }
+              : { label: 'Source not recorded' };
       return { id: d.id, what: 'draft', kind: d.kind as 'idea' | 'marginal', itemId: item.id, itemTitle: item.title, text: d.body.text, from };
     });
   const cards = wiki

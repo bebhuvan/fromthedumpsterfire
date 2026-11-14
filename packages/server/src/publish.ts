@@ -16,9 +16,9 @@ import { checkStyle } from '@fdf/shared/style';
 import { findQuotation, isVerbatimAt } from '@fdf/shared/verbatim';
 import { BUNDLE_VERSION, haulSlug } from '@fdf/shared/haul';
 import { editionOf, type ContentType, type Swatch } from '@fdf/shared/tokens';
-import { validateHaul, type BundleIssue } from '@fdf/shared/validate';
+import { isNoteUrl, validateHaul, type BundleIssue } from '@fdf/shared/validate';
 import type { Env } from './env';
-import type { CheckRow, DraftRow, ExcerptRow, HaulRow, ItemRow, MarginalBody, NoteRow, WikiRow } from './db';
+import type { CheckRow, DraftRow, EvidenceRow, ExcerptRow, HaulRow, ItemRow, MarginalBody, NoteRow, WikiRow } from './db';
 import { dateIst, nowIso, parseJson, sha256Hex, slugify } from './util';
 import { imageSize, plateForBundle, type PlateRow } from './plates';
 import { formatOfNote } from './voice';
@@ -123,6 +123,7 @@ export const isPublicPath = (key: string) => isHaulPath(key) || isShelfPath(key)
 
 function citeLabel(b: MarginalBody, item: ItemRow): string {
   if (b.cite.kind === 'wiki') return `Wikipedia: ${b.cite.title}`;
+  if (b.cite.kind === 'evidence') return `${b.cite.publisher}: ${b.cite.title}`;
   return item.source_name ? `${item.source_name}, the piece itself` : 'The piece itself';
 }
 
@@ -214,6 +215,16 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       await env.DB.prepare(`SELECT * FROM drafts WHERE item_id = ? AND kind = 'marginal' AND status IN ('kept', 'edited') ORDER BY position`).bind(it.id).all<DraftRow>()
     ).results.map((d) => parseJson<MarginalBody | null>(d.body, null)).filter((b): b is MarginalBody => Boolean(b));
     for (const n of notes) if (n.verdict !== 'supported') problems.push({ itemId: it.id, itemTitle: label, message: `a kept note is not confirmed by its source ("${n.text.slice(0, 50)}…")` });
+    // A note citing a fetched text still finds its quotation there, at its place.
+    const fetched = notes.some((n) => n.cite.kind === 'evidence')
+      ? (await env.DB.prepare('SELECT id, text FROM evidence WHERE item_id = ?').bind(it.id).all<Pick<EvidenceRow, 'id' | 'text'>>()).results
+      : [];
+    for (const n of notes) {
+      if (n.cite.kind !== 'evidence') continue;
+      const c = n.cite;
+      const e = fetched.find((x) => x.id === c.evidenceId);
+      if (!e || !isVerbatimAt(e.text, c, c.quote)) problems.push({ itemId: it.id, itemTitle: label, message: `a kept note's quotation is no longer in ${c.publisher}: ${c.title} ("${n.text.slice(0, 50)}…")` });
+    }
     // Machine notes and ideas publish only when the editor ticked them; the rest are left out.
     const src = await env.DB.prepare('SELECT text, extractor FROM sources WHERE item_id = ?').bind(it.id).first<{ text: string; extractor: string }>();
     // Transcripts without punctuation (older auto-captions, fetched or uploaded) keep every "uh":
@@ -235,9 +246,10 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
     const cardUrl = new Map(
       (await env.DB.prepare('SELECT id, url FROM wiki_cards WHERE item_id = ?').bind(it.id).all<Pick<WikiRow, 'id' | 'url'>>()).results.map((c) => [c.id, c.url]),
     );
-    const wikiUrl = (n: MarginalBody) => {
-      const url = n.cite.kind === 'wiki' ? cardUrl.get(n.cite.cardId) : undefined;
-      return url && /^https:\/\/[a-z-]+\.wikipedia\.org\/wiki\//.test(url) ? { url } : {};
+    // A note links to what it was checked against: the Wikipedia card's article, or the fetched text's page.
+    const noteUrl = (n: MarginalBody) => {
+      const url = n.cite.kind === 'wiki' ? cardUrl.get(n.cite.cardId) : n.cite.kind === 'evidence' ? n.cite.url : undefined;
+      return url && isNoteUrl(url) ? { url } : {};
     };
     // Links the editor wrote into the note ("words" (https://…) or [words](https://…)) print as links on
     // those words; lifting them out only deletes the marks around the words. A quotation set out in
@@ -327,7 +339,7 @@ export async function assembleHaul(env: Env, haulId: string, opts: { correction?
       ...(it.media ? { media: JSON.parse(it.media) } : {}),
       ...(rhyme ? { rhyme } : {}),
       ...(plate ? { plate } : {}),
-      marginalia: notes.map((n) => ({ text: n.text, cite: citeLabel(n, it), ...wikiUrl(n) })),
+      marginalia: notes.map((n) => ({ text: n.text, cite: citeLabel(n, it), ...noteUrl(n) })),
       ...(ideas.length
         ? {
             ideas: ideas.map((n) => ({
