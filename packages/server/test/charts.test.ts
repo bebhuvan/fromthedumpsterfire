@@ -215,3 +215,31 @@ describe('Our World in Data column keys', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 });
+
+describe('an Our World in Data annotations column', () => {
+  // Shaped like gdp-per-capita-maddison-project-database (checked 2026-11-15): a text column of notes
+  // whose metadata points at an indicator id OWID left undefined.
+  const meta = { columns: {
+    'GDP per capita': { titleShort: 'GDP per capita', shortUnit: '$', shortName: 'gdp_per_capita', fullMetadata: 'https://api.ourworldindata.org/v1/indicators/900793.metadata.json' },
+    '900793-annotations': { titleShort: '900793-annotations', fullMetadata: 'https://api.ourworldindata.org/v1/indicators/undefined.metadata.json' },
+  } };
+  const serveWith = (csv: string) => serve((u) => {
+    if (u.pathname === '/grapher/maddison.metadata.json') return json(meta);
+    if (u.pathname === '/grapher/maddison.csv') return new Response(csv);
+    if (u.toString() === 'https://api.ourworldindata.org/v1/indicators/900793.metadata.json') return json({ origins: [{ producer: 'Bolt and van Zanden', title: 'Maddison Project Database', license: { name: 'CC BY 4.0' } }] });
+    return null;
+  });
+
+  it('is left out when it holds no numbers, and the numbers keep their own columns', async () => {
+    serveWith('entity,code,year,gdp_per_capita,gdp_per_capita__annotations\nMexico,MEX,1985,9785,\nArgentina,ARG,1985,10895,"Former figure, revised"\n');
+    const r = await fetchOwid('maddison');
+    expect(r.data.columns.map((c) => c.key)).toEqual(['entity', 'year', 'gdp_per_capita']);
+    expect(r.data.rows).toEqual([['Mexico', 1985, 9785], ['Argentina', 1985, 10895]]);
+    expect(r.sources.map((s) => [s.maker, s.licence])).toEqual([['Bolt and van Zanden', 'CC BY 4.0']]);
+  });
+
+  it('is refused like any column without a licence when it holds a number', async () => {
+    serveWith('entity,code,year,gdp_per_capita,gdp_per_capita__annotations\nMexico,MEX,1985,9785,12\n');
+    await expect(fetchOwid('maddison')).rejects.toThrow(/does not say where "gdp_per_capita__annotations" comes from/);
+  });
+});

@@ -268,6 +268,9 @@ licence and the source's full span.
   producer with its own licence and Our World in Data as the redistributor. An origin without a stated
   licence is refused.
 - A year at the end of OWID's span can be partial; check the latest year before keeping a chart.
+- Some charts carry a text column ending `__annotations` with no metadata of its own (Maddison's GDP per
+  capita, checked 2026-11-15). The adapter leaves it out when it holds no number; with a number in it,
+  the chart is refused like any column without a licence.
 
 ### World Bank (checked 2026-10-25 and 2026-10-26)
 

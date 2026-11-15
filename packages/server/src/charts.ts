@@ -89,6 +89,10 @@ interface OwidOrigin {
   license?: { name?: string; url?: string };
 }
 
+/** The column names where its numbers come from: an indicator's metadata on OWID's API. */
+const hasOwidOrigin = (c: OwidColumn | undefined): boolean => !!c?.fullMetadata && /^https:\/\/api\.ourworldindata\.org\/v1\/indicators\/\d+\.metadata\.json$/.test(c.fullMetadata);
+const isNumberCell = (raw: string | undefined): boolean => (raw ?? '').trim() !== '' && Number.isFinite(Number(raw));
+
 /** Split one CSV line (OWID quotes entity names that contain commas). */
 function csvLine(line: string): string[] {
   const out: string[] = [];
@@ -122,18 +126,23 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
   const header = csvLine(lines[0] ?? '');
   const timeKey = header[2];
   if (header[0] !== 'entity' || header[1] !== 'code' || (timeKey !== 'year' && timeKey !== 'day')) refuse('This chart’s data is not in the shape Our World in Data’s charts usually have (entity, code, year).');
-  const valueKeys = header.slice(3);
-  if (!valueKeys.length) refuse('This chart has no data columns.');
-  if (valueKeys.length > 8) refuse('This chart has more than eight data columns; pick a simpler chart.');
   const cols = Object.values(meta.columns ?? {});
   const colFor = (key: string) => cols.find((c) => c.shortName === key);
+  // OWID ships some charts (Maddison's GDP, for one) with an "…__annotations" column of text notes
+  // that has no metadata of its own. It holds no numbers, so it is left out rather than refusing the
+  // chart; a column that holds even one number still needs its stated licence.
+  const dropped = header.slice(3).filter((k, j) => k.endsWith('__annotations') && !hasOwidOrigin(colFor(k)) && !lines.slice(1).some((l) => isNumberCell(csvLine(l)[3 + j])));
+  const valueKeys = header.slice(3).filter((k) => !dropped.includes(k));
+  const valueAt = valueKeys.map((k) => 3 + header.slice(3).indexOf(k));
+  if (!valueKeys.length) refuse('This chart has no data columns.');
+  if (valueKeys.length > 8) refuse('This chart has more than eight data columns; pick a simpler chart.');
 
   // Licences, per indicator, from each origin. Refuse any origin without a stated licence.
   const sources = new Map<string, ChartSource>();
   const retrieved = dateIst(nowIso());
   for (const key of valueKeys) {
     const c = colFor(key);
-    if (!c?.fullMetadata || !/^https:\/\/api\.ourworldindata\.org\/v1\/indicators\/\d+\.metadata\.json$/.test(c.fullMetadata)) refuse(`Our World in Data does not say where "${key}" comes from, so its licence cannot be checked.`);
+    if (!hasOwidOrigin(c)) refuse(`Our World in Data does not say where "${key}" comes from, so its licence cannot be checked.`);
     const full = await getJson<{ origins?: OwidOrigin[] }>(c!.fullMetadata!, META_BYTES, 'The indicator’s metadata');
     const origins = full.origins ?? [];
     if (!origins.length) {
@@ -191,7 +200,7 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
     const year = timeKey === 'day' ? Number(t.slice(0, 4)) : Number(t);
     if ((opts.from !== undefined && year < opts.from) || (opts.to !== undefined && year > opts.to)) continue;
     rows.push([entity, timeKey === 'day' ? t : Number(t), ...valueKeys.map((_, j) => {
-      const raw = (f[3 + j] ?? '').trim();
+      const raw = (f[valueAt[j]!] ?? '').trim();
       if (raw === '') return null;
       const n = Number(raw);
       return Number.isFinite(n) ? n : null;
