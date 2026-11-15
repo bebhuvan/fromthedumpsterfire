@@ -6,7 +6,7 @@
 
 import type { Scene, SceneNode } from '../../charts/scene';
 import { xAxis, yAxis } from '../axes';
-import { pathOf, scale, type Pt } from '../geom';
+import { pathOf, scale, xScaleOf, type Pt } from '../geom';
 import { DASH, DOT, STROKE, TYPE, WIDTH, type Device } from '../grammar';
 import { Placer } from '../place';
 import type { Axis, XAxis } from '../spec';
@@ -44,13 +44,13 @@ export function drawTrail(f: TrailFigure, dev: Device): Scene {
   if (f.members.filter((m) => m.focus).length !== 1) throw new Error('A trail has one member in the ink.');
   const T = TYPE[dev], L = PLOT[dev], width = WIDTH[dev];
   const height = L.top + L.height + L.bottom;
-  const x = scale(f.x.domain, [L.left, width - L.right]);
+  const x = xScaleOf(f.x, [L.left, width - L.right]);
   const y = scale(f.y.domain, [L.top + L.height, L.top]);
   const P = new Placer({ x: 0, y: 0, w: width, h: height });
   const back: SceneNode[] = [], paths: SceneNode[] = [], dots: SceneNode[] = [], labels: SceneNode[] = [];
   const xBottom = L.top + L.height;
   back.push(...yAxis(P, y, f.y, L.left, width - L.right, dev));
-  back.push(...xAxis(P, x, dev === 'phone' ? f.x.phoneTicks ?? f.x.ticks : f.x.ticks, xBottom, dev, f.x.title));
+  back.push(...xAxis(P, x, dev === 'phone' ? f.x.phoneTicks ?? f.x.ticks : f.x.ticks, xBottom, dev, f.x.title, f.x.log));
 
   const at = (p: [number, number, number]): Pt => [x(p[1]), y(p[2])];
   const mk = (p: [number, number, number], r: number): Mark => { const [cx, cy] = at(p); return { cx, cy, r }; };

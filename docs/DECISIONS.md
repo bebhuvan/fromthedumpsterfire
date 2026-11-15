@@ -637,3 +637,27 @@ reaches the live Desk, pipeline, website or app (the Workers were built and thei
   - decode-uri-component is not installed on this branch (the alert is from `main`'s older lockfile).
 - Rejected: `npm audit fix --force` (major upgrades of Expo and Puppeteer in one step, untested, and
   some under seven days old).
+
+## 2026-11-15 (data stories: a log income axis, and Maddison's GDP from Our World in Data)
+
+For the fertility-and-income story, which redraws Jesús Fernández-Villaverde's chart of fertility
+against GDP per capita (9 November 2026) from his own sources.
+
+- **Story plates can draw a log x axis** (`XAxis.log`, on `lines`, `trail` and `scatter` only). Income
+  spans two orders of magnitude; on an even axis everything below $5,000, where the story happens, is
+  squeezed into a corner. `validateStory` refuses a log axis with a value, tick or start at or below
+  zero, and one whose caption does not say "log scale" (as a scale not starting at zero must say so).
+  Ticks are written short ("2k", "10k"). Rejected: plotting log10 values on an even axis (the ticks
+  would read 3, 4, 5).
+- **A lines plate's key can name its solid line** (`LinesFigure.focusKey`, e.g. "The 2022 curve"),
+  because "Estimated" means nothing when x is not time. Ticks may be written in thousands
+  (`format: 'thousand'`). Existing stories are unchanged.
+- **`fetchOwid` leaves out an empty `…__annotations` column.** OWID ships Maddison's GDP per capita
+  with a text column of notes whose metadata points at an undefined indicator, and the adapter refused
+  the whole chart for want of its licence. A column ending `__annotations` with no metadata of its own
+  and no number in it is now left out; one holding even one number is still refused. Tested with the
+  real shape (checked 2026-11-15).
+- **Not done, waiting on the editor: sub-Saharan Africa as a fetched list.** The UN's M49 table (the
+  definition the post uses) is machine-readable on unstats.un.org, but the UN's terms of use allow
+  personal, non-commercial use and state no open licence; Our World in Data's copy states none either.
+  The World Bank's region list is CC BY 4.0 but differs slightly (Sudan, Djibouti). The editor chooses.

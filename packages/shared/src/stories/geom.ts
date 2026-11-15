@@ -13,6 +13,16 @@ export function scale(domain: [number, number], range: [number, number]): Scale 
   return f;
 }
 
+/** A scale for an x axis: even, or logarithmic (the domain stays in the data's own units). */
+export function xScaleOf(a: { domain: [number, number]; log?: boolean }, range: [number, number]): Scale {
+  if (!a.log) return scale(a.domain, range);
+  const inner = scale([Math.log10(a.domain[0]), Math.log10(a.domain[1])], range);
+  const f = ((v: number) => inner(Math.log10(v))) as Scale;
+  f.domain = a.domain;
+  f.range = range;
+  return f;
+}
+
 const n = (v: number) => String(Math.round(v * 10) / 10);
 export const pathOf = (pts: readonly Pt[]) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${n(x)} ${n(y)}`).join('');
 /** A closed area between an upper and a lower edge, both left to right. */

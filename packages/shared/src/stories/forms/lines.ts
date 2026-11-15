@@ -4,7 +4,7 @@
 
 import type { Scene, SceneNode } from '../../charts/scene';
 import { ranges, seam, xAxis, yAxis } from '../axes';
-import { hatch, hatchPath, pathOf, scale, type Pt } from '../geom';
+import { hatch, hatchPath, pathOf, scale, xScaleOf, type Pt } from '../geom';
 import { DASH, OPACITY, DOT, HATCH, MARGIN, STROKE, TYPE, WIDTH, type Device } from '../grammar';
 import { place, Placer, spread, widthOf } from '../place';
 import type { LinesFigure, Series } from '../spec';
@@ -18,12 +18,12 @@ export function drawLines(f: LinesFigure, dev: Device, width: number = WIDTH[dev
   // One panel takes the plate's height; several share 1.45 times it, by weight.
   const heights = f.panels.map((p) => (f.panels.length === 1 ? PANEL_H[dev] : (PANEL_H[dev] * 1.45 * (p.weight ?? 1)) / wsum));
   const height = M.top + heights.reduce((a, b) => a + b, 0) + GAP * (f.panels.length - 1) + M.bottom + (f.x.title ? T.tick * 2 : 0);
-  const x = scale(f.x.domain, [M.left, width - M.right]);
+  const x = xScaleOf(f.x, [M.left, width - M.right]);
   const P = new Placer({ x: 0, y: 0, w: width, h: height });
   const back: SceneNode[] = [], mid: SceneNode[] = [], front: SceneNode[] = [], labels: SceneNode[] = [];
   const xBottom = height - M.bottom - (f.x.title ? T.tick * 2 : 0);
   const ticks = dev === 'phone' ? f.x.phoneTicks ?? f.x.ticks : f.x.ticks;
-  back.push(...xAxis(P, x, ticks, xBottom, dev, f.x.title));
+  back.push(...xAxis(P, x, ticks, xBottom, dev, f.x.title, f.x.log));
   if (f.seam !== undefined) back.push(...seam(P, x(f.seam), M.top - 24, xBottom, dev));
 
   let top = M.top;
@@ -69,7 +69,7 @@ export function drawLines(f: LinesFigure, dev: Device, width: number = WIDTH[dev
         const last = s.points[s.points.length - 1]!;
         // A line that stops short of the axis is named where it stops, with a dot; one that runs to
         // the end is named beyond it.
-        if (last[0] < f.x.domain[1] - (f.x.domain[1] - f.x.domain[0]) * 0.02) {
+        if (x(last[0]) < x(f.x.domain[1]) - (x(f.x.domain[1]) - x(f.x.domain[0])) * 0.02) {
           front.push({ t: 'circle', cx: x(last[0]), cy: y(last[1]), r: s.role === 'focus' ? DOT.story : DOT.named, fill: paint, stroke: 'bg', sw: 1.5 });
           stops.push({ at: [x(last[0]), y(last[1])], text: s.label, strong: s.role === 'focus' });
         } else ends.push({ y: y(last[1]), text: s.label, strong: s.role === 'focus' });

@@ -5,7 +5,7 @@
 import { describe, expect, test } from 'vitest';
 import { ALL_INKS } from './ink';
 import { drawFigure, drawKey, keyOf } from './plate';
-import { untraced, validateStory, type Story } from './spec';
+import { untraced, validateStory, type LinesFigure, type Story } from './spec';
 import { expectClean, texts } from './testkit';
 
 // The package's types leave out Node, so node:fs is loaded as the chart kit's tests load it.
@@ -118,5 +118,59 @@ describe('plates draw cleanly', () => {
     }
     const peak = keyOf(story.plates.find((p) => p.key === 'peak')!.figure).map((k) => k.mark);
     expect(peak).toEqual(['estimated', 'projected', 'range80', 'range95']);
+  });
+});
+
+describe('a log scale', () => {
+  // Fertility against income, a curve a year: the shape of the 2026-11 fertility-and-income story.
+  const curve = (top: number, bottom: number): [number, number][] => [800, 1500, 3000, 6000, 12000, 25000, 50000].map((g, i) => [g, +(top - ((top - bottom) * i) / 6).toFixed(2)]);
+  const figure = (): LinesFigure => ({
+    form: 'lines',
+    x: { domain: [500, 100000], ticks: [1000, 2000, 5000, 10000, 20000, 50000, 100000], phoneTicks: [1000, 10000, 100000], title: 'GDP per capita', log: true },
+    focusKey: 'The later curve',
+    panels: [{ y: { unit: 'Children per woman', domain: [0, 8], ticks: [0, 2, 4, 6, 8] }, series: [
+      { key: 'earlier', label: 'Earlier', role: 'named', points: curve(6.4, 1.9) },
+      { key: 'later', label: 'Later', role: 'focus', points: curve(4.9, 1.4) },
+    ] }],
+  });
+  const withPlate = (f: LinesFigure, caption: string): Story => {
+    const s = copy();
+    s.plates[0] = { ...s.plates[0]!, figure: f, caption, editorNote: undefined };
+    return s;
+  };
+
+  test('draws clean at both widths, with short ticks and the key naming the solid line', () => {
+    for (const dev of ['wide', 'phone'] as const) {
+      const scene = drawFigure(figure(), dev);
+      expectClean(scene);
+      const words = texts(scene.nodes).map((t) => t.t);
+      expect(words).toContain('10k');
+      expect(words).not.toContain('10000');
+    }
+    expect(keyOf(figure()).map((k) => k.text)).toContain('The later curve');
+  });
+
+  test('places values evenly by their logarithm', () => {
+    const xs = (drawFigure(figure(), 'wide').nodes.filter((n) => n.t === 'line' && n.y2 - n.y1 === 4) as { x1: number }[]).map((n) => n.x1);
+    // 1k to 10k and 10k to 100k are the same distance apart.
+    expect(Math.abs((xs[3]! - xs[0]!) - (xs[6]! - xs[3]!))).toBeLessThan(0.5);
+  });
+
+  test('passes when the caption says so, and is refused when it does not', () => {
+    expect(validateStory(withPlate(figure(), 'Fitted fertility by GDP per capita, log scale.'), null)).toEqual([]);
+    expect(validateStory(withPlate(figure(), 'Fitted fertility by GDP per capita.'), null).join(' ')).toMatch(/logarithmic, and the caption must say so/);
+  });
+
+  test('is refused with a value at or below zero', () => {
+    const f = figure();
+    f.panels[0]!.series[0]!.points[0] = [0, 6.4];
+    expect(validateStory(withPlate(f, 'Log scale.'), null).join(' ')).toMatch(/above zero/);
+  });
+});
+
+describe('tick formats', () => {
+  test('thousands are written short', async () => {
+    const { fmt } = await import('./axes');
+    expect([0, 10000, 2500, 30000].map((v) => fmt(v, 'thousand'))).toEqual(['0', '10k', '2.5k', '30k']);
   });
 });

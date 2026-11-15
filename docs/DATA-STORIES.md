@@ -145,6 +145,9 @@ warm above it, binned by `stories/ramp.ts`, tested for contrast against the grou
 - Bars start at zero and are never negative; bump ranks are 1 to n in every year; ramps have a positive
   bin width and one to five bins a side.
 - A line plate whose scale does not start at zero says so in its caption.
+- A log x axis (`x.log`, lines, trails and scatters only, for income and the like) needs every value,
+  tick and the scale's start above zero, and its caption says "log scale". Its ticks are written short
+  ("2k"). A lines plate whose x is not time names its solid line in the key with `focusKey`.
 - Machine prose passes `checkStyle`.
 - The editor's margin notes and standfirst are his words, unchanged: they must be found in his stored
   text.

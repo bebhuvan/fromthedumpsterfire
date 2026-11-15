@@ -48,10 +48,17 @@ export interface Axis {
   unit: string;
   domain: [number, number];
   ticks: number[];
-  /** How ticks are written: whole, one or two decimals, millions, billions. */
-  format?: 'int' | 'one' | 'two' | 'million' | 'billion';
+  /** How ticks are written: whole, one or two decimals, thousands ("20k"), millions, billions. */
+  format?: 'int' | 'one' | 'two' | 'thousand' | 'million' | 'billion';
 }
-export interface XAxis { domain: [number, number]; ticks: number[]; phoneTicks?: number[]; title?: string }
+export interface XAxis {
+  domain: [number, number];
+  ticks: number[];
+  phoneTicks?: number[];
+  title?: string;
+  /** A logarithmic scale (income, say): every value above zero, ticks written short ("2k"), and the caption says so. */
+  log?: boolean;
+}
 
 export interface Panel { y: Axis; series: Series[]; rules?: Rule[]; zones?: Zone[]; notes?: Note[]; weight?: number }
 export interface LinesFigure {
@@ -61,6 +68,8 @@ export interface LinesFigure {
   panels: Panel[];
   /** What the grey context lines are, for the key ("Every other country"). */
   contextLabel?: string;
+  /** What the solid line is, for the key, when it is not a time series ("The 2022 curve"); else "Estimated". */
+  focusKey?: string;
 }
 
 export interface SwarmItem {
@@ -282,6 +291,12 @@ export function validateStory(story: Story, editorText: string | null): string[]
     const labels: [string, string][] = [];
     stringsIn(f, `${at} figure`, labels);
     figureText.push(...labels);
+    if ('x' in f && f.x && typeof f.x === 'object' && 'log' in f.x && f.x.log && f.form !== 'lines' && f.form !== 'trail' && f.form !== 'scatter') errs.push(`${at}: only lines, trails and scatters draw a log scale.`);
+    if ((f.form === 'lines' || f.form === 'trail' || f.form === 'scatter') && f.x.log) {
+      const xs = f.form === 'lines' ? f.panels.flatMap((pa) => pa.series.flatMap((s) => s.points.map(([x]) => x))) : f.form === 'trail' ? f.members.flatMap((m) => m.points.map((q) => q[1])) : f.points.map((q) => q.x);
+      if (!(f.x.domain[0] > 0) || xs.some((x) => !(x > 0)) || f.x.ticks.some((t) => !(t > 0))) errs.push(`${at}: a log scale needs every value, tick and the scale's start above zero.`);
+      if (!/log(arithmic)? scale/i.test(p.caption)) errs.push(`${at}: the scale is logarithmic, and the caption must say so.`);
+    }
     if (f.form === 'lines') {
       for (const panel of f.panels) {
         if (panel.y.domain[0] !== 0 && !/not (at )?zero/i.test(p.caption)) errs.push(`${at}: the scale does not start at zero, and the caption must say so.`);

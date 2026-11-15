@@ -61,7 +61,7 @@ export function keyOf(f: Figure): { mark: KeyMark; text: string }[] {
   if (f.form === 'lines') {
     const all = f.panels.flatMap((p) => p.series);
     if (all.some((s) => s.role === 'context')) add('context', f.contextLabel ?? 'Everything else');
-    add('estimated', 'Estimated');
+    add('estimated', f.focusKey ?? 'Estimated');
     if (all.some((s) => s.projectedFrom !== undefined)) add('projected', 'Projected');
     if (all.some((s) => s.range)) { add('range80', '80% range'); add('range95', '95% range'); }
     for (const p of f.panels) { if (p.rules?.length) add('reference', p.rules[0]!.label); if (p.zones?.length) add('zone', p.zones[0]!.phone ?? p.zones[0]!.label); }

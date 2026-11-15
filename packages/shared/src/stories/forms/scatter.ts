@@ -5,7 +5,7 @@
 
 import type { Scene, SceneNode } from '../../charts/scene';
 import { xAxis, yAxis } from '../axes';
-import { scale } from '../geom';
+import { scale, xScaleOf } from '../geom';
 import { DASH, DOT, STROKE, TYPE, WIDTH, type Device } from '../grammar';
 import { Placer, widthOf, type Box } from '../place';
 import type { Axis, XAxis } from '../spec';
@@ -41,13 +41,13 @@ const PLOT = {
 export function drawScatter(f: ScatterFigure, dev: Device): Scene {
   const T = TYPE[dev], L = PLOT[dev], width = WIDTH[dev];
   const height = L.top + L.height + L.bottom;
-  const x = scale(f.x.domain, [L.left, width - L.right]);
+  const x = xScaleOf(f.x, [L.left, width - L.right]);
   const y = scale(f.y.domain, [L.top + L.height, L.top]);
   const P = new Placer({ x: 0, y: 0, w: width, h: height });
   const back: SceneNode[] = [], marks: SceneNode[] = [], labels: SceneNode[] = [];
   const xBottom = L.top + L.height;
   back.push(...yAxis(P, y, f.y, L.left, width - L.right, dev));
-  back.push(...xAxis(P, x, dev === 'phone' ? f.x.phoneTicks ?? f.x.ticks : f.x.ticks, xBottom, dev, f.x.title));
+  back.push(...xAxis(P, x, dev === 'phone' ? f.x.phoneTicks ?? f.x.ticks : f.x.ticks, xBottom, dev, f.x.title, f.x.log));
 
   const maxW = Math.max(...f.points.map((p) => p.weight), ...f.sizeKey.circles.map((c) => c.weight));
   const rOf = (w: number) => Math.max(DOT.note * (dev === 'phone' ? 0.75 : 0.9), L.maxR * Math.sqrt(w / maxW));

@@ -10,6 +10,7 @@ import type { Axis, Range } from './spec';
 export function fmt(v: number, f: Axis['format'] = 'int'): string {
   if (f === 'one') return v.toFixed(1);
   if (f === 'two') return v.toFixed(2);
+  if (f === 'thousand') return v === 0 ? '0' : `${+(v / 1e3).toFixed(1)}k`;
   if (f === 'million') return v === 0 ? '0' : `${Math.round(v / 1e6)}`;
   if (f === 'billion') return v === 0 ? '0' : `${+(v / 1e9).toFixed(1)} bn`;
   return String(Math.round(v));
@@ -36,13 +37,21 @@ export function yAxis(P: Placer, y: Scale, a: Axis, x0: number, x1: number, dev:
   return out;
 }
 
-export function xAxis(P: Placer, x: Scale, ticks: number[], y0: number, dev: Device, title?: string): SceneNode[] {
+/** A tick on a log scale, written short: 500, 1k, 2.5k, 10k, 1m. */
+export function shortTick(v: number): string {
+  if (v >= 1e6) return `${+(v / 1e6).toFixed(1)}m`;
+  if (v >= 1e3) return `${+(v / 1e3).toFixed(1)}k`;
+  return String(v);
+}
+
+export function xAxis(P: Placer, x: Scale, ticks: number[], y0: number, dev: Device, title?: string, log = false): SceneNode[] {
   const size = TYPE[dev].tick;
   const out: SceneNode[] = [];
   for (const t of ticks) {
+    const lab = log ? shortTick(t) : String(t);
     out.push({ t: 'line', x1: x(t), y1: y0, x2: x(t), y2: y0 + 4, stroke: 'ink2', sw: STROKE.hair });
-    out.push(text(x(t), y0 + 6 + size, String(t), size, 'middle'));
-    const w = widthOf(String(t), 'sans', size);
+    out.push(text(x(t), y0 + 6 + size, lab, size, 'middle'));
+    const w = widthOf(lab, 'sans', size);
     P.block({ x: x(t) - w / 2 - 2, y: y0, w: w + 4, h: size + 8 });
   }
   if (title) {
