@@ -1327,3 +1327,27 @@ only Puppeteer's browser downloader (not in any Worker bundle) and Expo's build 
 Committed; **not yet deployed** (the hono fix reaches the live Desk only with a Desk deploy).
 Due: @cloudflare/puppeteer 2.0.0 after 2026-11-17; Expo's tools with the next native release. The GitHub
 alerts are on `main`, which is behind this branch: they close when this branch is merged into `main`.
+
+## The second data story ready, and terminal sign-in fixed (2026-11-19; deployed, story not published)
+
+The editor: "Finish fertility story", title "Same income, fewer children", "Yes, merge and deploy", the
+World Bank's region list for sub-Saharan Africa; then "The haul is incomplete; don't publish it, just
+keep it ready".
+
+- **Deployed**: the Desk (`fdf-desk` 4385bec8, pipeline `fdf-pipeline` a3e20679) and the website (`fdf-web`
+  1b1aead7). They carry the story log axis and the OWID annotations fix (DECISIONS 2026-11-15), the World
+  Bank region fetch and OWID rows with codes (DECISIONS 2026-11-19), and the sign-in fix below. The app
+  needs nothing: it shows the Desk's pictures, and its current validator accepts the story.
+- **Terminal sign-in**: Cloudflare Access stopped sending an empty `sub` on service-token assertions, and
+  every `npm run editorial` request was refused ("Malformed service assertion"). The previous Desk
+  version failed the same way, so it was Access, not the deploy. `verifyEditor` now accepts a missing
+  subject; every other condition stands (test in `service-access.test.ts`).
+- **Story "Same income, fewer children"** (`.editorial/data-story-h3/`, built by `prep3.py` and
+  `build-story3.mjs` from rows fetched through the Desk): seven plates in three movements, 71 facts, the
+  new plate "Without sub-Saharan Africa" (the World Bank's 48 countries; 44 have both numbers).
+  `story-check` passes for slug `fertility-and-income` against item `it_01m7fmjhqnesxd12hzhy`. **Not
+  published.** Publish it after Haul 003 goes out, so it links to the item.
+- **Haul 003**: the fertility item added (after the neutrino, before Wilde), title "Income and fertility,
+  loosening" (picked from the drafted options, for the editor to confirm), Malthus's *Essay* contents page
+  as its plate, three machine notes (South Korea, Kerala, Angus Maddison) and two cards. Preview clean.
+  **Not published**: the editor says the Haul is incomplete.
