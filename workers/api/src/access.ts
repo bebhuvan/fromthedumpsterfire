@@ -57,10 +57,11 @@ export async function verifyEditor(token: string | null, cfg: AccessConfig, reso
       clockTolerance: 30,
     });
     const email = typeof payload.email === 'string' ? payload.email.toLowerCase() : '';
-    // A service assertion has type=app, an empty subject, no email, and common_name=Client ID.
+    // A service assertion has type=app, no subject (Access sent an empty one until November 2026 and
+    // now leaves it out), no email, and common_name=Client ID.
     // Never trust the raw CF-Access-Client-Id header; only the verified JWT identifies a client.
     if (payload.common_name !== undefined || payload.sub === '') {
-      if (payload.type !== 'app' || payload.sub !== '' || payload.email !== undefined || typeof payload.common_name !== 'string') throw new AccessDenied('Malformed service assertion');
+      if (payload.type !== 'app' || (payload.sub !== undefined && payload.sub !== '') || payload.email !== undefined || typeof payload.common_name !== 'string') throw new AccessDenied('Malformed service assertion');
       if (!clientIds(cfg.serviceClientIds).has(payload.common_name)) throw new AccessDenied('Service client is not allowed');
       return { kind: 'service', id: payload.common_name, canPublish: clientIds(cfg.servicePublishClientIds).has(payload.common_name) };
     }

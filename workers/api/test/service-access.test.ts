@@ -18,6 +18,9 @@ describe('Access service principals', () => {
     const token = await sign(service);
     expect(await verifyEditor(token, cfg, keys)).toEqual({ kind: 'service', id: 'draft.access', canPublish: false });
     expect(await verifyEditor(await sign({ ...service, common_name: 'publisher.access' }), cfg, keys)).toMatchObject({ canPublish: true });
+    // Access's service assertions carry no subject at all since November 2026.
+    const { sub: _, ...noSub } = service;
+    expect(await verifyEditor(await sign(noSub), cfg, keys)).toEqual({ kind: 'service', id: 'draft.access', canPublish: false });
     expect(await verifyEditor(await sign({ email: 'OWNER@example.org' }), cfg, keys)).toEqual({ kind: 'owner', id: 'owner@example.org', canPublish: true });
     await expect(verifyOwner(token, cfg, keys)).rejects.toThrow();
     await expect(verifyEditor(token, { ...cfg, serviceClientIds: '' }, keys)).rejects.toThrow();
