@@ -20,7 +20,7 @@ export * from './connect';
 export * from './rhymes';
 export * from './blocks';
 export * from './fieldnote';
-export { fetchOwid, fetchWorldBank, owidSlug, wbUnits, type FetchedChartData } from './charts';
+export { fetchOwid, fetchWorldBank, fetchWorldBankRegion, owidSlug, wbUnits, type FetchedChartData } from './charts';
 export * from './shelf';
 export * from './lives';
 export { fromLibrary, libraryProviders, normaliseLibraryUrl, syncLibrary } from './library';

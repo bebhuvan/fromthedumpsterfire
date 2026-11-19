@@ -3,7 +3,7 @@
 // chart's app pictures must be drawn from exactly the chart being published.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchOwid, fetchWorldBank, owidSlug, wbUnits } from '../src/charts';
+import { fetchOwid, fetchWorldBank, fetchWorldBankRegion, owidSlug, wbUnits } from '../src/charts';
 import { blocksForBundle, BlockRefused, type BlockRow } from '../src/blocks';
 import { chartKey, type Chart } from '@fdf/shared/charts';
 
@@ -241,5 +241,56 @@ describe('an Our World in Data annotations column', () => {
   it('is refused like any column without a licence when it holds a number', async () => {
     serveWith('entity,code,year,gdp_per_capita,gdp_per_capita__annotations\nMexico,MEX,1985,9785,12\n');
     await expect(fetchOwid('maddison')).rejects.toThrow(/does not say where "gdp_per_capita__annotations" comes from/);
+  });
+});
+
+describe('Our World in Data with codes', () => {
+  it('keeps each place’s code when asked, and leaves an aggregate’s missing code missing', async () => {
+    owid();
+    const r = await fetchOwid('temperature-anomaly', { entities: ['India', 'Korea, South'], codes: true });
+    expect(r.data.columns.map((c) => c.key)).toEqual(['entity', 'code', 'year', 'near_surface_temperature_anomaly']);
+    expect(r.data.rows).toEqual([
+      ['Korea, South', 'KOR', 1850, null],
+      ['India', 'IND', 1852, 0.2],
+    ]);
+  });
+});
+
+// Shaped like the real answers (checked 2026-11-19): the region, its members (each with its region),
+// and WDI's population series metadata, which states the licence.
+function wbRegion(licence?: string) {
+  serve((u) => {
+    if (u.pathname === '/v2/region/SSF') return json([{ page: '1', pages: '1', per_page: '50', total: '1' }, [{ id: '9', code: 'SSF', iso2code: 'ZG', name: 'Sub-Saharan Africa ' }]]);
+    if (u.pathname === '/v2/sources/2/series/SP.POP.TOTL/metadata') return json(WB_META(licence));
+    if (u.pathname === '/v2/region/SSF/country') {
+      expect(u.searchParams.get('per_page')).toBe('400');
+      return json([
+        { page: 1, pages: 1, per_page: '400', total: 3 },
+        [
+          { id: 'BDI', iso2Code: 'BI', name: 'Burundi', region: { id: 'SSF', iso2code: 'ZG', value: 'Sub-Saharan Africa ' } },
+          { id: 'AGO', iso2Code: 'AO', name: 'Angola', region: { id: 'SSF', iso2code: 'ZG', value: 'Sub-Saharan Africa ' } },
+          { id: 'SSF', iso2Code: 'ZG', name: 'Sub-Saharan Africa', region: { id: 'NA', iso2code: 'NA', value: 'Aggregates' } },
+        ],
+      ]);
+    }
+    return null;
+  });
+}
+
+describe('a World Bank region', () => {
+  it('lists its member countries with their codes and the licence the Bank states, without aggregates', async () => {
+    wbRegion('CC BY-4.0');
+    const r = await fetchWorldBankRegion('ssf');
+    expect(r.data.rows).toEqual([
+      ['Angola', 'AGO'],
+      ['Burundi', 'BDI'],
+    ]);
+    expect(r.sources[0]).toEqual(expect.objectContaining({ maker: 'World Bank', licence: 'CC BY-4.0', dataset: 'World Development Indicators: country classification, Sub-Saharan Africa (SSF)' }));
+  });
+
+  it('refuses without a stated licence, and a bad code', async () => {
+    wbRegion();
+    await expect(fetchWorldBankRegion('SSF')).rejects.toThrow(/does not state a licence/);
+    await expect(fetchWorldBankRegion('sub-saharan')).rejects.toThrow(BlockRefused);
   });
 });

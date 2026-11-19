@@ -117,7 +117,7 @@ function csvLine(line: string): string[] {
  * metadata, and each indicator's origins with their licences. OWID's own work is CC BY 4.0; the data
  * it republishes keeps its producer's licence, so each producer is credited with its own.
  */
-export async function fetchOwid(input: string, opts: { entities?: string[]; from?: number; to?: number } = {}): Promise<FetchedChartData> {
+export async function fetchOwid(input: string, opts: { entities?: string[]; from?: number; to?: number; codes?: boolean } = {}): Promise<FetchedChartData> {
   const slug = owidSlug(input);
   const page = `https://ourworldindata.org/grapher/${slug}`;
   const meta = await getJson<OwidMeta>(`${page}.metadata.json`, META_BYTES, 'The chart’s metadata');
@@ -170,6 +170,9 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
 
   const columns: ChartColumn[] = [
     { key: 'entity', label: 'Entity', type: 'text' },
+    // The ISO code, asked for when rows must be matched to another source's list of countries
+    // (a region's members), because the two name countries differently.
+    ...(opts.codes ? [{ key: 'code', label: 'Code', type: 'text' as const }] : []),
     { key: timeKey === 'day' ? 'day' : 'year', label: timeKey === 'day' ? 'Date' : 'Year', type: timeKey === 'day' ? 'date' : 'year' },
     ...valueKeys.map((k, j) => {
       const c = colFor(k);
@@ -199,7 +202,8 @@ export async function fetchOwid(input: string, opts: { entities?: string[]; from
     if (want && !want.has(entity)) continue;
     const year = timeKey === 'day' ? Number(t.slice(0, 4)) : Number(t);
     if ((opts.from !== undefined && year < opts.from) || (opts.to !== undefined && year > opts.to)) continue;
-    rows.push([entity, timeKey === 'day' ? t : Number(t), ...valueKeys.map((_, j) => {
+    const code = (f[1] ?? '').trim();
+    rows.push([entity, ...(opts.codes ? [code || null] : []), timeKey === 'day' ? t : Number(t), ...valueKeys.map((_, j) => {
       const raw = (f[valueAt[j]!] ?? '').trim();
       if (raw === '') return null;
       const n = Number(raw);
@@ -322,5 +326,53 @@ export async function fetchWorldBank(indicator: string, countries: string[], opt
     sourceSpan: withValues.length ? { from: String(Math.min(...withValues)), to: String(Math.max(...withValues)) } : undefined,
     entities: [...new Set(points.map((p) => p.country.value))].sort(),
     reference: { title: ind.name, note: ind.sourceOrganization ? `Source organisation: ${ind.sourceOrganization.replace(/\s+/g, ' ').trim()}` : undefined },
+  };
+}
+
+interface WbCountry {
+  id: string;
+  name: string;
+  region?: { id: string; value: string };
+}
+
+/**
+ * The members of a World Bank region (API v2: /region/<code>/country), so a story can say "outside
+ * sub-Saharan Africa" from a fetched list instead of a typed one. The classification is published in
+ * World Development Indicators' country metadata, and the Bank states WDI's licence per series, so the
+ * licence recorded is the one stated for WDI's population series. Aggregates are not members.
+ */
+export async function fetchWorldBankRegion(region: string): Promise<FetchedChartData> {
+  const code = region.trim().toUpperCase();
+  if (!/^[A-Z0-9]{2,3}$/.test(code)) refuse('That is not a World Bank region code (like SSF).', 400);
+  const head = await getJson<[unknown, Array<{ code: string; name: string }>?]>(`https://api.worldbank.org/v2/region/${code}?format=json`, META_BYTES, 'The World Bank’s region');
+  const name = Array.isArray(head) ? head[1]?.[0]?.name?.trim() : undefined;
+  if (!name) return refuse(`The World Bank has no region ${code}.`, 404);
+  const lic = await wbLicence('2', 'SP.POP.TOTL');
+  const res = await getJson<[{ pages?: number | string }, WbCountry[]?]>(`https://api.worldbank.org/v2/region/${code}/country?format=json&per_page=400`, META_BYTES, 'The World Bank’s region members');
+  const members = (Array.isArray(res) ? (res[1] ?? []) : []).filter((c) => c.region?.id === code && /^[A-Z]{3}$/.test(c.id));
+  if (Number(res[0]?.pages ?? 1) > 1) refuse('The region has more members than one request returns.');
+  if (!members.length) refuse(`The World Bank lists no countries in ${name}.`, 404);
+  const rows: Cell[][] = members.map((c) => [c.name.trim(), c.id] as Cell[]).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  return {
+    data: {
+      columns: [
+        { key: 'country', label: 'Country', type: 'text' },
+        { key: 'code', label: 'Code', type: 'text' },
+      ],
+      rows,
+    },
+    sources: [
+      {
+        maker: 'World Bank',
+        dataset: `World Development Indicators: country classification, ${name} (${code})`,
+        url: 'https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups',
+        licence: lic.licence,
+        ...(lic.url ? { licenceUrl: lic.url } : {}),
+        retrieved: dateIst(nowIso()),
+      },
+    ],
+    units: '',
+    entities: rows.map((r) => String(r[0])),
+    reference: { title: name },
   };
 }

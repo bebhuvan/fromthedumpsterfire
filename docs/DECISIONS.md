@@ -657,7 +657,23 @@ against GDP per capita (9 November 2026) from his own sources.
   the whole chart for want of its licence. A column ending `__annotations` with no metadata of its own
   and no number in it is now left out; one holding even one number is still refused. Tested with the
   real shape (checked 2026-11-15).
-- **Not done, waiting on the editor: sub-Saharan Africa as a fetched list.** The UN's M49 table (the
+- **Sub-Saharan Africa as a fetched list (decided 2026-11-19, below).** The UN's M49 table (the
   definition the post uses) is machine-readable on unstats.un.org, but the UN's terms of use allow
   personal, non-commercial use and state no open licence; Our World in Data's copy states none either.
   The World Bank's region list is CC BY 4.0 but differs slightly (Sudan, Djibouti). The editor chooses.
+
+## 2026-11-19 (data stories: sub-Saharan Africa from the World Bank's region list)
+
+The editor chose the World Bank's list for the fertility story's "without sub-Saharan Africa" plate.
+
+- **`fetchWorldBankRegion` fetches a region's members** (`/v2/region/<code>/country`) with their ISO3
+  codes, through `chart-fetch` (`provider: "worldbank-region"`). The classification is part of World
+  Development Indicators' country metadata, and the Bank states WDI's licence (CC BY 4.0) per series,
+  so the recorded licence is the one stated for WDI's population series; a missing licence is refused.
+- **`fetchOwid` can keep the ISO code** (`codes: true`), so a region's members are matched to OWID's
+  rows by code, never by name (the two spell countries differently: "Congo, Dem. Rep." against
+  "Democratic Republic of Congo").
+- The World Bank's list differs slightly from UN M49, the definition the post uses (it counts Sudan,
+  and leaves out Djibouti); the plate's caption says whose list it is.
+- Rejected: UN M49 (machine-readable, but its terms of use allow personal, non-commercial use and state
+  no open licence); typing the list (the rule is fetched, never typed).

@@ -14,6 +14,7 @@ import {
   checkChart,
   fetchOwid,
   fetchWorldBank,
+  fetchWorldBankRegion,
   replaceChart,
   addCode,
   addPicture,
@@ -250,11 +251,12 @@ blocksApi.post('/api/charts/fetch', async (c) => {
   const b = await body(
     c,
     z.discriminatedUnion('provider', [
-      z.object({ provider: z.literal('owid'), chart: z.string().trim().min(2).max(500), entities: z.array(z.string().max(120)).max(60).optional(), from: z.number().int().optional(), to: z.number().int().optional() }),
+      z.object({ provider: z.literal('owid'), chart: z.string().trim().min(2).max(500), entities: z.array(z.string().max(120)).max(60).optional(), from: z.number().int().optional(), to: z.number().int().optional(), codes: z.boolean().optional() }),
       z.object({ provider: z.literal('worldbank'), indicator: z.string().trim().min(2).max(60), countries: z.array(z.string().max(3)).min(1).max(30), from: z.number().int().optional(), to: z.number().int().optional() }),
+      z.object({ provider: z.literal('worldbank-region'), region: z.string().trim().min(2).max(3) }),
     ]),
   );
-  const r = await attempt(() => (b.provider === 'owid' ? fetchOwid(b.chart, b) : fetchWorldBank(b.indicator, b.countries, b)));
+  const r = await attempt(() => (b.provider === 'owid' ? fetchOwid(b.chart, b) : b.provider === 'worldbank' ? fetchWorldBank(b.indicator, b.countries, b) : fetchWorldBankRegion(b.region)));
   return c.json(r);
 });
 

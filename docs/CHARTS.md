@@ -286,6 +286,12 @@ licence and the source's full span.
   (datacatalog.worldbank.org, dataset 0041418). More recent state data sits on data.gov.in (Government
   Open Data License, India) behind a keyed API, or with the RBI, whose terms are not an open licence;
   use the table route with the licence as stated.
+- A region's members (checked 2026-11-19): `https://api.worldbank.org/v2/region/<code>/country?format=json&per_page=400`
+  (`SSF` is sub-Saharan Africa, 48 countries), each with its ISO3 `id` and its `region`; aggregates
+  are left out. The classification sits in World Development Indicators' country metadata, so the
+  licence recorded is the one WDI states for its population series (`SP.POP.TOTL`). Through
+  `chart-fetch` as `{"provider":"worldbank-region","region":"SSF"}`; match it to OWID rows by code,
+  asking OWID for its codes with `"codes":true`.
 
 ### Other sources
 

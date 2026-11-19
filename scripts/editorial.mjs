@@ -36,7 +36,9 @@ npm run editorial -- <command> [arguments] [options]
   chart-edit BLOCK                replace a chart block's spec with --data chart.json
   chart-fetch                     data behind a chart from Our World in Data or the World Bank
                                   (--data {"provider":"owid","chart":URL,"entities":[...]} or
-                                  {"provider":"worldbank","indicator":ID,"countries":["IND"]})
+                                  {"provider":"worldbank","indicator":ID,"countries":["IND"]}; a
+                                  World Bank region's members: {"provider":"worldbank-region",
+                                  "region":"SSF"}; "codes":true adds OWID's ISO codes)
   chart-csv FILE                  a CSV/TSV file as chart data (local; prints data and problems)
   chart-check                     the honesty validator on --data chart.json (local)
   chart-draw DIR                  draw --data chart.json to PNGs in DIR (local): wide and phone,
